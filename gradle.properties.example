@@ -1,0 +1,5 @@
+# Copy this file to gradle.properties only on your own PC if JAVA_HOME points to an older JDK.
+# Do not commit gradle.properties. It is ignored because the JDK path is local to each developer.
+#
+# Example for Windows:
+# org.gradle.java.home=C:/Program Files/Java/jdk-17
