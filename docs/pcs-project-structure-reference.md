@@ -43,11 +43,16 @@ Hibernate Dirty Checking 전제
 src/main/java/com/pcs
 ├─ PcsApiApplication.java
 ├─ domain
-│  ├─ auth
-│  ├─ member
-│  ├─ part
-│  ├─ stock
-│  └─ inspection
+│   ├─ auth
+│   ├─ company
+│   ├─ member
+│   ├─ partner
+│   ├─ category
+│   ├─ part
+│   ├─ stock
+│   ├─ inspection
+│   ├─ history
+│   └─ dashboard
 ├─ global
 └─ web/controller
 ```
