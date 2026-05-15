@@ -3,18 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parts Control Station</title>
+    <meta name="description" content="PCS는 중고 PC 부품의 입고, 검수, 재고, 출고, 이력을 관리번호 단위로 추적하는 업체 운영 시스템입니다.">
+    <title>PCS | 중고 PC 부품 관리</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/main.css">
 </head>
 <body>
-<main class="page-shell">
-    <section class="main-panel">
-        <p class="eyebrow">Parts Control Station</p>
-        <h1>파츠관제소</h1>
-        <p class="description">중고 PC 부품 관리 시스템 프로젝트 기본 화면입니다.</p>
-        <div class="status">Spring Boot 프로젝트 실행 확인용 메인 페이지</div>
+<header class="site-header">
+    <div class="header-inner">
+        <a class="brand" href="/" aria-label="PCS 메인">
+            <img class="brand-mark" src="/images/parts-control-station-icon.svg" alt="" width="36" height="36">
+            <span class="brand-text">
+                <strong>PCS</strong>
+                <small>Parts Control Station</small>
+            </span>
+        </a>
+        <nav class="header-actions" aria-label="주요 이동">
+            <a class="header-link" href="/w">업체 로그인</a>
+            <a class="btn-primary" href="/company/register">회사 등록</a>
+        </nav>
+    </div>
+</header>
+
+<main>
+    <section class="hero">
+        <div class="hero-inner">
+            <div class="hero-copy">
+                <p class="eyebrow">중고 PC 부품 운영 시스템</p>
+                <h1>관리번호로 부품 상태를 한눈에 확인합니다.</h1>
+                <p class="hero-description">
+                    PCS는 중고 PC 부품의 입고, 검수, 재고, 출고, 상태 변경 이력을 업체 작업공간 안에서 연결하는 관리자용 운영 시스템입니다.
+                </p>
+                <div class="hero-actions">
+                    <a class="btn-primary" href="/company/register">회사 등록 시작</a>
+                    <a class="btn-outline" href="/w">업체 로그인</a>
+                </div>
+            </div>
+
+            <aside class="workspace-card" aria-labelledby="workspace-title">
+                <div class="card-header">
+                    <span>업체 작업공간</span>
+                    <strong>접속</strong>
+                </div>
+                <h2 id="workspace-title">업체 코드로 바로 접속</h2>
+                <form class="workspace-form" id="workspaceForm">
+                    <label class="sr-only" for="companyCode">업체 코드</label>
+                    <input id="companyCode" name="companyCode" type="text" placeholder="company-code" autocomplete="organization">
+                    <button type="submit">이동</button>
+                </form>
+                <p class="workspace-note">회사 등록 후 발급받은 업체 코드로 전용 업무 페이지에 들어갑니다.</p>
+            </aside>
+        </div>
+
+        <div class="operation-panel" aria-label="부품 처리 흐름 예시">
+            <div class="panel-summary">
+                <span>관리번호</span>
+                <strong>PCS-CPU-000128</strong>
+                <p>현재 위치: 검수 진행</p>
+            </div>
+            <div class="timeline-grid">
+                <article class="timeline-card is-complete">
+                    <span>01</span>
+                    <strong>입고 등록</strong>
+                    <p>관리번호 발급 완료</p>
+                </article>
+                <article class="timeline-card is-current">
+                    <span>02</span>
+                    <strong>검수 진행</strong>
+                    <p>B등급, 판매 보류</p>
+                </article>
+                <article class="timeline-card">
+                    <span>03</span>
+                    <strong>재고 대기</strong>
+                    <p>검수 확정 후 반영</p>
+                </article>
+                <article class="timeline-card">
+                    <span>04</span>
+                    <strong>출고 대기</strong>
+                    <p>전표 생성 전</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <hr class="dashed-divider">
+
+    <section class="workflow-section" aria-labelledby="workflow-title">
+        <div class="section-heading">
+            <p class="eyebrow">업무 흐름</p>
+            <h2 id="workflow-title">업무 화면은 부품의 상태 변화 순서로 나뉩니다.</h2>
+        </div>
+        <ol class="workflow-list">
+            <li>
+                <span>01</span>
+                <strong>입고</strong>
+                <p>실물 부품에 업체 내부 관리번호를 부여합니다.</p>
+            </li>
+            <li>
+                <span>02</span>
+                <strong>검수</strong>
+                <p>카테고리 기준으로 등급과 판매 가능 상태를 결정합니다.</p>
+            </li>
+            <li>
+                <span>03</span>
+                <strong>재고</strong>
+                <p>개별 부품 상태와 현재 수량을 함께 봅니다.</p>
+            </li>
+            <li>
+                <span>04</span>
+                <strong>출고</strong>
+                <p>출고 전표와 실제 개별 부품 이동을 연결합니다.</p>
+            </li>
+            <li>
+                <span>05</span>
+                <strong>이력</strong>
+                <p>누가, 언제, 왜 상태를 바꿨는지 남깁니다.</p>
+            </li>
+        </ol>
+    </section>
+
+    <hr class="dashed-divider">
+
+    <section class="focus-section" aria-labelledby="focus-title">
+        <div class="section-heading">
+            <p class="eyebrow">관리 포인트</p>
+            <h2 id="focus-title">관리자가 매일 확인하는 정보만 전면에 둡니다.</h2>
+        </div>
+        <div class="focus-grid">
+            <article>
+                <span>unit.serial</span>
+                <strong>관리번호 기준 추적</strong>
+                <p>개별 부품의 현재 상태와 처리 과정을 한 기준으로 확인합니다.</p>
+            </article>
+            <article>
+                <span>inspection.result</span>
+                <strong>검수 결과 반영</strong>
+                <p>검수 결과가 등급, 판매 가능 여부, 상태 이력으로 이어집니다.</p>
+            </article>
+            <article>
+                <span>stock.quantity</span>
+                <strong>재고 정합성</strong>
+                <p>부품별 현재 수량과 실제 개별 부품 수량이 맞는지 확인합니다.</p>
+            </article>
+            <article>
+                <span>status.history</span>
+                <strong>상태 변경 이력</strong>
+                <p>변경자, 변경 시점, 변경 사유를 이력으로 남깁니다.</p>
+            </article>
+        </div>
     </section>
 </main>
+
+<footer class="site-footer">
+    <div class="footer-inner">
+        <p>&copy; 2026 PCS — Parts Control Station</p>
+    </div>
+</footer>
+
 <script src="/js/main.js"></script>
 </body>
 </html>
