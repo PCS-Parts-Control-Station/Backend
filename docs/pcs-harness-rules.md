@@ -109,7 +109,9 @@ harness/reports/*
 
 구조:
 
-- `domain/auth`, `domain/member`, `domain/part`, `domain/stock`, `domain/inspection`
+- `domain/auth`, `domain/company`, `domain/member`, `domain/partner`, `domain/category`
+- `domain/part`, `domain/stock`, `domain/inspection`, `domain/history`, `domain/dashboard`
+- 각 도메인은 `api`, `dto/request`, `dto/response`, `entity`, `facade`, `mapper`, `service`, `type`, `validation` 기준 구조를 따른다.
 - `global/config`, `global/dto`, `global/error`, `global/jwt`
 - `resources/mapper`
 
@@ -127,6 +129,7 @@ DTO/Validation:
 - Request DTO에는 validation
 - `@RequestBody`에는 `@Valid`
 - Entity와 DTO 상호 참조 금지
+- enum은 `entity`가 아니라 도메인별 `type` 패키지에 둔다.
 
 API/예외:
 

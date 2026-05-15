@@ -1,4 +1,4 @@
-package com.pcs.domain.inspection.entity;
+package com.pcs.domain.inspection.type;
 
 public enum InspectionFailPolicy {
     NONE,

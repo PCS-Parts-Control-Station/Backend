@@ -1,4 +1,4 @@
-package com.pcs.domain.part.entity;
+package com.pcs.domain.part.type;
 
 public enum SalesStatus {
     HOLD,

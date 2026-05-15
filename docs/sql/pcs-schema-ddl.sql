@@ -48,6 +48,7 @@ CREATE TABLE tb_member (
     password_hash VARCHAR(255) NOT NULL,
     name VARCHAR(100) NOT NULL,
     role ENUM('OWNER', 'ADMIN', 'STAFF') NOT NULL,
+    owner_slot TINYINT NULL,
     password_status ENUM('TEMPORARY', 'ACTIVE') NOT NULL DEFAULT 'TEMPORARY',
     temp_password_expires_at DATETIME(6) NULL,
     active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -57,7 +58,12 @@ CREATE TABLE tb_member (
     updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     PRIMARY KEY (member_id),
     CONSTRAINT uk_member_company_login UNIQUE (company_id, login_id),
+    CONSTRAINT uk_member_company_owner UNIQUE (company_id, owner_slot),
     CONSTRAINT uk_member_company_member_id UNIQUE (company_id, member_id),
+    CONSTRAINT chk_member_owner_slot CHECK (
+        (role = 'OWNER' AND owner_slot = 1)
+        OR (role <> 'OWNER' AND owner_slot IS NULL)
+    ),
     INDEX idx_member_company_created_by (company_id, created_by),
     INDEX idx_member_company_role (company_id, role),
     INDEX idx_member_company_active (company_id, active)

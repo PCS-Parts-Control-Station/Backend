@@ -265,13 +265,41 @@ function Test-JavaScriptSyntax {
 }
 
 function Test-FullModeStructure {
-    $requiredDomains = @("auth", "member", "part", "stock", "inspection")
+    $requiredDomains = @(
+        "auth",
+        "company",
+        "member",
+        "partner",
+        "category",
+        "part",
+        "stock",
+        "inspection",
+        "history",
+        "dashboard"
+    )
+    $requiredDomainSubdirs = @(
+        "api",
+        "dto/request",
+        "dto/response",
+        "entity",
+        "facade",
+        "mapper",
+        "service",
+        "type",
+        "validation"
+    )
+
     Test-PathRequired "src/main/java/com/pcs/domain" "FULL_DOMAIN_ROOT" "Create domain root after feature structure is decided."
     Test-PathRequired "src/main/java/com/pcs/global" "FULL_GLOBAL_ROOT" "Create global root after API common structure is decided."
     Test-PathRequired "src/main/resources/mapper" "FULL_MAPPER_ROOT" "Create mapper XML root after MyBatis is introduced."
 
     foreach ($domain in $requiredDomains) {
         Test-PathRequired "src/main/java/com/pcs/domain/$domain" "FULL_DOMAIN_$($domain.ToUpper())" "Create $domain structure after feature spec is decided."
+
+        foreach ($subdir in $requiredDomainSubdirs) {
+            $ruleName = "FULL_DOMAIN_$($domain.ToUpper())_$($subdir.ToUpper().Replace('/', '_'))"
+            Test-PathRequired "src/main/java/com/pcs/domain/$domain/$subdir" $ruleName "Keep the standard domain structure: api, dto/request, dto/response, entity, facade, mapper, service, type, validation."
+        }
     }
 }
 

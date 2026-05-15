@@ -1,4 +1,4 @@
-package com.pcs.domain.partner.entity;
+package com.pcs.domain.partner.type;
 
 public enum PartnerRole {
     SUPPLIER,

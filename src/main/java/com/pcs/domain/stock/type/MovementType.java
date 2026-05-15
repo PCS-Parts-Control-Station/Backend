@@ -1,4 +1,4 @@
-package com.pcs.domain.stock.entity;
+package com.pcs.domain.stock.type;
 
 public enum MovementType {
     INBOUND,
