@@ -68,8 +68,19 @@ domain/{domain}
 ├─ facade
 ├─ mapper
 ├─ service
+├─ type
 └─ validation
 ```
+
+기준:
+
+- `api`에는 Controller만 둔다.
+- Request/Response DTO는 `api` 하위가 아니라 `dto/request`, `dto/response`에 둔다.
+- Entity는 DTO를 import하지 않는다.
+- DTO도 Entity를 직접 참조하지 않는 것을 기본으로 한다.
+- enum은 Entity가 아니라 도메인 타입으로 보고 `type` 패키지에 둔다.
+- DTO, Entity, Service는 필요한 enum을 `type` 패키지에서 참조한다.
+- validation은 해당 도메인의 입력 검증 어노테이션과 Validator를 둔다.
 
 Mapper XML:
 
@@ -163,14 +174,23 @@ public StockOutboundResult outbound(...) {
 
 ## 주요 도메인 후보
 
-- Member: 작업자
-- PartCategory: 부품 분류
-- PcPart: 부품 마스터
-- PartItem: 입고된 개별 제품, 관리번호 단위
-- PartStock: 현재 재고
-- StockMovement: 입출고 이력
-- Inspection: 검수 결과
-- PartStatusHistory: 상태 변경 이력
+- Company: 업체 작업 공간, 회사 코드, 회사 활성 상태
+- Member: Owner, Admin, Staff 작업자 계정
+- TradePartner: 입고/출고 거래처
+- PartCategory: 부품 카테고리
+- PcPart: 부품 종류/모델 마스터
+- PcPartUnit: 개별 중고 부품, 관리번호 단위
+- PartStock: 현재 재고 집계
+- StockDocument: 거래처와 연결되는 입출고 전표
+- StockMovement: 전표 안의 부품별 재고 변화 라인
+- StockMovementUnit: 재고 변화 라인에 포함된 개별 부품 매핑
+- Inspection: 검수, 정정, 재검수 이력
+- InspectionTemplate: 카테고리별 검수 양식
+- InspectionTemplateItem: 검수 항목
+- InspectionTemplateItemOption: SELECT 항목 선택지
+- InspectionItemResult: 실제 검수 항목별 결과
+- PartStatusHistory: 개별 부품 상태 변경 이력
+- Dashboard: 운영 요약, 우선 처리 목록, 통계 조회
 
 ## SQL 중심 기능
 

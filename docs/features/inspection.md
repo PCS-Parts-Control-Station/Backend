@@ -40,6 +40,9 @@ com.pcs.domain.inspection
 - 재검수는 `inspection_type = REINSPECTION`이며 기준 검수 ID를 가진다.
 - 검수 결과는 원본 row를 수정하지 않고 새 이력으로 저장한다.
 - 검수 결과 저장 시 항목명과 선택지 값 snapshot을 함께 저장한다.
+- 검수 등록 DTO에서는 `grade = NONE`을 허용하지 않는다.
+- 검수 요청 body에는 `inspectedAt`을 받지 않는다.
+- 서버가 검수 저장 시점의 현재 시각을 `tb_inspection.inspected_at`에 저장한다.
 - 검수 후 개별 부품의 검수 상태, 등급, 판매 상태를 갱신한다.
 - 상태 변경 시 `tb_part_status_history`를 저장한다.
 
