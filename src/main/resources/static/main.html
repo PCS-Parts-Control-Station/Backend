@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="PCS는 중고 PC 부품의 입고, 검수, 재고, 출고, 이력을 관리번호 단위로 추적하는 업체 운영 시스템입니다.">
-    <title>PCS | 중고 PC 부품 관리</title>
+    <meta name="description" content="PCS는 중고 PC 부품의 입고, 검수, 재고, 출고 이력을 관리번호 단위로 추적하는 국내 업무용 재고관리 시스템입니다.">
+    <title>PCS | 관리번호 기반 중고 PC 부품 재고관리</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/main.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css?20260519_2">
 </head>
 <body>
 <header class="site-header">
@@ -17,148 +17,263 @@
             <img class="brand-mark" src="/images/parts-control-station-icon.svg" alt="" width="36" height="36">
             <span class="brand-text">
                 <strong>PCS</strong>
-                <small>Parts Control Station</small>
+                <small>관리번호 기반 부품 추적</small>
             </span>
         </a>
-        <nav class="header-actions" aria-label="주요 이동">
-            <a class="header-link" href="/w">업체 로그인</a>
-            <a class="btn-primary" href="/company/register">회사 등록</a>
+
+        <nav class="header-nav" aria-label="주요 이동">
+            <a class="nav-link" href="#features">기능 소개</a>
+            <a class="nav-link" href="#use-cases">사용 대상</a>
+            <a class="nav-link" href="/w">업체 로그인</a>
+            <a class="btn btn-primary" href="/company/register">회사 등록</a>
         </nav>
     </div>
 </header>
 
 <main>
-    <section class="hero">
+    <section class="hero" aria-labelledby="hero-title">
         <div class="hero-inner">
-            <div class="hero-copy">
-                <p class="eyebrow">중고 PC 부품 운영 시스템</p>
-                <h1>관리번호로 부품 상태를 한눈에 확인합니다.</h1>
-                <p class="hero-description">
-                    PCS는 중고 PC 부품의 입고, 검수, 재고, 출고, 상태 변경 이력을 업체 작업공간 안에서 연결하는 관리자용 운영 시스템입니다.
-                </p>
-                <div class="hero-actions">
-                    <a class="btn-primary" href="/company/register">회사 등록 시작</a>
-                    <a class="btn-outline" href="/w">업체 로그인</a>
-                </div>
+            <p class="eyebrow">중고 PC 부품 업무용 재고관리</p>
+            <h1 id="hero-title">
+                <span>입고부터 출고까지,</span>
+                <span>부품 하나의 이력을 놓치지 마세요.</span>
+            </h1>
+            <p class="hero-description">
+                PCS는 중고 PC 부품을 관리번호 단위로 추적해 거래처 입고, 검수 등급, 판매 상태, 보관 위치, 출고 이력을 하나의 흐름으로 연결합니다.
+            </p>
+
+            <div class="signature-line" aria-label="PCS 핵심 메시지">
+                <span>관리번호 발급</span>
+                <span>검수등급 기록</span>
+                <span>판매상태 관리</span>
+                <span>이력 추적</span>
             </div>
 
-            <aside class="workspace-card" aria-labelledby="workspace-title">
-                <div class="card-header">
-                    <span>업체 작업공간</span>
-                    <strong>접속</strong>
-                </div>
-                <h2 id="workspace-title">업체 코드로 바로 접속</h2>
-                <form class="workspace-form" id="workspaceForm">
-                    <label class="sr-only" for="companyCode">업체 코드</label>
-                    <input id="companyCode" name="companyCode" type="text" placeholder="company-code" autocomplete="organization">
-                    <button type="submit">이동</button>
-                </form>
-                <p class="workspace-note">회사 등록 후 발급받은 업체 코드로 전용 업무 페이지에 들어갑니다.</p>
-            </aside>
-        </div>
-
-        <div class="operation-panel" aria-label="부품 처리 흐름 예시">
-            <div class="panel-summary">
-                <span>관리번호</span>
-                <strong>PCS-CPU-000128</strong>
-                <p>현재 위치: 검수 진행</p>
+            <div class="hero-actions">
+                <a class="btn btn-primary btn-large" href="/company/register">회사 등록 시작</a>
+                <a class="btn btn-secondary btn-large" href="/w">업체 로그인</a>
             </div>
-            <div class="timeline-grid">
-                <article class="timeline-card is-complete">
-                    <span>01</span>
-                    <strong>입고 등록</strong>
-                    <p>관리번호 발급 완료</p>
-                </article>
-                <article class="timeline-card is-current">
-                    <span>02</span>
-                    <strong>검수 진행</strong>
-                    <p>B등급, 판매 보류</p>
-                </article>
-                <article class="timeline-card">
-                    <span>03</span>
-                    <strong>재고 대기</strong>
-                    <p>검수 확정 후 반영</p>
-                </article>
-                <article class="timeline-card">
-                    <span>04</span>
-                    <strong>출고 대기</strong>
-                    <p>전표 생성 전</p>
-                </article>
+
+            <form class="quick-access" id="workspaceForm" aria-label="업체 코드 바로 접속">
+                <label for="companyCode">업체 코드로 바로 접속</label>
+                <div class="quick-access-row">
+                    <input id="companyCode" name="companyCode" type="text" placeholder="예: pcs-seoul" autocomplete="organization">
+                    <button class="btn btn-primary" type="submit">이동</button>
+                </div>
+            </form>
+
+            <div class="product-preview" aria-label="PCS 관리자 화면 미리보기">
+                <div class="preview-window">
+                    <div class="preview-toolbar">
+                        <div class="window-dots" aria-hidden="true">
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                        </div>
+                        <strong>PCS 관리자 화면 | 관리번호 기반 개별 부품 추적</strong>
+                    </div>
+                    <div class="preview-content">
+                        <aside class="preview-sidebar">
+                            <span class="active">운영 현황</span>
+                            <span>부품 관리</span>
+                            <span>입고 관리</span>
+                            <span>검수 관리</span>
+                            <span>출고 관리</span>
+                            <span>이력 관리</span>
+                        </aside>
+                        <div class="preview-main">
+                            <div class="preview-heading">
+                                <div>
+                                    <span class="screen-kicker">관리번호 추적 화면</span>
+                                    <h2>개별 부품 상태 현황</h2>
+                                </div>
+                                <div class="scan-code" aria-label="관리번호 예시">
+                                    <span>관리번호</span>
+                                    <strong>PCS-RAM-000128</strong>
+                                </div>
+                            </div>
+
+                            <div class="preview-summary">
+                                <article>
+                                    <span>추적 중인 개별 부품</span>
+                                    <strong>328</strong>
+                                </article>
+                                <article>
+                                    <span>검수 대기</span>
+                                    <strong>18</strong>
+                                </article>
+                                <article>
+                                    <span>출고 차단</span>
+                                    <strong>7</strong>
+                                </article>
+                            </div>
+
+                            <div class="preview-table">
+                                <div class="preview-row header">
+                                    <span>관리번호</span>
+                                    <span>부품명</span>
+                                    <span>검수등급</span>
+                                    <span>검수상태</span>
+                                    <span>판매상태</span>
+                                    <span>보관위치</span>
+                                    <span>최근이력</span>
+                                </div>
+                                <div class="preview-row">
+                                    <strong>PCS-RAM-000128</strong>
+                                    <span>Samsung DDR4 8GB</span>
+                                    <span>B</span>
+                                    <em class="badge-complete">검수완료</em>
+                                    <em class="badge-hold">판매보류</em>
+                                    <span>창고 A-03</span>
+                                    <span>검수 결과 반영</span>
+                                </div>
+                                <div class="preview-row">
+                                    <strong>PCS-GPU-000091</strong>
+                                    <span>RTX 3060 Twin Edge</span>
+                                    <span>A</span>
+                                    <em class="badge-complete">검수완료</em>
+                                    <em class="badge-available">판매가능</em>
+                                    <span>진열 B-01</span>
+                                    <span>출고 가능 전환</span>
+                                </div>
+                                <div class="preview-row">
+                                    <strong>PCS-SSD-000044</strong>
+                                    <span>970 EVO Plus 500GB</span>
+                                    <span>-</span>
+                                    <em class="badge-waiting">검수대기</em>
+                                    <em class="badge-hold">판매보류</em>
+                                    <span>검수대기함</span>
+                                    <span>입고 전표 생성</span>
+                                </div>
+                                <div class="preview-row">
+                                    <strong>PCS-CPU-000017</strong>
+                                    <span>Intel Core i5-10400</span>
+                                    <span>불량</span>
+                                    <em class="badge-defect">불량</em>
+                                    <em class="badge-blocked">출고차단</em>
+                                    <span>격리 보관</span>
+                                    <span>핀 손상 확인</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
-    <hr class="dashed-divider">
-
-    <section class="workflow-section" aria-labelledby="workflow-title">
-        <div class="section-heading">
-            <p class="eyebrow">업무 흐름</p>
-            <h2 id="workflow-title">업무 화면은 부품의 상태 변화 순서로 나뉩니다.</h2>
+    <section class="use-case-section full-bleed-section" aria-labelledby="use-case-title" id="use-cases">
+        <div class="use-case-inner">
+            <div class="section-heading center">
+                <p class="eyebrow">현장 사용 사례</p>
+                <h2 id="use-case-title">이런 현장에서 PCS를 씁니다.</h2>
+            </div>
+            <div class="use-case-grid" aria-label="PCS 현장 사용 사례 자동 슬라이드">
+                <div class="use-case-track">
+                    <article class="use-case-card">
+                        <span>PC방 일괄 매입</span>
+                        <h3>RAM, SSD, GPU가 한 번에 들어오는 날</h3>
+                        <p>거래처 전표로 묶고, 부품마다 관리번호를 발급해 검수 대기와 판매 가능 수량을 나눠 봅니다.</p>
+                    </article>
+                    <article class="use-case-card">
+                        <span>중고 부품 리셀러</span>
+                        <h3>같은 모델인데 상태가 다른 부품을 판매할 때</h3>
+                        <p>검수등급과 판매상태를 개별 부품에 연결해 출고 가능한 부품만 전표에 포함합니다.</p>
+                    </article>
+                    <article class="use-case-card">
+                        <span>컴퓨터 수리점</span>
+                        <h3>수리 후 남은 부품을 다시 보관할 때</h3>
+                        <p>재사용 가능 부품, 불량 부품, 보류 부품을 관리번호 기준으로 분리해 보관 위치를 남깁니다.</p>
+                    </article>
+                    <article class="use-case-card">
+                        <span>기업 전산팀</span>
+                        <h3>교체한 PC 부품의 보관과 폐기를 기록할 때</h3>
+                        <p>입고, 검수, 폐기, 출고 이력을 남겨 누가 언제 어떤 사유로 상태를 바꿨는지 확인합니다.</p>
+                    </article>
+                    <article class="use-case-card" aria-hidden="true">
+                        <span>PC방 일괄 매입</span>
+                        <h3>RAM, SSD, GPU가 한 번에 들어오는 날</h3>
+                        <p>거래처 전표로 묶고, 부품마다 관리번호를 발급해 검수 대기와 판매 가능 수량을 나눠 봅니다.</p>
+                    </article>
+                    <article class="use-case-card" aria-hidden="true">
+                        <span>중고 부품 리셀러</span>
+                        <h3>같은 모델인데 상태가 다른 부품을 판매할 때</h3>
+                        <p>검수등급과 판매상태를 개별 부품에 연결해 출고 가능한 부품만 전표에 포함합니다.</p>
+                    </article>
+                    <article class="use-case-card" aria-hidden="true">
+                        <span>컴퓨터 수리점</span>
+                        <h3>수리 후 남은 부품을 다시 보관할 때</h3>
+                        <p>재사용 가능 부품, 불량 부품, 보류 부품을 관리번호 기준으로 분리해 보관 위치를 남깁니다.</p>
+                    </article>
+                    <article class="use-case-card" aria-hidden="true">
+                        <span>기업 전산팀</span>
+                        <h3>교체한 PC 부품의 보관과 폐기를 기록할 때</h3>
+                        <p>입고, 검수, 폐기, 출고 이력을 남겨 누가 언제 어떤 사유로 상태를 바꿨는지 확인합니다.</p>
+                    </article>
+                </div>
+            </div>
         </div>
-        <ol class="workflow-list">
-            <li>
-                <span>01</span>
-                <strong>입고</strong>
-                <p>실물 부품에 업체 내부 관리번호를 부여합니다.</p>
-            </li>
-            <li>
-                <span>02</span>
-                <strong>검수</strong>
-                <p>카테고리 기준으로 등급과 판매 가능 상태를 결정합니다.</p>
-            </li>
-            <li>
-                <span>03</span>
-                <strong>재고</strong>
-                <p>개별 부품 상태와 현재 수량을 함께 봅니다.</p>
-            </li>
-            <li>
-                <span>04</span>
-                <strong>출고</strong>
-                <p>출고 전표와 실제 개별 부품 이동을 연결합니다.</p>
-            </li>
-            <li>
-                <span>05</span>
-                <strong>이력</strong>
-                <p>누가, 언제, 왜 상태를 바꿨는지 남깁니다.</p>
-            </li>
-        </ol>
     </section>
 
-    <hr class="dashed-divider">
-
-    <section class="focus-section" aria-labelledby="focus-title">
-        <div class="section-heading">
-            <p class="eyebrow">관리 포인트</p>
-            <h2 id="focus-title">관리자가 매일 확인하는 정보만 전면에 둡니다.</h2>
+    <section class="question-section" aria-labelledby="question-title">
+        <div class="section-heading center">
+            <p class="eyebrow">현장에서 자주 생기는 문제</p>
+            <h2 id="question-title">부품은 있는데, 어떤 상태인지 바로 확인하기 어렵다면 관리 기준이 필요한 시점입니다.</h2>
         </div>
-        <div class="focus-grid">
-            <article>
-                <span>unit.serial</span>
-                <strong>관리번호 기준 추적</strong>
-                <p>개별 부품의 현재 상태와 처리 과정을 한 기준으로 확인합니다.</p>
+        <div class="question-grid">
+            <article>입고된 부품이 어느 거래처에서 왔는지 찾기 어렵나요?</article>
+            <article>검수 등급과 판매 가능 여부가 담당자마다 다르게 기록되나요?</article>
+            <article>현재 재고 수량과 실제 개별 부품 수량이 자주 안 맞나요?</article>
+            <article>출고 차단 사유와 정정 이력이 기록으로 남지 않나요?</article>
+        </div>
+    </section>
+
+    <section class="features-section" id="features" aria-labelledby="features-title">
+        <div class="section-heading">
+            <p class="eyebrow">PCS 핵심 기능</p>
+            <h2 id="features-title">관리번호를 기준으로 입고, 검수, 재고, 출고를 연결합니다.</h2>
+        </div>
+
+        <div class="feature-list">
+            <article class="feature-card">
+                <span class="feature-index">01</span>
+                <h3>개별 부품 관리번호 발급</h3>
+                <p>부품 1개마다 내부 관리번호를 부여해 같은 모델이라도 상태와 이력을 따로 추적합니다.</p>
             </article>
-            <article>
-                <span>inspection.result</span>
-                <strong>검수 결과 반영</strong>
-                <p>검수 결과가 등급, 판매 가능 여부, 상태 이력으로 이어집니다.</p>
+            <article class="feature-card">
+                <span class="feature-index">02</span>
+                <h3>검수등급과 판매상태 연결</h3>
+                <p>검수 결과가 A, B, C, 불량 등급과 판매가능, 판매보류, 출고차단 상태로 이어집니다.</p>
             </article>
-            <article>
-                <span>stock.quantity</span>
-                <strong>재고 정합성</strong>
-                <p>부품별 현재 수량과 실제 개별 부품 수량이 맞는지 확인합니다.</p>
+            <article class="feature-card">
+                <span class="feature-index">03</span>
+                <h3>거래처별 입출고 전표 관리</h3>
+                <p>PC방, 개인, 기업 거래처별 입고/출고 묶음을 만들고 실제 이동한 개별 부품까지 기록합니다.</p>
             </article>
-            <article>
-                <span>status.history</span>
-                <strong>상태 변경 이력</strong>
-                <p>변경자, 변경 시점, 변경 사유를 이력으로 남깁니다.</p>
+            <article class="feature-card">
+                <span class="feature-index">04</span>
+                <h3>취소와 정정 이력 보존</h3>
+                <p>입출고 취소, 재검수, 상태 정정은 삭제하지 않고 시간순 이력으로 남깁니다.</p>
             </article>
+        </div>
+    </section>
+
+    <section class="cta-section full-bleed-section" aria-labelledby="cta-title">
+        <div class="cta-box">
+            <p class="eyebrow">업무공간 만들기</p>
+            <h2 id="cta-title">중고 PC 부품 재고관리, 관리번호부터 시작하세요.</h2>
+            <p>회사 등록 후 업체 코드를 발급받으면 PCS 전용 업무공간에서 입고, 검수, 재고, 출고를 관리할 수 있습니다.</p>
+            <div class="hero-actions">
+                <a class="btn btn-primary btn-large" href="/company/register">회사 등록 시작</a>
+                <a class="btn btn-secondary btn-large" href="/w">업체 로그인</a>
+            </div>
         </div>
     </section>
 </main>
 
 <footer class="site-footer">
     <div class="footer-inner">
-        <p>&copy; 2026 PCS — Parts Control Station</p>
+        <p>&copy; 2026 PCS — 관리번호 기반 부품 추적 시스템</p>
     </div>
 </footer>
 
