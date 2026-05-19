@@ -10,4 +10,9 @@ public class PageController {
     public String main() {
         return "forward:/main.html";
     }
+
+    @GetMapping("/company/register")
+    public String companyRegister() {
+        return "forward:/company-register.html";
+    }
 }
