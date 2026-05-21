@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/company-register.css">
+    <link rel="stylesheet" href="/css/company-register.css?20260519">
 </head>
 <body>
 <header class="site-header">
@@ -109,7 +109,7 @@
 
             <div class="form-actions">
                 <a class="btn-outline" href="/">취소</a>
-                <button class="btn-primary" type="submit">회사 등록 완료</button>
+                <button class="btn-primary" id="submitButton" type="submit">회사 등록 완료</button>
             </div>
             <p class="form-message" id="formMessage" role="status" aria-live="polite"></p>
         </form>
@@ -134,8 +134,41 @@
                     <dd id="previewOwnerLoginId">입력 전</dd>
                 </div>
             </dl>
-            <p class="preview-note">회사와 Owner 계정은 한 번에 생성되고, 등록 완료 후 업체 로그인 화면으로 이동합니다.</p>
+            <p class="preview-note">회사와 Owner 계정은 한 번에 생성되고, 완료 후 업체 전용 접속 주소를 확인합니다.</p>
         </aside>
+    </section>
+
+    <section class="completion-card" id="registrationComplete" aria-labelledby="complete-title" hidden>
+        <div class="completion-main">
+            <p class="eyebrow">등록 완료</p>
+            <h2 id="complete-title">회사 등록이 완료되었습니다.</h2>
+            <p>
+                아래 주소는 이 업체 전용 업무 페이지입니다. 직원에게 공유할 때는 이 주소와 발급한 계정 정보를 함께 전달하세요.
+            </p>
+            <div class="completion-actions">
+                <a class="btn-primary" id="workspaceLoginLink" href="/w">업체 로그인 화면으로 이동</a>
+                <button class="btn-outline" id="copyWorkspaceUrlButton" type="button">주소 복사</button>
+            </div>
+            <p class="copy-message" id="copyMessage" role="status" aria-live="polite"></p>
+        </div>
+        <dl class="completion-summary">
+            <div>
+                <dt>회사명</dt>
+                <dd id="completeCompanyName">-</dd>
+            </div>
+            <div>
+                <dt>업체 코드</dt>
+                <dd id="completeCompanyCode">-</dd>
+            </div>
+            <div>
+                <dt>업체 접속 주소</dt>
+                <dd id="completeWorkspaceUrl">-</dd>
+            </div>
+            <div>
+                <dt>Owner 로그인 ID</dt>
+                <dd id="completeOwnerLoginId">-</dd>
+            </div>
+        </dl>
     </section>
 </main>
 

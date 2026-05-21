@@ -2,9 +2,17 @@ param(
     [ValidateSet("bootstrap", "full")]
     [string] $Mode = "bootstrap",
 
+    [ValidateSet("none", "company", "member")]
+    [string] $Feature = "none",
+
     [switch] $FixGitignore,
 
     [switch] $RunBuild,
+
+    [switch] $RunDb,
+
+    [ValidateSet("none", "company", "member")]
+    [string] $DbFeature = "none",
 
     [switch] $CheckPort,
 
@@ -303,6 +311,708 @@ function Test-FullModeStructure {
     }
 }
 
+function Test-CompanyFeature {
+    Test-PathRequired "docs/features/company.md" "COMPANY_FEATURE_DOC" "Keep docs/features/company.md as the company feature rule source."
+    Test-PathRequired "src/main/java/com/pcs/domain/company/api/OwnerSignupApiController.java" "COMPANY_SIGNUP_API" "Expose POST /api/owners/signup in company/api."
+    Test-PathRequired "src/main/java/com/pcs/domain/company/dto/request/OwnerSignupRequest.java" "COMPANY_SIGNUP_REQUEST" "Keep owner signup request DTO with validation."
+    Test-PathRequired "src/main/java/com/pcs/domain/company/dto/response/OwnerSignupResponse.java" "COMPANY_SIGNUP_RESPONSE" "Keep owner signup response DTO."
+    Test-PathRequired "src/main/java/com/pcs/domain/company/entity/Company.java" "COMPANY_ENTITY" "Keep tb_company row state in company/entity."
+    Test-PathRequired "src/main/java/com/pcs/domain/company/facade/CompanyFacade.java" "COMPANY_FACADE" "Keep company signup use case in company/facade."
+    Test-PathRequired "src/main/java/com/pcs/domain/company/service/CompanyService.java" "COMPANY_SERVICE" "Keep company DB validation and persistence in company/service."
+    Test-PathRequired "src/main/java/com/pcs/domain/company/mapper/CompanyMapper.java" "COMPANY_MAPPER" "Keep MyBatis mapper interface for company persistence."
+    Test-PathRequired "src/main/resources/mapper/company/CompanyMapper.xml" "COMPANY_MAPPER_XML" "Keep MyBatis mapper XML for company persistence."
+
+    $controller = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/company/api/OwnerSignupApiController.java"
+    if (Test-Path $controller) {
+        $controllerContent = Get-Content -Raw $controller
+        foreach ($pattern in @("@RestController", '@RequestMapping\("/api/owners"\)', '@PostMapping\("/signup"\)', "@Valid", "ApiResultDto")) {
+            if ($controllerContent -notmatch $pattern) {
+                Add-Result "FAIL" "COMPANY_SIGNUP_CONTROLLER_$($pattern.ToUpper().Replace('\', '').Replace('/', '').Replace('"', '').Replace('@', ''))" "OwnerSignupApiController is missing required pattern: $pattern" "Keep signup API shape aligned with docs/features/company.md."
+            }
+        }
+    }
+
+    $request = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/company/dto/request/OwnerSignupRequest.java"
+    if (Test-Path $request) {
+        $requestContent = Get-Content -Raw $request
+        foreach ($field in @("companyName", "companyCode", "ownerName", "ownerLoginId", "ownerPassword")) {
+            if ($requestContent -notmatch $field) {
+                Add-Result "FAIL" "COMPANY_REQUEST_$($field.ToUpper())" "OwnerSignupRequest is missing $field." "Keep required company + owner signup fields."
+            }
+        }
+        foreach ($validation in @("@NotBlank", "@Size", "@Pattern")) {
+            if ($requestContent -notmatch $validation) {
+                Add-Result "FAIL" "COMPANY_REQUEST_VALIDATION_$($validation.Replace('@', '').ToUpper())" "OwnerSignupRequest is missing $validation." "Request DTO must own input validation."
+            }
+        }
+    }
+
+    $facade = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/company/facade/CompanyFacade.java"
+    if (Test-Path $facade) {
+        $facadeContent = Get-Content -Raw $facade
+        if ($facadeContent -notmatch "@Transactional") {
+            Add-Result "FAIL" "COMPANY_SIGNUP_TRANSACTION" "CompanyFacade.signupOwner is not transactional." "Company creation and OWNER creation must be one transaction."
+        }
+        foreach ($pattern in @("companyService.create", "memberService.createOwner", "COMPANY_CODE_DUPLICATED")) {
+            if ($facadeContent -notmatch $pattern) {
+                Add-Result "FAIL" "COMPANY_SIGNUP_FLOW_$($pattern.ToUpper().Replace('.', '_'))" "CompanyFacade is missing signup flow pattern: $pattern" "Keep company creation, owner creation, and duplicate companyCode handling."
+            }
+        }
+    }
+
+    $mapperXml = Join-Path $ProjectRoot "src/main/resources/mapper/company/CompanyMapper.xml"
+    if (Test-Path $mapperXml) {
+        $mapperXmlContent = Get-Content -Raw $mapperXml
+        if ($mapperXmlContent -notmatch 'namespace="com\.pcs\.domain\.company\.mapper\.CompanyMapper"') {
+            Add-Result "FAIL" "COMPANY_MAPPER_NAMESPACE" "CompanyMapper.xml namespace does not match CompanyMapper FQCN." "Match XML namespace to mapper interface."
+        }
+        foreach ($column in @("company_name", "company_code", "representative_email", "representative_phone", "business_registration_no")) {
+            if ($mapperXmlContent -notmatch $column) {
+                Add-Result "FAIL" "COMPANY_MAPPER_COLUMN_$($column.ToUpper())" "CompanyMapper.xml does not insert $column." "Insert required tb_company columns."
+            }
+        }
+    }
+
+    $schema = Join-Path $ProjectRoot "docs/sql/pcs-schema-ddl.sql"
+    if (Test-Path $schema) {
+        $schemaContent = Get-Content -Raw $schema
+        foreach ($pattern in @("uk_company_code", "representative_email", "representative_phone", "business_registration_no")) {
+            if ($schemaContent -notmatch $pattern) {
+                Add-Result "FAIL" "COMPANY_SCHEMA_$($pattern.ToUpper())" "Schema is missing $pattern." "Keep company signup columns and unique companyCode in DDL."
+            }
+        }
+    }
+
+    Add-Result "INFO" "COMPANY_FEATURE" "Company feature checks completed."
+}
+
+function Test-MemberFeature {
+    Test-PathRequired "docs/features/member.md" "MEMBER_FEATURE_DOC" "Keep docs/features/member.md as the member feature rule source."
+    Test-PathRequired "src/main/java/com/pcs/domain/member/type/MemberRole.java" "MEMBER_ROLE_ENUM" "Keep OWNER, ADMIN, STAFF in MemberRole."
+    Test-PathRequired "src/main/java/com/pcs/domain/member/type/PasswordStatus.java" "MEMBER_PASSWORD_STATUS_ENUM" "Keep TEMPORARY, ACTIVE in PasswordStatus."
+    Test-PathRequired "src/main/java/com/pcs/domain/member/entity/Member.java" "MEMBER_ENTITY" "Keep tb_member row state in member/entity."
+    Test-PathRequired "src/main/java/com/pcs/domain/member/service/MemberService.java" "MEMBER_SERVICE" "Keep member creation and password hashing in member/service."
+    Test-PathRequired "src/main/java/com/pcs/domain/member/mapper/MemberMapper.java" "MEMBER_MAPPER" "Keep MyBatis mapper interface for member persistence."
+    Test-PathRequired "src/main/resources/mapper/member/MemberMapper.xml" "MEMBER_MAPPER_XML" "Keep MyBatis mapper XML for member persistence."
+
+    $memberRole = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/member/type/MemberRole.java"
+    if (Test-Path $memberRole) {
+        $roleContent = Get-Content -Raw $memberRole
+        foreach ($role in @("OWNER", "ADMIN", "STAFF")) {
+            if ($roleContent -notmatch $role) {
+                Add-Result "FAIL" "MEMBER_ROLE_$role" "MemberRole is missing $role." "Keep OWNER, ADMIN, STAFF."
+            }
+        }
+    }
+
+    $passwordStatus = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/member/type/PasswordStatus.java"
+    if (Test-Path $passwordStatus) {
+        $passwordStatusContent = Get-Content -Raw $passwordStatus
+        foreach ($status in @("TEMPORARY", "ACTIVE")) {
+            if ($passwordStatusContent -notmatch $status) {
+                Add-Result "FAIL" "MEMBER_PASSWORD_STATUS_$status" "PasswordStatus is missing $status." "Keep TEMPORARY, ACTIVE."
+            }
+        }
+    }
+
+    $memberEntity = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/member/entity/Member.java"
+    if (Test-Path $memberEntity) {
+        $memberEntityContent = Get-Content -Raw $memberEntity
+        if ($memberEntityContent -notmatch "ownerSlot") {
+            Add-Result "FAIL" "MEMBER_OWNER_SLOT" "Member entity does not contain ownerSlot." "OWNER must use ownerSlot = 1 and other roles must use null."
+        }
+        if ($memberEntityContent -match "getPasswordHash") {
+            Add-Result "FAIL" "MEMBER_PASSWORD_HASH_NOT_EXPOSED" "Member exposes passwordHash through a public getter." "Do not expose password hash outside persistence mapping."
+        }
+    }
+
+    $memberService = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/member/service/MemberService.java"
+    if (Test-Path $memberService) {
+        $memberServiceContent = Get-Content -Raw $memberService
+        if ($memberServiceContent -notmatch "PasswordEncoder" -or $memberServiceContent -notmatch "passwordEncoder\.encode") {
+            Add-Result "FAIL" "MEMBER_PASSWORD_HASHED_IN_SERVICE" "MemberService does not hash raw passwords with PasswordEncoder." "Hash passwords in MemberService before saving."
+        }
+        if ($memberServiceContent -match "return owner;") {
+            Add-Result "FAIL" "MEMBER_PASSWORD_HASH_RESULT_LEAK" "MemberService returns the Member entity after password hashing." "Return a result that does not contain passwordHash."
+        }
+    }
+
+    $memberMapperXml = Join-Path $ProjectRoot "src/main/resources/mapper/member/MemberMapper.xml"
+    if (Test-Path $memberMapperXml) {
+        $memberMapperXmlContent = Get-Content -Raw $memberMapperXml
+        if ($memberMapperXmlContent -notmatch 'namespace="com\.pcs\.domain\.member\.mapper\.MemberMapper"') {
+            Add-Result "FAIL" "MEMBER_MAPPER_NAMESPACE" "MemberMapper.xml namespace does not match MemberMapper FQCN." "Match XML namespace to mapper interface."
+        }
+        foreach ($column in @("password_hash", "owner_slot", "password_status")) {
+            if ($memberMapperXmlContent -notmatch $column) {
+                Add-Result "FAIL" "MEMBER_MAPPER_COLUMN_$($column.ToUpper())" "MemberMapper.xml does not insert $column." "Insert required tb_member columns."
+            }
+        }
+    }
+
+    $schema = Join-Path $ProjectRoot "docs/sql/pcs-schema-ddl.sql"
+    if (Test-Path $schema) {
+        $schemaContent = Get-Content -Raw $schema
+        foreach ($pattern in @("uk_member_company_login", "uk_member_company_owner", "chk_member_owner_slot")) {
+            if ($schemaContent -notmatch $pattern) {
+                Add-Result "FAIL" "MEMBER_SCHEMA_$($pattern.ToUpper())" "Schema is missing $pattern." "Keep member uniqueness and ownerSlot constraints in DDL."
+            }
+        }
+    }
+
+    $memberResponseRoot = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/member/dto/response"
+    if (Test-Path $memberResponseRoot) {
+        $passwordResponseMatches = Get-ChildItem -Path $memberResponseRoot -Recurse -File |
+            Select-String -Pattern "passwordHash" -SimpleMatch -ErrorAction SilentlyContinue
+        if ($passwordResponseMatches) {
+            $locations = ($passwordResponseMatches | Select-Object -First 5 | ForEach-Object { "$($_.Path):$($_.LineNumber)" }) -join ", "
+            Add-Result "FAIL" "MEMBER_RESPONSE_PASSWORD_HASH" "Member response DTO exposes passwordHash. Locations: $locations" "Never expose passwordHash in response DTOs."
+        }
+    }
+
+    Add-Result "INFO" "MEMBER_FEATURE" "Member feature checks completed."
+}
+
+function Get-DbConfig {
+    $dbUrl = $env:DB_URL
+    $dbUser = $env:DB_USER
+    $dbPassword = $env:DB_PASSWORD
+
+    if ([string]::IsNullOrWhiteSpace($dbUrl)) {
+        $dbUrl = "jdbc:mariadb://localhost:3306/pcs_db"
+    }
+    if ([string]::IsNullOrWhiteSpace($dbUser)) {
+        $dbUser = "localuser"
+    }
+    if ([string]::IsNullOrWhiteSpace($dbPassword)) {
+        $dbPassword = "pcs123#"
+    }
+
+    [pscustomobject]@{
+        Url = $dbUrl
+        User = $dbUser
+        Password = $dbPassword
+    }
+}
+
+function Find-MariaDbDriverJar {
+    $roots = New-Object System.Collections.Generic.List[string]
+
+    if (-not [string]::IsNullOrWhiteSpace($env:GRADLE_USER_HOME)) {
+        $roots.Add((Join-Path $env:GRADLE_USER_HOME "caches/modules-2/files-2.1/org.mariadb.jdbc/mariadb-java-client")) | Out-Null
+    }
+    if (-not [string]::IsNullOrWhiteSpace($env:USERPROFILE)) {
+        $roots.Add((Join-Path $env:USERPROFILE ".gradle/caches/modules-2/files-2.1/org.mariadb.jdbc/mariadb-java-client")) | Out-Null
+    }
+
+    foreach ($root in $roots) {
+        if (-not (Test-Path $root)) {
+            continue
+        }
+
+        $jar = Get-ChildItem -Path $root -Recurse -Filter "mariadb-java-client-*.jar" -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -notmatch "-sources\.jar$" -and $_.Name -notmatch "-javadoc\.jar$" } |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1
+
+        if ($jar) {
+            return $jar.FullName
+        }
+    }
+
+    return $null
+}
+
+function Resolve-MariaDbDriverJar {
+    $driverJar = Find-MariaDbDriverJar
+    if ($driverJar) {
+        return $driverJar
+    }
+
+    $gradlew = Join-Path $ProjectRoot "gradlew.bat"
+    if (-not (Test-Path $gradlew)) {
+        Add-Result "FAIL" "DB_DRIVER_GRADLEW_MISSING" "MariaDB JDBC driver was not found and gradlew.bat is missing." "Restore Gradle Wrapper or download dependencies."
+        return $null
+    }
+
+    Push-Location $ProjectRoot
+    try {
+        & $gradlew "--quiet" "dependencies" "--configuration" "runtimeClasspath" | Out-Null
+    } catch {
+        Add-Result "FAIL" "DB_DRIVER_RESOLVE_FAILED" "Failed to resolve runtimeClasspath dependencies for MariaDB JDBC driver." "Run Gradle dependency resolution after configuring JDK 17."
+        return $null
+    } finally {
+        Pop-Location
+    }
+
+    $driverJar = Find-MariaDbDriverJar
+    if (-not $driverJar) {
+        Add-Result "FAIL" "DB_DRIVER_NOT_FOUND" "MariaDB JDBC driver jar was not found in Gradle cache." "Run .\gradlew.bat dependencies --configuration runtimeClasspath or check build.gradle runtimeOnly dependency."
+        return $null
+    }
+
+    return $driverJar
+}
+
+function New-HarnessDbCheckerSource {
+    param(
+        [string] $SourcePath
+    )
+
+    $source = @'
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
+import java.util.HashSet;
+import java.util.Set;
+
+public class PcsHarnessDbCheck {
+    private static final String PASSWORD_HASH = "$2a$10$pcsHarnessPasswordHashValueForDbCheckOnly1234567890";
+    private static Connection connection;
+    private static String schemaName;
+    private static boolean failed;
+    private static String runSuffix;
+
+    public static void main(String[] args) throws Exception {
+        if (args.length < 4) {
+            fail("DB_CHECK_ARGUMENTS", "Usage: PcsHarnessDbCheck <url> <user> <password> <checks>");
+            System.exit(1);
+        }
+
+        String url = args[0];
+        String user = args[1];
+        String password = args[2];
+        String[] checks = args[3].split(",");
+        runSuffix = Long.toString(System.currentTimeMillis());
+
+        try {
+            Class.forName("org.mariadb.jdbc.Driver");
+            connection = DriverManager.getConnection(url, user, password);
+            schemaName = queryString("SELECT DATABASE()");
+
+            for (String check : checks) {
+                String normalized = check.trim();
+                if (normalized.isEmpty()) {
+                    continue;
+                }
+                if ("checkdb".equals(normalized)) {
+                    checkCommonSchema();
+                } else if ("company".equals(normalized)) {
+                    checkCompanyDb();
+                } else if ("member".equals(normalized)) {
+                    checkMemberDb();
+                } else {
+                    fail("DB_CHECK_UNKNOWN", "Unknown DB check: " + normalized);
+                }
+            }
+        } catch (SQLException exception) {
+            fail("DB_CONNECTION", exception.getMessage());
+        } finally {
+            if (connection != null) {
+                connection.close();
+            }
+        }
+
+        System.exit(failed ? 1 : 0);
+    }
+
+    private static void checkCommonSchema() throws SQLException {
+        pass("DB_CONNECTED", "Connected to database: " + schemaName);
+
+        String[] requiredTables = {
+            "tb_company",
+            "tb_member",
+            "tb_trade_partner",
+            "tb_part_category",
+            "tb_pc_part",
+            "tb_pc_part_unit",
+            "tb_part_stock",
+            "tb_stock_document",
+            "tb_stock_movement",
+            "tb_stock_movement_unit",
+            "tb_inspection_template",
+            "tb_inspection_template_item",
+            "tb_inspection_template_item_option",
+            "tb_inspection",
+            "tb_part_status_history",
+            "tb_inspection_item_result"
+        };
+
+        for (String table : requiredTables) {
+            requireTable(table);
+        }
+
+        String[] companyOwnedTables = {
+            "tb_member",
+            "tb_trade_partner",
+            "tb_part_category",
+            "tb_pc_part",
+            "tb_pc_part_unit",
+            "tb_part_stock",
+            "tb_stock_document",
+            "tb_stock_movement",
+            "tb_inspection_template",
+            "tb_inspection",
+            "tb_part_status_history"
+        };
+
+        for (String table : companyOwnedTables) {
+            requireColumn(table, "company_id");
+        }
+
+        requireColumn("tb_company", "company_code");
+        requireColumn("tb_company", "representative_email");
+        requireColumn("tb_company", "representative_phone");
+        requireColumn("tb_company", "business_registration_no");
+        requireColumn("tb_member", "owner_slot");
+        requireColumn("tb_member", "password_hash");
+        requireColumn("tb_member", "password_status");
+
+        requireConstraint("tb_company", "uk_company_code");
+        requireConstraint("tb_company", "uk_company_business_registration_no");
+        requireConstraint("tb_member", "uk_member_company_login");
+        requireConstraint("tb_member", "uk_member_company_owner");
+        requireConstraint("tb_member", "chk_member_owner_slot");
+
+        pass("CHECKDB_SCHEMA", "Common DB preflight checks completed.");
+    }
+
+    private static void checkCompanyDb() throws SQLException {
+        requireColumn("tb_company", "company_name");
+        requireColumn("tb_company", "company_code");
+        requireColumn("tb_company", "business_registration_no");
+        requireColumn("tb_member", "company_id");
+        requireColumn("tb_member", "role");
+        requireColumn("tb_member", "owner_slot");
+
+        boolean originalAutoCommit = connection.getAutoCommit();
+        connection.setAutoCommit(false);
+        try {
+            String companyCode = "pcs-harness-company-" + runSuffix;
+            String businessNo = "999-" + runSuffix.substring(Math.max(0, runSuffix.length() - 2)) + "-" + runSuffix.substring(Math.max(0, runSuffix.length() - 5));
+            long companyId = insertCompany("PCS Harness Company", companyCode, "harness-" + runSuffix + "@pcs.local", "010-0000-0000", businessNo);
+            insertMember(companyId, "owner-" + runSuffix, "Harness Owner", "OWNER", Integer.valueOf(1), "ACTIVE");
+
+            int ownerCount = queryInt(
+                "SELECT COUNT(*) FROM tb_member WHERE company_id = ? AND role = 'OWNER' AND owner_slot = 1",
+                companyId
+            );
+            if (ownerCount == 1) {
+                pass("COMPANY_OWNER_CREATED", "Company and OWNER member are saved with the same company_id.");
+            } else {
+                fail("COMPANY_OWNER_CREATED", "Expected exactly one OWNER member but found " + ownerCount + ".");
+            }
+
+            expectSqlFailure("COMPANY_CODE_UNIQUE", new SqlAction() {
+                public void run() throws SQLException {
+                    insertCompany("PCS Harness Duplicate Code", companyCode, "dup-code-" + runSuffix + "@pcs.local", "010-0000-0001", "888-00-" + runSuffix.substring(Math.max(0, runSuffix.length() - 5)));
+                }
+            });
+
+            expectSqlFailure("COMPANY_BUSINESS_NO_UNIQUE", new SqlAction() {
+                public void run() throws SQLException {
+                    insertCompany("PCS Harness Duplicate Business No", companyCode + "-other", "dup-business-" + runSuffix + "@pcs.local", "010-0000-0002", businessNo);
+                }
+            });
+
+            pass("COMPANY_DB_ROLLBACK_SCOPE", "Company DB scenario was executed inside a rollback transaction.");
+        } finally {
+            connection.rollback();
+            connection.setAutoCommit(originalAutoCommit);
+        }
+    }
+
+    private static void checkMemberDb() throws SQLException {
+        requireColumn("tb_member", "company_id");
+        requireColumn("tb_member", "login_id");
+        requireColumn("tb_member", "password_hash");
+        requireColumn("tb_member", "role");
+        requireColumn("tb_member", "owner_slot");
+        requireColumn("tb_member", "password_status");
+        requireConstraint("tb_member", "uk_member_company_login");
+        requireConstraint("tb_member", "uk_member_company_owner");
+        requireConstraint("tb_member", "chk_member_owner_slot");
+
+        boolean originalAutoCommit = connection.getAutoCommit();
+        connection.setAutoCommit(false);
+        try {
+            long companyId = insertCompany("PCS Harness Member Company", "pcs-harness-member-" + runSuffix, null, null, "777-00-" + runSuffix.substring(Math.max(0, runSuffix.length() - 5)));
+            insertMember(companyId, "owner-" + runSuffix, "Harness Owner", "OWNER", Integer.valueOf(1), "ACTIVE");
+            insertMember(companyId, "admin-" + runSuffix, "Harness Admin", "ADMIN", null, "TEMPORARY");
+            insertMember(companyId, "staff-" + runSuffix, "Harness Staff", "STAFF", null, "TEMPORARY");
+
+            int memberCount = queryInt("SELECT COUNT(*) FROM tb_member WHERE company_id = ?", companyId);
+            if (memberCount == 3) {
+                pass("MEMBER_ROLE_STORAGE", "OWNER, ADMIN, STAFF rows are saved with expected owner_slot usage.");
+            } else {
+                fail("MEMBER_ROLE_STORAGE", "Expected 3 member rows but found " + memberCount + ".");
+            }
+
+            expectSqlFailure("MEMBER_LOGIN_ID_UNIQUE", new SqlAction() {
+                public void run() throws SQLException {
+                    insertMember(companyId, "admin-" + runSuffix, "Duplicate Login", "ADMIN", null, "TEMPORARY");
+                }
+            });
+
+            expectSqlFailure("MEMBER_SINGLE_OWNER", new SqlAction() {
+                public void run() throws SQLException {
+                    insertMember(companyId, "owner2-" + runSuffix, "Second Owner", "OWNER", Integer.valueOf(1), "ACTIVE");
+                }
+            });
+
+            expectSqlFailure("MEMBER_OWNER_SLOT_REQUIRED", new SqlAction() {
+                public void run() throws SQLException {
+                    insertMember(companyId, "owner-null-" + runSuffix, "Owner Null Slot", "OWNER", null, "ACTIVE");
+                }
+            });
+
+            long otherCompanyId = insertCompany("PCS Harness Invalid Member Company", "pcs-harness-member-invalid-" + runSuffix, null, null, "666-00-" + runSuffix.substring(Math.max(0, runSuffix.length() - 5)));
+            expectSqlFailure("MEMBER_NON_OWNER_SLOT_BLOCKED", new SqlAction() {
+                public void run() throws SQLException {
+                    insertMember(otherCompanyId, "admin-slot-" + runSuffix, "Admin Slot", "ADMIN", Integer.valueOf(1), "TEMPORARY");
+                }
+            });
+
+            pass("MEMBER_DB_ROLLBACK_SCOPE", "Member DB scenario was executed inside a rollback transaction.");
+        } finally {
+            connection.rollback();
+            connection.setAutoCommit(originalAutoCommit);
+        }
+    }
+
+    private static long insertCompany(String name, String code, String email, String phone, String businessNo) throws SQLException {
+        String sql = "INSERT INTO tb_company (company_name, company_code, representative_email, representative_phone, business_registration_no, active) VALUES (?, ?, ?, ?, ?, TRUE)";
+        try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            statement.setString(1, name);
+            statement.setString(2, code);
+            setNullableString(statement, 3, email);
+            setNullableString(statement, 4, phone);
+            setNullableString(statement, 5, businessNo);
+            statement.executeUpdate();
+            try (ResultSet keys = statement.getGeneratedKeys()) {
+                if (keys.next()) {
+                    return keys.getLong(1);
+                }
+            }
+        }
+        throw new SQLException("Failed to read generated company_id.");
+    }
+
+    private static long insertMember(long companyId, String loginId, String name, String role, Integer ownerSlot, String passwordStatus) throws SQLException {
+        String sql = "INSERT INTO tb_member (company_id, login_id, password_hash, name, role, owner_slot, password_status, temp_password_expires_at, active, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, NULL, TRUE, NULL)";
+        try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            statement.setLong(1, companyId);
+            statement.setString(2, loginId);
+            statement.setString(3, PASSWORD_HASH);
+            statement.setString(4, name);
+            statement.setString(5, role);
+            if (ownerSlot == null) {
+                statement.setNull(6, Types.TINYINT);
+            } else {
+                statement.setInt(6, ownerSlot.intValue());
+            }
+            statement.setString(7, passwordStatus);
+            statement.executeUpdate();
+            try (ResultSet keys = statement.getGeneratedKeys()) {
+                if (keys.next()) {
+                    return keys.getLong(1);
+                }
+            }
+        }
+        throw new SQLException("Failed to read generated member_id.");
+    }
+
+    private static void requireTable(String tableName) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?";
+        if (queryInt(sql, tableName) == 1) {
+            pass("DB_TABLE_" + tableName.toUpperCase(), tableName + " exists.");
+        } else {
+            fail("DB_TABLE_" + tableName.toUpperCase(), tableName + " is missing.");
+        }
+    }
+
+    private static void requireColumn(String tableName, String columnName) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?";
+        if (queryInt(sql, tableName, columnName) == 1) {
+            pass("DB_COLUMN_" + tableName.toUpperCase() + "_" + columnName.toUpperCase(), tableName + "." + columnName + " exists.");
+        } else {
+            fail("DB_COLUMN_" + tableName.toUpperCase() + "_" + columnName.toUpperCase(), tableName + "." + columnName + " is missing.");
+        }
+    }
+
+    private static void requireConstraint(String tableName, String constraintName) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND LOWER(CONSTRAINT_NAME) = LOWER(?)";
+        if (queryInt(sql, tableName, constraintName) == 1) {
+            pass("DB_CONSTRAINT_" + constraintName.toUpperCase(), tableName + "." + constraintName + " exists.");
+        } else {
+            fail("DB_CONSTRAINT_" + constraintName.toUpperCase(), tableName + "." + constraintName + " is missing.");
+        }
+    }
+
+    private static void expectSqlFailure(String rule, SqlAction action) throws SQLException {
+        try {
+            action.run();
+            fail(rule, "Expected SQL failure, but statement succeeded.");
+        } catch (SQLException expected) {
+            pass(rule, "Expected SQL failure occurred: " + expected.getErrorCode());
+        }
+    }
+
+    private static int queryInt(String sql, Object... values) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            bind(statement, values);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt(1);
+                }
+            }
+        }
+        return 0;
+    }
+
+    private static String queryString(String sql) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+            if (resultSet.next()) {
+                return resultSet.getString(1);
+            }
+        }
+        return "";
+    }
+
+    private static void bind(PreparedStatement statement, Object... values) throws SQLException {
+        for (int index = 0; index < values.length; index++) {
+            Object value = values[index];
+            if (value == null) {
+                statement.setObject(index + 1, null);
+            } else if (value instanceof Long) {
+                statement.setLong(index + 1, ((Long) value).longValue());
+            } else if (value instanceof Integer) {
+                statement.setInt(index + 1, ((Integer) value).intValue());
+            } else {
+                statement.setString(index + 1, value.toString());
+            }
+        }
+    }
+
+    private static void setNullableString(PreparedStatement statement, int parameterIndex, String value) throws SQLException {
+        if (value == null) {
+            statement.setNull(parameterIndex, Types.VARCHAR);
+        } else {
+            statement.setString(parameterIndex, value);
+        }
+    }
+
+    private static void pass(String rule, String message) {
+        System.out.println("PASS|" + rule + "|" + message);
+    }
+
+    private static void fail(String rule, String message) {
+        failed = true;
+        System.out.println("FAIL|" + rule + "|" + message);
+    }
+
+    private interface SqlAction {
+        void run() throws SQLException;
+    }
+}
+'@
+
+    Set-Content -Path $SourcePath -Value $source -Encoding ASCII
+}
+
+function Invoke-HarnessDbJava {
+    param(
+        [string[]] $Checks
+    )
+
+    $driverJar = Resolve-MariaDbDriverJar
+    if (-not $driverJar) {
+        return
+    }
+
+    $dbConfig = Get-DbConfig
+    $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) "pcs-harness-db"
+    New-Item -ItemType Directory -Force -Path $tempRoot | Out-Null
+
+    $sourcePath = Join-Path $tempRoot "PcsHarnessDbCheck.java"
+    New-HarnessDbCheckerSource $sourcePath
+
+    try {
+        & javac "-encoding" "UTF-8" "-d" $tempRoot $sourcePath | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            Add-Result "FAIL" "DB_CHECKER_COMPILE" "Failed to compile the harness DB checker." "Check that JDK javac is available."
+            return
+        }
+    } catch {
+        Add-Result "FAIL" "DB_CHECKER_JAVAC" "javac command is not available for DB harness checks." "Use JDK 17 and make javac available in PATH."
+        return
+    }
+
+    $classPath = "$tempRoot$([System.IO.Path]::PathSeparator)$driverJar"
+    $checksArg = ($Checks | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique) -join ","
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        $output = & java "-cp" $classPath "PcsHarnessDbCheck" $dbConfig.Url $dbConfig.User $dbConfig.Password $checksArg 2>&1
+        $exitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+
+    foreach ($line in $output) {
+        $text = [string] $line
+        if ($text.StartsWith("PASS|")) {
+            $parts = $text.Split("|", 3)
+            Add-Result "INFO" $parts[1] $parts[2]
+        } elseif ($text.StartsWith("FAIL|")) {
+            $parts = $text.Split("|", 3)
+            Add-Result "FAIL" $parts[1] $parts[2]
+        } elseif (-not [string]::IsNullOrWhiteSpace($text)) {
+            Add-Result "INFO" "DB_CHECK_OUTPUT" $text
+        }
+    }
+
+    if ($exitCode -ne 0) {
+        Add-Result "FAIL" "DB_CHECK_FAILED" "One or more DB harness checks failed." "Read harness/reports/latest.md and fix schema/data rules."
+    }
+}
+
+function Invoke-DbChecks {
+    $requestedChecks = New-Object System.Collections.Generic.List[string]
+
+    if ($RunDb -or $DbFeature -ne "none") {
+        $requestedChecks.Add("checkdb") | Out-Null
+    }
+
+    if ($RunDb -and $Feature -ne "none") {
+        $requestedChecks.Add($Feature) | Out-Null
+    }
+
+    if ($DbFeature -ne "none") {
+        $requestedChecks.Add($DbFeature) | Out-Null
+    }
+
+    $checks = $requestedChecks | Select-Object -Unique
+    if (-not $checks -or $checks.Count -eq 0) {
+        return
+    }
+
+    Test-PathRequired "docs/features/checkdb.md" "CHECKDB_DOC" "Create docs/features/checkdb.md for common DB preflight rules."
+    foreach ($check in $checks) {
+        if ($check -eq "checkdb") {
+            continue
+        }
+        Test-PathRequired "docs/features/$check-db.md" "DB_FEATURE_DOC_$($check.ToUpper())" "Create docs/features/$check-db.md for DB validation rules."
+    }
+
+    Invoke-HarnessDbJava $checks
+}
+
 function Invoke-BuildCheck {
     $gradlew = Join-Path $ProjectRoot "gradlew.bat"
     if (-not (Test-Path $gradlew)) {
@@ -342,6 +1052,9 @@ function Write-Report {
     $lines.Add("# PCS Harness Report") | Out-Null
     $lines.Add("") | Out-Null
     $lines.Add("- Mode: $Mode") | Out-Null
+    $lines.Add("- Feature: $Feature") | Out-Null
+    $lines.Add("- RunDb: $RunDb") | Out-Null
+    $lines.Add("- DbFeature: $DbFeature") | Out-Null
     $lines.Add("- GeneratedAt: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')") | Out-Null
     $lines.Add("- FAIL: $($failures.Count)") | Out-Null
     $lines.Add("- WARN: $($warnings.Count)") | Out-Null
@@ -391,6 +1104,16 @@ if ($Mode -eq "full") {
     Test-FullModeStructure
 }
 
+if ($Feature -eq "company") {
+    Test-CompanyFeature
+}
+
+if ($Feature -eq "member") {
+    Test-MemberFeature
+}
+
+Invoke-DbChecks
+
 if ($RunBuild) {
     Invoke-BuildCheck
 }
@@ -400,6 +1123,9 @@ Write-Report
 Write-Host ""
 Write-Host "PCS Harness Result"
 Write-Host "Mode: $Mode"
+Write-Host "Feature: $Feature"
+Write-Host "RunDb: $RunDb"
+Write-Host "DbFeature: $DbFeature"
 Write-Host "FAIL: $($failures.Count), WARN: $($warnings.Count), INFO: $($infos.Count)"
 Write-Host "Report: $ReportPath"
 
