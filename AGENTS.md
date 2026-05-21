@@ -1,0 +1,31 @@
+# PCS Core Agent
+
+## 작업 시작 규칙
+
+1. 모든 md 파일을 무조건 읽지 않는다.
+2. 먼저 `docs/ai/AI_INDEX.md`만 확인한다.
+3. `AI_INDEX.md`의 문서 선택 기준에 따라 이번 작업에 필요한 문서만 읽는다.
+4. 작업과 무관한 feature 문서, API 명세, DDL은 읽지 않는다.
+5. 문서를 읽었다면 응답 마지막에 참조한 문서를 짧게 적는다.
+
+## 항상 지킬 핵심 원칙
+
+- 기능 코드보다 기능 명세를 먼저 작성한다.
+- `src/main/java/com/pcs/domain/{feature}`를 만들기 전 `docs/features/{feature}.md`가 있어야 한다.
+- JPA는 사용하지 않는다.
+- DB 접근은 MyBatis Mapper 인터페이스와 XML SQL로 한다.
+- Controller는 Facade만 호출한다.
+- Facade는 유스케이스 흐름과 트랜잭션 경계를 담당한다.
+- Service는 DB 조회/변경과 비즈니스 검증을 담당한다.
+- Mapper는 SQL 실행만 담당한다.
+- API 응답은 `ApiResultDto`로 통일한다.
+- PageController는 HTML forward만 담당한다.
+- 화면 데이터는 JS가 `/api/**`를 호출해서 받는다.
+
+## 작업 완료 기준
+
+- 관련 기능 명세가 존재한다.
+- 계층 역할이 섞이지 않는다.
+- JPA 흔적이 없다.
+- 필요한 경우 하네스를 실행한다.
+- 하네스 FAIL이 있으면 다음 기능 작업보다 먼저 해결한다.
