@@ -111,9 +111,12 @@ Owner 회원가입 + 회사 생성 요청 후보:
 {
   "companyName": "그린파츠",
   "companyCode": "greenparts",
-  "loginId": "owner01",
-  "password": "password",
-  "name": "김대표"
+  "businessRegistrationNo": "000-00-00000",
+  "representativeEmail": "owner@greenparts.com",
+  "representativePhone": "010-0000-0000",
+  "ownerLoginId": "owner01",
+  "ownerPassword": "password",
+  "ownerName": "김대표"
 }
 ```
 

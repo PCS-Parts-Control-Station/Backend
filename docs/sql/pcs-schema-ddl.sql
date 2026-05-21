@@ -33,11 +33,15 @@ CREATE TABLE tb_company (
     company_id BIGINT NOT NULL AUTO_INCREMENT,
     company_name VARCHAR(100) NOT NULL,
     company_code VARCHAR(50) NOT NULL,
+    representative_email VARCHAR(255) NULL,
+    representative_phone VARCHAR(30) NULL,
+    business_registration_no VARCHAR(20) NULL,
     active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     PRIMARY KEY (company_id),
     CONSTRAINT uk_company_code UNIQUE (company_code),
+    CONSTRAINT uk_company_business_registration_no UNIQUE (business_registration_no),
     INDEX idx_company_active (active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

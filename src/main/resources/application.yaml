@@ -1,6 +1,16 @@
 spring:
   application:
     name: pcs-api
+  datasource:
+    url: ${DB_URL:jdbc:mariadb://localhost:3306/pcs_db}
+    username: ${DB_USER:localuser}
+    password: "${DB_PASSWORD:pcs123#}"
+    driver-class-name: org.mariadb.jdbc.Driver
 
 server:
   port: 8080
+
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true

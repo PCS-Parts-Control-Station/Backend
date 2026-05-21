@@ -360,7 +360,7 @@ h1 span {
     padding: 14px 18px;
     border-bottom: 1px solid var(--line);
     background:
-            linear-gradient(90deg, rgba(22, 199, 217, 0.12), transparent 44%),
+            linear-gradient(90deg, rgba(37, 99, 235, 0.12), transparent 44%),
             var(--surface-soft);
 }
 
@@ -541,7 +541,7 @@ h1 span {
     font-size: 13px;
 }
 
-.preview-row em {
+.badge {
     display: inline-flex;
     justify-content: center;
     min-height: 26px;
@@ -695,7 +695,7 @@ h1 span {
     align-items: center;
     min-height: 28px;
     padding: 0 9px;
-    border: 1px solid rgba(22, 199, 217, 0.3);
+    border: 1px solid rgba(37, 99, 235, 0.3);
     border-radius: 999px;
     background: var(--cyan-soft);
     color: var(--cyan-dark);

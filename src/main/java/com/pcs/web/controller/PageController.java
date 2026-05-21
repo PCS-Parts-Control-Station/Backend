@@ -11,6 +11,11 @@ public class PageController {
         return "forward:/main.html";
     }
 
+    @GetMapping("/company/register")
+    public String companyRegister() {
+        return "forward:/company-register.html";
+    }
+
     @GetMapping("/w/{companyCode}/categories")
     public String categories() {
         return "forward:/categories.html";

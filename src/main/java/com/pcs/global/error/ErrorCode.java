@@ -21,6 +21,11 @@ public enum ErrorCode {
     COMPANY_NOT_FOUND(HttpStatus.NOT_FOUND, "COMPANY-001", "업체를 찾을 수 없습니다."),
     COMPANY_CODE_DUPLICATED(HttpStatus.CONFLICT, "COMPANY-002", "이미 사용 중인 업체 코드입니다."),
     COMPANY_INACTIVE(HttpStatus.FORBIDDEN, "COMPANY-003", "비활성화된 업체입니다."),
+    COMPANY_BUSINESS_REGISTRATION_NO_DUPLICATED(
+            HttpStatus.CONFLICT,
+            "COMPANY-004",
+            "이미 등록된 사업자등록번호입니다."
+    ),
 
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER-001", "사용자를 찾을 수 없습니다."),
     MEMBER_LOGIN_ID_DUPLICATED(HttpStatus.CONFLICT, "MEMBER-002", "이미 사용 중인 로그인 ID입니다."),
