@@ -10,4 +10,9 @@ public class PageController {
     public String main() {
         return "forward:/main.html";
     }
+
+    @GetMapping("/w/{companyCode}/categories")
+    public String categories() {
+        return "forward:/categories.html";
+    }
 }
