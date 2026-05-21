@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pcs.domain.company.mapper.CompanyMapper">
+
+    <select id="existsByCompanyCode" parameterType="string" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM tb_company
+            WHERE company_code = #{companyCode}
+        )
+    </select>
+
+    <insert id="insert" parameterType="com.pcs.domain.company.entity.Company"
+            useGeneratedKeys="true" keyProperty="companyId">
+        INSERT INTO tb_company (
+            company_name,
+            company_code,
+            representative_email,
+            representative_phone,
+            business_registration_no,
+            active
+        ) VALUES (
+            #{companyName},
+            #{companyCode},
+            #{representativeEmail},
+            #{representativePhone},
+            #{businessRegistrationNo},
+            #{active}
+        )
+    </insert>
+
+</mapper>
