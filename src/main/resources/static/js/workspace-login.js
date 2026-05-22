@@ -7,6 +7,9 @@ const loginButton = document.querySelector('#loginButton');
 const loginMessage = document.querySelector('#loginMessage');
 const loginTitle = document.querySelector('#login-title');
 const loginDescription = document.querySelector('#login-description');
+const guideTitle = document.querySelector('#guide-title');
+const guideBadge = document.querySelector('#guideBadge');
+const currentAccessLabel = document.querySelector('#currentAccessLabel');
 const workspaceChip = document.querySelector('#workspaceChip');
 const workspaceCodeText = document.querySelector('#workspaceCodeText');
 const currentAccessTitle = document.querySelector('#currentAccessTitle');
@@ -54,18 +57,30 @@ const updateRouteMode = () => {
     workspaceCodeText.textContent = companyCodeFromUrl;
 
     if (hasCompanyCodeInUrl) {
+        guideTitle.textContent = '아이디와 비밀번호를 입력하세요.';
+        if (guideBadge) {
+            guideBadge.textContent = '업체 확인 완료';
+            guideBadge.classList.add('is-confirmed');
+        }
+        if (currentAccessLabel) currentAccessLabel.textContent = '업체 코드 확인됨';
         currentAccessTitle.textContent = '업체 코드가 확인되었습니다.';
         currentAccessDescription.textContent = '아이디와 비밀번호만 입력하면 업무 페이지로 이동합니다.';
         loginTitle.textContent = `${companyCodeFromUrl} 작업공간 로그인`;
-        loginDescription.textContent = '업체 코드가 확인되었습니다. 아이디와 비밀번호로 업무 화면에 접속하세요.';
+        if (loginDescription) loginDescription.textContent = '업체 코드가 확인되었습니다. 아이디와 비밀번호로 업무 화면에 접속하세요.';
         loginIdInput.focus();
         return;
     }
 
+    guideTitle.textContent = '업체 코드와 계정 정보를 입력하세요.';
+    if (guideBadge) {
+        guideBadge.textContent = '업체 선택 필요';
+        guideBadge.classList.remove('is-confirmed');
+    }
+    if (currentAccessLabel) currentAccessLabel.textContent = '현재 접속 방식';
     currentAccessTitle.textContent = '업체 코드를 입력해야 합니다.';
     currentAccessDescription.textContent = '회사 관리자에게 받은 업체 코드, 아이디, 비밀번호를 입력하세요.';
-    loginTitle.textContent = '업체 작업공간으로 접속합니다.';
-    loginDescription.textContent = '회사에서 받은 계정으로 로그인하면 부품, 입고, 검수, 출고 업무를 바로 이어서 처리할 수 있습니다.';
+    loginTitle.textContent = '로그인';
+    if (loginDescription) loginDescription.textContent = '회사에서 받은 계정으로 로그인하면 부품, 입고, 검수, 출고 업무를 바로 이어서 처리할 수 있습니다.';
 };
 
 companyCodeInput?.addEventListener('input', () => {
