@@ -31,9 +31,11 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 
 - 공개/진입 화면 → `docs/ai/design/public-pages.md`
 - 로그인 후 업무 화면 공통 레이아웃 → `docs/ai/design/workspace-layout.md`
+- 업무 화면 반응형/햄버거 사이드바 → `docs/ai/design/responsive-layout.md`
 - 대시보드 → `docs/ai/design/dashboard.md`
 - 검색/목록/테이블 → `docs/ai/design/data-table.md`
 - 등록/수정 패널 → `docs/ai/design/form-panel.md`
+- 업무 흐름 보조 패널 → `docs/ai/design/workflow-panel.md`
 - 상세 화면 → `docs/ai/design/detail-page.md`
 - 이력/타임라인 → `docs/ai/design/history-timeline.md`
 
