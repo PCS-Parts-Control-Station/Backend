@@ -32,6 +32,7 @@ Feature:
 ```powershell
 .\harness\run-harness.ps1 -Mode bootstrap -Feature company -RunBuild
 .\harness\run-harness.ps1 -Mode bootstrap -Feature member -RunBuild
+.\harness\run-harness.ps1 -Mode bootstrap -Feature auth -RunBuild -RunDb
 ```
 
 ## bootstrap 규칙
@@ -262,6 +263,7 @@ SQL 품질:
 .\harness\run-harness.ps1 -Mode bootstrap
 .\harness\run-harness.ps1 -Mode bootstrap -RunBuild
 .\harness\run-harness.ps1 -Mode bootstrap -Feature company -RunBuild -RunDb
+.\harness\run-harness.ps1 -Mode bootstrap -Feature auth -RunBuild -RunDb
 .\harness\run-harness.ps1 -Mode bootstrap -DbFeature member
 ```
 

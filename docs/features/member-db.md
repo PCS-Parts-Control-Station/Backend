@@ -28,8 +28,13 @@ role
 owner_slot
 password_status
 temp_password_expires_at
+password_changed_at
 active
 last_login_at
+login_failed_count
+locked_until_at
+last_login_ip
+last_login_user_agent
 created_by
 created_at
 updated_at

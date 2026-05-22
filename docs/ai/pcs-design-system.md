@@ -337,6 +337,22 @@ src/main/resources/static/images/parts-control-station-icon.svg
 
 로고는 현재 블루 기반 팔레트와 맞춰 사용한다. 로고만 별도의 강한 색상으로 튀게 만들지 않는다.
 
+## Favicon
+
+모든 정적 HTML 페이지는 공통 favicon을 명시한다.
+
+```html
+<link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
+```
+
+브라우저가 자동 요청하는 `/favicon.ico`는 기존 로고 SVG로 연결한다.
+
+```text
+GET /favicon.ico -> /images/parts-control-station-icon.svg
+```
+
+새 HTML 페이지를 만들 때 favicon 링크 누락으로 `NoResourceFoundException` 로그가 발생하지 않도록 한다.
+
 ## 새 페이지 작성 규칙
 
 공개 페이지 또는 독립 화면:

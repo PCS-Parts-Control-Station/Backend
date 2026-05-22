@@ -24,6 +24,8 @@ DROP TABLE IF EXISTS tb_pc_part_unit;
 DROP TABLE IF EXISTS tb_pc_part;
 DROP TABLE IF EXISTS tb_part_category;
 DROP TABLE IF EXISTS tb_trade_partner;
+DROP TABLE IF EXISTS tb_auth_login_history;
+DROP TABLE IF EXISTS tb_auth_refresh_token;
 DROP TABLE IF EXISTS tb_member;
 DROP TABLE IF EXISTS tb_company;
 
@@ -55,8 +57,13 @@ CREATE TABLE tb_member (
     owner_slot TINYINT NULL,
     password_status ENUM('TEMPORARY', 'ACTIVE') NOT NULL DEFAULT 'TEMPORARY',
     temp_password_expires_at DATETIME(6) NULL,
+    password_changed_at DATETIME(6) NULL,
     active BOOLEAN NOT NULL DEFAULT TRUE,
     last_login_at DATETIME(6) NULL,
+    login_failed_count INT NOT NULL DEFAULT 0,
+    locked_until_at DATETIME(6) NULL,
+    last_login_ip VARCHAR(45) NULL,
+    last_login_user_agent VARCHAR(500) NULL,
     created_by BIGINT NULL,
     created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
@@ -71,6 +78,44 @@ CREATE TABLE tb_member (
     INDEX idx_member_company_created_by (company_id, created_by),
     INDEX idx_member_company_role (company_id, role),
     INDEX idx_member_company_active (company_id, active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE tb_auth_refresh_token (
+    token_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_id BIGINT NOT NULL,
+    member_id BIGINT NOT NULL,
+    refresh_token_hash CHAR(64) NOT NULL,
+    token_family_id VARCHAR(36) NOT NULL,
+    expires_at DATETIME(6) NOT NULL,
+    last_used_at DATETIME(6) NULL,
+    revoked_at DATETIME(6) NULL,
+    revoked_reason ENUM('LOGOUT', 'ROTATED', 'REUSE_DETECTED', 'ADMIN_REVOKED') NULL,
+    replaced_by_token_id BIGINT NULL,
+    created_ip VARCHAR(45) NULL,
+    created_user_agent VARCHAR(500) NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (token_id),
+    CONSTRAINT uk_auth_refresh_token_hash UNIQUE (refresh_token_hash),
+    INDEX idx_auth_refresh_member_active (company_id, member_id, revoked_at, expires_at),
+    INDEX idx_auth_refresh_family (company_id, member_id, token_family_id),
+    INDEX idx_auth_refresh_replaced_by (replaced_by_token_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE tb_auth_login_history (
+    history_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_id BIGINT NULL,
+    member_id BIGINT NULL,
+    company_code_snapshot VARCHAR(50) NULL,
+    login_id_snapshot VARCHAR(50) NOT NULL,
+    login_result ENUM('SUCCESS', 'FAIL', 'LOCKED', 'INACTIVE', 'TEMP_PASSWORD_EXPIRED') NOT NULL,
+    failure_reason VARCHAR(100) NULL,
+    login_ip VARCHAR(45) NULL,
+    user_agent VARCHAR(500) NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (history_id),
+    INDEX idx_auth_login_history_company_date (company_id, created_at),
+    INDEX idx_auth_login_history_member_date (company_id, member_id, created_at),
+    INDEX idx_auth_login_history_login_id_date (login_id_snapshot, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE tb_trade_partner (

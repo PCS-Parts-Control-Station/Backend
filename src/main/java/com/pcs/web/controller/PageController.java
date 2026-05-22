@@ -16,6 +16,16 @@ public class PageController {
         return "forward:/company-register.html";
     }
 
+    @GetMapping({"/w", "/w/", "/w/{companyCode}"})
+    public String workspaceLogin() {
+        return "forward:/workspace-login.html";
+    }
+
+    @GetMapping("/w/{companyCode}/dashboard")
+    public String dashboard() {
+        return "forward:/dashboard.html";
+    }
+
     @GetMapping("/w/{companyCode}/categories")
     public String categories() {
         return "forward:/categories.html";
