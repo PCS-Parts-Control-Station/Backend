@@ -30,6 +30,8 @@ pcs123#
 ```text
 tb_company
 tb_member
+tb_auth_refresh_token
+tb_auth_login_history
 tb_trade_partner
 tb_part_category
 tb_pc_part
@@ -62,6 +64,7 @@ tb_stock_movement.company_id
 tb_inspection_template.company_id
 tb_inspection.company_id
 tb_part_status_history.company_id
+tb_auth_refresh_token.company_id
 ```
 
 마스터성 테이블은 `active` 상태를 가진다.
@@ -78,6 +81,21 @@ tb_inspection_template_item.active
 tb_inspection_template_item_option.active
 ```
 
+인증 공통 컬럼은 로그인/토큰 검증에 필요하다.
+
+```text
+tb_member.password_hash
+tb_member.password_status
+tb_member.login_failed_count
+tb_member.locked_until_at
+tb_member.last_login_ip
+tb_member.last_login_user_agent
+tb_auth_refresh_token.refresh_token_hash
+tb_auth_refresh_token.token_family_id
+tb_auth_refresh_token.expires_at
+tb_auth_login_history.login_result
+```
+
 ## 공통 제약 기준
 
 ```text
@@ -86,6 +104,7 @@ tb_company.uk_company_business_registration_no
 tb_member.uk_member_company_login
 tb_member.uk_member_company_owner
 tb_member.chk_member_owner_slot
+tb_auth_refresh_token.uk_auth_refresh_token_hash
 ```
 
 ## 하네스 기준
