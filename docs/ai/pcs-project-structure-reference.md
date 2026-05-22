@@ -23,6 +23,7 @@ implementation 'org.springframework.boot:spring-boot-starter-security'
 implementation 'org.springframework.boot:spring-boot-starter-validation'
 implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:4.0.1'
 implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3'
+implementation 'com.fasterxml.jackson.core:jackson-databind'
 runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
 ```
 

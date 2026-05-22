@@ -15,6 +15,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -92,6 +93,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(ErrorCode.UNSUPPORTED_HTTP_METHOD.getHttpStatus())
                 .body(ApiResultDto.error(ErrorCode.UNSUPPORTED_HTTP_METHOD));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiResultDto<Void>> handleNoResourceFound(NoResourceFoundException exception) {
+        return ResponseEntity
+                .status(ErrorCode.RESOURCE_NOT_FOUND.getHttpStatus())
+                .body(ApiResultDto.error(ErrorCode.RESOURCE_NOT_FOUND));
     }
 
     @ExceptionHandler(Exception.class)

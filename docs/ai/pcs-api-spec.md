@@ -87,6 +87,23 @@ sort
 }
 ```
 
+로그인 성공 응답은 `accessToken`을 JSON으로 내려주고, refresh token은 HttpOnly Cookie로 내려준다.
+
+```json
+{
+  "accessToken": "jwt",
+  "tokenType": "Bearer",
+  "expiresInSeconds": 1800,
+  "companyId": 1,
+  "companyCode": "greenparts",
+  "memberId": 10,
+  "loginId": "staff01",
+  "name": "이검수",
+  "role": "STAFF",
+  "passwordChangeRequired": false
+}
+```
+
 ### 3.2 회사 / Owner 가입 `company`
 
 | Method | API | 설명 |
