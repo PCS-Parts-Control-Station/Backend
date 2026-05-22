@@ -87,6 +87,14 @@ sort
 }
 ```
 
+
+인증 저장 기준:
+
+- `tb_member`는 로그인 실패 횟수, 계정 잠금, 최근 로그인 IP/User-Agent를 가진다.
+- `tb_auth_refresh_token`은 refresh token 원문이 아니라 SHA-256 해시만 저장한다.
+- `tb_auth_refresh_token.token_family_id`로 refresh token 회전 흐름을 추적한다.
+- `tb_auth_login_history`에는 성공/실패/잠금/비활성/임시 비밀번호 만료 결과를 모두 남긴다.
+
 로그인 성공 응답은 `accessToken`을 JSON으로 내려주고, refresh token은 HttpOnly Cookie로 내려준다.
 
 ```json
@@ -103,6 +111,7 @@ sort
   "passwordChangeRequired": false
 }
 ```
+
 
 ### 3.2 회사 / Owner 가입 `company`
 
@@ -482,7 +491,10 @@ STAFF:
 
 - access token은 `Authorization: Bearer {token}` 헤더로 전달한다.
 - refresh token은 HttpOnly Cookie로 관리한다.
+- refresh token 원문은 DB에 저장하지 않고 해시만 저장한다.
 - access token 만료 시 `/api/auth/refresh`로 재발급한다.
+- refresh token 재발급 시 기존 토큰은 폐기하고 새 토큰으로 회전한다.
+- refresh token 재사용이 감지되면 해당 token family를 비정상 흐름으로 처리한다.
 - refresh token이 없거나 만료되면 재로그인이 필요하다.
 - 로그아웃 시 refresh token을 폐기한다.
 
