@@ -87,12 +87,31 @@ sort
 }
 ```
 
+
 인증 저장 기준:
 
 - `tb_member`는 로그인 실패 횟수, 계정 잠금, 최근 로그인 IP/User-Agent를 가진다.
 - `tb_auth_refresh_token`은 refresh token 원문이 아니라 SHA-256 해시만 저장한다.
 - `tb_auth_refresh_token.token_family_id`로 refresh token 회전 흐름을 추적한다.
 - `tb_auth_login_history`에는 성공/실패/잠금/비활성/임시 비밀번호 만료 결과를 모두 남긴다.
+
+로그인 성공 응답은 `accessToken`을 JSON으로 내려주고, refresh token은 HttpOnly Cookie로 내려준다.
+
+```json
+{
+  "accessToken": "jwt",
+  "tokenType": "Bearer",
+  "expiresInSeconds": 1800,
+  "companyId": 1,
+  "companyCode": "greenparts",
+  "memberId": 10,
+  "loginId": "staff01",
+  "name": "이검수",
+  "role": "STAFF",
+  "passwordChangeRequired": false
+}
+```
+
 
 ### 3.2 회사 / Owner 가입 `company`
 

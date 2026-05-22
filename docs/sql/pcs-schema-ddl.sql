@@ -10,370 +10,384 @@ USE pcs_db;
 
 SET FOREIGN_KEY_CHECKS = 0;
 
-DROP TABLE IF EXISTS `tb_inspection_item_result`;
-DROP TABLE IF EXISTS `tb_inspection_template_item_option`;
-DROP TABLE IF EXISTS `tb_part_status_history`;
-DROP TABLE IF EXISTS `tb_inspection`;
-DROP TABLE IF EXISTS `tb_inspection_template_item`;
-DROP TABLE IF EXISTS `tb_inspection_template`;
-DROP TABLE IF EXISTS `tb_stock_movement_unit`;
-DROP TABLE IF EXISTS `tb_stock_movement`;
-DROP TABLE IF EXISTS `tb_stock_document`;
-DROP TABLE IF EXISTS `tb_part_stock`;
-DROP TABLE IF EXISTS `tb_pc_part_unit`;
-DROP TABLE IF EXISTS `tb_pc_part`;
-DROP TABLE IF EXISTS `tb_part_category`;
-DROP TABLE IF EXISTS `tb_trade_partner`;
-DROP TABLE IF EXISTS `tb_auth_login_history`;
-DROP TABLE IF EXISTS `tb_auth_refresh_token`;
-DROP TABLE IF EXISTS `tb_member`;
-DROP TABLE IF EXISTS `tb_company`;
+DROP TABLE IF EXISTS tb_inspection_item_result;
+DROP TABLE IF EXISTS tb_inspection_template_item_option;
+DROP TABLE IF EXISTS tb_part_status_history;
+DROP TABLE IF EXISTS tb_inspection;
+DROP TABLE IF EXISTS tb_inspection_template_item;
+DROP TABLE IF EXISTS tb_inspection_template;
+DROP TABLE IF EXISTS tb_stock_movement_unit;
+DROP TABLE IF EXISTS tb_stock_movement;
+DROP TABLE IF EXISTS tb_stock_document;
+DROP TABLE IF EXISTS tb_part_stock;
+DROP TABLE IF EXISTS tb_pc_part_unit;
+DROP TABLE IF EXISTS tb_pc_part;
+DROP TABLE IF EXISTS tb_part_category;
+DROP TABLE IF EXISTS tb_trade_partner;
+DROP TABLE IF EXISTS tb_auth_login_history;
+DROP TABLE IF EXISTS tb_auth_refresh_token;
+DROP TABLE IF EXISTS tb_member;
+DROP TABLE IF EXISTS tb_company;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
-CREATE TABLE `tb_company` (
-  `company_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `company_name` varchar(100) NOT NULL,
-  `company_code` varchar(50) NOT NULL,
-  `representative_email` varchar(255) DEFAULT NULL COMMENT '대표 이메일',
-  `representative_phone` varchar(30) DEFAULT NULL COMMENT '대표 연락처',
-  `business_registration_no` varchar(20) DEFAULT NULL COMMENT '사업자등록번호',
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `created_at` datetime(6) NOT NULL DEFAULT current_timestamp(6),
-  `updated_at` datetime(6) NOT NULL DEFAULT current_timestamp(6) ON UPDATE current_timestamp(6),
-  PRIMARY KEY (`company_id`),
-  UNIQUE KEY `uk_company_code` (`company_code`),
-  UNIQUE KEY `uk_company_business_registration_no` (`business_registration_no`),
-  KEY `idx_company_active` (`active`)
+CREATE TABLE tb_company (
+    company_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_name VARCHAR(100) NOT NULL,
+    company_code VARCHAR(50) NOT NULL,
+    representative_email VARCHAR(255) NULL,
+    representative_phone VARCHAR(30) NULL,
+    business_registration_no VARCHAR(20) NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (company_id),
+    CONSTRAINT uk_company_code UNIQUE (company_code),
+    CONSTRAINT uk_company_business_registration_no UNIQUE (business_registration_no),
+    INDEX idx_company_active (active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `tb_inspection` (
-  `inspection_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `company_id` bigint(20) NOT NULL,
-  `unit_id` bigint(20) NOT NULL,
-  `template_id` bigint(20) DEFAULT NULL,
-  `inspected_by` bigint(20) NOT NULL,
-  `inspection_type` enum('INITIAL','CORRECTION','REINSPECTION') NOT NULL DEFAULT 'INITIAL',
-  `original_inspection_id` bigint(20) DEFAULT NULL,
-  `sales_status` enum('HOLD','AVAILABLE','UNAVAILABLE') NOT NULL,
-  `result` enum('PASS','FAIL') NOT NULL,
-  `grade` enum('A','B','C','DEFECTIVE') NOT NULL,
-  `memo` varchar(1000) DEFAULT NULL,
-  `inspected_at` datetime(6) NOT NULL,
-  `created_at` datetime(6) NOT NULL DEFAULT current_timestamp(6),
-  PRIMARY KEY (`inspection_id`),
-  UNIQUE KEY `uk_inspection_company_inspection_id` (`company_id`,`inspection_id`),
-  KEY `idx_inspection_company_unit_date` (`company_id`,`unit_id`,`inspected_at`),
-  KEY `idx_inspection_company_template` (`company_id`,`template_id`),
-  KEY `idx_inspection_company_inspected_by` (`company_id`,`inspected_by`),
-  KEY `idx_inspection_company_original` (`company_id`,`original_inspection_id`),
-  KEY `idx_inspection_type_date` (`company_id`,`inspection_type`,`inspected_at`),
-  KEY `idx_inspection_result_date` (`company_id`,`result`,`inspected_at`),
-  CONSTRAINT `chk_inspection_original` CHECK (`inspection_type` = 'INITIAL' and `original_inspection_id` is null or `inspection_type` in ('CORRECTION','REINSPECTION') and `original_inspection_id` is not null)
+CREATE TABLE tb_member (
+    member_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_id BIGINT NOT NULL,
+    login_id VARCHAR(50) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    role ENUM('OWNER', 'ADMIN', 'STAFF') NOT NULL,
+    owner_slot TINYINT NULL,
+    password_status ENUM('TEMPORARY', 'ACTIVE') NOT NULL DEFAULT 'TEMPORARY',
+    temp_password_expires_at DATETIME(6) NULL,
+    password_changed_at DATETIME(6) NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    last_login_at DATETIME(6) NULL,
+    login_failed_count INT NOT NULL DEFAULT 0,
+    locked_until_at DATETIME(6) NULL,
+    last_login_ip VARCHAR(45) NULL,
+    last_login_user_agent VARCHAR(500) NULL,
+    created_by BIGINT NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (member_id),
+    CONSTRAINT uk_member_company_login UNIQUE (company_id, login_id),
+    CONSTRAINT uk_member_company_owner UNIQUE (company_id, owner_slot),
+    CONSTRAINT uk_member_company_member_id UNIQUE (company_id, member_id),
+    CONSTRAINT chk_member_owner_slot CHECK (
+        (role = 'OWNER' AND owner_slot = 1)
+        OR (role <> 'OWNER' AND owner_slot IS NULL)
+    ),
+    INDEX idx_member_company_created_by (company_id, created_by),
+    INDEX idx_member_company_role (company_id, role),
+    INDEX idx_member_company_active (company_id, active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `tb_inspection_item_result` (
-  `item_result_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `inspection_id` bigint(20) NOT NULL,
-  `item_id` bigint(20) DEFAULT NULL,
-  `item_name_snapshot` varchar(150) NOT NULL,
-  `result` enum('PASS','FAIL','WARN','NA') NOT NULL,
-  `value_text` varchar(1000) DEFAULT NULL,
-  `value_number` decimal(15,4) DEFAULT NULL,
-  `selected_option_id` bigint(20) DEFAULT NULL,
-  `selected_option_label_snapshot` varchar(150) DEFAULT NULL,
-  `selected_option_value_snapshot` varchar(150) DEFAULT NULL,
-  `memo` varchar(1000) DEFAULT NULL,
-  PRIMARY KEY (`item_result_id`),
-  KEY `idx_inspection_item_result_inspection` (`inspection_id`),
-  KEY `idx_inspection_item_result_item` (`item_id`),
-  KEY `idx_inspection_item_result_selected_option` (`selected_option_id`)
+CREATE TABLE tb_auth_refresh_token (
+    token_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_id BIGINT NOT NULL,
+    member_id BIGINT NOT NULL,
+    refresh_token_hash CHAR(64) NOT NULL,
+    token_family_id VARCHAR(36) NOT NULL,
+    expires_at DATETIME(6) NOT NULL,
+    last_used_at DATETIME(6) NULL,
+    revoked_at DATETIME(6) NULL,
+    revoked_reason ENUM('LOGOUT', 'ROTATED', 'REUSE_DETECTED', 'ADMIN_REVOKED') NULL,
+    replaced_by_token_id BIGINT NULL,
+    created_ip VARCHAR(45) NULL,
+    created_user_agent VARCHAR(500) NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (token_id),
+    CONSTRAINT uk_auth_refresh_token_hash UNIQUE (refresh_token_hash),
+    INDEX idx_auth_refresh_member_active (company_id, member_id, revoked_at, expires_at),
+    INDEX idx_auth_refresh_family (company_id, member_id, token_family_id),
+    INDEX idx_auth_refresh_replaced_by (replaced_by_token_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `tb_inspection_template` (
-  `template_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `company_id` bigint(20) NOT NULL,
-  `category_id` bigint(20) NOT NULL,
-  `template_name` varchar(150) NOT NULL,
-  `version` int(11) NOT NULL DEFAULT 1,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` datetime(6) NOT NULL DEFAULT current_timestamp(6),
-  `updated_at` datetime(6) NOT NULL DEFAULT current_timestamp(6) ON UPDATE current_timestamp(6),
-  PRIMARY KEY (`template_id`),
-  UNIQUE KEY `uk_inspection_template_company_template_id` (`company_id`,`template_id`),
-  UNIQUE KEY `uk_inspection_template_version` (`company_id`,`category_id`,`template_name`,`version`),
-  KEY `idx_inspection_template_company_created_by` (`company_id`,`created_by`),
-  KEY `idx_inspection_template_company_category` (`company_id`,`category_id`,`active`),
-  CONSTRAINT `chk_inspection_template_version` CHECK (`version` > 0)
+CREATE TABLE tb_auth_login_history (
+    history_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_id BIGINT NULL,
+    member_id BIGINT NULL,
+    company_code_snapshot VARCHAR(50) NULL,
+    login_id_snapshot VARCHAR(50) NOT NULL,
+    login_result ENUM('SUCCESS', 'FAIL', 'LOCKED', 'INACTIVE', 'TEMP_PASSWORD_EXPIRED') NOT NULL,
+    failure_reason VARCHAR(100) NULL,
+    login_ip VARCHAR(45) NULL,
+    user_agent VARCHAR(500) NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (history_id),
+    INDEX idx_auth_login_history_company_date (company_id, created_at),
+    INDEX idx_auth_login_history_member_date (company_id, member_id, created_at),
+    INDEX idx_auth_login_history_login_id_date (login_id_snapshot, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `tb_inspection_template_item` (
-  `item_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `template_id` bigint(20) NOT NULL,
-  `item_group` enum('BASIC','DETAIL') NOT NULL,
-  `item_name` varchar(150) NOT NULL,
-  `input_type` enum('CHECK','NUMBER','TEXT','SELECT') NOT NULL,
-  `required` tinyint(1) NOT NULL DEFAULT 0,
-  `sort_order` int(11) NOT NULL DEFAULT 0,
-  `grade_impact` enum('HIGH','MEDIUM','LOW') NOT NULL DEFAULT 'LOW',
-  `fail_policy` enum('NONE','GRADE_DOWN','MARK_DEFECTIVE','BLOCK_SALE') NOT NULL DEFAULT 'NONE',
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  PRIMARY KEY (`item_id`),
-  UNIQUE KEY `uk_inspection_template_item_id` (`template_id`,`item_id`),
-  KEY `idx_inspection_template_item_template_sort` (`template_id`,`active`,`sort_order`),
-  CONSTRAINT `chk_inspection_template_item_sort_order` CHECK (`sort_order` >= 0)
+CREATE TABLE tb_trade_partner (
+    partner_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_id BIGINT NOT NULL,
+    partner_name VARCHAR(150) NOT NULL,
+    partner_type ENUM('PC_CAFE', 'PERSON', 'COMPANY', 'ETC') NOT NULL,
+    partner_role ENUM('SUPPLIER', 'CUSTOMER', 'BOTH') NOT NULL,
+    phone VARCHAR(50) NULL,
+    email VARCHAR(150) NULL,
+    address VARCHAR(500) NULL,
+    memo VARCHAR(1000) NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_by BIGINT NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (partner_id),
+    CONSTRAINT uk_trade_partner_company_name UNIQUE (company_id, partner_name),
+    CONSTRAINT uk_trade_partner_company_partner_id UNIQUE (company_id, partner_id),
+    INDEX idx_trade_partner_company_role (company_id, partner_role, active),
+    INDEX idx_trade_partner_company_type (company_id, partner_type, active),
+    INDEX idx_trade_partner_company_created_by (company_id, created_by)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `tb_inspection_template_item_option` (
-  `option_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `item_id` bigint(20) NOT NULL,
-  `option_label` varchar(150) NOT NULL,
-  `option_value` varchar(150) NOT NULL,
-  `sort_order` int(11) NOT NULL DEFAULT 0,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  PRIMARY KEY (`option_id`),
-  UNIQUE KEY `uk_inspection_template_item_option_value` (`item_id`,`option_value`),
-  KEY `idx_inspection_template_item_option_item_sort` (`item_id`,`active`,`sort_order`),
-  CONSTRAINT `chk_inspection_template_item_option_sort_order` CHECK (`sort_order` >= 0)
+CREATE TABLE tb_part_category (
+    category_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_id BIGINT NOT NULL,
+    category_name VARCHAR(100) NOT NULL,
+    description VARCHAR(500) NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_by BIGINT NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (category_id),
+    CONSTRAINT uk_part_category_company_name UNIQUE (company_id, category_name),
+    CONSTRAINT uk_part_category_company_category_id UNIQUE (company_id, category_id),
+    INDEX idx_part_category_company_created_by (company_id, created_by),
+    INDEX idx_part_category_company_active (company_id, active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `tb_member` (
-  `member_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `company_id` bigint(20) NOT NULL,
-  `login_id` varchar(50) NOT NULL,
-  `password_hash` varchar(255) NOT NULL,
-  `name` varchar(100) NOT NULL,
-  `role` enum('OWNER','ADMIN','STAFF') NOT NULL,
-  `owner_slot` tinyint(4) DEFAULT NULL,
-  `password_status` enum('TEMPORARY','ACTIVE') NOT NULL DEFAULT 'TEMPORARY',
-  `temp_password_expires_at` datetime(6) DEFAULT NULL,
-  `password_changed_at` datetime(6) DEFAULT NULL COMMENT '비밀번호 마지막 변경일',
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `last_login_at` datetime(6) DEFAULT NULL,
-  `login_failed_count` int(11) NOT NULL DEFAULT 0 COMMENT '로그인 실패 횟수',
-  `locked_until_at` datetime(6) DEFAULT NULL COMMENT '로그인 잠금 해제 시각',
-  `last_login_ip` varchar(45) DEFAULT NULL COMMENT '최근 로그인 IP',
-  `last_login_user_agent` varchar(500) DEFAULT NULL COMMENT '최근 로그인 User-Agent',
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` datetime(6) NOT NULL DEFAULT current_timestamp(6),
-  `updated_at` datetime(6) NOT NULL DEFAULT current_timestamp(6) ON UPDATE current_timestamp(6),
-  PRIMARY KEY (`member_id`),
-  UNIQUE KEY `uk_member_company_login` (`company_id`,`login_id`),
-  UNIQUE KEY `uk_member_company_member_id` (`company_id`,`member_id`),
-  UNIQUE KEY `uk_member_company_owner` (`company_id`,`owner_slot`),
-  KEY `idx_member_company_created_by` (`company_id`,`created_by`),
-  KEY `idx_member_company_role` (`company_id`,`role`),
-  KEY `idx_member_company_active` (`company_id`,`active`)
+CREATE TABLE tb_pc_part (
+    part_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_id BIGINT NOT NULL,
+    category_id BIGINT NOT NULL,
+    created_by BIGINT NULL,
+    part_name VARCHAR(150) NOT NULL,
+    model_name VARCHAR(150) NOT NULL,
+    manufacturer VARCHAR(100) NOT NULL,
+    part_code VARCHAR(80) NOT NULL,
+    estimated_price DECIMAL(15, 2) NOT NULL DEFAULT 0.00,
+    safe_quantity INT NOT NULL DEFAULT 0,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (part_id),
+    CONSTRAINT uk_pc_part_company_code UNIQUE (company_id, part_code),
+    CONSTRAINT uk_pc_part_company_part_id UNIQUE (company_id, part_id),
+    CONSTRAINT chk_pc_part_price CHECK (estimated_price >= 0),
+    CONSTRAINT chk_pc_part_safe_quantity CHECK (safe_quantity >= 0),
+    INDEX idx_pc_part_company_category (company_id, category_id),
+    INDEX idx_pc_part_company_created_by (company_id, created_by),
+    INDEX idx_pc_part_company_manufacturer (company_id, manufacturer),
+    INDEX idx_pc_part_company_active (company_id, active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `tb_auth_refresh_token` (
-  `token_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `company_id` bigint(20) NOT NULL,
-  `member_id` bigint(20) NOT NULL,
-  `refresh_token_hash` char(64) NOT NULL COMMENT 'refresh token SHA-256 해시',
-  `token_family_id` varchar(36) NOT NULL COMMENT '토큰 회전 추적용 UUID',
-  `expires_at` datetime(6) NOT NULL,
-  `last_used_at` datetime(6) DEFAULT NULL,
-  `revoked_at` datetime(6) DEFAULT NULL,
-  `revoked_reason` enum('LOGOUT','ROTATED','REUSE_DETECTED','ADMIN_REVOKED') DEFAULT NULL,
-  `replaced_by_token_id` bigint(20) DEFAULT NULL,
-  `created_ip` varchar(45) DEFAULT NULL,
-  `created_user_agent` varchar(500) DEFAULT NULL,
-  `created_at` datetime(6) NOT NULL DEFAULT current_timestamp(6),
-  PRIMARY KEY (`token_id`),
-  UNIQUE KEY `uk_auth_refresh_token_hash` (`refresh_token_hash`),
-  KEY `idx_auth_refresh_member_active` (`company_id`,`member_id`,`revoked_at`,`expires_at`),
-  KEY `idx_auth_refresh_family` (`company_id`,`member_id`,`token_family_id`),
-  KEY `idx_auth_refresh_replaced_by` (`replaced_by_token_id`)
+CREATE TABLE tb_pc_part_unit (
+    unit_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_id BIGINT NOT NULL,
+    part_id BIGINT NOT NULL,
+    internal_serial_no VARCHAR(80) NOT NULL,
+    manufacturer_serial_no VARCHAR(120) NULL,
+    unit_status ENUM('IN_STOCK', 'OUTBOUND', 'DISPOSED', 'CANCELED') NOT NULL DEFAULT 'IN_STOCK',
+    grade ENUM('NONE', 'A', 'B', 'C', 'DEFECTIVE') NOT NULL DEFAULT 'NONE',
+    inspection_status ENUM('WAITING', 'COMPLETED') NOT NULL DEFAULT 'WAITING',
+    sales_status ENUM('HOLD', 'AVAILABLE', 'UNAVAILABLE') NOT NULL DEFAULT 'HOLD',
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_by BIGINT NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (unit_id),
+    CONSTRAINT uk_pc_part_unit_internal_serial UNIQUE (company_id, internal_serial_no),
+    CONSTRAINT uk_pc_part_unit_manufacturer_serial UNIQUE (company_id, manufacturer_serial_no),
+    CONSTRAINT uk_pc_part_unit_company_unit_id UNIQUE (company_id, unit_id),
+    CONSTRAINT uk_pc_part_unit_company_part_unit_id UNIQUE (company_id, part_id, unit_id),
+    INDEX idx_pc_part_unit_company_part (company_id, part_id),
+    INDEX idx_pc_part_unit_company_created_by (company_id, created_by),
+    INDEX idx_pc_part_unit_company_status (company_id, unit_status, active),
+    INDEX idx_pc_part_unit_work_status (company_id, inspection_status, sales_status, grade)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `tb_auth_login_history` (
-  `history_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `company_id` bigint(20) DEFAULT NULL,
-  `member_id` bigint(20) DEFAULT NULL,
-  `company_code_snapshot` varchar(50) DEFAULT NULL,
-  `login_id_snapshot` varchar(50) NOT NULL,
-  `login_result` enum('SUCCESS','FAIL','LOCKED','INACTIVE','TEMP_PASSWORD_EXPIRED') NOT NULL,
-  `failure_reason` varchar(100) DEFAULT NULL,
-  `login_ip` varchar(45) DEFAULT NULL,
-  `user_agent` varchar(500) DEFAULT NULL,
-  `created_at` datetime(6) NOT NULL DEFAULT current_timestamp(6),
-  PRIMARY KEY (`history_id`),
-  KEY `idx_auth_login_history_company_date` (`company_id`,`created_at`),
-  KEY `idx_auth_login_history_member_date` (`company_id`,`member_id`,`created_at`),
-  KEY `idx_auth_login_history_login_id_date` (`login_id_snapshot`,`created_at`)
+CREATE TABLE tb_part_stock (
+    stock_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_id BIGINT NOT NULL,
+    part_id BIGINT NOT NULL,
+    quantity INT NOT NULL DEFAULT 0,
+    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (stock_id),
+    CONSTRAINT uk_part_stock_company_part UNIQUE (company_id, part_id),
+    CONSTRAINT chk_part_stock_quantity CHECK (quantity >= 0),
+    INDEX idx_part_stock_company_quantity (company_id, quantity)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `tb_part_category` (
-  `category_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `company_id` bigint(20) NOT NULL,
-  `category_name` varchar(100) NOT NULL,
-  `description` varchar(500) DEFAULT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` datetime(6) NOT NULL DEFAULT current_timestamp(6),
-  `updated_at` datetime(6) NOT NULL DEFAULT current_timestamp(6) ON UPDATE current_timestamp(6),
-  PRIMARY KEY (`category_id`),
-  UNIQUE KEY `uk_part_category_company_name` (`company_id`,`category_name`),
-  UNIQUE KEY `uk_part_category_company_category_id` (`company_id`,`category_id`),
-  KEY `idx_part_category_company_created_by` (`company_id`,`created_by`),
-  KEY `idx_part_category_company_active` (`company_id`,`active`)
+CREATE TABLE tb_stock_document (
+    document_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_id BIGINT NOT NULL,
+    partner_id BIGINT NULL,
+    document_no VARCHAR(80) NOT NULL,
+    document_type ENUM('INBOUND', 'OUTBOUND') NOT NULL,
+    document_status ENUM('COMPLETED', 'CANCELED') NOT NULL DEFAULT 'COMPLETED',
+    reason VARCHAR(500) NULL,
+    processed_by BIGINT NOT NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (document_id),
+    CONSTRAINT uk_stock_document_company_document_no UNIQUE (company_id, document_no),
+    CONSTRAINT uk_stock_document_company_document_id UNIQUE (company_id, document_id),
+    INDEX idx_stock_document_company_partner (company_id, partner_id),
+    INDEX idx_stock_document_company_processed_by (company_id, processed_by),
+    INDEX idx_stock_document_type_status_created (company_id, document_type, document_status, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `tb_part_status_history` (
-  `history_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `company_id` bigint(20) NOT NULL,
-  `unit_id` bigint(20) NOT NULL,
-  `changed_by` bigint(20) NOT NULL,
-  `from_inspection_status` enum('WAITING','COMPLETED') DEFAULT NULL,
-  `to_inspection_status` enum('WAITING','COMPLETED') DEFAULT NULL,
-  `from_grade` enum('NONE','A','B','C','DEFECTIVE') DEFAULT NULL,
-  `to_grade` enum('NONE','A','B','C','DEFECTIVE') DEFAULT NULL,
-  `from_sales_status` enum('HOLD','AVAILABLE','UNAVAILABLE') DEFAULT NULL,
-  `to_sales_status` enum('HOLD','AVAILABLE','UNAVAILABLE') DEFAULT NULL,
-  `reason` varchar(500) DEFAULT NULL,
-  `created_at` datetime(6) NOT NULL DEFAULT current_timestamp(6),
-  PRIMARY KEY (`history_id`),
-  KEY `idx_part_status_history_company_unit_date` (`company_id`,`unit_id`,`created_at`),
-  KEY `idx_part_status_history_company_changed_by` (`company_id`,`changed_by`)
+CREATE TABLE tb_stock_movement (
+    movement_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_id BIGINT NOT NULL,
+    document_id BIGINT NOT NULL,
+    part_id BIGINT NOT NULL,
+    movement_type ENUM('INBOUND', 'OUTBOUND', 'INBOUND_CANCEL', 'OUTBOUND_CANCEL') NOT NULL,
+    movement_status ENUM('COMPLETED', 'CANCELED') NOT NULL DEFAULT 'COMPLETED',
+    canceled_movement_id BIGINT NULL,
+    quantity INT NOT NULL,
+    before_quantity INT NOT NULL,
+    after_quantity INT NOT NULL,
+    reason VARCHAR(500) NULL,
+    processed_by BIGINT NOT NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (movement_id),
+    CONSTRAINT uk_stock_movement_company_movement_id UNIQUE (company_id, movement_id),
+    CONSTRAINT chk_stock_movement_quantity CHECK (quantity > 0),
+    CONSTRAINT chk_stock_movement_before_after CHECK (
+        before_quantity >= 0
+        AND after_quantity >= 0
+        AND (
+            (movement_type IN ('INBOUND', 'OUTBOUND_CANCEL') AND after_quantity = before_quantity + quantity)
+            OR (movement_type IN ('OUTBOUND', 'INBOUND_CANCEL') AND after_quantity = before_quantity - quantity)
+        )
+    ),
+    INDEX idx_stock_movement_company_document (company_id, document_id),
+    INDEX idx_stock_movement_company_part (company_id, part_id),
+    INDEX idx_stock_movement_company_canceled (company_id, canceled_movement_id),
+    INDEX idx_stock_movement_company_processed_by (company_id, processed_by),
+    INDEX idx_stock_movement_type_status_created (company_id, movement_type, movement_status, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `tb_part_stock` (
-  `stock_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `company_id` bigint(20) NOT NULL,
-  `part_id` bigint(20) NOT NULL,
-  `quantity` int(11) NOT NULL DEFAULT 0,
-  `updated_at` datetime(6) NOT NULL DEFAULT current_timestamp(6) ON UPDATE current_timestamp(6),
-  PRIMARY KEY (`stock_id`),
-  UNIQUE KEY `uk_part_stock_company_part` (`company_id`,`part_id`),
-  KEY `idx_part_stock_company_quantity` (`company_id`,`quantity`),
-  CONSTRAINT `chk_part_stock_quantity` CHECK (`quantity` >= 0)
+CREATE TABLE tb_stock_movement_unit (
+    movement_unit_id BIGINT NOT NULL AUTO_INCREMENT,
+    movement_id BIGINT NOT NULL,
+    unit_id BIGINT NOT NULL,
+    before_unit_status ENUM('IN_STOCK', 'OUTBOUND', 'DISPOSED', 'CANCELED') NULL,
+    after_unit_status ENUM('IN_STOCK', 'OUTBOUND', 'DISPOSED', 'CANCELED') NOT NULL,
+    PRIMARY KEY (movement_unit_id),
+    CONSTRAINT uk_stock_movement_unit UNIQUE (movement_id, unit_id),
+    INDEX idx_stock_movement_unit_movement (movement_id),
+    INDEX idx_stock_movement_unit_unit (unit_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `tb_pc_part` (
-  `part_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `company_id` bigint(20) NOT NULL,
-  `category_id` bigint(20) NOT NULL,
-  `created_by` bigint(20) DEFAULT NULL,
-  `part_name` varchar(150) NOT NULL,
-  `model_name` varchar(150) NOT NULL,
-  `manufacturer` varchar(100) NOT NULL,
-  `part_code` varchar(80) NOT NULL,
-  `estimated_price` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `safe_quantity` int(11) NOT NULL DEFAULT 0,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `created_at` datetime(6) NOT NULL DEFAULT current_timestamp(6),
-  `updated_at` datetime(6) NOT NULL DEFAULT current_timestamp(6) ON UPDATE current_timestamp(6),
-  PRIMARY KEY (`part_id`),
-  UNIQUE KEY `uk_pc_part_company_code` (`company_id`,`part_code`),
-  UNIQUE KEY `uk_pc_part_company_part_id` (`company_id`,`part_id`),
-  KEY `idx_pc_part_company_category` (`company_id`,`category_id`),
-  KEY `idx_pc_part_company_created_by` (`company_id`,`created_by`),
-  KEY `idx_pc_part_company_manufacturer` (`company_id`,`manufacturer`),
-  KEY `idx_pc_part_company_active` (`company_id`,`active`),
-  CONSTRAINT `chk_pc_part_price` CHECK (`estimated_price` >= 0),
-  CONSTRAINT `chk_pc_part_safe_quantity` CHECK (`safe_quantity` >= 0)
+CREATE TABLE tb_inspection_template (
+    template_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_id BIGINT NOT NULL,
+    category_id BIGINT NOT NULL,
+    template_name VARCHAR(150) NOT NULL,
+    version INT NOT NULL DEFAULT 1,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_by BIGINT NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (template_id),
+    CONSTRAINT uk_inspection_template_company_template_id UNIQUE (company_id, template_id),
+    CONSTRAINT uk_inspection_template_version UNIQUE (company_id, category_id, template_name, version),
+    CONSTRAINT chk_inspection_template_version CHECK (version > 0),
+    INDEX idx_inspection_template_company_created_by (company_id, created_by),
+    INDEX idx_inspection_template_company_category (company_id, category_id, active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `tb_pc_part_unit` (
-  `unit_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `company_id` bigint(20) NOT NULL,
-  `part_id` bigint(20) NOT NULL,
-  `internal_serial_no` varchar(80) NOT NULL,
-  `manufacturer_serial_no` varchar(120) DEFAULT NULL,
-  `unit_status` enum('IN_STOCK','OUTBOUND','DISPOSED','CANCELED') NOT NULL DEFAULT 'IN_STOCK',
-  `grade` enum('NONE','A','B','C','DEFECTIVE') NOT NULL DEFAULT 'NONE',
-  `inspection_status` enum('WAITING','COMPLETED') NOT NULL DEFAULT 'WAITING',
-  `sales_status` enum('HOLD','AVAILABLE','UNAVAILABLE') NOT NULL DEFAULT 'HOLD',
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` datetime(6) NOT NULL DEFAULT current_timestamp(6),
-  `updated_at` datetime(6) NOT NULL DEFAULT current_timestamp(6) ON UPDATE current_timestamp(6),
-  PRIMARY KEY (`unit_id`),
-  UNIQUE KEY `uk_pc_part_unit_internal_serial` (`company_id`,`internal_serial_no`),
-  UNIQUE KEY `uk_pc_part_unit_company_unit_id` (`company_id`,`unit_id`),
-  UNIQUE KEY `uk_pc_part_unit_company_part_unit_id` (`company_id`,`part_id`,`unit_id`),
-  UNIQUE KEY `uk_pc_part_unit_manufacturer_serial` (`company_id`,`manufacturer_serial_no`),
-  KEY `idx_pc_part_unit_company_part` (`company_id`,`part_id`),
-  KEY `idx_pc_part_unit_company_created_by` (`company_id`,`created_by`),
-  KEY `idx_pc_part_unit_company_status` (`company_id`,`unit_status`,`active`),
-  KEY `idx_pc_part_unit_work_status` (`company_id`,`inspection_status`,`sales_status`,`grade`)
+CREATE TABLE tb_inspection_template_item (
+    item_id BIGINT NOT NULL AUTO_INCREMENT,
+    template_id BIGINT NOT NULL,
+    item_group ENUM('BASIC', 'DETAIL') NOT NULL,
+    item_name VARCHAR(150) NOT NULL,
+    input_type ENUM('CHECK', 'NUMBER', 'TEXT', 'SELECT') NOT NULL,
+    required BOOLEAN NOT NULL DEFAULT FALSE,
+    sort_order INT NOT NULL DEFAULT 0,
+    grade_impact ENUM('HIGH', 'MEDIUM', 'LOW') NOT NULL DEFAULT 'LOW',
+    fail_policy ENUM('NONE', 'GRADE_DOWN', 'MARK_DEFECTIVE', 'BLOCK_SALE') NOT NULL DEFAULT 'NONE',
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    PRIMARY KEY (item_id),
+    CONSTRAINT uk_inspection_template_item_id UNIQUE (template_id, item_id),
+    CONSTRAINT chk_inspection_template_item_sort_order CHECK (sort_order >= 0),
+    INDEX idx_inspection_template_item_template_sort (template_id, active, sort_order)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `tb_stock_document` (
-  `document_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `company_id` bigint(20) NOT NULL,
-  `partner_id` bigint(20) DEFAULT NULL,
-  `document_no` varchar(80) NOT NULL,
-  `document_type` enum('INBOUND','OUTBOUND') NOT NULL,
-  `document_status` enum('COMPLETED','CANCELED') NOT NULL DEFAULT 'COMPLETED',
-  `reason` varchar(500) DEFAULT NULL,
-  `processed_by` bigint(20) NOT NULL,
-  `created_at` datetime(6) NOT NULL DEFAULT current_timestamp(6),
-  PRIMARY KEY (`document_id`),
-  UNIQUE KEY `uk_stock_document_company_document_no` (`company_id`,`document_no`),
-  UNIQUE KEY `uk_stock_document_company_document_id` (`company_id`,`document_id`),
-  KEY `idx_stock_document_company_partner` (`company_id`,`partner_id`),
-  KEY `idx_stock_document_company_processed_by` (`company_id`,`processed_by`),
-  KEY `idx_stock_document_type_status_created` (`company_id`,`document_type`,`document_status`,`created_at`)
+CREATE TABLE tb_inspection_template_item_option (
+    option_id BIGINT NOT NULL AUTO_INCREMENT,
+    item_id BIGINT NOT NULL,
+    option_label VARCHAR(150) NOT NULL,
+    option_value VARCHAR(150) NOT NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    PRIMARY KEY (option_id),
+    CONSTRAINT uk_inspection_template_item_option_value UNIQUE (item_id, option_value),
+    CONSTRAINT chk_inspection_template_item_option_sort_order CHECK (sort_order >= 0),
+    INDEX idx_inspection_template_item_option_item_sort (item_id, active, sort_order)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `tb_stock_movement` (
-  `movement_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `company_id` bigint(20) NOT NULL,
-  `document_id` bigint(20) NOT NULL,
-  `part_id` bigint(20) NOT NULL,
-  `movement_type` enum('INBOUND','OUTBOUND','INBOUND_CANCEL','OUTBOUND_CANCEL') NOT NULL,
-  `movement_status` enum('COMPLETED','CANCELED') NOT NULL DEFAULT 'COMPLETED',
-  `canceled_movement_id` bigint(20) DEFAULT NULL,
-  `quantity` int(11) NOT NULL,
-  `before_quantity` int(11) NOT NULL,
-  `after_quantity` int(11) NOT NULL,
-  `reason` varchar(500) DEFAULT NULL,
-  `processed_by` bigint(20) NOT NULL,
-  `created_at` datetime(6) NOT NULL DEFAULT current_timestamp(6),
-  PRIMARY KEY (`movement_id`),
-  UNIQUE KEY `uk_stock_movement_company_movement_id` (`company_id`,`movement_id`),
-  KEY `idx_stock_movement_company_document` (`company_id`,`document_id`),
-  KEY `idx_stock_movement_company_part` (`company_id`,`part_id`),
-  KEY `idx_stock_movement_company_canceled` (`company_id`,`canceled_movement_id`),
-  KEY `idx_stock_movement_company_processed_by` (`company_id`,`processed_by`),
-  KEY `idx_stock_movement_type_status_created` (`company_id`,`movement_type`,`movement_status`,`created_at`),
-  CONSTRAINT `chk_stock_movement_quantity` CHECK (`quantity` > 0),
-  CONSTRAINT `chk_stock_movement_before_after` CHECK (`before_quantity` >= 0 and `after_quantity` >= 0 and (`movement_type` in ('INBOUND','OUTBOUND_CANCEL') and `after_quantity` = `before_quantity` + `quantity` or `movement_type` in ('OUTBOUND','INBOUND_CANCEL') and `after_quantity` = `before_quantity` - `quantity`))
+CREATE TABLE tb_inspection (
+    inspection_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_id BIGINT NOT NULL,
+    unit_id BIGINT NOT NULL,
+    template_id BIGINT NULL,
+    inspected_by BIGINT NOT NULL,
+    inspection_type ENUM('INITIAL', 'CORRECTION', 'REINSPECTION') NOT NULL DEFAULT 'INITIAL',
+    original_inspection_id BIGINT NULL,
+    sales_status ENUM('HOLD', 'AVAILABLE', 'UNAVAILABLE') NOT NULL,
+    result ENUM('PASS', 'FAIL') NOT NULL,
+    grade ENUM('A', 'B', 'C', 'DEFECTIVE') NOT NULL,
+    memo VARCHAR(1000) NULL,
+    inspected_at DATETIME(6) NOT NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (inspection_id),
+    CONSTRAINT uk_inspection_company_inspection_id UNIQUE (company_id, inspection_id),
+    CONSTRAINT chk_inspection_original CHECK (
+        (inspection_type = 'INITIAL' AND original_inspection_id IS NULL)
+        OR (inspection_type IN ('CORRECTION', 'REINSPECTION') AND original_inspection_id IS NOT NULL)
+    ),
+    INDEX idx_inspection_company_unit_date (company_id, unit_id, inspected_at),
+    INDEX idx_inspection_company_template (company_id, template_id),
+    INDEX idx_inspection_company_inspected_by (company_id, inspected_by),
+    INDEX idx_inspection_company_original (company_id, original_inspection_id),
+    INDEX idx_inspection_type_date (company_id, inspection_type, inspected_at),
+    INDEX idx_inspection_result_date (company_id, result, inspected_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `tb_stock_movement_unit` (
-  `movement_unit_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `movement_id` bigint(20) NOT NULL,
-  `unit_id` bigint(20) NOT NULL,
-  `before_unit_status` enum('IN_STOCK','OUTBOUND','DISPOSED','CANCELED') DEFAULT NULL,
-  `after_unit_status` enum('IN_STOCK','OUTBOUND','DISPOSED','CANCELED') NOT NULL,
-  PRIMARY KEY (`movement_unit_id`),
-  UNIQUE KEY `uk_stock_movement_unit` (`movement_id`,`unit_id`),
-  KEY `idx_stock_movement_unit_movement` (`movement_id`),
-  KEY `idx_stock_movement_unit_unit` (`unit_id`)
+CREATE TABLE tb_part_status_history (
+    history_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_id BIGINT NOT NULL,
+    unit_id BIGINT NOT NULL,
+    changed_by BIGINT NOT NULL,
+    from_inspection_status ENUM('WAITING', 'COMPLETED') NULL,
+    to_inspection_status ENUM('WAITING', 'COMPLETED') NULL,
+    from_grade ENUM('NONE', 'A', 'B', 'C', 'DEFECTIVE') NULL,
+    to_grade ENUM('NONE', 'A', 'B', 'C', 'DEFECTIVE') NULL,
+    from_sales_status ENUM('HOLD', 'AVAILABLE', 'UNAVAILABLE') NULL,
+    to_sales_status ENUM('HOLD', 'AVAILABLE', 'UNAVAILABLE') NULL,
+    reason VARCHAR(500) NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (history_id),
+    INDEX idx_part_status_history_company_unit_date (company_id, unit_id, created_at),
+    INDEX idx_part_status_history_company_changed_by (company_id, changed_by)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `tb_trade_partner` (
-  `partner_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `company_id` bigint(20) NOT NULL,
-  `partner_name` varchar(150) NOT NULL,
-  `partner_type` enum('PC_CAFE','PERSON','COMPANY','ETC') NOT NULL,
-  `partner_role` enum('SUPPLIER','CUSTOMER','BOTH') NOT NULL,
-  `phone` varchar(50) DEFAULT NULL,
-  `email` varchar(150) DEFAULT NULL,
-  `address` varchar(500) DEFAULT NULL,
-  `memo` varchar(1000) DEFAULT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` datetime(6) NOT NULL DEFAULT current_timestamp(6),
-  `updated_at` datetime(6) NOT NULL DEFAULT current_timestamp(6) ON UPDATE current_timestamp(6),
-  PRIMARY KEY (`partner_id`),
-  UNIQUE KEY `uk_trade_partner_company_name` (`company_id`,`partner_name`),
-  UNIQUE KEY `uk_trade_partner_company_partner_id` (`company_id`,`partner_id`),
-  KEY `idx_trade_partner_company_role` (`company_id`,`partner_role`,`active`),
-  KEY `idx_trade_partner_company_type` (`company_id`,`partner_type`,`active`),
-  KEY `idx_trade_partner_company_created_by` (`company_id`,`created_by`)
+CREATE TABLE tb_inspection_item_result (
+    item_result_id BIGINT NOT NULL AUTO_INCREMENT,
+    inspection_id BIGINT NOT NULL,
+    item_id BIGINT NULL,
+    item_name_snapshot VARCHAR(150) NOT NULL,
+    result ENUM('PASS', 'FAIL', 'WARN', 'NA') NOT NULL,
+    value_text VARCHAR(1000) NULL,
+    value_number DECIMAL(15, 4) NULL,
+    selected_option_id BIGINT NULL,
+    selected_option_label_snapshot VARCHAR(150) NULL,
+    selected_option_value_snapshot VARCHAR(150) NULL,
+    memo VARCHAR(1000) NULL,
+    PRIMARY KEY (item_result_id),
+    INDEX idx_inspection_item_result_inspection (inspection_id),
+    INDEX idx_inspection_item_result_item (item_id),
+    INDEX idx_inspection_item_result_selected_option (selected_option_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

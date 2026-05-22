@@ -2,7 +2,7 @@ param(
     [ValidateSet("bootstrap", "full")]
     [string] $Mode = "bootstrap",
 
-    [ValidateSet("none", "company", "member")]
+    [ValidateSet("none", "company", "member", "auth")]
     [string] $Feature = "none",
 
     [switch] $FixGitignore,
@@ -11,7 +11,7 @@ param(
 
     [switch] $RunDb,
 
-    [ValidateSet("none", "company", "member")]
+    [ValidateSet("none", "company", "member", "auth")]
     [string] $DbFeature = "none",
 
     [switch] $CheckPort,
@@ -473,6 +473,86 @@ function Test-MemberFeature {
     Add-Result "INFO" "MEMBER_FEATURE" "Member feature checks completed."
 }
 
+function Test-AuthFeature {
+    Test-PathRequired "docs/features/auth.md" "AUTH_FEATURE_DOC" "Keep docs/features/auth.md as the auth feature rule source."
+    Test-PathRequired "src/main/java/com/pcs/domain/auth/api/AuthApiController.java" "AUTH_API" "Expose login, refresh, logout, and me APIs in auth/api."
+    Test-PathRequired "src/main/java/com/pcs/domain/auth/dto/request/WorkspaceLoginRequest.java" "AUTH_LOGIN_REQUEST" "Keep workspace login request DTO with validation."
+    Test-PathRequired "src/main/java/com/pcs/domain/auth/dto/response/LoginResponse.java" "AUTH_LOGIN_RESPONSE" "Keep login response DTO."
+    Test-PathRequired "src/main/java/com/pcs/domain/auth/facade/AuthFacade.java" "AUTH_FACADE" "Keep auth use case flow in auth/facade."
+    Test-PathRequired "src/main/java/com/pcs/domain/auth/service/AuthService.java" "AUTH_SERVICE" "Keep auth DB validation and token persistence in auth/service."
+    Test-PathRequired "src/main/java/com/pcs/domain/auth/mapper/AuthMapper.java" "AUTH_MAPPER" "Keep MyBatis mapper interface for auth persistence."
+    Test-PathRequired "src/main/resources/mapper/auth/AuthMapper.xml" "AUTH_MAPPER_XML" "Keep MyBatis mapper XML for auth persistence."
+    Test-PathRequired "src/main/java/com/pcs/global/jwt/JwtTokenProvider.java" "AUTH_JWT_PROVIDER" "Keep JWT creation and validation in global/jwt."
+
+    $controller = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/auth/api/AuthApiController.java"
+    if (Test-Path $controller) {
+        $controllerContent = Get-Content -Raw $controller
+        foreach ($pattern in @("@RestController", '@RequestMapping\("/api"\)', '@PostMapping\("/workspaces/login"\)', '@PostMapping\("/auth/refresh"\)', '@PostMapping\("/auth/logout"\)', '@GetMapping\("/workspaces/\{companyCode\}/me"\)', "ApiResultDto", "ResponseCookie")) {
+            if ($controllerContent -notmatch $pattern) {
+                Add-Result "FAIL" "AUTH_CONTROLLER_PATTERN" "AuthApiController is missing required pattern: $pattern" "Keep auth API shape aligned with docs/features/auth.md."
+            }
+        }
+        if ($controllerContent -match "Service|Mapper") {
+            Add-Result "FAIL" "AUTH_CONTROLLER_FACADE_ONLY" "AuthApiController directly references Service or Mapper." "Controller must call Facade only."
+        }
+    }
+
+    $facade = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/auth/facade/AuthFacade.java"
+    if (Test-Path $facade) {
+        $facadeContent = Get-Content -Raw $facade
+        foreach ($pattern in @("@Transactional", "loginWorkspace", "refresh", "logout", "findMe")) {
+            if ($facadeContent -notmatch $pattern) {
+                Add-Result "FAIL" "AUTH_FACADE_PATTERN" "AuthFacade is missing required pattern: $pattern" "Keep auth use cases transactional where DB state changes."
+            }
+        }
+    }
+
+    $service = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/auth/service/AuthService.java"
+    if (Test-Path $service) {
+        $serviceContent = Get-Content -Raw $service
+        foreach ($pattern in @("PasswordEncoder", "matches", "insertLoginHistory", "recordLoginSuccess", "recordLoginFailure", "SHA-256", "hashRefreshToken", "AUTH_WORKSPACE_MISMATCH")) {
+            if ($serviceContent -notmatch $pattern) {
+                Add-Result "FAIL" "AUTH_SERVICE_PATTERN" "AuthService is missing required pattern: $pattern" "Keep password verification, login history, and refresh token hash handling."
+            }
+        }
+    }
+
+    $jwtProvider = Join-Path $ProjectRoot "src/main/java/com/pcs/global/jwt/JwtTokenProvider.java"
+    if (Test-Path $jwtProvider) {
+        $jwtContent = Get-Content -Raw $jwtProvider
+        foreach ($pattern in @("HmacSHA256", "companyId", "companyCode", "memberId", "tokenType", "exp")) {
+            if ($jwtContent -notmatch $pattern) {
+                Add-Result "FAIL" "AUTH_JWT_PATTERN" "JwtTokenProvider is missing required JWT claim/signing pattern: $pattern" "Access token must include workspace/member claims and HS256 signature."
+            }
+        }
+    }
+
+    $mapperXml = Join-Path $ProjectRoot "src/main/resources/mapper/auth/AuthMapper.xml"
+    if (Test-Path $mapperXml) {
+        $mapperXmlContent = Get-Content -Raw $mapperXml
+        if ($mapperXmlContent -notmatch 'namespace="com\.pcs\.domain\.auth\.mapper\.AuthMapper"') {
+            Add-Result "FAIL" "AUTH_MAPPER_NAMESPACE" "AuthMapper.xml namespace does not match AuthMapper FQCN." "Match XML namespace to mapper interface."
+        }
+        foreach ($column in @("tb_auth_refresh_token", "refresh_token_hash", "token_family_id", "tb_auth_login_history", "login_result", "last_login_at", "login_failed_count", "locked_until_at")) {
+            if ($mapperXmlContent -notmatch $column) {
+                Add-Result "FAIL" "AUTH_MAPPER_COLUMN_$($column.ToUpper())" "AuthMapper.xml does not use $column." "Keep required auth DB columns in Mapper XML."
+            }
+        }
+    }
+
+    $schema = Join-Path $ProjectRoot "docs/sql/pcs-schema-ddl.sql"
+    if (Test-Path $schema) {
+        $schemaContent = Get-Content -Raw $schema
+        foreach ($pattern in @("tb_auth_refresh_token", "tb_auth_login_history", "login_failed_count", "locked_until_at", "uk_auth_refresh_token_hash")) {
+            if ($schemaContent -notmatch $pattern) {
+                Add-Result "FAIL" "AUTH_SCHEMA_$($pattern.ToUpper())" "Schema is missing $pattern." "Keep auth tables and member login tracking columns in DDL."
+            }
+        }
+    }
+
+    Add-Result "INFO" "AUTH_FEATURE" "Auth feature checks completed."
+}
+
 function Get-DbConfig {
     $dbUrl = $env:DB_URL
     $dbUser = $env:DB_USER
@@ -605,6 +685,8 @@ public class PcsHarnessDbCheck {
                     checkCompanyDb();
                 } else if ("member".equals(normalized)) {
                     checkMemberDb();
+                } else if ("auth".equals(normalized)) {
+                    checkAuthDb();
                 } else {
                     fail("DB_CHECK_UNKNOWN", "Unknown DB check: " + normalized);
                 }
@@ -626,6 +708,8 @@ public class PcsHarnessDbCheck {
         String[] requiredTables = {
             "tb_company",
             "tb_member",
+            "tb_auth_refresh_token",
+            "tb_auth_login_history",
             "tb_trade_partner",
             "tb_part_category",
             "tb_pc_part",
@@ -648,6 +732,8 @@ public class PcsHarnessDbCheck {
 
         String[] companyOwnedTables = {
             "tb_member",
+            "tb_auth_refresh_token",
+            "tb_auth_login_history",
             "tb_trade_partner",
             "tb_part_category",
             "tb_pc_part",
@@ -671,12 +757,21 @@ public class PcsHarnessDbCheck {
         requireColumn("tb_member", "owner_slot");
         requireColumn("tb_member", "password_hash");
         requireColumn("tb_member", "password_status");
+        requireColumn("tb_member", "login_failed_count");
+        requireColumn("tb_member", "locked_until_at");
+        requireColumn("tb_member", "last_login_ip");
+        requireColumn("tb_member", "last_login_user_agent");
+        requireColumn("tb_auth_refresh_token", "refresh_token_hash");
+        requireColumn("tb_auth_refresh_token", "token_family_id");
+        requireColumn("tb_auth_refresh_token", "expires_at");
+        requireColumn("tb_auth_login_history", "login_result");
 
         requireConstraint("tb_company", "uk_company_code");
         requireConstraint("tb_company", "uk_company_business_registration_no");
         requireConstraint("tb_member", "uk_member_company_login");
         requireConstraint("tb_member", "uk_member_company_owner");
         requireConstraint("tb_member", "chk_member_owner_slot");
+        requireConstraint("tb_auth_refresh_token", "uk_auth_refresh_token_hash");
 
         pass("CHECKDB_SCHEMA", "Common DB preflight checks completed.");
     }
@@ -784,6 +879,82 @@ public class PcsHarnessDbCheck {
         }
     }
 
+    private static void checkAuthDb() throws SQLException {
+        requireColumn("tb_member", "last_login_at");
+        requireColumn("tb_member", "login_failed_count");
+        requireColumn("tb_member", "locked_until_at");
+        requireColumn("tb_member", "last_login_ip");
+        requireColumn("tb_member", "last_login_user_agent");
+        requireColumn("tb_auth_refresh_token", "company_id");
+        requireColumn("tb_auth_refresh_token", "member_id");
+        requireColumn("tb_auth_refresh_token", "refresh_token_hash");
+        requireColumn("tb_auth_refresh_token", "token_family_id");
+        requireColumn("tb_auth_refresh_token", "expires_at");
+        requireColumn("tb_auth_refresh_token", "revoked_at");
+        requireColumn("tb_auth_refresh_token", "revoked_reason");
+        requireColumn("tb_auth_refresh_token", "replaced_by_token_id");
+        requireColumn("tb_auth_login_history", "company_code_snapshot");
+        requireColumn("tb_auth_login_history", "login_id_snapshot");
+        requireColumn("tb_auth_login_history", "login_result");
+        requireConstraint("tb_auth_refresh_token", "uk_auth_refresh_token_hash");
+
+        boolean originalAutoCommit = connection.getAutoCommit();
+        connection.setAutoCommit(false);
+        try {
+            long companyId = insertCompany("PCS Harness Auth Company", "pcs-harness-auth-" + runSuffix, null, null, "555-00-" + runSuffix.substring(Math.max(0, runSuffix.length() - 5)));
+            long memberId = insertMember(companyId, "auth-" + runSuffix, "Harness Auth", "ADMIN", null, "ACTIVE");
+            updateMemberLoginSuccess(companyId, memberId);
+            String refreshHash = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+            long tokenId = insertRefreshToken(companyId, memberId, refreshHash, "11111111-1111-1111-1111-111111111111");
+            insertLoginHistory(companyId, memberId, "pcs-harness-auth-" + runSuffix, "auth-" + runSuffix, "SUCCESS");
+
+            int loginUpdated = queryInt(
+                "SELECT COUNT(*) FROM tb_member WHERE company_id = ? AND member_id = ? AND last_login_at IS NOT NULL AND login_failed_count = 0",
+                companyId,
+                memberId
+            );
+            if (loginUpdated == 1) {
+                pass("AUTH_MEMBER_LOGIN_STATE", "Member login state columns can be updated.");
+            } else {
+                fail("AUTH_MEMBER_LOGIN_STATE", "Member login state columns were not updated as expected.");
+            }
+
+            int refreshCount = queryInt(
+                "SELECT COUNT(*) FROM tb_auth_refresh_token WHERE company_id = ? AND member_id = ? AND token_id = ? AND revoked_at IS NULL",
+                companyId,
+                memberId,
+                tokenId
+            );
+            if (refreshCount == 1) {
+                pass("AUTH_REFRESH_TOKEN_SAVED", "Refresh token hash row is saved.");
+            } else {
+                fail("AUTH_REFRESH_TOKEN_SAVED", "Refresh token hash row was not saved.");
+            }
+
+            expectSqlFailure("AUTH_REFRESH_TOKEN_HASH_UNIQUE", new SqlAction() {
+                public void run() throws SQLException {
+                    insertRefreshToken(companyId, memberId, refreshHash, "22222222-2222-2222-2222-222222222222");
+                }
+            });
+
+            int historyCount = queryInt(
+                "SELECT COUNT(*) FROM tb_auth_login_history WHERE company_id = ? AND member_id = ? AND login_result = 'SUCCESS'",
+                companyId,
+                memberId
+            );
+            if (historyCount == 1) {
+                pass("AUTH_LOGIN_HISTORY_SAVED", "Login history row is saved.");
+            } else {
+                fail("AUTH_LOGIN_HISTORY_SAVED", "Expected one login history row but found " + historyCount + ".");
+            }
+
+            pass("AUTH_DB_ROLLBACK_SCOPE", "Auth DB scenario was executed inside a rollback transaction.");
+        } finally {
+            connection.rollback();
+            connection.setAutoCommit(originalAutoCommit);
+        }
+    }
+
     private static long insertCompany(String name, String code, String email, String phone, String businessNo) throws SQLException {
         String sql = "INSERT INTO tb_company (company_name, company_code, representative_email, representative_phone, business_registration_no, active) VALUES (?, ?, ?, ?, ?, TRUE)";
         try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -824,6 +995,44 @@ public class PcsHarnessDbCheck {
             }
         }
         throw new SQLException("Failed to read generated member_id.");
+    }
+
+    private static void updateMemberLoginSuccess(long companyId, long memberId) throws SQLException {
+        String sql = "UPDATE tb_member SET last_login_at = CURRENT_TIMESTAMP(6), login_failed_count = 0, locked_until_at = NULL, last_login_ip = '127.0.0.1', last_login_user_agent = 'pcs-harness' WHERE company_id = ? AND member_id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, companyId);
+            statement.setLong(2, memberId);
+            statement.executeUpdate();
+        }
+    }
+
+    private static long insertRefreshToken(long companyId, long memberId, String refreshTokenHash, String tokenFamilyId) throws SQLException {
+        String sql = "INSERT INTO tb_auth_refresh_token (company_id, member_id, refresh_token_hash, token_family_id, expires_at, created_ip, created_user_agent) VALUES (?, ?, ?, ?, DATE_ADD(CURRENT_TIMESTAMP(6), INTERVAL 14 DAY), '127.0.0.1', 'pcs-harness')";
+        try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            statement.setLong(1, companyId);
+            statement.setLong(2, memberId);
+            statement.setString(3, refreshTokenHash);
+            statement.setString(4, tokenFamilyId);
+            statement.executeUpdate();
+            try (ResultSet keys = statement.getGeneratedKeys()) {
+                if (keys.next()) {
+                    return keys.getLong(1);
+                }
+            }
+        }
+        throw new SQLException("Failed to read generated token_id.");
+    }
+
+    private static void insertLoginHistory(long companyId, long memberId, String companyCode, String loginId, String loginResult) throws SQLException {
+        String sql = "INSERT INTO tb_auth_login_history (company_id, member_id, company_code_snapshot, login_id_snapshot, login_result, login_ip, user_agent) VALUES (?, ?, ?, ?, ?, '127.0.0.1', 'pcs-harness')";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, companyId);
+            statement.setLong(2, memberId);
+            statement.setString(3, companyCode);
+            statement.setString(4, loginId);
+            statement.setString(5, loginResult);
+            statement.executeUpdate();
+        }
     }
 
     private static void requireTable(String tableName) throws SQLException {
@@ -1110,6 +1319,10 @@ if ($Feature -eq "company") {
 
 if ($Feature -eq "member") {
     Test-MemberFeature
+}
+
+if ($Feature -eq "auth") {
+    Test-AuthFeature
 }
 
 Invoke-DbChecks

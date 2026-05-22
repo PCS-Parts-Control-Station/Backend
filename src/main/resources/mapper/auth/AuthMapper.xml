@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pcs.domain.auth.mapper.AuthMapper">
+
+    <select id="findLoginMember" resultType="com.pcs.domain.auth.entity.AuthMember">
+        SELECT
+            c.company_id,
+            c.company_code,
+            c.active AS company_active,
+            m.member_id,
+            m.login_id,
+            m.password_hash,
+            m.name,
+            m.role,
+            m.password_status,
+            m.temp_password_expires_at,
+            m.active,
+            m.login_failed_count,
+            m.locked_until_at
+        FROM tb_company c
+        JOIN tb_member m
+            ON m.company_id = c.company_id
+        WHERE c.company_code = #{companyCode}
+          AND m.login_id = #{loginId}
+        LIMIT 1
+    </select>
+
+    <select id="findSessionMember" resultType="com.pcs.domain.auth.entity.AuthMember">
+        SELECT
+            c.company_id,
+            c.company_code,
+            c.active AS company_active,
+            m.member_id,
+            m.login_id,
+            m.password_hash,
+            m.name,
+            m.role,
+            m.password_status,
+            m.temp_password_expires_at,
+            m.active,
+            m.login_failed_count,
+            m.locked_until_at
+        FROM tb_company c
+        JOIN tb_member m
+            ON m.company_id = c.company_id
+        WHERE c.company_id = #{companyId}
+          AND m.member_id = #{memberId}
+        LIMIT 1
+    </select>
+
+    <update id="recordLoginFailure">
+        UPDATE tb_member
+        SET login_failed_count = login_failed_count + 1,
+            locked_until_at = #{lockedUntilAt}
+        WHERE company_id = #{companyId}
+          AND member_id = #{memberId}
+    </update>
+
+    <update id="recordLoginSuccess">
+        UPDATE tb_member
+        SET last_login_at = CURRENT_TIMESTAMP(6),
+            login_failed_count = 0,
+            locked_until_at = NULL,
+            last_login_ip = #{lastLoginIp},
+            last_login_user_agent = #{lastLoginUserAgent}
+        WHERE company_id = #{companyId}
+          AND member_id = #{memberId}
+    </update>
+
+    <insert id="insertLoginHistory">
+        INSERT INTO tb_auth_login_history (
+            company_id,
+            member_id,
+            company_code_snapshot,
+            login_id_snapshot,
+            login_result,
+            failure_reason,
+            login_ip,
+            user_agent
+        ) VALUES (
+            #{companyId},
+            #{memberId},
+            #{companyCodeSnapshot},
+            #{loginIdSnapshot},
+            #{loginResult},
+            #{failureReason},
+            #{loginIp},
+            #{userAgent}
+        )
+    </insert>
+
+    <insert id="insertRefreshToken" parameterType="com.pcs.domain.auth.entity.AuthRefreshToken"
+            useGeneratedKeys="true" keyProperty="tokenId">
+        INSERT INTO tb_auth_refresh_token (
+            company_id,
+            member_id,
+            refresh_token_hash,
+            token_family_id,
+            expires_at,
+            created_ip,
+            created_user_agent
+        ) VALUES (
+            #{companyId},
+            #{memberId},
+            #{refreshTokenHash},
+            #{tokenFamilyId},
+            #{expiresAt},
+            #{createdIp},
+            #{createdUserAgent}
+        )
+    </insert>
+
+    <select id="findRefreshTokenSession" parameterType="string"
+            resultType="com.pcs.domain.auth.entity.AuthRefreshTokenSession">
+        SELECT
+            t.token_id,
+            t.company_id,
+            c.company_code,
+            c.active AS company_active,
+            t.member_id,
+            m.login_id,
+            m.name,
+            m.role,
+            m.password_status,
+            m.active AS member_active,
+            t.token_family_id,
+            t.expires_at,
+            t.revoked_at
+        FROM tb_auth_refresh_token t
+        JOIN tb_company c
+            ON c.company_id = t.company_id
+        JOIN tb_member m
+            ON m.company_id = t.company_id
+           AND m.member_id = t.member_id
+        WHERE t.refresh_token_hash = #{refreshTokenHash}
+        LIMIT 1
+    </select>
+
+    <update id="revokeRefreshToken">
+        UPDATE tb_auth_refresh_token
+        SET revoked_at = CURRENT_TIMESTAMP(6),
+            revoked_reason = #{revokedReason},
+            replaced_by_token_id = #{replacedByTokenId}
+        WHERE token_id = #{tokenId}
+          AND revoked_at IS NULL
+    </update>
+
+</mapper>

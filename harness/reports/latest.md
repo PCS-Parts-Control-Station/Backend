@@ -1,13 +1,13 @@
 ﻿# PCS Harness Report
 
 - Mode: bootstrap
-- Feature: company
+- Feature: auth
 - RunDb: False
 - DbFeature: none
-- GeneratedAt: 2026-05-21 14:33:21
+- GeneratedAt: 2026-05-22 15:45:29
 - FAIL: 0
 - WARN: 0
-- INFO: 4
+- INFO: 5
 
 ## FAIL
 
@@ -22,5 +22,6 @@
 1. [GITIGNORE_REQUIRED_RULES] .gitignore contains required rules.
 2. [JAVA_17_REQUIRED] Java 17 or later is available.
 3. [JS_SYNTAX] JS syntax check passed.
-4. [COMPANY_FEATURE] Company feature checks completed.
+4. [AUTH_FEATURE] Auth feature checks completed.
+5. [COMPILE_JAVA] compileJava passed.
 
