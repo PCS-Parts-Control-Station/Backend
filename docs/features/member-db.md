@@ -28,8 +28,13 @@ role
 owner_slot
 password_status
 temp_password_expires_at
+password_changed_at
 active
 last_login_at
+login_failed_count
+locked_until_at
+last_login_ip
+last_login_user_agent
 created_by
 created_at
 updated_at
@@ -66,6 +71,15 @@ STAFF:
 - DB에는 원문 비밀번호를 저장하지 않는다.
 - DB 컬럼은 `password_hash`이다.
 - 응답 DTO로 `password_hash`를 노출하지 않는다.
+- 비밀번호 변경 시각은 `password_changed_at`에 저장한다.
+- 임시 비밀번호 만료 시각은 `temp_password_expires_at`에 저장한다.
+
+## 로그인 보안 기준
+
+- 로그인 실패 횟수는 `login_failed_count`에 저장한다.
+- 로그인 잠금 해제 시각은 `locked_until_at`에 저장한다.
+- 로그인 성공 시 `last_login_at`, `last_login_ip`, `last_login_user_agent`를 갱신한다.
+- 계정 잠금 여부는 `locked_until_at`이 현재 시각보다 미래인지로 판단한다.
 
 ## 실패 시나리오
 

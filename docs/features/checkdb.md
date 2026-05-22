@@ -30,6 +30,8 @@ pcs123#
 ```text
 tb_company
 tb_member
+tb_auth_refresh_token
+tb_auth_login_history
 tb_trade_partner
 tb_part_category
 tb_pc_part
@@ -52,6 +54,8 @@ tb_inspection_item_result
 
 ```text
 tb_member.company_id
+tb_auth_refresh_token.company_id
+tb_auth_login_history.company_id
 tb_trade_partner.company_id
 tb_part_category.company_id
 tb_pc_part.company_id
@@ -86,6 +90,7 @@ tb_company.uk_company_business_registration_no
 tb_member.uk_member_company_login
 tb_member.uk_member_company_owner
 tb_member.chk_member_owner_slot
+tb_auth_refresh_token.uk_auth_refresh_token_hash
 ```
 
 ## 하네스 기준
