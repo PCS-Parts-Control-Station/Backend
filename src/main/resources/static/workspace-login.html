@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PCS 업체 작업공간 로그인 화면입니다.">
+    <title>PCS | 업체 로그인</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/workspace-login.css?20260522_2">
+</head>
+<body>
+<header class="site-header">
+    <div class="header-inner">
+        <a class="brand" href="/" aria-label="PCS 메인">
+            <img class="brand-mark" src="/images/parts-control-station-icon.svg" alt="" width="38" height="38">
+            <span class="brand-text">
+                <strong>PCS</strong>
+                <small>Parts Control Station</small>
+            </span>
+        </a>
+        <nav class="header-actions" aria-label="주요 이동">
+            <a class="header-link" href="/">메인</a>
+            <a class="btn btn-secondary" href="/company/register">회사 등록</a>
+        </nav>
+    </div>
+</header>
+
+<main class="login-page">
+    <section class="login-hero" aria-labelledby="login-title">
+        <p class="eyebrow">업체 로그인</p>
+        <h1 id="login-title">업체 작업공간으로 접속합니다.</h1>
+        <p id="login-description">
+            회사에서 받은 계정으로 로그인하면 부품, 입고, 검수, 출고 업무를 바로 이어서 처리할 수 있습니다.
+        </p>
+    </section>
+
+    <section class="login-layout" aria-label="업체 로그인 입력">
+        <form class="login-form" id="workspaceLoginForm" novalidate>
+            <div class="workspace-chip" id="workspaceChip" hidden>
+                <span>접속 중인 업체 코드</span>
+                <strong id="workspaceCodeText">company-code</strong>
+            </div>
+
+            <div class="field-stack">
+                <label class="field" id="companyCodeField">
+                    <span>업체 코드</span>
+                    <input id="companyCode" name="companyCode" type="text" placeholder="예: seoul-parts" autocomplete="organization">
+                    <small>회사 관리자에게 받은 업체 코드를 입력하세요.</small>
+                </label>
+
+                <label class="field">
+                    <span>아이디</span>
+                    <input id="loginId" name="loginId" type="text" placeholder="예: admin01" autocomplete="username" required>
+                </label>
+
+                <label class="field">
+                    <span>비밀번호</span>
+                    <input id="password" name="password" type="password" placeholder="비밀번호 입력" autocomplete="current-password" required>
+                </label>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn-primary" id="loginButton" type="submit">업무 페이지로 이동</button>
+            </div>
+            <p class="form-message" id="loginMessage" role="status" aria-live="polite"></p>
+        </form>
+
+        <aside class="login-guide" aria-labelledby="guide-title">
+            <h2 id="guide-title">필요한 정보만 입력하면 됩니다.</h2>
+
+            <div class="guide-card is-active">
+                <strong id="currentAccessTitle">업체 코드를 입력해야 합니다.</strong>
+                <p id="currentAccessDescription">회사 관리자에게 받은 업체 코드, 아이디, 비밀번호를 입력하세요.</p>
+            </div>
+
+            <div class="guide-card">
+                <strong>업무 대시보드</strong>
+                <p>부품 재고, 입고, 검수, 출고, 이력 관리 메뉴를 이어서 사용할 수 있습니다.</p>
+            </div>
+
+            <div class="guide-note">
+                <strong>로그인이 안 되나요?</strong>
+                <p>업체 코드, 아이디, 임시 비밀번호는 회사 관리자에게 확인하세요.</p>
+            </div>
+        </aside>
+    </section>
+</main>
+
+<script src="/js/workspace-login.js?20260522_2"></script>
+</body>
+</html>
