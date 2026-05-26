@@ -229,7 +229,7 @@ CREATE TABLE tb_stock_document (
     processed_by BIGINT NOT NULL,
     created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     PRIMARY KEY (document_id),
-    CONSTRAINT uk_stock_document_company_document_no UNIQUE (company_id, document_no),
+    CONSTRAINT uk_stock_document_document_no UNIQUE (document_no),
     CONSTRAINT uk_stock_document_company_document_id UNIQUE (company_id, document_id),
     INDEX idx_stock_document_company_partner (company_id, partner_id),
     INDEX idx_stock_document_company_processed_by (company_id, processed_by),

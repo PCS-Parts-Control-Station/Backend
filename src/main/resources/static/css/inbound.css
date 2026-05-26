@@ -14,6 +14,17 @@
     grid-template-columns: minmax(220px, 1fr) minmax(160px, 0.55fr) 130px auto;
 }
 
+.created-document-notice {
+    margin-bottom: 16px;
+    padding: 13px 16px;
+    border: 1px solid rgba(37, 99, 235, 0.18);
+    border-radius: var(--radius);
+    background: var(--blue-soft, #eff6ff);
+    color: var(--blue, #2563eb);
+    font-size: 14px;
+    font-weight: 800;
+}
+
 .inbound-table {
     display: block;
     overflow-x: auto;
@@ -34,6 +45,11 @@
     grid-template-columns: 136px minmax(220px, 1fr) 64px 72px 104px 124px;
     gap: 12px;
     min-width: 820px;
+}
+
+.inbound-row.is-created {
+    border-color: rgba(37, 99, 235, 0.24);
+    background: var(--primary-faint, #eff6ff);
 }
 
 .cell-stack {
@@ -74,7 +90,47 @@
     justify-self: end;
 }
 
-.register-fields,
+.register-card h2,
+.submit-panel h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-step {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 22px;
+    height: 22px;
+    border: 1px solid rgba(37, 99, 235, 0.18);
+    border-radius: 999px;
+    background: var(--blue-soft, #eff6ff);
+    color: var(--blue, #2563eb);
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.register-fields {
+    display: grid;
+    grid-template-columns: minmax(180px, 0.55fr) minmax(260px, 1fr);
+    gap: 14px;
+    padding: 20px;
+}
+
+.field-message {
+    min-height: 18px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.4;
+}
+
+.field-message.is-error {
+    color: var(--danger, #b42318);
+}
+
 .line-entry-grid {
     display: grid;
     grid-template-columns: minmax(180px, 0.7fr) minmax(160px, 0.45fr) minmax(260px, 1fr);
@@ -90,6 +146,17 @@
     display: grid;
     gap: 14px;
     padding: 20px;
+}
+
+.line-empty-state {
+    margin: 0;
+    padding: 18px;
+    border: 1px dashed var(--line-strong);
+    border-radius: var(--radius);
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 800;
+    text-align: center;
 }
 
 .part-search-panel {
@@ -143,6 +210,19 @@
     color: var(--muted);
     font-size: 12px;
     font-weight: 800;
+}
+
+.part-search-message {
+    margin: 0;
+    padding: 11px 14px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.part-search-message.is-error {
+    color: var(--danger, #b42318);
 }
 
 .part-result-row {
@@ -363,6 +443,17 @@
     margin-top: 6px;
     color: var(--muted);
     font-size: 14px;
+}
+
+.submit-panel .submit-message {
+    min-height: 20px;
+    color: var(--cyan-dark, #0f766e);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.submit-panel .submit-message.is-error {
+    color: #8c5a65;
 }
 
 .btn-compact {

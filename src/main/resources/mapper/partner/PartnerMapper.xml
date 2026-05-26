@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pcs.domain.partner.mapper.PartnerMapper">
+
+    <select id="isCompanyActive" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM tb_company
+            WHERE company_id = #{companyId}
+              AND active = TRUE
+        )
+    </select>
+
+    <select id="searchPartners" resultType="com.pcs.domain.partner.dto.response.SearchPartnerResponse">
+        SELECT
+            partner_id,
+            partner_name,
+            partner_type,
+            partner_role,
+            phone,
+            active
+        FROM tb_trade_partner
+        WHERE company_id = #{companyId}
+        <if test="active != null">
+          AND active = #{active}
+        </if>
+        <if test="partnerRole != null">
+          AND (
+              partner_role = #{partnerRole}
+              OR partner_role = 'BOTH'
+          )
+        </if>
+        <if test="keyword != null and keyword != ''">
+          AND (
+              partner_name LIKE CONCAT('%', #{keyword}, '%')
+              OR phone LIKE CONCAT('%', #{keyword}, '%')
+              OR email LIKE CONCAT('%', #{keyword}, '%')
+          )
+        </if>
+        ORDER BY partner_name ASC, partner_id ASC
+        LIMIT #{limit}
+    </select>
+
+</mapper>
