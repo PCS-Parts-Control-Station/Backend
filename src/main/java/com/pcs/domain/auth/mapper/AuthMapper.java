@@ -55,4 +55,11 @@ public interface AuthMapper {
             @Param("revokedReason") RefreshTokenRevokedReason revokedReason,
             @Param("replacedByTokenId") Long replacedByTokenId
     );
+
+    void revokeRefreshTokenFamily(
+            @Param("companyId") Long companyId,
+            @Param("memberId") Long memberId,
+            @Param("tokenFamilyId") String tokenFamilyId,
+            @Param("revokedReason") RefreshTokenRevokedReason revokedReason
+    );
 }

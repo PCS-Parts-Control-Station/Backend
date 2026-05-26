@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS tb_auth_refresh_token (
     expires_at DATETIME(6) NOT NULL,
     last_used_at DATETIME(6) NULL,
     revoked_at DATETIME(6) NULL,
-    revoked_reason ENUM('LOGOUT', 'ROTATED', 'REUSE_DETECTED', 'ADMIN_REVOKED') NULL,
+    revoked_reason ENUM('LOGOUT', 'ROTATED', 'EXPIRED', 'REUSE_DETECTED', 'ADMIN_REVOKED') NULL,
     replaced_by_token_id BIGINT NULL,
     created_ip VARCHAR(45) NULL,
     created_user_agent VARCHAR(500) NULL,
@@ -45,6 +45,9 @@ CREATE TABLE IF NOT EXISTS tb_auth_refresh_token (
     INDEX idx_auth_refresh_family (company_id, member_id, token_family_id),
     INDEX idx_auth_refresh_replaced_by (replaced_by_token_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE tb_auth_refresh_token
+    MODIFY revoked_reason ENUM('LOGOUT', 'ROTATED', 'EXPIRED', 'REUSE_DETECTED', 'ADMIN_REVOKED') NULL;
 
 CREATE TABLE IF NOT EXISTS tb_auth_login_history (
     history_id BIGINT NOT NULL AUTO_INCREMENT,

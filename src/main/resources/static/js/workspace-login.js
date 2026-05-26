@@ -151,7 +151,7 @@ workspaceLoginForm?.addEventListener('submit', async (event) => {
         const nextCompanyCode = responseData.companyCode || companyCode;
 
         if (responseData.accessToken) {
-            window.localStorage.setItem('pcsAccessToken', responseData.accessToken);
+            window.PcsApi?.setAccessToken(responseData.accessToken);
         }
 
         window.location.href = `/w/${encodeURIComponent(nextCompanyCode)}/dashboard`;

@@ -127,7 +127,8 @@
             m.active AS member_active,
             t.token_family_id,
             t.expires_at,
-            t.revoked_at
+            t.revoked_at,
+            t.revoked_reason
         FROM tb_auth_refresh_token t
         JOIN tb_company c
             ON c.company_id = t.company_id
@@ -144,6 +145,16 @@
             revoked_reason = #{revokedReason},
             replaced_by_token_id = #{replacedByTokenId}
         WHERE token_id = #{tokenId}
+          AND revoked_at IS NULL
+    </update>
+
+    <update id="revokeRefreshTokenFamily">
+        UPDATE tb_auth_refresh_token
+        SET revoked_at = CURRENT_TIMESTAMP(6),
+            revoked_reason = #{revokedReason}
+        WHERE company_id = #{companyId}
+          AND member_id = #{memberId}
+          AND token_family_id = #{tokenFamilyId}
           AND revoked_at IS NULL
     </update>
 
