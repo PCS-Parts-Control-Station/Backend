@@ -2,6 +2,7 @@ package com.pcs.domain.auth.entity;
 
 import com.pcs.domain.member.type.MemberRole;
 import com.pcs.domain.member.type.PasswordStatus;
+import com.pcs.domain.auth.type.RefreshTokenRevokedReason;
 import java.time.LocalDateTime;
 
 public class AuthRefreshTokenSession {
@@ -19,6 +20,7 @@ public class AuthRefreshTokenSession {
     private String tokenFamilyId;
     private LocalDateTime expiresAt;
     private LocalDateTime revokedAt;
+    private RefreshTokenRevokedReason revokedReason;
 
     public Long getTokenId() {
         return tokenId;
@@ -72,11 +74,19 @@ public class AuthRefreshTokenSession {
         return revokedAt;
     }
 
+    public RefreshTokenRevokedReason getRevokedReason() {
+        return revokedReason;
+    }
+
     public boolean isExpired(LocalDateTime now) {
         return expiresAt == null || expiresAt.isBefore(now);
     }
 
     public boolean isRevoked() {
         return revokedAt != null;
+    }
+
+    public boolean isRotated() {
+        return revokedReason == RefreshTokenRevokedReason.ROTATED;
     }
 }

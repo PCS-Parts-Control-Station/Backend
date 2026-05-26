@@ -10,7 +10,7 @@ import com.pcs.domain.auth.type.RefreshTokenRevokedReason;
 import com.pcs.domain.member.type.MemberRole;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
-import com.pcs.global.jwt.JwtClaims;
+import com.pcs.global.security.PcsPrincipal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
@@ -155,11 +155,22 @@ public class AuthService {
 
         AuthRefreshTokenSession session = authMapper.findRefreshTokenSession(hashRefreshToken(rawRefreshToken));
         LocalDateTime now = LocalDateTime.now();
-        if (session == null || session.isRevoked()) {
+        if (session == null) {
+            throw new BusinessException(ErrorCode.AUTH_TOKEN_INVALID);
+        }
+        if (session.isRevoked()) {
+            if (session.isRotated()) {
+                revokeRefreshTokenFamily(
+                        session.getCompanyId(),
+                        session.getMemberId(),
+                        session.getTokenFamilyId(),
+                        RefreshTokenRevokedReason.REUSE_DETECTED
+                );
+            }
             throw new BusinessException(ErrorCode.AUTH_TOKEN_INVALID);
         }
         if (session.isExpired(now)) {
-            revokeRefreshToken(session.getTokenId(), RefreshTokenRevokedReason.REUSE_DETECTED, null);
+            revokeRefreshToken(session.getTokenId(), RefreshTokenRevokedReason.EXPIRED, null);
             throw new BusinessException(ErrorCode.AUTH_TOKEN_EXPIRED);
         }
         if (!session.isCompanyActive()) {
@@ -179,6 +190,15 @@ public class AuthService {
         authMapper.revokeRefreshToken(tokenId, revokedReason, replacedByTokenId);
     }
 
+    public void revokeRefreshTokenFamily(
+            Long companyId,
+            Long memberId,
+            String tokenFamilyId,
+            RefreshTokenRevokedReason revokedReason
+    ) {
+        authMapper.revokeRefreshTokenFamily(companyId, memberId, tokenFamilyId, revokedReason);
+    }
+
     public void revokeRefreshTokenByRawValue(String rawRefreshToken, RefreshTokenRevokedReason revokedReason) {
         if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
             return;
@@ -189,13 +209,13 @@ public class AuthService {
         }
     }
 
-    public SessionMeResponse findCurrentSession(JwtClaims claims, String pathCompanyCode) {
+    public SessionMeResponse findCurrentSession(PcsPrincipal principal, String pathCompanyCode) {
         String normalizedPathCompanyCode = normalizeRequired(pathCompanyCode).toLowerCase();
-        if (!claims.companyCode().equals(normalizedPathCompanyCode)) {
+        if (!principal.companyCode().equals(normalizedPathCompanyCode)) {
             throw new BusinessException(ErrorCode.AUTH_WORKSPACE_MISMATCH);
         }
 
-        AuthMember member = authMapper.findSessionMember(claims.companyId(), claims.memberId());
+        AuthMember member = authMapper.findSessionMember(principal.companyId(), principal.memberId());
         if (member == null) {
             throw new BusinessException(ErrorCode.AUTH_TOKEN_INVALID);
         }

@@ -155,6 +155,25 @@ function Test-JavaVersion {
     } catch {
         Add-Result "FAIL" "JAVA_COMMAND_REQUIRED" "java command is not available." "Install JDK 17 or later and configure PATH/JAVA_HOME."
     }
+
+    if (-not [string]::IsNullOrWhiteSpace($env:JAVA_HOME)) {
+        $javaHomeCommand = Join-Path $env:JAVA_HOME "bin\java.exe"
+        if (-not (Test-Path $javaHomeCommand)) {
+            Add-Result "FAIL" "JAVA_HOME_COMMAND_REQUIRED" "JAVA_HOME does not point to a JDK with bin\java.exe: $env:JAVA_HOME" "Set JAVA_HOME to JDK 17 or later."
+            return
+        }
+
+        try {
+            $javaHomeVersionOutput = (cmd /c "`"$javaHomeCommand`" -version 2>&1") -join "`n"
+            if ($javaHomeVersionOutput -notmatch 'version "17\.|version "18\.|version "19\.|version "2[0-9]\.') {
+                Add-Result "FAIL" "JAVA_HOME_17_REQUIRED" "JAVA_HOME is not Java 17 or later. Output: $javaHomeVersionOutput" "Set JAVA_HOME to JDK 17 or later."
+            } else {
+                Add-Result "INFO" "JAVA_HOME_17_REQUIRED" "JAVA_HOME points to Java 17 or later."
+            }
+        } catch {
+            Add-Result "FAIL" "JAVA_HOME_VERSION_CHECK_FAILED" "Failed to execute JAVA_HOME bin\java.exe." "Set JAVA_HOME to a valid JDK 17 or later."
+        }
+    }
 }
 
 function Test-PortAvailable {
@@ -201,6 +220,9 @@ function Test-ProjectSettings {
         }
         if ($build -notmatch "spring-boot-starter-web") {
             Add-Result "FAIL" "SPRING_WEB_REQUIRED" "spring-boot-starter-web is missing." "Keep web starter for the main page."
+        }
+        if ($build -notmatch "spring-boot-starter-security") {
+            Add-Result "FAIL" "SPRING_SECURITY_REQUIRED" "spring-boot-starter-security is missing." "Use Spring Security for JWT request authentication."
         }
     }
 
@@ -483,6 +505,11 @@ function Test-AuthFeature {
     Test-PathRequired "src/main/java/com/pcs/domain/auth/mapper/AuthMapper.java" "AUTH_MAPPER" "Keep MyBatis mapper interface for auth persistence."
     Test-PathRequired "src/main/resources/mapper/auth/AuthMapper.xml" "AUTH_MAPPER_XML" "Keep MyBatis mapper XML for auth persistence."
     Test-PathRequired "src/main/java/com/pcs/global/jwt/JwtTokenProvider.java" "AUTH_JWT_PROVIDER" "Keep JWT creation and validation in global/jwt."
+    Test-PathRequired "src/main/java/com/pcs/global/security/SecurityConfig.java" "AUTH_SECURITY_CONFIG" "Use Spring Security for API authentication boundaries."
+    Test-PathRequired "src/main/java/com/pcs/global/security/JwtAuthenticationFilter.java" "AUTH_JWT_FILTER" "JWT Authorization header parsing must live in a Security filter."
+    Test-PathRequired "src/main/java/com/pcs/global/security/JwtAuthenticationEntryPoint.java" "AUTH_ENTRY_POINT" "Security authentication failures must return ApiResultDto JSON."
+    Test-PathRequired "src/main/java/com/pcs/global/security/JwtAccessDeniedHandler.java" "AUTH_ACCESS_DENIED_HANDLER" "Security authorization failures must return ApiResultDto JSON."
+    Test-PathRequired "src/main/java/com/pcs/global/security/PcsPrincipal.java" "AUTH_SECURITY_PRINCIPAL" "Authenticated user claims must be exposed through PcsPrincipal."
     Test-PathRequired "src/main/resources/static/js/pcs-api.js" "AUTH_STATIC_API_FETCH" "Keep common fetch wrapper for access token attachment and refresh retry."
 
     $controller = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/auth/api/AuthApiController.java"
@@ -492,6 +519,12 @@ function Test-AuthFeature {
             if ($controllerContent -notmatch $pattern) {
                 Add-Result "FAIL" "AUTH_CONTROLLER_PATTERN" "AuthApiController is missing required pattern: $pattern" "Keep auth API shape aligned with docs/features/auth.md."
             }
+        }
+        if ($controllerContent -notmatch "@AuthenticationPrincipal" -or $controllerContent -notmatch "PcsPrincipal") {
+            Add-Result "FAIL" "AUTH_CONTROLLER_PRINCIPAL" "AuthApiController does not use @AuthenticationPrincipal for authenticated user access." "Do not parse Authorization headers in Controller."
+        }
+        if ($controllerContent -match "AUTHORIZATION|RequestHeader") {
+            Add-Result "FAIL" "AUTH_CONTROLLER_NO_AUTH_HEADER_PARSE" "AuthApiController directly reads Authorization headers." "Move JWT request authentication to global/security."
         }
         if ($controllerContent -match "Service|Mapper") {
             Add-Result "FAIL" "AUTH_CONTROLLER_FACADE_ONLY" "AuthApiController directly references Service or Mapper." "Controller must call Facade only."
@@ -506,12 +539,15 @@ function Test-AuthFeature {
                 Add-Result "FAIL" "AUTH_FACADE_PATTERN" "AuthFacade is missing required pattern: $pattern" "Keep auth use cases transactional where DB state changes."
             }
         }
+        if ($facadeContent -match "parseAccessToken|extractBearerToken|AUTHORIZATION|Authorization") {
+            Add-Result "FAIL" "AUTH_FACADE_NO_AUTH_HEADER_PARSE" "AuthFacade parses JWT or Authorization header directly." "JWT request parsing must live in global/security."
+        }
     }
 
     $service = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/auth/service/AuthService.java"
     if (Test-Path $service) {
         $serviceContent = Get-Content -Raw $service
-        foreach ($pattern in @("PasswordEncoder", "matches", "insertLoginHistory", "recordLoginSuccess", "recordLoginFailure", "SHA-256", "hashRefreshToken", "AUTH_WORKSPACE_MISMATCH")) {
+        foreach ($pattern in @("PasswordEncoder", "matches", "insertLoginHistory", "recordLoginSuccess", "recordLoginFailure", "SHA-256", "hashRefreshToken", "AUTH_WORKSPACE_MISMATCH", "EXPIRED", "REUSE_DETECTED", "revokeRefreshTokenFamily")) {
             if ($serviceContent -notmatch $pattern) {
                 Add-Result "FAIL" "AUTH_SERVICE_PATTERN" "AuthService is missing required pattern: $pattern" "Keep password verification, login history, and refresh token hash handling."
             }
@@ -521,9 +557,29 @@ function Test-AuthFeature {
     $jwtProvider = Join-Path $ProjectRoot "src/main/java/com/pcs/global/jwt/JwtTokenProvider.java"
     if (Test-Path $jwtProvider) {
         $jwtContent = Get-Content -Raw $jwtProvider
-        foreach ($pattern in @("HmacSHA256", "companyId", "companyCode", "memberId", "tokenType", "exp")) {
+        foreach ($pattern in @("HmacSHA256", "companyId", "companyCode", "memberId", "tokenType", "exp", "MessageDigest.isEqual", "SecretKeySpec", "DEFAULT_LOCAL_SECRET", "allowDefaultSecret")) {
             if ($jwtContent -notmatch $pattern) {
                 Add-Result "FAIL" "AUTH_JWT_PATTERN" "JwtTokenProvider is missing required JWT claim/signing pattern: $pattern" "Access token must include workspace/member claims and HS256 signature."
+            }
+        }
+    }
+
+    $securityConfig = Join-Path $ProjectRoot "src/main/java/com/pcs/global/security/SecurityConfig.java"
+    if (Test-Path $securityConfig) {
+        $securityContent = Get-Content -Raw $securityConfig
+        foreach ($pattern in @("SecurityFilterChain", "SessionCreationPolicy.STATELESS", "/api/**", "authenticated", "permitAll", "addFilterBefore")) {
+            if ($securityContent -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "AUTH_SECURITY_CONFIG_PATTERN" "SecurityConfig is missing required pattern: $pattern" "Keep stateless JWT Security configuration."
+            }
+        }
+    }
+
+    $jwtFilter = Join-Path $ProjectRoot "src/main/java/com/pcs/global/security/JwtAuthenticationFilter.java"
+    if (Test-Path $jwtFilter) {
+        $filterContent = Get-Content -Raw $jwtFilter
+        foreach ($pattern in @("OncePerRequestFilter", "Authorization", "Bearer ", "parseAccessToken", "SecurityContextHolder", "UsernamePasswordAuthenticationToken")) {
+            if ($filterContent -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "AUTH_JWT_FILTER_PATTERN" "JwtAuthenticationFilter is missing required pattern: $pattern" "JWT request authentication must be handled by the Security filter."
             }
         }
     }
@@ -533,6 +589,11 @@ function Test-AuthFeature {
         $applicationContent = Get-Content -Raw $application
         if ($applicationContent -notmatch "access-token-expiration-minutes:\s*\$\{PCS_JWT_ACCESS_TOKEN_MINUTES:10\}") {
             Add-Result "FAIL" "AUTH_ACCESS_TOKEN_10_MINUTES" "Default access token expiration is not 10 minutes." "Keep pcs.jwt.access-token-expiration-minutes default as 10."
+        }
+        foreach ($pattern in @("allow-default-secret", "refresh-cookie-secure")) {
+            if ($applicationContent -notmatch $pattern) {
+                Add-Result "FAIL" "AUTH_APPLICATION_SECURITY_SETTING" "application.yaml is missing required JWT security setting: $pattern" "Keep explicit JWT secret and refresh cookie security settings."
+            }
         }
     }
 
@@ -552,7 +613,7 @@ function Test-AuthFeature {
         if ($mapperXmlContent -notmatch 'namespace="com\.pcs\.domain\.auth\.mapper\.AuthMapper"') {
             Add-Result "FAIL" "AUTH_MAPPER_NAMESPACE" "AuthMapper.xml namespace does not match AuthMapper FQCN." "Match XML namespace to mapper interface."
         }
-        foreach ($column in @("tb_auth_refresh_token", "refresh_token_hash", "token_family_id", "tb_auth_login_history", "login_result", "last_login_at", "login_failed_count", "locked_until_at")) {
+        foreach ($column in @("tb_auth_refresh_token", "refresh_token_hash", "token_family_id", "revoked_reason", "tb_auth_login_history", "login_result", "last_login_at", "login_failed_count", "locked_until_at", "revokeRefreshTokenFamily")) {
             if ($mapperXmlContent -notmatch $column) {
                 Add-Result "FAIL" "AUTH_MAPPER_COLUMN_$($column.ToUpper())" "AuthMapper.xml does not use $column." "Keep required auth DB columns in Mapper XML."
             }
@@ -562,7 +623,7 @@ function Test-AuthFeature {
     $schema = Join-Path $ProjectRoot "docs/sql/pcs-schema-ddl.sql"
     if (Test-Path $schema) {
         $schemaContent = Get-Content -Raw $schema
-        foreach ($pattern in @("tb_auth_refresh_token", "tb_auth_login_history", "login_failed_count", "locked_until_at", "uk_auth_refresh_token_hash")) {
+        foreach ($pattern in @("tb_auth_refresh_token", "tb_auth_login_history", "login_failed_count", "locked_until_at", "uk_auth_refresh_token_hash", "EXPIRED")) {
             if ($schemaContent -notmatch $pattern) {
                 Add-Result "FAIL" "AUTH_SCHEMA_$($pattern.ToUpper())" "Schema is missing $pattern." "Keep auth tables and member login tracking columns in DDL."
             }
@@ -912,6 +973,8 @@ public class PcsHarnessDbCheck {
         requireColumn("tb_auth_refresh_token", "revoked_at");
         requireColumn("tb_auth_refresh_token", "revoked_reason");
         requireColumn("tb_auth_refresh_token", "replaced_by_token_id");
+        requireEnumValue("tb_auth_refresh_token", "revoked_reason", "EXPIRED");
+        requireEnumValue("tb_auth_refresh_token", "revoked_reason", "REUSE_DETECTED");
         requireColumn("tb_auth_login_history", "company_code_snapshot");
         requireColumn("tb_auth_login_history", "login_id_snapshot");
         requireColumn("tb_auth_login_history", "login_result");
@@ -948,6 +1011,46 @@ public class PcsHarnessDbCheck {
                 pass("AUTH_REFRESH_TOKEN_SAVED", "Refresh token hash row is saved.");
             } else {
                 fail("AUTH_REFRESH_TOKEN_SAVED", "Refresh token hash row was not saved.");
+            }
+
+            String rotatedHash = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+            long replacementTokenId = insertRefreshToken(companyId, memberId, rotatedHash, "11111111-1111-1111-1111-111111111111");
+            rotateRefreshToken(tokenId, replacementTokenId);
+            int rotatedCount = queryInt(
+                "SELECT COUNT(*) FROM tb_auth_refresh_token WHERE token_id = ? AND revoked_at IS NOT NULL AND revoked_reason = 'ROTATED' AND replaced_by_token_id = ?",
+                tokenId,
+                replacementTokenId
+            );
+            if (rotatedCount == 1) {
+                pass("AUTH_REFRESH_TOKEN_ROTATED", "Refresh token rotation state can be recorded.");
+            } else {
+                fail("AUTH_REFRESH_TOKEN_ROTATED", "Refresh token rotation state was not recorded as expected.");
+            }
+
+            String expiredHash = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc";
+            long expiredTokenId = insertRefreshToken(companyId, memberId, expiredHash, "33333333-3333-3333-3333-333333333333");
+            expireRefreshToken(expiredTokenId);
+            int expiredCount = queryInt(
+                "SELECT COUNT(*) FROM tb_auth_refresh_token WHERE token_id = ? AND revoked_at IS NOT NULL AND revoked_reason = 'EXPIRED'",
+                expiredTokenId
+            );
+            if (expiredCount == 1) {
+                pass("AUTH_REFRESH_TOKEN_EXPIRED", "Expired refresh token state can be recorded.");
+            } else {
+                fail("AUTH_REFRESH_TOKEN_EXPIRED", "Expired refresh token state was not recorded as expected.");
+            }
+
+            String reuseHash = "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd";
+            long reuseTokenId = insertRefreshToken(companyId, memberId, reuseHash, "44444444-4444-4444-4444-444444444444");
+            revokeRefreshTokenFamily(companyId, memberId, "44444444-4444-4444-4444-444444444444");
+            int reuseCount = queryInt(
+                "SELECT COUNT(*) FROM tb_auth_refresh_token WHERE token_id = ? AND revoked_at IS NOT NULL AND revoked_reason = 'REUSE_DETECTED'",
+                reuseTokenId
+            );
+            if (reuseCount == 1) {
+                pass("AUTH_REFRESH_TOKEN_REUSE_DETECTED", "Refresh token family reuse-detected state can be recorded.");
+            } else {
+                fail("AUTH_REFRESH_TOKEN_REUSE_DETECTED", "Refresh token family reuse-detected state was not recorded as expected.");
             }
 
             expectSqlFailure("AUTH_REFRESH_TOKEN_HASH_UNIQUE", new SqlAction() {
@@ -1042,6 +1145,33 @@ public class PcsHarnessDbCheck {
         throw new SQLException("Failed to read generated token_id.");
     }
 
+    private static void rotateRefreshToken(long tokenId, long replacedByTokenId) throws SQLException {
+        String sql = "UPDATE tb_auth_refresh_token SET revoked_at = CURRENT_TIMESTAMP(6), revoked_reason = 'ROTATED', replaced_by_token_id = ? WHERE token_id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, replacedByTokenId);
+            statement.setLong(2, tokenId);
+            statement.executeUpdate();
+        }
+    }
+
+    private static void expireRefreshToken(long tokenId) throws SQLException {
+        String sql = "UPDATE tb_auth_refresh_token SET revoked_at = CURRENT_TIMESTAMP(6), revoked_reason = 'EXPIRED' WHERE token_id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, tokenId);
+            statement.executeUpdate();
+        }
+    }
+
+    private static void revokeRefreshTokenFamily(long companyId, long memberId, String tokenFamilyId) throws SQLException {
+        String sql = "UPDATE tb_auth_refresh_token SET revoked_at = CURRENT_TIMESTAMP(6), revoked_reason = 'REUSE_DETECTED' WHERE company_id = ? AND member_id = ? AND token_family_id = ? AND revoked_at IS NULL";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, companyId);
+            statement.setLong(2, memberId);
+            statement.setString(3, tokenFamilyId);
+            statement.executeUpdate();
+        }
+    }
+
     private static void insertLoginHistory(long companyId, long memberId, String companyCode, String loginId, String loginResult) throws SQLException {
         String sql = "INSERT INTO tb_auth_login_history (company_id, member_id, company_code_snapshot, login_id_snapshot, login_result, login_ip, user_agent) VALUES (?, ?, ?, ?, ?, '127.0.0.1', 'pcs-harness')";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -1078,6 +1208,15 @@ public class PcsHarnessDbCheck {
             pass("DB_CONSTRAINT_" + constraintName.toUpperCase(), tableName + "." + constraintName + " exists.");
         } else {
             fail("DB_CONSTRAINT_" + constraintName.toUpperCase(), tableName + "." + constraintName + " is missing.");
+        }
+    }
+
+    private static void requireEnumValue(String tableName, String columnName, String enumValue) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? AND COLUMN_TYPE LIKE ?";
+        if (queryInt(sql, tableName, columnName, "%" + enumValue + "%") == 1) {
+            pass("DB_ENUM_" + tableName.toUpperCase() + "_" + columnName.toUpperCase() + "_" + enumValue, tableName + "." + columnName + " supports " + enumValue + ".");
+        } else {
+            fail("DB_ENUM_" + tableName.toUpperCase() + "_" + columnName.toUpperCase() + "_" + enumValue, tableName + "." + columnName + " does not support " + enumValue + ".");
         }
     }
 

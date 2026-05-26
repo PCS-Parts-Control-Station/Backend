@@ -118,12 +118,14 @@ static/js/{page}.js
 공통 JS:
 
 ```text
+pcs-api.js
 common-theme.js
-common-api-response.js
-common-auth.js
 common-form.js
 common-navbar.js
 ```
+
+- 인증이 필요한 정적 화면의 API 호출은 `pcs-api.js`를 사용한다.
+- `pcs-api.js`는 access token 첨부, 401 응답 시 refresh 재발급, 원 요청 1회 재시도를 공통 처리한다.
 
 ## PageController 기준
 
@@ -149,7 +151,7 @@ public String parts() {
 ```text
 HTML
 -> page.js
--> fetchJsonWithAuth('/api/**')
+-> PcsApi.request('/api/**')
 -> Controller
 -> Facade
 -> Service

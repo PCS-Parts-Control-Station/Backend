@@ -89,7 +89,7 @@ CREATE TABLE tb_auth_refresh_token (
     expires_at DATETIME(6) NOT NULL,
     last_used_at DATETIME(6) NULL,
     revoked_at DATETIME(6) NULL,
-    revoked_reason ENUM('LOGOUT', 'ROTATED', 'REUSE_DETECTED', 'ADMIN_REVOKED') NULL,
+    revoked_reason ENUM('LOGOUT', 'ROTATED', 'EXPIRED', 'REUSE_DETECTED', 'ADMIN_REVOKED') NULL,
     replaced_by_token_id BIGINT NULL,
     created_ip VARCHAR(45) NULL,
     created_user_agent VARCHAR(500) NULL,
