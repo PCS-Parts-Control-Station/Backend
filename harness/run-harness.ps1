@@ -483,6 +483,7 @@ function Test-AuthFeature {
     Test-PathRequired "src/main/java/com/pcs/domain/auth/mapper/AuthMapper.java" "AUTH_MAPPER" "Keep MyBatis mapper interface for auth persistence."
     Test-PathRequired "src/main/resources/mapper/auth/AuthMapper.xml" "AUTH_MAPPER_XML" "Keep MyBatis mapper XML for auth persistence."
     Test-PathRequired "src/main/java/com/pcs/global/jwt/JwtTokenProvider.java" "AUTH_JWT_PROVIDER" "Keep JWT creation and validation in global/jwt."
+    Test-PathRequired "src/main/resources/static/js/pcs-api.js" "AUTH_STATIC_API_FETCH" "Keep common fetch wrapper for access token attachment and refresh retry."
 
     $controller = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/auth/api/AuthApiController.java"
     if (Test-Path $controller) {
@@ -523,6 +524,24 @@ function Test-AuthFeature {
         foreach ($pattern in @("HmacSHA256", "companyId", "companyCode", "memberId", "tokenType", "exp")) {
             if ($jwtContent -notmatch $pattern) {
                 Add-Result "FAIL" "AUTH_JWT_PATTERN" "JwtTokenProvider is missing required JWT claim/signing pattern: $pattern" "Access token must include workspace/member claims and HS256 signature."
+            }
+        }
+    }
+
+    $application = Join-Path $ProjectRoot "src/main/resources/application.yaml"
+    if (Test-Path $application) {
+        $applicationContent = Get-Content -Raw $application
+        if ($applicationContent -notmatch "access-token-expiration-minutes:\s*\$\{PCS_JWT_ACCESS_TOKEN_MINUTES:10\}") {
+            Add-Result "FAIL" "AUTH_ACCESS_TOKEN_10_MINUTES" "Default access token expiration is not 10 minutes." "Keep pcs.jwt.access-token-expiration-minutes default as 10."
+        }
+    }
+
+    $apiJs = Join-Path $ProjectRoot "src/main/resources/static/js/pcs-api.js"
+    if (Test-Path $apiJs) {
+        $apiJsContent = Get-Content -Raw $apiJs
+        foreach ($pattern in @("pcsAccessToken", "/api/auth/refresh", "Authorization", "Bearer", "retryOnAuthError", "localStorage")) {
+            if ($apiJsContent -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "AUTH_STATIC_API_PATTERN" "pcs-api.js is missing required pattern: $pattern" "Common fetch must attach access token and retry once through refresh."
             }
         }
     }
