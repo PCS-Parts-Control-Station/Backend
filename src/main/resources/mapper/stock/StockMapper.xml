@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pcs.domain.stock.mapper.StockMapper">
+
+    <select id="isCompanyActive" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM tb_company
+            WHERE company_id = #{companyId}
+              AND active = TRUE
+        )
+    </select>
+
+    <select id="findPartner" resultType="com.pcs.domain.stock.entity.StockPartner">
+        SELECT
+            partner_id,
+            partner_role,
+            active
+        FROM tb_trade_partner
+        WHERE company_id = #{companyId}
+          AND partner_id = #{partnerId}
+        LIMIT 1
+    </select>
+
+    <select id="findPart" resultType="com.pcs.domain.stock.entity.StockPart">
+        SELECT
+            part_id,
+            part_code
+        FROM tb_pc_part
+        WHERE company_id = #{companyId}
+          AND part_id = #{partId}
+          AND active = TRUE
+        LIMIT 1
+    </select>
+
+    <select id="existsDocumentNo" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM tb_stock_document
+            WHERE document_no = #{documentNo}
+        )
+    </select>
+
+    <insert id="insertDocument"
+            parameterType="com.pcs.domain.stock.entity.StockDocument"
+            useGeneratedKeys="true"
+            keyProperty="documentId">
+        INSERT INTO tb_stock_document (
+            company_id,
+            partner_id,
+            document_no,
+            document_type,
+            document_status,
+            reason,
+            processed_by
+        ) VALUES (
+            #{companyId},
+            #{partnerId},
+            #{documentNo},
+            #{documentType},
+            #{documentStatus},
+            #{reason},
+            #{processedBy}
+        )
+    </insert>
+
+    <select id="findPartStockQuantityForUpdate" resultType="int">
+        SELECT quantity
+        FROM tb_part_stock
+        WHERE company_id = #{companyId}
+          AND part_id = #{partId}
+        FOR UPDATE
+    </select>
+
+    <insert id="insertPartStock">
+        INSERT INTO tb_part_stock (
+            company_id,
+            part_id,
+            quantity
+        ) VALUES (
+            #{companyId},
+            #{partId},
+            #{quantity}
+        )
+    </insert>
+
+    <update id="updatePartStockQuantity">
+        UPDATE tb_part_stock
+        SET quantity = #{quantity}
+        WHERE company_id = #{companyId}
+          AND part_id = #{partId}
+    </update>
+
+    <insert id="insertMovement"
+            parameterType="com.pcs.domain.stock.entity.StockMovement"
+            useGeneratedKeys="true"
+            keyProperty="movementId">
+        INSERT INTO tb_stock_movement (
+            company_id,
+            document_id,
+            part_id,
+            movement_type,
+            movement_status,
+            quantity,
+            before_quantity,
+            after_quantity,
+            reason,
+            processed_by
+        ) VALUES (
+            #{companyId},
+            #{documentId},
+            #{partId},
+            #{movementType},
+            #{movementStatus},
+            #{quantity},
+            #{beforeQuantity},
+            #{afterQuantity},
+            #{reason},
+            #{processedBy}
+        )
+    </insert>
+
+    <select id="findSerialSequence" resultType="int">
+        SELECT COALESCE(MAX(CAST(SUBSTRING_INDEX(internal_serial_no, '-', -1) AS UNSIGNED)), 0)
+        FROM tb_pc_part_unit
+        WHERE company_id = #{companyId}
+          AND internal_serial_no LIKE CONCAT(#{serialPrefix}, '-', #{dateToken}, '-%')
+    </select>
+
+    <insert id="insertPartUnit"
+            parameterType="com.pcs.domain.stock.entity.StockPartUnit"
+            useGeneratedKeys="true"
+            keyProperty="unitId">
+        INSERT INTO tb_pc_part_unit (
+            company_id,
+            part_id,
+            internal_serial_no,
+            manufacturer_serial_no,
+            unit_status,
+            grade,
+            inspection_status,
+            sales_status,
+            active,
+            created_by
+        ) VALUES (
+            #{companyId},
+            #{partId},
+            #{internalSerialNo},
+            #{manufacturerSerialNo},
+            #{unitStatus},
+            #{grade},
+            #{inspectionStatus},
+            #{salesStatus},
+            #{active},
+            #{createdBy}
+        )
+    </insert>
+
+    <insert id="insertMovementUnit">
+        INSERT INTO tb_stock_movement_unit (
+            movement_id,
+            unit_id,
+            before_unit_status,
+            after_unit_status
+        ) VALUES (
+            #{movementId},
+            #{unitId},
+            NULL,
+            #{afterUnitStatus}
+        )
+    </insert>
+
+</mapper>
