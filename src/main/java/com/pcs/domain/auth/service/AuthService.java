@@ -155,11 +155,22 @@ public class AuthService {
 
         AuthRefreshTokenSession session = authMapper.findRefreshTokenSession(hashRefreshToken(rawRefreshToken));
         LocalDateTime now = LocalDateTime.now();
-        if (session == null || session.isRevoked()) {
+        if (session == null) {
+            throw new BusinessException(ErrorCode.AUTH_TOKEN_INVALID);
+        }
+        if (session.isRevoked()) {
+            if (session.isRotated()) {
+                revokeRefreshTokenFamily(
+                        session.getCompanyId(),
+                        session.getMemberId(),
+                        session.getTokenFamilyId(),
+                        RefreshTokenRevokedReason.REUSE_DETECTED
+                );
+            }
             throw new BusinessException(ErrorCode.AUTH_TOKEN_INVALID);
         }
         if (session.isExpired(now)) {
-            revokeRefreshToken(session.getTokenId(), RefreshTokenRevokedReason.REUSE_DETECTED, null);
+            revokeRefreshToken(session.getTokenId(), RefreshTokenRevokedReason.EXPIRED, null);
             throw new BusinessException(ErrorCode.AUTH_TOKEN_EXPIRED);
         }
         if (!session.isCompanyActive()) {
@@ -177,6 +188,15 @@ public class AuthService {
             Long replacedByTokenId
     ) {
         authMapper.revokeRefreshToken(tokenId, revokedReason, replacedByTokenId);
+    }
+
+    public void revokeRefreshTokenFamily(
+            Long companyId,
+            Long memberId,
+            String tokenFamilyId,
+            RefreshTokenRevokedReason revokedReason
+    ) {
+        authMapper.revokeRefreshTokenFamily(companyId, memberId, tokenFamilyId, revokedReason);
     }
 
     public void revokeRefreshTokenByRawValue(String rawRefreshToken, RefreshTokenRevokedReason revokedReason) {

@@ -97,6 +97,12 @@ tb_auth_login_history.idx_auth_login_history_member_date
 - 기존 refresh token의 `replaced_by_token_id`에는 새 refresh token ID를 기록한다.
 - 새 access token을 응답한다.
 
+만료/재사용 시:
+
+- 만료된 refresh token은 `revoked_reason = EXPIRED`로 폐기한다.
+- 이미 `ROTATED` 처리된 refresh token이 다시 들어오면 재사용으로 판단한다.
+- 재사용 감지 시 같은 `token_family_id`의 활성 refresh token은 `revoked_reason = REUSE_DETECTED`로 폐기한다.
+
 로그아웃 시:
 
 - refresh token을 `revoked_reason = LOGOUT`으로 폐기한다.

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pcs.domain.member.type.MemberRole;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
+import java.security.MessageDigest;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -13,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import org.springframework.core.env.Environment;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -21,20 +23,25 @@ public class JwtTokenProvider {
 
     private static final String HMAC_ALGORITHM = "HmacSHA256";
     private static final String ACCESS_TOKEN_TYPE = "ACCESS";
+    private static final String DEFAULT_LOCAL_SECRET = "pcs-local-development-jwt-secret-change-before-production-2026";
+    private static final int MIN_SECRET_BYTE_LENGTH = 32;
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {
     };
 
     private final ObjectMapper objectMapper;
-    private final byte[] secretBytes;
+    private final SecretKeySpec secretKeySpec;
     private final Duration accessTokenDuration;
 
     public JwtTokenProvider(
             ObjectMapper objectMapper,
             @Value("${pcs.jwt.secret}") String secret,
-            @Value("${pcs.jwt.access-token-expiration-minutes}") long accessTokenExpirationMinutes
+            @Value("${pcs.jwt.access-token-expiration-minutes}") long accessTokenExpirationMinutes,
+            @Value("${pcs.jwt.allow-default-secret:false}") boolean allowDefaultSecret,
+            Environment environment
     ) {
+        validateSecret(secret, allowDefaultSecret, environment);
         this.objectMapper = objectMapper;
-        this.secretBytes = secret.getBytes(StandardCharsets.UTF_8);
+        this.secretKeySpec = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), HMAC_ALGORITHM);
         this.accessTokenDuration = Duration.ofMinutes(accessTokenExpirationMinutes);
     }
 
@@ -133,7 +140,7 @@ public class JwtTokenProvider {
     private String sign(String value) {
         try {
             Mac mac = Mac.getInstance(HMAC_ALGORITHM);
-            mac.init(new SecretKeySpec(secretBytes, HMAC_ALGORITHM));
+            mac.init(secretKeySpec);
             return Base64.getUrlEncoder()
                     .withoutPadding()
                     .encodeToString(mac.doFinal(value.getBytes(StandardCharsets.UTF_8)));
@@ -143,17 +150,31 @@ public class JwtTokenProvider {
     }
 
     private boolean constantTimeEquals(String left, String right) {
-        byte[] leftBytes = left.getBytes(StandardCharsets.UTF_8);
-        byte[] rightBytes = right.getBytes(StandardCharsets.UTF_8);
-        if (leftBytes.length != rightBytes.length) {
-            return false;
-        }
+        return MessageDigest.isEqual(
+                left.getBytes(StandardCharsets.US_ASCII),
+                right.getBytes(StandardCharsets.US_ASCII)
+        );
+    }
 
-        int result = 0;
-        for (int index = 0; index < leftBytes.length; index++) {
-            result |= leftBytes[index] ^ rightBytes[index];
+    private void validateSecret(String secret, boolean allowDefaultSecret, Environment environment) {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException("pcs.jwt.secret must not be blank.");
         }
-        return result == 0;
+        if (secret.getBytes(StandardCharsets.UTF_8).length < MIN_SECRET_BYTE_LENGTH) {
+            throw new IllegalStateException("pcs.jwt.secret must be at least 32 bytes for HS256.");
+        }
+        if (!allowDefaultSecret && DEFAULT_LOCAL_SECRET.equals(secret) && isProductionProfile(environment)) {
+            throw new IllegalStateException("Default local JWT secret cannot be used with production profile.");
+        }
+    }
+
+    private boolean isProductionProfile(Environment environment) {
+        for (String profile : environment.getActiveProfiles()) {
+            if ("prod".equalsIgnoreCase(profile) || "production".equalsIgnoreCase(profile)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String readString(Map<String, Object> payload, String key) {

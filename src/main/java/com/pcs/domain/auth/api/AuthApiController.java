@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,9 +29,14 @@ public class AuthApiController {
     private static final String REFRESH_TOKEN_COOKIE_NAME = "pcsRefreshToken";
 
     private final AuthFacade authFacade;
+    private final boolean refreshCookieSecure;
 
-    public AuthApiController(AuthFacade authFacade) {
+    public AuthApiController(
+            AuthFacade authFacade,
+            @Value("${pcs.jwt.refresh-cookie-secure:false}") boolean refreshCookieSecure
+    ) {
         this.authFacade = authFacade;
+        this.refreshCookieSecure = refreshCookieSecure;
     }
 
     @PostMapping("/owners/login")
@@ -117,7 +123,7 @@ public class AuthApiController {
     private String refreshCookie(String refreshToken, long maxAgeSeconds) {
         return ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, refreshToken)
                 .httpOnly(true)
-                .secure(false)
+                .secure(refreshCookieSecure)
                 .sameSite("Strict")
                 .path("/api/auth")
                 .maxAge(maxAgeSeconds)
@@ -128,7 +134,7 @@ public class AuthApiController {
     private String expiredRefreshCookie() {
         return ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, "")
                 .httpOnly(true)
-                .secure(false)
+                .secure(refreshCookieSecure)
                 .sameSite("Strict")
                 .path("/api/auth")
                 .maxAge(0)

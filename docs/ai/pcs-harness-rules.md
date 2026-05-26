@@ -65,6 +65,7 @@ src/main/resources/static/js/main.js
 - `.gitignore` 필수 규칙 확인
 - `domain/{feature}`가 있으면 `docs/features/{feature}.md`가 있어야 함
 - 인증 기능은 `Authorization` 헤더 파싱을 Controller/Facade에 두지 않고 Security 필터에서 처리함
+- 인증 기능은 운영 기본 secret 차단, refresh cookie secure 설정, refresh token 만료/재사용 reason 구분을 유지함
 
 ## Feature / DB 문서 작성 규칙
 

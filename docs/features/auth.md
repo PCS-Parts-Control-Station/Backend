@@ -29,6 +29,8 @@ com.pcs.domain.auth
 - access token에는 `memberId`, `companyId`, `companyCode`, `loginId`, `role`, `tokenType`, `exp`를 담는다.
 - refresh token은 HttpOnly Cookie로 관리한다.
 - refresh token 원문은 DB에 저장하지 않고 SHA-256 해시만 저장한다.
+- refresh token cookie의 `Secure` 속성은 환경 설정으로 제어한다. 로컬 HTTP는 `false`, 운영 HTTPS는 `true`로 설정한다.
+- 운영 프로필에서는 기본 JWT secret을 사용할 수 없다.
 - `companyCode`는 URL 값만 믿지 않고 JWT와 DB 기준으로 검증한다.
 - 비활성 회사 또는 비활성 계정은 로그인할 수 없다.
 - 임시 비밀번호 상태면 비밀번호 변경이 필요한 상태로 응답한다.
@@ -36,6 +38,8 @@ com.pcs.domain.auth
 - 로그인 실패가 반복되면 계정을 일정 시간 잠근다.
 - 로그인 성공/실패는 `tb_auth_login_history`에 기록한다.
 - refresh token 재발급은 rotation 방식으로 처리한다. 재발급 성공 시 새 access token과 새 refresh token을 함께 발급하고, 기존 refresh token은 `ROTATED`로 폐기한다.
+- refresh token 만료는 `EXPIRED`, 회전된 토큰 재사용은 `REUSE_DETECTED`로 분리한다.
+- 회전된 refresh token이 다시 사용되면 같은 token family의 활성 refresh token을 `REUSE_DETECTED`로 폐기한다.
 - 정적 화면의 인증 API 호출은 `/js/pcs-api.js` 공통 fetch 래퍼를 사용한다.
 - 공통 fetch 래퍼는 `localStorage.pcsAccessToken`을 `Authorization` 헤더에 싣고, 401 또는 인증 ErrorCode 응답을 받으면 `/api/auth/refresh`를 한 번 호출한 뒤 원 요청을 재시도한다.
 - API 인증 판별은 Spring Security에서 처리한다.

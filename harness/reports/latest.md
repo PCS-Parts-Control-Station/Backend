@@ -4,10 +4,10 @@
 - Feature: auth
 - RunDb: True
 - DbFeature: none
-- GeneratedAt: 2026-05-26 14:24:13
+- GeneratedAt: 2026-05-26 14:37:17
 - FAIL: 0
 - WARN: 0
-- INFO: 84
+- INFO: 88
 
 ## FAIL
 
@@ -91,16 +91,20 @@
 70. [DB_COLUMN_TB_AUTH_REFRESH_TOKEN_REVOKED_AT] tb_auth_refresh_token.revoked_at exists.
 71. [DB_COLUMN_TB_AUTH_REFRESH_TOKEN_REVOKED_REASON] tb_auth_refresh_token.revoked_reason exists.
 72. [DB_COLUMN_TB_AUTH_REFRESH_TOKEN_REPLACED_BY_TOKEN_ID] tb_auth_refresh_token.replaced_by_token_id exists.
-73. [DB_COLUMN_TB_AUTH_LOGIN_HISTORY_COMPANY_CODE_SNAPSHOT] tb_auth_login_history.company_code_snapshot exists.
-74. [DB_COLUMN_TB_AUTH_LOGIN_HISTORY_LOGIN_ID_SNAPSHOT] tb_auth_login_history.login_id_snapshot exists.
-75. [DB_COLUMN_TB_AUTH_LOGIN_HISTORY_LOGIN_RESULT] tb_auth_login_history.login_result exists.
-76. [DB_CONSTRAINT_UK_AUTH_REFRESH_TOKEN_HASH] tb_auth_refresh_token.uk_auth_refresh_token_hash exists.
-77. [AUTH_MEMBER_LOGIN_STATE] Member login state columns can be updated.
-78. [AUTH_REFRESH_TOKEN_SAVED] Refresh token hash row is saved.
-79. [AUTH_REFRESH_TOKEN_ROTATED] Refresh token rotation state can be recorded.
-80. [DB_CHECK_OUTPUT] [ WARN] (main) Error: 1062-23000: Duplicate entry 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' for key 'uk_auth_refresh_token_hash'
-81. [AUTH_REFRESH_TOKEN_HASH_UNIQUE] Expected SQL failure occurred: 1062
-82. [AUTH_LOGIN_HISTORY_SAVED] Login history row is saved.
-83. [AUTH_DB_ROLLBACK_SCOPE] Auth DB scenario was executed inside a rollback transaction.
-84. [COMPILE_JAVA] compileJava passed.
+73. [DB_ENUM_TB_AUTH_REFRESH_TOKEN_REVOKED_REASON_EXPIRED] tb_auth_refresh_token.revoked_reason supports EXPIRED.
+74. [DB_ENUM_TB_AUTH_REFRESH_TOKEN_REVOKED_REASON_REUSE_DETECTED] tb_auth_refresh_token.revoked_reason supports REUSE_DETECTED.
+75. [DB_COLUMN_TB_AUTH_LOGIN_HISTORY_COMPANY_CODE_SNAPSHOT] tb_auth_login_history.company_code_snapshot exists.
+76. [DB_COLUMN_TB_AUTH_LOGIN_HISTORY_LOGIN_ID_SNAPSHOT] tb_auth_login_history.login_id_snapshot exists.
+77. [DB_COLUMN_TB_AUTH_LOGIN_HISTORY_LOGIN_RESULT] tb_auth_login_history.login_result exists.
+78. [DB_CONSTRAINT_UK_AUTH_REFRESH_TOKEN_HASH] tb_auth_refresh_token.uk_auth_refresh_token_hash exists.
+79. [AUTH_MEMBER_LOGIN_STATE] Member login state columns can be updated.
+80. [AUTH_REFRESH_TOKEN_SAVED] Refresh token hash row is saved.
+81. [AUTH_REFRESH_TOKEN_ROTATED] Refresh token rotation state can be recorded.
+82. [AUTH_REFRESH_TOKEN_EXPIRED] Expired refresh token state can be recorded.
+83. [AUTH_REFRESH_TOKEN_REUSE_DETECTED] Refresh token family reuse-detected state can be recorded.
+84. [DB_CHECK_OUTPUT] [ WARN] (main) Error: 1062-23000: Duplicate entry 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' for key 'uk_auth_refresh_token_hash'
+85. [AUTH_REFRESH_TOKEN_HASH_UNIQUE] Expected SQL failure occurred: 1062
+86. [AUTH_LOGIN_HISTORY_SAVED] Login history row is saved.
+87. [AUTH_DB_ROLLBACK_SCOPE] Auth DB scenario was executed inside a rollback transaction.
+88. [COMPILE_JAVA] compileJava passed.
 
