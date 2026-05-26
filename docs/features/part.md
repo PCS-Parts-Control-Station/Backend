@@ -31,6 +31,7 @@ com.pcs.domain.part
 - `partCode`는 같은 업체 안에서 중복될 수 없다.
 - 부품 마스터는 모델 단위 정보만 가진다.
 - 검수 상태, 등급, 판매 상태는 개별 부품 기준으로 관리한다.
+- 부품 검색은 `keyword`, `categoryId`, `active`, `limit` 조건을 지원하고 기본 `active=true`, `limit=20`으로 조회한다.
 - `grade = DEFECTIVE`인 개별 부품은 판매 가능 상태가 될 수 없다.
 - 판매 상태 변경 시 `tb_part_status_history`를 저장한다.
 

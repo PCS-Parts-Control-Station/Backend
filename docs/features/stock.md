@@ -27,6 +27,7 @@ com.pcs.domain.stock
 ## 주요 규칙
 
 - `tb_stock_document`는 거래처와 연결된 입출고 전표 헤더다.
+- 입고 전표번호는 서버가 `IN-YYYYMMDD-RANDOM16` 형식으로 자동 발급하고, 내부 정렬은 `document_id`를 사용한다.
 - `tb_stock_movement`는 전표 안의 부품별 재고 변화 라인이다.
 - `tb_stock_movement_unit`은 재고 변화 라인에 포함된 개별 부품 목록이다.
 - 입출고 원본은 수정/삭제하지 않고 취소 이력으로 처리한다.

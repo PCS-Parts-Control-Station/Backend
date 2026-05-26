@@ -243,6 +243,30 @@ Owner 회원가입 + 회사 생성 요청 후보:
 
 `standards`는 별도 폴더로 만들기보다 초기에는 `part` 도메인에 포함한다.
 
+부품 검색 요청:
+
+```text
+GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&limit=20
+```
+
+부품 검색 응답 항목:
+
+```json
+{
+  "partId": 32,
+  "categoryId": 1,
+  "categoryName": "그래픽카드",
+  "partName": "RTX 3060",
+  "modelName": "Ventus 2X",
+  "manufacturer": "MSI",
+  "partCode": "VGA-RTX3060-MSI",
+  "estimatedPrice": 180000.00,
+  "safeQuantity": 0,
+  "currentStockQuantity": 3,
+  "active": true
+}
+```
+
 부품 등록 요청 후보:
 
 ```json
@@ -285,27 +309,19 @@ Owner 회원가입 + 회사 생성 요청 후보:
 ```json
 {
   "partnerId": 1,
-  "documentNo": "IN-20260513-0001",
   "reason": "A피시방 매입 부품 입고",
   "lines": [
     {
       "partId": 10,
       "quantity": 2,
-      "reason": "CPU 입고",
-      "units": [
-        {
-          "internalSerialNo": "PCS-CPU-20260513-0001",
-          "manufacturerSerialNo": null
-        },
-        {
-          "internalSerialNo": "PCS-CPU-20260513-0002",
-          "manufacturerSerialNo": null
-        }
-      ]
+      "reason": "CPU 입고"
     }
   ]
 }
 ```
+
+입고 전표번호는 서버가 `IN-YYYYMMDD-RANDOM16` 형식으로 자동 발급한다.
+내부 정렬과 페이징 기준은 `documentId`를 사용한다.
 
 출고 전표 등록 요청 후보:
 

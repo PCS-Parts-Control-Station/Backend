@@ -14,7 +14,7 @@ com.pcs.domain.partner
 
 | Method | API | 설명 |
 |---|---|---|
-| GET | `/api/workspaces/{companyCode}/partners` | 거래처 목록 |
+| GET | `/api/workspaces/{companyCode}/partners` | 거래처 목록. `keyword`, `partnerRole`, `active`, `limit` 필터를 지원한다. |
 | POST | `/api/workspaces/{companyCode}/partners` | 거래처 생성 |
 | GET | `/api/workspaces/{companyCode}/partners/{partnerId}` | 거래처 상세 |
 | PATCH | `/api/workspaces/{companyCode}/partners/{partnerId}` | 거래처 수정 |
