@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PCS 입고 등록 화면입니다. 거래처와 입고 부품 라인을 입력하고 관리번호 발급 대상을 확인합니다.">
+    <title>PCS | 입고 등록</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/admin.css?20260522_split">
+    <link rel="stylesheet" href="/css/workflow.css?20260522_split">
+    <link rel="stylesheet" href="/css/inbound.css?20260522_split">
+</head>
+<body class="has-collapsible-sidebar">
+<div class="workspace-layout">
+    <aside class="workspace-sidebar" id="workspace-sidebar" aria-label="업무 메뉴">
+        <a class="sidebar-brand" href="/">
+            <img src="/images/parts-control-station-icon.svg" alt="" width="38" height="38">
+            <span>
+                <strong>PCS</strong>
+                <small>pcs-seoul</small>
+            </span>
+        </a>
+
+        <nav class="sidebar-nav" aria-label="업무 화면 이동">
+            <a href="/w/pcs-seoul/dashboard">운영 현황</a>
+            <a href="/w/pcs-seoul/categories">카테고리</a>
+            <a href="/w/pcs-seoul/parts">부품 관리</a>
+            <a href="/w/pcs-seoul/inbound" class="active" aria-current="page">입고 관리</a>
+            <a href="/w/pcs-seoul/inspection">검수 관리</a>
+            <a href="/w/pcs-seoul/outbound">출고 관리</a>
+            <a href="/w/pcs-seoul/history">이력 관리</a>
+            <a href="/w/pcs-seoul/users">사용자 관리</a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <span>접속 계정</span>
+            <strong>관리자 김관리</strong>
+        </div>
+    </aside>
+    <button class="sidebar-backdrop" type="button" data-sidebar-backdrop aria-label="메뉴 닫기"></button>
+
+    <main class="workspace-main">
+        <header class="workspace-header">
+            <button class="menu-toggle" type="button" data-sidebar-toggle aria-controls="workspace-sidebar" aria-expanded="false" aria-label="메뉴 열기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M4 7h16" />
+                    <path d="M4 12h16" />
+                    <path d="M4 17h16" />
+                </svg>
+            </button>
+            <div class="page-title-row">
+                <span class="page-icon page-icon-inbound" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <path d="M4 11.5 12 16l8-4.5" />
+                        <path d="M4 7.5 12 12l8-4.5L12 3 4 7.5Z" />
+                        <path d="M4 7.5v9L12 21l8-4.5v-9" />
+                        <path d="M12 3v9" />
+                        <path d="m9 9 3 3 3-3" />
+                    </svg>
+                </span>
+                <div>
+                    <p class="page-kicker">재고 입출고 관리</p>
+                    <h1>입고 등록</h1>
+                    <p class="page-description">거래처, 입고 사유, 부품 라인을 입력해 입고 전표를 생성합니다.</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a class="btn btn-secondary" href="/w/pcs-seoul/inbound">전표 목록</a>
+                <button class="btn btn-primary" type="submit" form="inbound-register-form">입고 저장</button>
+            </div>
+        </header>
+
+        <section class="content-grid">
+            <div class="content-main">
+                <!-- API: POST /api/workspaces/{companyCode}/stock/documents/inbounds -->
+                <form class="register-flow" id="inbound-register-form" action="#" method="post">
+                    <section class="table-card register-card" aria-labelledby="inbound-register-basic-title">
+                        <div class="table-header">
+                            <div>
+                                <h2 id="inbound-register-basic-title">전표 기본 정보</h2>
+                                <p>전표번호는 자동 발급을 기본으로 두고, 필요할 때만 직접 입력합니다.</p>
+                            </div>
+                            <span class="badge badge-pending">작성 중</span>
+                        </div>
+                        <div class="register-fields">
+                            <label>
+                                <span>거래처</span>
+                                <select name="partnerId" required>
+                                    <option value="">거래처 선택</option>
+                                    <option value="1">A PC방</option>
+                                    <option value="2">리퍼 부품 매입처</option>
+                                    <option value="3">B 사무실 정리</option>
+                                </select>
+                            </label>
+                            <label>
+                                <span>전표번호</span>
+                                <input type="text" name="documentNo" placeholder="자동 발급">
+                            </label>
+                            <label class="field-wide">
+                                <span>입고 사유</span>
+                                <input type="text" name="reason" placeholder="예: A PC방 매입 부품 입고" required>
+                            </label>
+                        </div>
+                    </section>
+
+                    <section class="table-card register-card" aria-labelledby="part-search-title">
+                        <div class="table-header">
+                            <div>
+                                <h2 id="part-search-title">부품 검색</h2>
+                                <p>부품관리의 마스터 정보를 검색한 뒤 수량과 라인 사유를 입력해 전표에 추가합니다.</p>
+                            </div>
+                            <button class="btn btn-secondary btn-compact" type="button" data-open-part-modal>새 부품 등록</button>
+                        </div>
+                        <!-- API: GET /api/workspaces/{companyCode}/parts?keyword=&categoryId=&active=true -->
+                        <div class="part-search-panel">
+                            <div class="part-search-form" aria-label="부품 검색 조건">
+                                <label>
+                                    <span>검색어</span>
+                                    <input type="search" data-part-keyword placeholder="예: RTX 3060, DDR4, SSD">
+                                </label>
+                                <label>
+                                    <span>카테고리</span>
+                                    <select data-part-category>
+                                        <option value="">전체 카테고리</option>
+                                        <option value="graphics">그래픽카드</option>
+                                        <option value="memory">RAM</option>
+                                        <option value="storage">SSD</option>
+                                    </select>
+                                </label>
+                                <button class="btn btn-primary" type="button" data-part-search>검색</button>
+                            </div>
+
+                            <div class="part-search-results" aria-label="부품 검색 결과">
+                                <div class="part-result-head" aria-hidden="true">
+                                    <span>부품명</span>
+                                    <span>모델 / 코드</span>
+                                    <span>카테고리</span>
+                                    <span>선택</span>
+                                </div>
+                                <button class="part-result-row active" type="button" data-part-option data-part-id="32" data-part-name="RTX 3060" data-part-meta="MSI Ventus 2X · VGA-RTX3060-MSI" data-part-prefix="PCS-VGA" data-part-category-value="graphics">
+                                    <strong>RTX 3060</strong>
+                                    <span>MSI Ventus 2X · VGA-RTX3060-MSI</span>
+                                    <em>그래픽카드</em>
+                                    <b data-select-label>선택됨</b>
+                                </button>
+                                <button class="part-result-row" type="button" data-part-option data-part-id="33" data-part-name="GTX 1660 SUPER" data-part-meta="ASUS TUF · VGA-GTX1660S-ASUS" data-part-prefix="PCS-VGA" data-part-category-value="graphics">
+                                    <strong>GTX 1660 SUPER</strong>
+                                    <span>ASUS TUF · VGA-GTX1660S-ASUS</span>
+                                    <em>그래픽카드</em>
+                                    <b data-select-label>선택</b>
+                                </button>
+                                <button class="part-result-row" type="button" data-part-option data-part-id="21" data-part-name="RAM DDR4 16GB" data-part-meta="Samsung PC4-25600 · RAM-DDR4-16G-SAM" data-part-prefix="PCS-RAM" data-part-category-value="memory">
+                                    <strong>RAM DDR4 16GB</strong>
+                                    <span>Samsung PC4-25600 · RAM-DDR4-16G-SAM</span>
+                                    <em>RAM</em>
+                                    <b data-select-label>선택</b>
+                                </button>
+                            </div>
+
+                            <div class="selected-part-panel" aria-live="polite">
+                                <div>
+                                    <span>선택한 부품</span>
+                                    <strong data-selected-part-name>RTX 3060</strong>
+                                    <p data-selected-part-meta>MSI Ventus 2X · VGA-RTX3060-MSI</p>
+                                </div>
+                                <label>
+                                    <span>수량</span>
+                                    <input type="number" min="1" value="3" data-add-quantity>
+                                </label>
+                                <label>
+                                    <span>라인 사유</span>
+                                    <input type="text" value="그래픽카드 입고" data-add-reason>
+                                </label>
+                                <button class="btn btn-primary" type="button" data-add-line>라인 추가</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="table-card register-card" aria-labelledby="inbound-line-title">
+                        <div class="table-header">
+                            <div>
+                                <h2 id="inbound-line-title">부품 라인</h2>
+                                <p>전표에 추가된 부품 라인입니다. 수량과 라인 사유를 수정하거나 삭제할 수 있습니다.</p>
+                            </div>
+                            <span class="line-count" data-line-count>2개 라인</span>
+                        </div>
+                        <div class="line-entry-list" aria-label="입고 부품 라인" data-line-list>
+                            <fieldset class="line-entry" data-line-entry data-part-id="32" data-part-name="RTX 3060" data-part-meta="MSI Ventus 2X · VGA-RTX3060-MSI" data-part-prefix="PCS-VGA">
+                                <legend>라인 1</legend>
+                                <input type="hidden" name="lines[0].partId" value="32" data-line-part-id>
+                                <div class="line-entry-grid line-review-grid">
+                                    <div class="line-part-summary">
+                                        <span>부품</span>
+                                        <strong>RTX 3060</strong>
+                                        <p>MSI Ventus 2X · VGA-RTX3060-MSI</p>
+                                    </div>
+                                    <label>
+                                        <span>수량</span>
+                                        <input type="number" name="lines[0].quantity" min="1" value="3" required data-line-quantity>
+                                    </label>
+                                    <label class="field-wide">
+                                        <span>라인 사유</span>
+                                        <input type="text" name="lines[0].reason" value="그래픽카드 입고" data-line-reason>
+                                    </label>
+                                    <button class="line-delete-button" type="button" data-delete-line>삭제</button>
+                                </div>
+                                <div class="serial-preview" aria-label="라인 1 관리번호 발급 예시">
+                                    <strong>관리번호 발급 예시</strong>
+                                    <span>PCS-VGA-20260522-0001</span>
+                                    <span>PCS-VGA-20260522-0002</span>
+                                    <span>외 1개</span>
+                                </div>
+                            </fieldset>
+
+                            <fieldset class="line-entry" data-line-entry data-part-id="21" data-part-name="RAM DDR4 16GB" data-part-meta="Samsung PC4-25600 · RAM-DDR4-16G-SAM" data-part-prefix="PCS-RAM">
+                                <legend>라인 2</legend>
+                                <input type="hidden" name="lines[1].partId" value="21" data-line-part-id>
+                                <div class="line-entry-grid line-review-grid">
+                                    <div class="line-part-summary">
+                                        <span>부품</span>
+                                        <strong>RAM DDR4 16GB</strong>
+                                        <p>Samsung PC4-25600 · RAM-DDR4-16G-SAM</p>
+                                    </div>
+                                    <label>
+                                        <span>수량</span>
+                                        <input type="number" name="lines[1].quantity" min="1" value="4" data-line-quantity>
+                                    </label>
+                                    <label class="field-wide">
+                                        <span>라인 사유</span>
+                                        <input type="text" name="lines[1].reason" value="RAM 입고" data-line-reason>
+                                    </label>
+                                    <button class="line-delete-button" type="button" data-delete-line>삭제</button>
+                                </div>
+                                <div class="serial-preview" aria-label="라인 2 관리번호 발급 예시">
+                                    <strong>관리번호 발급 예시</strong>
+                                    <span>PCS-RAM-20260522-0001</span>
+                                    <span>PCS-RAM-20260522-0002</span>
+                                    <span>외 2개</span>
+                                </div>
+                            </fieldset>
+                        </div>
+                    </section>
+
+                    <section class="table-card register-card" aria-labelledby="inbound-submit-title">
+                        <div class="submit-panel">
+                            <div>
+                                <h2 id="inbound-submit-title">저장 후 처리</h2>
+                                <p>입고 저장 시 전표와 재고 변화 라인이 생성되고, 개별 부품은 검수 대기와 판매 보류 상태로 시작합니다.</p>
+                            </div>
+                            <div class="form-actions">
+                                <a class="btn btn-secondary" href="/w/pcs-seoul/inbound">취소</a>
+                                <button class="btn btn-primary" type="submit">입고 저장</button>
+                            </div>
+                        </div>
+                    </section>
+                </form>
+            </div>
+
+            <aside class="side-panel" aria-labelledby="inbound-register-guide-title">
+                <div class="panel-card process-panel">
+                    <h2 id="inbound-register-guide-title">입고 등록 흐름</h2>
+                    <p>현재 입력 내용은 입고 전표와 부품별 재고 변화 라인으로 저장됩니다.</p>
+                    <ol class="workflow-list" aria-label="입고 등록 업무 흐름">
+                        <li class="workflow-step active">
+                            <span class="process-dot" aria-hidden="true"></span>
+                            <div>
+                                <strong>입고 등록</strong>
+                                <p>거래처와 부품 라인을 입력하고 관리번호 발급 대상을 확인합니다.</p>
+                                <ol class="sub-process-list" aria-label="입고 등록 세부 흐름">
+                                    <li>
+                                        <span>1</span>
+                                        <div>
+                                            <strong>거래처 선택</strong>
+                                            <p>공급 거래처를 전표에 연결합니다.</p>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <span>2</span>
+                                        <div>
+                                            <strong>부품 라인 입력</strong>
+                                            <p>부품과 입고 수량을 라인별로 입력합니다.</p>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <span>3</span>
+                                        <div>
+                                            <strong>관리번호 발급</strong>
+                                            <p>수량만큼 개별 부품 관리번호가 생성됩니다.</p>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <span>4</span>
+                                        <div>
+                                            <strong>검수 대기</strong>
+                                            <p>입고 부품은 검수 대기로 넘어갑니다.</p>
+                                        </div>
+                                    </li>
+                                </ol>
+                            </div>
+                        </li>
+                        <li class="workflow-step">
+                            <span class="process-dot" aria-hidden="true"></span>
+                            <div>
+                                <strong>검수</strong>
+                                <p>등급과 판매 가능 여부를 확정합니다.</p>
+                            </div>
+                        </li>
+                        <li class="workflow-step">
+                            <span class="process-dot" aria-hidden="true"></span>
+                            <div>
+                                <strong>출고</strong>
+                                <p>판매 가능 부품을 출고합니다.</p>
+                            </div>
+                        </li>
+                    </ol>
+                </div>
+
+                <div class="panel-card muted-panel">
+                    <h2>등록 규칙</h2>
+                    <ul>
+                        <li>전표 저장 후 원본 수량은 직접 수정하지 않음</li>
+                        <li>입고 취소는 취소 전표와 취소 라인으로 보존</li>
+                        <li>제조사 시리얼은 추후 개별 부품 상세에서 보강 가능</li>
+                    </ul>
+                </div>
+            </aside>
+        </section>
+    </main>
+</div>
+
+<dialog class="part-modal" data-part-modal aria-labelledby="part-modal-title">
+    <form class="part-modal-card" method="dialog" data-part-modal-form>
+        <div class="part-modal-header">
+            <div>
+                <p class="page-kicker">부품 마스터 빠른 등록</p>
+                <h2 id="part-modal-title">새 부품 등록</h2>
+                <p>입고 중 필요한 부품만 빠르게 등록합니다. 상세 정보는 부품관리에서 보강할 수 있습니다.</p>
+            </div>
+            <button class="modal-close-button" type="button" data-close-part-modal aria-label="닫기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M6 6l12 12" />
+                    <path d="M18 6 6 18" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- API: POST /api/workspaces/{companyCode}/parts -->
+        <div class="part-modal-fields">
+            <label>
+                <span>카테고리</span>
+                <select data-new-part-category required>
+                    <option value="">카테고리 선택</option>
+                    <option value="graphics">그래픽카드</option>
+                    <option value="memory">RAM</option>
+                    <option value="storage">SSD</option>
+                    <option value="cpu">CPU</option>
+                </select>
+            </label>
+            <label>
+                <span>제조사</span>
+                <input type="text" data-new-part-manufacturer placeholder="예: MSI" required>
+            </label>
+            <label>
+                <span>부품명</span>
+                <input type="text" data-new-part-name placeholder="예: RTX 4060" required>
+            </label>
+            <label>
+                <span>모델명</span>
+                <input type="text" data-new-part-model placeholder="예: Ventus 2X">
+            </label>
+            <label>
+                <span>부품코드</span>
+                <input type="text" data-new-part-code placeholder="예: VGA-RTX4060-MSI" required>
+            </label>
+            <label>
+                <span>안전 재고</span>
+                <input type="number" data-new-part-safe-quantity min="0" value="0">
+            </label>
+        </div>
+
+        <div class="part-modal-actions">
+            <button class="btn btn-secondary" type="button" data-close-part-modal>취소</button>
+            <button class="btn btn-primary" type="submit">등록 후 선택</button>
+        </div>
+    </form>
+</dialog>
+
+<script>
+    (() => {
+        const body = document.body;
+        const toggle = document.querySelector("[data-sidebar-toggle]");
+        const backdrop = document.querySelector("[data-sidebar-backdrop]");
+        const desktopQuery = window.matchMedia("(min-width: 1521px)");
+
+        if (!toggle || !backdrop) {
+            return;
+        }
+
+        const closeMenu = () => {
+            body.classList.remove("sidebar-open");
+            toggle.setAttribute("aria-expanded", "false");
+            toggle.setAttribute("aria-label", "메뉴 열기");
+        };
+
+        const openMenu = () => {
+            body.classList.add("sidebar-open");
+            toggle.setAttribute("aria-expanded", "true");
+            toggle.setAttribute("aria-label", "메뉴 닫기");
+        };
+
+        toggle.addEventListener("click", () => {
+            if (body.classList.contains("sidebar-open")) {
+                closeMenu();
+                return;
+            }
+            openMenu();
+        });
+
+        backdrop.addEventListener("click", closeMenu);
+
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape") {
+                closeMenu();
+            }
+        });
+
+        desktopQuery.addEventListener("change", (event) => {
+            if (event.matches) {
+                closeMenu();
+            }
+        });
+    })();
+
+    (() => {
+        const lineList = document.querySelector("[data-line-list]");
+        const lineCount = document.querySelector("[data-line-count]");
+        const partResults = document.querySelector(".part-search-results");
+        let partOptions = [...document.querySelectorAll("[data-part-option]")];
+        const keywordInput = document.querySelector("[data-part-keyword]");
+        const categorySelect = document.querySelector("[data-part-category]");
+        const searchButton = document.querySelector("[data-part-search]");
+        const selectedName = document.querySelector("[data-selected-part-name]");
+        const selectedMeta = document.querySelector("[data-selected-part-meta]");
+        const quantityInput = document.querySelector("[data-add-quantity]");
+        const reasonInput = document.querySelector("[data-add-reason]");
+        const addButton = document.querySelector("[data-add-line]");
+        const partModal = document.querySelector("[data-part-modal]");
+        const partModalForm = document.querySelector("[data-part-modal-form]");
+        const openPartModalButton = document.querySelector("[data-open-part-modal]");
+        const closePartModalButtons = document.querySelectorAll("[data-close-part-modal]");
+        const categoryLabels = {
+            graphics: "그래픽카드",
+            memory: "RAM",
+            storage: "SSD",
+            cpu: "CPU",
+        };
+        let selectedPart = null;
+
+        if (!lineList || !lineCount || !partOptions.length || !addButton) {
+            return;
+        }
+
+        const escapeHtml = (value) => value.replace(/[&<>"']/g, (letter) => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            "\"": "&quot;",
+            "'": "&#039;",
+        }[letter]));
+
+        const readPart = (option) => ({
+            id: option.dataset.partId,
+            name: option.dataset.partName,
+            meta: option.dataset.partMeta,
+            prefix: option.dataset.partPrefix,
+        });
+
+        const selectPart = (option) => {
+            selectedPart = readPart(option);
+            partOptions.forEach((partOption) => {
+                const active = partOption === option;
+                partOption.classList.toggle("active", active);
+                const label = partOption.querySelector("[data-select-label]");
+                if (label) {
+                    label.textContent = active ? "선택됨" : "선택";
+                }
+            });
+            selectedName.textContent = selectedPart.name;
+            selectedMeta.textContent = selectedPart.meta;
+        };
+
+        const serialPreview = (prefix, quantity) => {
+            const count = Number(quantity) || 1;
+            const second = count >= 2 ? `<span>${prefix}-20260522-0002</span>` : "";
+            const more = count > 2 ? `<span>외 ${count - 2}개</span>` : "";
+            return `
+                <strong>관리번호 발급 예시</strong>
+                <span>${prefix}-20260522-0001</span>
+                ${second}
+                ${more}
+            `;
+        };
+
+        const createPartOption = ({ id, name, meta, prefix, category }) => {
+            const option = document.createElement("button");
+            option.className = "part-result-row";
+            option.type = "button";
+            option.dataset.partOption = "";
+            option.dataset.partId = id;
+            option.dataset.partName = name;
+            option.dataset.partMeta = meta;
+            option.dataset.partPrefix = prefix;
+            option.dataset.partCategoryValue = category;
+            option.innerHTML = `
+                <strong>${escapeHtml(name)}</strong>
+                <span>${escapeHtml(meta)}</span>
+                <em>${escapeHtml(categoryLabels[category] || "기타")}</em>
+                <b data-select-label>선택</b>
+            `;
+            option.addEventListener("click", () => selectPart(option));
+            return option;
+        };
+
+        const refreshLineState = () => {
+            const lines = [...lineList.querySelectorAll("[data-line-entry]")];
+            lineCount.textContent = `${lines.length}개 라인`;
+
+            lines.forEach((line, index) => {
+                line.querySelector("legend").textContent = `라인 ${index + 1}`;
+                line.querySelector("[data-line-part-id]").name = `lines[${index}].partId`;
+                line.querySelector("[data-line-quantity]").name = `lines[${index}].quantity`;
+                line.querySelector("[data-line-reason]").name = `lines[${index}].reason`;
+            });
+        };
+
+        const createLine = ({ id, name, meta, prefix }, quantity, reason) => {
+            const line = document.createElement("fieldset");
+            line.className = "line-entry";
+            line.dataset.lineEntry = "";
+            line.dataset.partId = id;
+            line.dataset.partName = name;
+            line.dataset.partMeta = meta;
+            line.dataset.partPrefix = prefix;
+            line.innerHTML = `
+                <legend>라인</legend>
+                <input type="hidden" value="${id}" data-line-part-id>
+                <div class="line-entry-grid line-review-grid">
+                    <div class="line-part-summary">
+                        <span>부품</span>
+                        <strong>${name}</strong>
+                        <p>${meta}</p>
+                    </div>
+                    <label>
+                        <span>수량</span>
+                        <input type="number" min="1" value="${quantity}" required data-line-quantity>
+                    </label>
+                    <label class="field-wide">
+                        <span>라인 사유</span>
+                        <input type="text" value="${reason}" data-line-reason>
+                    </label>
+                    <button class="line-delete-button" type="button" data-delete-line>삭제</button>
+                </div>
+                <div class="serial-preview" aria-label="관리번호 발급 예시">
+                    ${serialPreview(prefix, quantity)}
+                </div>
+            `;
+            return line;
+        };
+
+        const addLine = () => {
+            if (!selectedPart) {
+                return;
+            }
+
+            const quantity = Math.max(1, Number(quantityInput.value) || 1);
+            const reason = reasonInput.value.trim();
+            const existingLine = lineList.querySelector(`[data-line-entry][data-part-id="${selectedPart.id}"]`);
+
+            if (existingLine) {
+                const existingQuantity = existingLine.querySelector("[data-line-quantity]");
+                const existingReason = existingLine.querySelector("[data-line-reason]");
+                existingQuantity.value = Number(existingQuantity.value || 0) + quantity;
+                if (!existingReason.value && reason) {
+                    existingReason.value = reason;
+                }
+                existingLine.querySelector(".serial-preview").innerHTML = serialPreview(selectedPart.prefix, existingQuantity.value);
+                refreshLineState();
+                return;
+            }
+
+            lineList.append(createLine(selectedPart, quantity, reason));
+            refreshLineState();
+        };
+
+        const filterParts = () => {
+            const keyword = keywordInput.value.trim().toLowerCase();
+            const category = categorySelect.value;
+
+            partOptions.forEach((option) => {
+                const text = option.textContent.toLowerCase();
+                const keywordMatched = !keyword || text.includes(keyword);
+                const categoryMatched = !category || option.dataset.partCategoryValue === category;
+                option.hidden = !keywordMatched || !categoryMatched;
+            });
+        };
+
+        partOptions.forEach((option) => {
+            option.addEventListener("click", () => selectPart(option));
+        });
+
+        searchButton.addEventListener("click", filterParts);
+        keywordInput.addEventListener("input", filterParts);
+        categorySelect.addEventListener("change", filterParts);
+        addButton.addEventListener("click", addLine);
+
+        lineList.addEventListener("click", (event) => {
+            const deleteButton = event.target.closest("[data-delete-line]");
+            if (!deleteButton) {
+                return;
+            }
+            deleteButton.closest("[data-line-entry]").remove();
+            refreshLineState();
+        });
+
+        lineList.addEventListener("input", (event) => {
+            const quantity = event.target.closest("[data-line-quantity]");
+            if (!quantity) {
+                return;
+            }
+            const line = quantity.closest("[data-line-entry]");
+            line.querySelector(".serial-preview").innerHTML = serialPreview(line.dataset.partPrefix, quantity.value);
+        });
+
+        openPartModalButton?.addEventListener("click", () => {
+            partModal?.showModal();
+        });
+
+        closePartModalButtons.forEach((button) => {
+            button.addEventListener("click", () => {
+                partModal?.close();
+            });
+        });
+
+        partModal?.addEventListener("click", (event) => {
+            if (event.target === partModal) {
+                partModal.close();
+            }
+        });
+
+        partModalForm?.addEventListener("submit", (event) => {
+            event.preventDefault();
+            const category = partModalForm.querySelector("[data-new-part-category]").value;
+            const manufacturer = partModalForm.querySelector("[data-new-part-manufacturer]").value.trim();
+            const name = partModalForm.querySelector("[data-new-part-name]").value.trim();
+            const model = partModalForm.querySelector("[data-new-part-model]").value.trim();
+            const code = partModalForm.querySelector("[data-new-part-code]").value.trim();
+
+            if (!category || !manufacturer || !name || !code) {
+                return;
+            }
+
+            const newPart = {
+                id: `new-${Date.now()}`,
+                name,
+                meta: `${manufacturer}${model ? ` ${model}` : ""} · ${code}`,
+                prefix: code.startsWith("PCS-") ? code.split("-").slice(0, 2).join("-") : `PCS-${code.split("-")[0] || "PART"}`,
+                category,
+            };
+            const option = createPartOption(newPart);
+            partResults.prepend(option);
+            partOptions = [option, ...partOptions];
+            keywordInput.value = "";
+            categorySelect.value = "";
+            filterParts();
+            selectPart(option);
+            partModalForm.reset();
+            partModalForm.querySelector("[data-new-part-safe-quantity]").value = "0";
+            partModal.close();
+        });
+
+        selectPart(partOptions[0]);
+        refreshLineState();
+    })();
+</script>
+</body>
+</html>

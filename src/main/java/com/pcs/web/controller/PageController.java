@@ -30,4 +30,14 @@ public class PageController {
     public String categories() {
         return "forward:/categories.html";
     }
+
+    @GetMapping("/w/{companyCode}/inbound")
+    public String inbound() {
+        return "forward:/inbound.html";
+    }
+
+    @GetMapping("/w/{companyCode}/inbound/new")
+    public String inboundRegister() {
+        return "forward:/inbound-register.html";
+    }
 }

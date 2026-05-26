@@ -54,6 +54,8 @@ tb_inspection_item_result
 
 ```text
 tb_member.company_id
+tb_auth_refresh_token.company_id
+tb_auth_login_history.company_id
 tb_trade_partner.company_id
 tb_part_category.company_id
 tb_pc_part.company_id
