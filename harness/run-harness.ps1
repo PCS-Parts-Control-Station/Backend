@@ -155,6 +155,25 @@ function Test-JavaVersion {
     } catch {
         Add-Result "FAIL" "JAVA_COMMAND_REQUIRED" "java command is not available." "Install JDK 17 or later and configure PATH/JAVA_HOME."
     }
+
+    if (-not [string]::IsNullOrWhiteSpace($env:JAVA_HOME)) {
+        $javaHomeCommand = Join-Path $env:JAVA_HOME "bin\java.exe"
+        if (-not (Test-Path $javaHomeCommand)) {
+            Add-Result "FAIL" "JAVA_HOME_COMMAND_REQUIRED" "JAVA_HOME does not point to a JDK with bin\java.exe: $env:JAVA_HOME" "Set JAVA_HOME to JDK 17 or later."
+            return
+        }
+
+        try {
+            $javaHomeVersionOutput = (cmd /c "`"$javaHomeCommand`" -version 2>&1") -join "`n"
+            if ($javaHomeVersionOutput -notmatch 'version "17\.|version "18\.|version "19\.|version "2[0-9]\.') {
+                Add-Result "FAIL" "JAVA_HOME_17_REQUIRED" "JAVA_HOME is not Java 17 or later. Output: $javaHomeVersionOutput" "Set JAVA_HOME to JDK 17 or later."
+            } else {
+                Add-Result "INFO" "JAVA_HOME_17_REQUIRED" "JAVA_HOME points to Java 17 or later."
+            }
+        } catch {
+            Add-Result "FAIL" "JAVA_HOME_VERSION_CHECK_FAILED" "Failed to execute JAVA_HOME bin\java.exe." "Set JAVA_HOME to a valid JDK 17 or later."
+        }
+    }
 }
 
 function Test-PortAvailable {
@@ -201,6 +220,9 @@ function Test-ProjectSettings {
         }
         if ($build -notmatch "spring-boot-starter-web") {
             Add-Result "FAIL" "SPRING_WEB_REQUIRED" "spring-boot-starter-web is missing." "Keep web starter for the main page."
+        }
+        if ($build -notmatch "spring-boot-starter-security") {
+            Add-Result "FAIL" "SPRING_SECURITY_REQUIRED" "spring-boot-starter-security is missing." "Use Spring Security for JWT request authentication."
         }
     }
 
@@ -483,6 +505,11 @@ function Test-AuthFeature {
     Test-PathRequired "src/main/java/com/pcs/domain/auth/mapper/AuthMapper.java" "AUTH_MAPPER" "Keep MyBatis mapper interface for auth persistence."
     Test-PathRequired "src/main/resources/mapper/auth/AuthMapper.xml" "AUTH_MAPPER_XML" "Keep MyBatis mapper XML for auth persistence."
     Test-PathRequired "src/main/java/com/pcs/global/jwt/JwtTokenProvider.java" "AUTH_JWT_PROVIDER" "Keep JWT creation and validation in global/jwt."
+    Test-PathRequired "src/main/java/com/pcs/global/security/SecurityConfig.java" "AUTH_SECURITY_CONFIG" "Use Spring Security for API authentication boundaries."
+    Test-PathRequired "src/main/java/com/pcs/global/security/JwtAuthenticationFilter.java" "AUTH_JWT_FILTER" "JWT Authorization header parsing must live in a Security filter."
+    Test-PathRequired "src/main/java/com/pcs/global/security/JwtAuthenticationEntryPoint.java" "AUTH_ENTRY_POINT" "Security authentication failures must return ApiResultDto JSON."
+    Test-PathRequired "src/main/java/com/pcs/global/security/JwtAccessDeniedHandler.java" "AUTH_ACCESS_DENIED_HANDLER" "Security authorization failures must return ApiResultDto JSON."
+    Test-PathRequired "src/main/java/com/pcs/global/security/PcsPrincipal.java" "AUTH_SECURITY_PRINCIPAL" "Authenticated user claims must be exposed through PcsPrincipal."
     Test-PathRequired "src/main/resources/static/js/pcs-api.js" "AUTH_STATIC_API_FETCH" "Keep common fetch wrapper for access token attachment and refresh retry."
 
     $controller = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/auth/api/AuthApiController.java"
@@ -492,6 +519,12 @@ function Test-AuthFeature {
             if ($controllerContent -notmatch $pattern) {
                 Add-Result "FAIL" "AUTH_CONTROLLER_PATTERN" "AuthApiController is missing required pattern: $pattern" "Keep auth API shape aligned with docs/features/auth.md."
             }
+        }
+        if ($controllerContent -notmatch "@AuthenticationPrincipal" -or $controllerContent -notmatch "PcsPrincipal") {
+            Add-Result "FAIL" "AUTH_CONTROLLER_PRINCIPAL" "AuthApiController does not use @AuthenticationPrincipal for authenticated user access." "Do not parse Authorization headers in Controller."
+        }
+        if ($controllerContent -match "AUTHORIZATION|RequestHeader") {
+            Add-Result "FAIL" "AUTH_CONTROLLER_NO_AUTH_HEADER_PARSE" "AuthApiController directly reads Authorization headers." "Move JWT request authentication to global/security."
         }
         if ($controllerContent -match "Service|Mapper") {
             Add-Result "FAIL" "AUTH_CONTROLLER_FACADE_ONLY" "AuthApiController directly references Service or Mapper." "Controller must call Facade only."
@@ -505,6 +538,9 @@ function Test-AuthFeature {
             if ($facadeContent -notmatch $pattern) {
                 Add-Result "FAIL" "AUTH_FACADE_PATTERN" "AuthFacade is missing required pattern: $pattern" "Keep auth use cases transactional where DB state changes."
             }
+        }
+        if ($facadeContent -match "parseAccessToken|extractBearerToken|AUTHORIZATION|Authorization") {
+            Add-Result "FAIL" "AUTH_FACADE_NO_AUTH_HEADER_PARSE" "AuthFacade parses JWT or Authorization header directly." "JWT request parsing must live in global/security."
         }
     }
 
@@ -524,6 +560,26 @@ function Test-AuthFeature {
         foreach ($pattern in @("HmacSHA256", "companyId", "companyCode", "memberId", "tokenType", "exp")) {
             if ($jwtContent -notmatch $pattern) {
                 Add-Result "FAIL" "AUTH_JWT_PATTERN" "JwtTokenProvider is missing required JWT claim/signing pattern: $pattern" "Access token must include workspace/member claims and HS256 signature."
+            }
+        }
+    }
+
+    $securityConfig = Join-Path $ProjectRoot "src/main/java/com/pcs/global/security/SecurityConfig.java"
+    if (Test-Path $securityConfig) {
+        $securityContent = Get-Content -Raw $securityConfig
+        foreach ($pattern in @("SecurityFilterChain", "SessionCreationPolicy.STATELESS", "/api/**", "authenticated", "permitAll", "addFilterBefore")) {
+            if ($securityContent -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "AUTH_SECURITY_CONFIG_PATTERN" "SecurityConfig is missing required pattern: $pattern" "Keep stateless JWT Security configuration."
+            }
+        }
+    }
+
+    $jwtFilter = Join-Path $ProjectRoot "src/main/java/com/pcs/global/security/JwtAuthenticationFilter.java"
+    if (Test-Path $jwtFilter) {
+        $filterContent = Get-Content -Raw $jwtFilter
+        foreach ($pattern in @("OncePerRequestFilter", "Authorization", "Bearer ", "parseAccessToken", "SecurityContextHolder", "UsernamePasswordAuthenticationToken")) {
+            if ($filterContent -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "AUTH_JWT_FILTER_PATTERN" "JwtAuthenticationFilter is missing required pattern: $pattern" "JWT request authentication must be handled by the Security filter."
             }
         }
     }
@@ -950,6 +1006,20 @@ public class PcsHarnessDbCheck {
                 fail("AUTH_REFRESH_TOKEN_SAVED", "Refresh token hash row was not saved.");
             }
 
+            String rotatedHash = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+            long replacementTokenId = insertRefreshToken(companyId, memberId, rotatedHash, "11111111-1111-1111-1111-111111111111");
+            rotateRefreshToken(tokenId, replacementTokenId);
+            int rotatedCount = queryInt(
+                "SELECT COUNT(*) FROM tb_auth_refresh_token WHERE token_id = ? AND revoked_at IS NOT NULL AND revoked_reason = 'ROTATED' AND replaced_by_token_id = ?",
+                tokenId,
+                replacementTokenId
+            );
+            if (rotatedCount == 1) {
+                pass("AUTH_REFRESH_TOKEN_ROTATED", "Refresh token rotation state can be recorded.");
+            } else {
+                fail("AUTH_REFRESH_TOKEN_ROTATED", "Refresh token rotation state was not recorded as expected.");
+            }
+
             expectSqlFailure("AUTH_REFRESH_TOKEN_HASH_UNIQUE", new SqlAction() {
                 public void run() throws SQLException {
                     insertRefreshToken(companyId, memberId, refreshHash, "22222222-2222-2222-2222-222222222222");
@@ -1040,6 +1110,15 @@ public class PcsHarnessDbCheck {
             }
         }
         throw new SQLException("Failed to read generated token_id.");
+    }
+
+    private static void rotateRefreshToken(long tokenId, long replacedByTokenId) throws SQLException {
+        String sql = "UPDATE tb_auth_refresh_token SET revoked_at = CURRENT_TIMESTAMP(6), revoked_reason = 'ROTATED', replaced_by_token_id = ? WHERE token_id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, replacedByTokenId);
+            statement.setLong(2, tokenId);
+            statement.executeUpdate();
+        }
     }
 
     private static void insertLoginHistory(long companyId, long memberId, String companyCode, String loginId, String loginResult) throws SQLException {

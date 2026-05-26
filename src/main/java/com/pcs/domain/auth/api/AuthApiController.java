@@ -6,17 +6,18 @@ import com.pcs.domain.auth.dto.response.RefreshTokenResponse;
 import com.pcs.domain.auth.dto.response.SessionMeResponse;
 import com.pcs.domain.auth.facade.AuthFacade;
 import com.pcs.global.dto.ApiResultDto;
+import com.pcs.global.security.PcsPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -108,9 +109,9 @@ public class AuthApiController {
     @GetMapping("/workspaces/{companyCode}/me")
     public ResponseEntity<ApiResultDto<SessionMeResponse>> me(
             @PathVariable String companyCode,
-            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader
+            @AuthenticationPrincipal PcsPrincipal principal
     ) {
-        return ResponseEntity.ok(ApiResultDto.ok(authFacade.findMe(authorizationHeader, companyCode)));
+        return ResponseEntity.ok(ApiResultDto.ok(authFacade.findMe(principal, companyCode)));
     }
 
     private String refreshCookie(String refreshToken, long maxAgeSeconds) {

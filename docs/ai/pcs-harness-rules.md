@@ -56,6 +56,7 @@ src/main/resources/static/js/main.js
 검사:
 
 - Java 17 이상
+- `JAVA_HOME`도 Java 17 이상
 - Spring Boot 4.0.3
 - `spring.application.name = pcs-api`
 - PageController는 forward만 담당
@@ -63,6 +64,7 @@ src/main/resources/static/js/main.js
 - JS 문법 검사
 - `.gitignore` 필수 규칙 확인
 - `domain/{feature}`가 있으면 `docs/features/{feature}.md`가 있어야 함
+- 인증 기능은 `Authorization` 헤더 파싱을 Controller/Facade에 두지 않고 Security 필터에서 처리함
 
 ## Feature / DB 문서 작성 규칙
 

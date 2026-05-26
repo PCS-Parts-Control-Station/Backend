@@ -490,10 +490,13 @@ STAFF:
 ### 6.1 인증 / 토큰
 
 - access token은 `Authorization: Bearer {token}` 헤더로 전달한다.
+- access token 기본 만료 시간은 10분이다.
 - refresh token은 HttpOnly Cookie로 관리한다.
 - refresh token 원문은 DB에 저장하지 않고 해시만 저장한다.
 - access token 만료 시 `/api/auth/refresh`로 재발급한다.
 - refresh token 재발급 시 기존 토큰은 폐기하고 새 토큰으로 회전한다.
+- JWT 요청 인증은 Spring Security 필터에서 처리한다.
+- Controller는 Authorization 헤더를 직접 파싱하지 않고 인증 사용자 정보가 필요하면 `@AuthenticationPrincipal`을 사용한다.
 - refresh token 재사용이 감지되면 해당 token family를 비정상 흐름으로 처리한다.
 - refresh token이 없거나 만료되면 재로그인이 필요하다.
 - 로그아웃 시 refresh token을 폐기한다.

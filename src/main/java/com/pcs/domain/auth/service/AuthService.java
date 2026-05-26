@@ -10,7 +10,7 @@ import com.pcs.domain.auth.type.RefreshTokenRevokedReason;
 import com.pcs.domain.member.type.MemberRole;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
-import com.pcs.global.jwt.JwtClaims;
+import com.pcs.global.security.PcsPrincipal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
@@ -189,13 +189,13 @@ public class AuthService {
         }
     }
 
-    public SessionMeResponse findCurrentSession(JwtClaims claims, String pathCompanyCode) {
+    public SessionMeResponse findCurrentSession(PcsPrincipal principal, String pathCompanyCode) {
         String normalizedPathCompanyCode = normalizeRequired(pathCompanyCode).toLowerCase();
-        if (!claims.companyCode().equals(normalizedPathCompanyCode)) {
+        if (!principal.companyCode().equals(normalizedPathCompanyCode)) {
             throw new BusinessException(ErrorCode.AUTH_WORKSPACE_MISMATCH);
         }
 
-        AuthMember member = authMapper.findSessionMember(claims.companyId(), claims.memberId());
+        AuthMember member = authMapper.findSessionMember(principal.companyId(), principal.memberId());
         if (member == null) {
             throw new BusinessException(ErrorCode.AUTH_TOKEN_INVALID);
         }

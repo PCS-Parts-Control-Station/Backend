@@ -38,6 +38,10 @@ com.pcs.domain.auth
 - refresh token 재발급은 rotation 방식으로 처리한다. 재발급 성공 시 새 access token과 새 refresh token을 함께 발급하고, 기존 refresh token은 `ROTATED`로 폐기한다.
 - 정적 화면의 인증 API 호출은 `/js/pcs-api.js` 공통 fetch 래퍼를 사용한다.
 - 공통 fetch 래퍼는 `localStorage.pcsAccessToken`을 `Authorization` 헤더에 싣고, 401 또는 인증 ErrorCode 응답을 받으면 `/api/auth/refresh`를 한 번 호출한 뒤 원 요청을 재시도한다.
+- API 인증 판별은 Spring Security에서 처리한다.
+- JWT 파싱과 `SecurityContext` 인증 객체 생성은 `global/security/JwtAuthenticationFilter`가 담당한다.
+- 인증이 필요한 Controller는 Authorization 헤더를 직접 파싱하지 않고 `@AuthenticationPrincipal PcsPrincipal`을 사용한다.
+- Security 인증 실패/권한 실패 응답도 `ApiResultDto` JSON 형식으로 반환한다.
 
 ## 응답 기준
 
@@ -86,7 +90,7 @@ pcsRefreshToken={token}; HttpOnly; SameSite=Strict; Path=/api/auth
 - `/api/**`는 인증 실패 시 JSON 에러를 반환해야 한다.
 - Security 설정은 stateless 기준을 유지한다.
 - Controller는 `ApiResultDto`만 반환하고 인증 흐름은 Facade/Service가 담당한다.
-- JWT 생성/검증은 `global/jwt`에서 처리한다.
+- JWT 생성/검증 로직은 `global/jwt`, 요청 인증 연결은 `global/security`에서 처리한다.
 - MyBatis Mapper XML namespace는 Mapper FQCN과 일치해야 한다.
 - refresh token 저장, 로그인 이력 저장, 로그인 성공 시 `tb_member.last_login_at` 갱신을 확인한다.
 - 업무 화면 JS는 인증 API를 직접 `fetch`하지 않고 `/js/pcs-api.js`를 통해 access token 첨부와 refresh 재시도를 공통 처리한다.

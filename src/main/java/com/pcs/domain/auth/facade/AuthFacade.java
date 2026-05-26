@@ -11,8 +11,8 @@ import com.pcs.domain.auth.service.RefreshTokenIssueResult;
 import com.pcs.domain.auth.type.RefreshTokenRevokedReason;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
-import com.pcs.global.jwt.JwtClaims;
 import com.pcs.global.jwt.JwtTokenProvider;
+import com.pcs.global.security.PcsPrincipal;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -96,9 +96,11 @@ public class AuthFacade {
         authService.revokeRefreshTokenByRawValue(rawRefreshToken, RefreshTokenRevokedReason.LOGOUT);
     }
 
-    public SessionMeResponse findMe(String authorizationHeader, String companyCode) {
-        JwtClaims claims = jwtTokenProvider.parseAccessToken(extractBearerToken(authorizationHeader));
-        return authService.findCurrentSession(claims, companyCode);
+    public SessionMeResponse findMe(PcsPrincipal principal, String companyCode) {
+        if (principal == null) {
+            throw new BusinessException(ErrorCode.AUTH_REQUIRED);
+        }
+        return authService.findCurrentSession(principal, companyCode);
     }
 
     private LoginIssueResult issueLoginResult(AuthMember member, String loginIp, String userAgent) {
@@ -140,17 +142,6 @@ public class AuthFacade {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "업체 코드를 입력해 주세요.");
         }
         return bodyCompanyCode.trim().toLowerCase();
-    }
-
-    private String extractBearerToken(String authorizationHeader) {
-        if (authorizationHeader == null || authorizationHeader.isBlank()) {
-            throw new BusinessException(ErrorCode.AUTH_REQUIRED);
-        }
-        String prefix = TOKEN_TYPE + " ";
-        if (!authorizationHeader.startsWith(prefix)) {
-            throw new BusinessException(ErrorCode.AUTH_TOKEN_INVALID);
-        }
-        return authorizationHeader.substring(prefix.length()).trim();
     }
 
     public record LoginIssueResult(
