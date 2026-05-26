@@ -31,6 +31,11 @@ public class PageController {
         return "forward:/categories.html";
     }
 
+    @GetMapping("/w/{companyCode}/partners")
+    public String partners() {
+        return "forward:/partners.html";
+    }
+
     @GetMapping("/w/{companyCode}/inbound")
     public String inbound() {
         return "forward:/inbound.html";
