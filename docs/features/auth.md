@@ -25,6 +25,7 @@ com.pcs.domain.auth
 
 - access token은 API 인증에 사용한다.
 - access token은 JWT이며 `Authorization: Bearer {token}` 헤더로 전달한다.
+- access token 기본 만료 시간은 10분이다.
 - access token에는 `memberId`, `companyId`, `companyCode`, `loginId`, `role`, `tokenType`, `exp`를 담는다.
 - refresh token은 HttpOnly Cookie로 관리한다.
 - refresh token 원문은 DB에 저장하지 않고 SHA-256 해시만 저장한다.
@@ -34,7 +35,9 @@ com.pcs.domain.auth
 - 임시 비밀번호 만료 시간이 지난 계정은 로그인할 수 없다.
 - 로그인 실패가 반복되면 계정을 일정 시간 잠근다.
 - 로그인 성공/실패는 `tb_auth_login_history`에 기록한다.
-- refresh token 재발급은 rotation 방식으로 처리한다.
+- refresh token 재발급은 rotation 방식으로 처리한다. 재발급 성공 시 새 access token과 새 refresh token을 함께 발급하고, 기존 refresh token은 `ROTATED`로 폐기한다.
+- 정적 화면의 인증 API 호출은 `/js/pcs-api.js` 공통 fetch 래퍼를 사용한다.
+- 공통 fetch 래퍼는 `localStorage.pcsAccessToken`을 `Authorization` 헤더에 싣고, 401 또는 인증 ErrorCode 응답을 받으면 `/api/auth/refresh`를 한 번 호출한 뒤 원 요청을 재시도한다.
 
 ## 응답 기준
 
@@ -48,7 +51,7 @@ com.pcs.domain.auth
   "data": {
     "accessToken": "jwt",
     "tokenType": "Bearer",
-    "expiresInSeconds": 1800,
+    "expiresInSeconds": 600,
     "companyId": 1,
     "companyCode": "seoul-parts",
     "memberId": 1,
@@ -86,3 +89,4 @@ pcsRefreshToken={token}; HttpOnly; SameSite=Strict; Path=/api/auth
 - JWT 생성/검증은 `global/jwt`에서 처리한다.
 - MyBatis Mapper XML namespace는 Mapper FQCN과 일치해야 한다.
 - refresh token 저장, 로그인 이력 저장, 로그인 성공 시 `tb_member.last_login_at` 갱신을 확인한다.
+- 업무 화면 JS는 인증 API를 직접 `fetch`하지 않고 `/js/pcs-api.js`를 통해 access token 첨부와 refresh 재시도를 공통 처리한다.

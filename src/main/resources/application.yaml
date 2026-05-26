@@ -18,5 +18,5 @@ mybatis:
 pcs:
   jwt:
     secret: ${PCS_JWT_SECRET:pcs-local-development-jwt-secret-change-before-production-2026}
-    access-token-expiration-minutes: ${PCS_JWT_ACCESS_TOKEN_MINUTES:30}
+    access-token-expiration-minutes: ${PCS_JWT_ACCESS_TOKEN_MINUTES:10}
     refresh-token-expiration-days: ${PCS_JWT_REFRESH_TOKEN_DAYS:14}

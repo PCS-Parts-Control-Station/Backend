@@ -94,6 +94,7 @@ tb_auth_login_history.idx_auth_login_history_member_date
 - 만료 또는 폐기된 token은 사용할 수 없다.
 - 새 refresh token을 저장한다.
 - 기존 refresh token은 `revoked_reason = ROTATED`로 폐기한다.
+- 기존 refresh token의 `replaced_by_token_id`에는 새 refresh token ID를 기록한다.
 - 새 access token을 응답한다.
 
 로그아웃 시:
