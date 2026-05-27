@@ -63,6 +63,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - `docs/ai/pcs-agent-context.md`
 - `docs/ai/pcs-project-structure-reference.md`
 - 필요한 경우 `docs/ai/pcs-api-spec.md`
+- 페이징 목록이면 `docs/ai/pcs-pagination-rules.md`
 - 해당 기능 문서 1개
 - 로그인 후 업무 화면에서 인증 API를 호출하면 `docs/features/auth.md`도 인증 사용 규칙 섹션만 확인
 
@@ -99,6 +100,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - `docs/ai/pcs-agent-context.md`
 - `docs/ai/pcs-project-structure-reference.md`
 - `docs/ai/pcs-api-spec.md`
+- 목록 API 또는 페이징 API면 `docs/ai/pcs-pagination-rules.md`
 - 해당 기능 문서 1개
 - `/api/workspaces/{companyCode}/**`처럼 인증이 필요한 API면 `docs/features/auth.md`도 인증 사용 규칙 섹션만 확인
 
@@ -118,6 +120,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - `docs/ai/pcs-project-structure-reference.md`
 - `docs/sql/pcs-schema-ddl.sql`
 - 해당 기능 문서 1개
+- DB 검증 기준이 있으면 `docs/features/{feature}-db.md`
 
 예시:
 
@@ -125,6 +128,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - 목록 검색 SQL 작성
 - 집계 SQL 작성
 - 재고 정합성 SQL 작성
+- 페이징 목록 SQL 작성 → `docs/ai/pcs-pagination-rules.md`
 
 ---
 
@@ -137,6 +141,18 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - 필요한 경우 `docs/ai/pcs-project-structure-reference.md`
 
 ---
+
+## 문서 추가 규칙
+
+새로운 `.md` 문서를 추가하면 이 파일에도 연결 기준을 추가한다.
+
+기준:
+
+- 새 feature 문서가 생기면 해당 작업 유형의 “읽을 문서” 기준에 포함한다.
+- 새 design 문서가 생기면 “화면 유형별 추가 문서”에 포함한다.
+- 새 DB 문서가 생기면 DB / SQL / Mapper XML 작업 기준에 포함한다.
+- 특정 기능에서만 읽어야 하는 문서는 전체 필수 문서로 올리지 않고, 해당 작업 유형이나 예시에 연결한다.
+- 문서가 생겼는데 `AI_INDEX.md`에서 찾을 수 없으면 팀원 에이전트가 참고하지 못하는 문서로 본다.
 
 ## 토큰 절약 규칙
 

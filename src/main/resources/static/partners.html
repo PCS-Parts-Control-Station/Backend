@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/admin.css?20260526_partner_details">
+    <link rel="stylesheet" href="/css/admin.css?20260527_partner_page">
 </head>
 <body class="has-collapsible-sidebar">
 <div class="workspace-layout">
@@ -62,9 +62,9 @@
                 <section class="filter-card partner-filter-card" aria-labelledby="filter-title">
                     <div>
                         <h2 id="filter-title">거래처 검색</h2>
-                        <p>거래처명, 유형, 역할, 사용 여부로 목록을 좁혀 봅니다.</p>
+                        <p>거래처명, 유형, 역할, 거래 상태로 목록을 좁혀 봅니다.</p>
                     </div>
-                    <!-- API: GET /api/workspaces/{companyCode}/partners?keyword=&partnerType=&partnerRole=&active= -->
+                    <!-- API: GET /api/workspaces/{companyCode}/partners?keyword=&partnerType=&partnerRole=&active=&page=&size= -->
                     <form class="filter-form partner-filter-form" action="#" method="get">
                         <label>
                             <span>검색어</span>
@@ -90,11 +90,11 @@
                             </select>
                         </label>
                         <label>
-                            <span>사용 여부</span>
+                            <span>거래 상태</span>
                             <select name="active">
                                 <option value="">전체</option>
-                                <option value="true">사용 중</option>
-                                <option value="false">사용 안 함</option>
+                                <option value="true">거래 가능</option>
+                                <option value="false">거래 불가</option>
                             </select>
                         </label>
                         <button class="btn btn-primary" type="submit">검색</button>
@@ -111,19 +111,19 @@
                             <dl class="list-summary">
                                 <div>
                                     <dt>전체</dt>
-                                    <dd>12</dd>
+                                    <dd data-summary-total>0</dd>
                                 </div>
                                 <div>
                                     <dt>공급처</dt>
-                                    <dd>5</dd>
+                                    <dd data-summary-supplier>0</dd>
                                 </div>
                                 <div>
                                     <dt>고객</dt>
-                                    <dd>4</dd>
+                                    <dd data-summary-customer>0</dd>
                                 </div>
                                 <div>
-                                    <dt>사용 중</dt>
-                                    <dd>10</dd>
+                                    <dt>거래 가능</dt>
+                                    <dd data-summary-active>0</dd>
                                 </div>
                             </dl>
                         </div>
@@ -134,95 +134,33 @@
                         - 목록: GET /api/workspaces/{companyCode}/partners
                         - 생성: POST /api/workspaces/{companyCode}/partners
                         - 수정: PATCH /api/workspaces/{companyCode}/partners/{partnerId}
-                        - 사용 여부: PATCH /api/workspaces/{companyCode}/partners/{partnerId}/active
+                        - 거래 상태: PATCH /api/workspaces/{companyCode}/partners/{partnerId}/active
 
                         DTO 후보:
-                        - PartnerListResponse(partnerId, partnerName, partnerType, partnerRole, phone, email, address, memo, active, createdByName, updatedAt)
+                        - PartnerListResponse(partnerId, partnerName, partnerType, partnerRole, phone, email, address, memo, active, updatedAt)
                         - CreatePartnerRequest(partnerName, partnerType, partnerRole, phone, email, address, memo, active)
                         - UpdatePartnerRequest(partnerName, partnerType, partnerRole, phone, email, address, memo)
                         - UpdatePartnerActiveRequest(active)
                     -->
-                    <div class="data-table" role="table" aria-label="거래처 목록">
+                    <div class="data-table" role="table" aria-label="거래처 목록" data-partner-table>
                         <div class="data-row partner-data-row table-head" role="row">
                             <span role="columnheader">거래처명</span>
                             <span role="columnheader">유형</span>
                             <span role="columnheader">역할</span>
-                            <span role="columnheader">사용 여부</span>
+                            <span role="columnheader">거래 상태</span>
                             <span role="columnheader">연락처</span>
                             <span role="columnheader">수정일</span>
                             <span role="columnheader">관리</span>
                         </div>
-                        <div class="data-row partner-data-row" role="row">
-                            <strong role="cell">용산전자 본점</strong>
-                            <span role="cell" data-label="유형"><em class="badge badge-blue">기업</em></span>
-                            <span role="cell" data-label="역할"><em class="badge badge-info">공급처</em></span>
-                            <span role="cell" data-label="사용 여부"><em class="badge badge-active">사용 중</em></span>
-                            <span role="cell" data-label="연락처">010-1234-5678</span>
-                            <span role="cell" data-label="수정일">2026-05-24</span>
-                            <span role="cell" class="row-actions">
-                                <button type="button">수정</button>
-                                <button type="button">중지</button>
-                            </span>
+                        <div class="data-row partner-data-row partner-empty-row" role="row" data-partner-empty>
+                            <span role="cell" data-label="안내">거래처 목록을 불러오는 중입니다.</span>
                         </div>
-                        <div class="data-row partner-data-row" role="row">
-                            <strong role="cell">강남 PC존</strong>
-                            <span role="cell" data-label="유형"><em class="badge badge-pending">PC방</em></span>
-                            <span role="cell" data-label="역할"><em class="badge badge-info">고객</em></span>
-                            <span role="cell" data-label="사용 여부"><em class="badge badge-active">사용 중</em></span>
-                            <span role="cell" data-label="연락처">010-9876-5432</span>
-                            <span role="cell" data-label="수정일">2026-05-23</span>
-                            <span role="cell" class="row-actions">
-                                <button type="button">수정</button>
-                                <button type="button">중지</button>
-                            </span>
-                        </div>
-                        <div class="data-row partner-data-row" role="row">
-                            <strong role="cell">이중고 부품</strong>
-                            <span role="cell" data-label="유형"><em class="badge badge-blue">기업</em></span>
-                            <span role="cell" data-label="역할"><em class="badge badge-active">공급+고객</em></span>
-                            <span role="cell" data-label="사용 여부"><em class="badge badge-active">사용 중</em></span>
-                            <span role="cell" data-label="연락처">010-5555-7777</span>
-                            <span role="cell" data-label="수정일">2026-05-22</span>
-                            <span role="cell" class="row-actions">
-                                <button type="button">수정</button>
-                                <button type="button">중지</button>
-                            </span>
-                        </div>
-                        <div class="data-row partner-data-row" role="row">
-                            <strong role="cell">김민수</strong>
-                            <span role="cell" data-label="유형"><em class="badge badge-inactive">개인</em></span>
-                            <span role="cell" data-label="역할"><em class="badge badge-info">공급처</em></span>
-                            <span role="cell" data-label="사용 여부"><em class="badge badge-active">사용 중</em></span>
-                            <span role="cell" data-label="연락처">010-3333-4444</span>
-                            <span role="cell" data-label="수정일">2026-05-20</span>
-                            <span role="cell" class="row-actions">
-                                <button type="button">수정</button>
-                                <button type="button">중지</button>
-                            </span>
-                        </div>
-                        <div class="data-row partner-data-row" role="row">
-                            <strong role="cell">테크노마트 B동</strong>
-                            <span role="cell" data-label="유형"><em class="badge badge-blue">기업</em></span>
-                            <span role="cell" data-label="역할"><em class="badge badge-info">공급처</em></span>
-                            <span role="cell" data-label="사용 여부"><em class="badge badge-inactive">사용 안 함</em></span>
-                            <span role="cell" data-label="연락처">02-555-1234</span>
-                            <span role="cell" data-label="수정일">2026-05-15</span>
-                            <span role="cell" class="row-actions">
-                                <button type="button">수정</button>
-                                <button type="button">사용</button>
-                            </span>
-                        </div>
-                        <div class="data-row partner-data-row" role="row">
-                            <strong role="cell">서울 게이밍카페</strong>
-                            <span role="cell" data-label="유형"><em class="badge badge-pending">PC방</em></span>
-                            <span role="cell" data-label="역할"><em class="badge badge-info">고객</em></span>
-                            <span role="cell" data-label="사용 여부"><em class="badge badge-active">사용 중</em></span>
-                            <span role="cell" data-label="연락처">010-8888-2222</span>
-                            <span role="cell" data-label="수정일">2026-05-18</span>
-                            <span role="cell" class="row-actions">
-                                <button type="button">수정</button>
-                                <button type="button">중지</button>
-                            </span>
+                    </div>
+                    <div class="pagination-bar" data-partner-pagination hidden>
+                        <p data-page-info>1 / 1 페이지</p>
+                        <div class="pagination-actions">
+                            <button type="button" data-page-prev>이전</button>
+                            <button type="button" data-page-next>다음</button>
                         </div>
                     </div>
                 </section>
@@ -283,7 +221,7 @@
                         </details>
                         <label class="switch-row">
                             <input type="checkbox" name="active" checked>
-                            <span>사용 중으로 등록</span>
+                            <span>거래 가능 상태로 등록</span>
                         </label>
                         <div class="form-actions">
                             <button class="btn btn-primary" type="submit">저장</button>
@@ -297,14 +235,17 @@
                     <ul>
                         <li>거래처명은 회사 안에서 중복 불가</li>
                         <li>공급처는 입고 전표, 고객은 출고 전표에서 선택 가능</li>
-                        <li>사용 안 함 상태는 신규 입출고 전표에서 제외</li>
-                        <li>삭제 대신 사용 여부 변경으로 이력 보존</li>
+                        <li>거래 불가 상태는 신규 입출고 전표에서 제외</li>
+                        <li>삭제 대신 거래 상태 변경으로 이력 보존</li>
                     </ul>
                 </div>
             </aside>
         </section>
     </main>
 </div>
+<script src="/js/pcs-api.js?20260527_partner_page"></script>
+<script src="/js/pcs-pagination.js?20260527_pagination"></script>
+<script src="/js/partners.js?20260527_pagination"></script>
 <script>
     (() => {
         const body = document.body;

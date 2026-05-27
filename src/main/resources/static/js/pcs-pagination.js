@@ -1,0 +1,122 @@
+(function (window) {
+    const DEFAULT_SIZE = 20;
+
+    const toNumber = (value, fallback) => {
+        const number = Number(value);
+        return Number.isFinite(number) ? number : fallback;
+    };
+
+    const normalizePageData = (data, fallbackSize = DEFAULT_SIZE) => {
+        if (Array.isArray(data)) {
+            return {
+                content: data,
+                page: 0,
+                size: data.length || fallbackSize,
+                totalElements: data.length,
+                totalPages: data.length ? 1 : 0,
+                hasPrevious: false,
+                hasNext: false,
+                summary: null
+            };
+        }
+
+        const page = Math.max(0, toNumber(data?.page, 0));
+        const size = Math.max(1, toNumber(data?.size, fallbackSize));
+        const totalElements = Math.max(0, toNumber(data?.totalElements, 0));
+        const totalPages = Math.max(0, toNumber(data?.totalPages, 0));
+
+        return {
+            content: Array.isArray(data?.content) ? data.content : Array.isArray(data?.items) ? data.items : [],
+            page,
+            size,
+            totalElements,
+            totalPages,
+            hasPrevious: data?.hasPrevious === true,
+            hasNext: data?.hasNext === true,
+            summary: data?.summary || null
+        };
+    };
+
+    const buildParams = ({ page = 0, size = DEFAULT_SIZE, form = null, extraParams = {} } = {}) => {
+        const params = new URLSearchParams({
+            page: String(Math.max(0, page)),
+            size: String(Math.max(1, size))
+        });
+
+        if (form) {
+            const formData = new FormData(form);
+            for (const [key, value] of formData.entries()) {
+                const trimmed = String(value).trim();
+                if (trimmed) {
+                    params.set(key, trimmed);
+                }
+            }
+        }
+
+        Object.entries(extraParams).forEach(([key, value]) => {
+            if (value === null || value === undefined || value === "") {
+                return;
+            }
+            params.set(key, String(value));
+        });
+
+        return params;
+    };
+
+    const formatPageInfo = (pageData) => {
+        if (!pageData.totalPages) {
+            return "0건";
+        }
+        return `${pageData.page + 1} / ${pageData.totalPages} 페이지 · 총 ${pageData.totalElements.toLocaleString("ko-KR")}건`;
+    };
+
+    const updateControls = ({ pageData, container, info, prevButton, nextButton }) => {
+        if (container) {
+            container.hidden = pageData.totalPages <= 1;
+        }
+        if (info) {
+            info.textContent = formatPageInfo(pageData);
+        }
+        if (prevButton) {
+            prevButton.disabled = !pageData.hasPrevious;
+        }
+        if (nextButton) {
+            nextButton.disabled = !pageData.hasNext;
+        }
+    };
+
+    const captureScroll = () => ({
+        top: window.scrollY,
+        left: window.scrollX
+    });
+
+    const restoreScrollPosition = (position) => {
+        if (!position) {
+            return;
+        }
+        window.requestAnimationFrame(() => {
+            window.scrollTo(position.left, position.top);
+            window.requestAnimationFrame(() => window.scrollTo(position.left, position.top));
+        });
+    };
+
+    const withPreservedScroll = async (task) => {
+        const position = captureScroll();
+        try {
+            return await task();
+        } finally {
+            restoreScrollPosition(position);
+        }
+    };
+
+    window.PcsPagination = {
+        DEFAULT_SIZE,
+        normalizePageData,
+        buildParams,
+        formatPageInfo,
+        updateControls,
+        captureScroll,
+        restoreScrollPosition,
+        withPreservedScroll
+    };
+})(window);
