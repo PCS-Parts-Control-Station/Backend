@@ -35,6 +35,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - 대시보드 → `docs/ai/design/dashboard.md`
 - 검색/목록/테이블 → `docs/ai/design/data-table.md`
 - 등록/수정 패널 → `docs/ai/design/form-panel.md`
+- 모달/확인창/토스트 → `docs/ai/design/modal-dialog.md`
 - 업무 흐름 보조 패널 → `docs/ai/design/workflow-panel.md`
 - 상세 화면 → `docs/ai/design/detail-page.md`
 - 이력/타임라인 → `docs/ai/design/history-timeline.md`
@@ -51,6 +52,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - 관리자 화면 UI 개선
 - CSS 리팩토링
 - 상태 배지 디자인 정리
+- 등록/수정 모달 또는 저장 확인 모달 추가
 
 ---
 

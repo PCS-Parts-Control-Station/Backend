@@ -22,6 +22,7 @@ docs/ai/design/responsive-layout.md
 docs/ai/design/dashboard.md
 docs/ai/design/data-table.md
 docs/ai/design/form-panel.md
+docs/ai/design/modal-dialog.md
 docs/ai/design/workflow-panel.md
 docs/ai/design/detail-page.md
 docs/ai/design/history-timeline.md
@@ -35,6 +36,7 @@ docs/ai/design/history-timeline.md
 - `dashboard.md`: 운영 현황, 통계, 우선 처리 목록
 - `data-table.md`: 검색/필터/목록/요약 테이블
 - `form-panel.md`: 오른쪽 등록/수정 패널, 보조 메모 패널
+- `modal-dialog.md`: 등록/수정 모달, 저장 확인 모달, 토스트 구분 기준
 - `workflow-panel.md`: 입고/검수/출고/이력 화면의 오른쪽 업무 흐름 보조 패널
 - `detail-page.md`: 부품 상세, 사용자 상세, 거래처 상세
 - `history-timeline.md`: 이력 관리, 개별 부품 타임라인
