@@ -184,13 +184,33 @@ Owner 회원가입 + 회사 생성 요청 후보:
 
 | Method | API | 설명 |
 |---|---|---|
-| GET | `/api/workspaces/{companyCode}/partners` | 거래처 목록 |
+| GET | `/api/workspaces/{companyCode}/partners` | 거래처 목록. `keyword`, `partnerType`, `partnerRole`, `active`, `page`, `size`, `limit` 지원 |
 | POST | `/api/workspaces/{companyCode}/partners` | 거래처 생성 |
 | GET | `/api/workspaces/{companyCode}/partners/{partnerId}` | 거래처 상세 |
 | PATCH | `/api/workspaces/{companyCode}/partners/{partnerId}` | 거래처 수정 |
-| PATCH | `/api/workspaces/{companyCode}/partners/{partnerId}/active` | 거래처 사용 여부 변경 |
+| PATCH | `/api/workspaces/{companyCode}/partners/{partnerId}/active` | 거래처 거래 가능 여부 변경 |
 
 거래처는 회사 하위 데이터지만 역할이 커서 `company`에 넣기보다 `partner` 도메인으로 분리한다.
+
+거래처 목록 응답은 공통 페이징 기준을 따른다.
+
+```json
+{
+  "content": [],
+  "page": 0,
+  "size": 20,
+  "totalElements": 0,
+  "totalPages": 0,
+  "hasPrevious": false,
+  "hasNext": false,
+  "summary": {
+    "totalCount": 0,
+    "supplierCount": 0,
+    "customerCount": 0,
+    "activeCount": 0
+  }
+}
+```
 
 거래처 생성 요청 후보:
 

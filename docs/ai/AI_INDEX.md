@@ -35,6 +35,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - 대시보드 → `docs/ai/design/dashboard.md`
 - 검색/목록/테이블 → `docs/ai/design/data-table.md`
 - 등록/수정 패널 → `docs/ai/design/form-panel.md`
+- 모달/확인창/토스트 → `docs/ai/design/modal-dialog.md`
 - 업무 흐름 보조 패널 → `docs/ai/design/workflow-panel.md`
 - 상세 화면 → `docs/ai/design/detail-page.md`
 - 이력/타임라인 → `docs/ai/design/history-timeline.md`
@@ -51,6 +52,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - 관리자 화면 UI 개선
 - CSS 리팩토링
 - 상태 배지 디자인 정리
+- 등록/수정 모달 또는 저장 확인 모달 추가
 
 ---
 
@@ -61,6 +63,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - `docs/ai/pcs-agent-context.md`
 - `docs/ai/pcs-project-structure-reference.md`
 - 필요한 경우 `docs/ai/pcs-api-spec.md`
+- 페이징 목록이면 `docs/ai/pcs-pagination-rules.md`
 - 해당 기능 문서 1개
 - 로그인 후 업무 화면에서 인증 API를 호출하면 `docs/features/auth.md`도 인증 사용 규칙 섹션만 확인
 
@@ -97,6 +100,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - `docs/ai/pcs-agent-context.md`
 - `docs/ai/pcs-project-structure-reference.md`
 - `docs/ai/pcs-api-spec.md`
+- 목록 API 또는 페이징 API면 `docs/ai/pcs-pagination-rules.md`
 - 해당 기능 문서 1개
 - `/api/workspaces/{companyCode}/**`처럼 인증이 필요한 API면 `docs/features/auth.md`도 인증 사용 규칙 섹션만 확인
 
@@ -116,6 +120,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - `docs/ai/pcs-project-structure-reference.md`
 - `docs/sql/pcs-schema-ddl.sql`
 - 해당 기능 문서 1개
+- DB 검증 기준이 있으면 `docs/features/{feature}-db.md`
 
 예시:
 
@@ -123,6 +128,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - 목록 검색 SQL 작성
 - 집계 SQL 작성
 - 재고 정합성 SQL 작성
+- 페이징 목록 SQL 작성 → `docs/ai/pcs-pagination-rules.md`
 
 ---
 
@@ -135,6 +141,18 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - 필요한 경우 `docs/ai/pcs-project-structure-reference.md`
 
 ---
+
+## 문서 추가 규칙
+
+새로운 `.md` 문서를 추가하면 이 파일에도 연결 기준을 추가한다.
+
+기준:
+
+- 새 feature 문서가 생기면 해당 작업 유형의 “읽을 문서” 기준에 포함한다.
+- 새 design 문서가 생기면 “화면 유형별 추가 문서”에 포함한다.
+- 새 DB 문서가 생기면 DB / SQL / Mapper XML 작업 기준에 포함한다.
+- 특정 기능에서만 읽어야 하는 문서는 전체 필수 문서로 올리지 않고, 해당 작업 유형이나 예시에 연결한다.
+- 문서가 생겼는데 `AI_INDEX.md`에서 찾을 수 없으면 팀원 에이전트가 참고하지 못하는 문서로 본다.
 
 ## 토큰 절약 규칙
 
