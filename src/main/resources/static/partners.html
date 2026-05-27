@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/admin.css?20260526_partner_responsive_2">
+    <link rel="stylesheet" href="/css/admin.css?20260526_partner_details">
 </head>
 <body class="has-collapsible-sidebar">
 <div class="workspace-layout">
@@ -54,10 +54,6 @@
                 <p class="page-kicker">기준 정보 관리</p>
                 <h1>거래처 관리</h1>
                 <p class="page-description">입고/출고에 사용하는 거래처를 등록하고, 유형과 역할별로 관리합니다.</p>
-            </div>
-            <div class="header-actions">
-                <a class="btn btn-secondary" href="/w/pcs-seoul/dashboard">운영 현황</a>
-                <button class="btn btn-primary" type="button">거래처 추가</button>
             </div>
         </header>
 
@@ -141,9 +137,9 @@
                         - 사용 여부: PATCH /api/workspaces/{companyCode}/partners/{partnerId}/active
 
                         DTO 후보:
-                        - PartnerListResponse(partnerId, partnerName, partnerType, partnerRole, contactName, contactPhone, active, createdByName, updatedAt)
-                        - CreatePartnerRequest(partnerName, partnerType, partnerRole, contactName, contactPhone, memo, active)
-                        - UpdatePartnerRequest(partnerName, partnerType, partnerRole, contactName, contactPhone, memo)
+                        - PartnerListResponse(partnerId, partnerName, partnerType, partnerRole, phone, email, address, memo, active, createdByName, updatedAt)
+                        - CreatePartnerRequest(partnerName, partnerType, partnerRole, phone, email, address, memo, active)
+                        - UpdatePartnerRequest(partnerName, partnerType, partnerRole, phone, email, address, memo)
                         - UpdatePartnerActiveRequest(active)
                     -->
                     <div class="data-table" role="table" aria-label="거래처 목록">
@@ -152,7 +148,7 @@
                             <span role="columnheader">유형</span>
                             <span role="columnheader">역할</span>
                             <span role="columnheader">사용 여부</span>
-                            <span role="columnheader">담당자</span>
+                            <span role="columnheader">연락처</span>
                             <span role="columnheader">수정일</span>
                             <span role="columnheader">관리</span>
                         </div>
@@ -161,7 +157,7 @@
                             <span role="cell" data-label="유형"><em class="badge badge-blue">기업</em></span>
                             <span role="cell" data-label="역할"><em class="badge badge-info">공급처</em></span>
                             <span role="cell" data-label="사용 여부"><em class="badge badge-active">사용 중</em></span>
-                            <span role="cell" data-label="담당자">김도매 010-1234-5678</span>
+                            <span role="cell" data-label="연락처">010-1234-5678</span>
                             <span role="cell" data-label="수정일">2026-05-24</span>
                             <span role="cell" class="row-actions">
                                 <button type="button">수정</button>
@@ -173,7 +169,7 @@
                             <span role="cell" data-label="유형"><em class="badge badge-pending">PC방</em></span>
                             <span role="cell" data-label="역할"><em class="badge badge-info">고객</em></span>
                             <span role="cell" data-label="사용 여부"><em class="badge badge-active">사용 중</em></span>
-                            <span role="cell" data-label="담당자">박사장 010-9876-5432</span>
+                            <span role="cell" data-label="연락처">010-9876-5432</span>
                             <span role="cell" data-label="수정일">2026-05-23</span>
                             <span role="cell" class="row-actions">
                                 <button type="button">수정</button>
@@ -185,7 +181,7 @@
                             <span role="cell" data-label="유형"><em class="badge badge-blue">기업</em></span>
                             <span role="cell" data-label="역할"><em class="badge badge-active">공급+고객</em></span>
                             <span role="cell" data-label="사용 여부"><em class="badge badge-active">사용 중</em></span>
-                            <span role="cell" data-label="담당자">이대표 010-5555-7777</span>
+                            <span role="cell" data-label="연락처">010-5555-7777</span>
                             <span role="cell" data-label="수정일">2026-05-22</span>
                             <span role="cell" class="row-actions">
                                 <button type="button">수정</button>
@@ -197,7 +193,7 @@
                             <span role="cell" data-label="유형"><em class="badge badge-inactive">개인</em></span>
                             <span role="cell" data-label="역할"><em class="badge badge-info">공급처</em></span>
                             <span role="cell" data-label="사용 여부"><em class="badge badge-active">사용 중</em></span>
-                            <span role="cell" data-label="담당자">김민수 010-3333-4444</span>
+                            <span role="cell" data-label="연락처">010-3333-4444</span>
                             <span role="cell" data-label="수정일">2026-05-20</span>
                             <span role="cell" class="row-actions">
                                 <button type="button">수정</button>
@@ -209,7 +205,7 @@
                             <span role="cell" data-label="유형"><em class="badge badge-blue">기업</em></span>
                             <span role="cell" data-label="역할"><em class="badge badge-info">공급처</em></span>
                             <span role="cell" data-label="사용 여부"><em class="badge badge-inactive">사용 안 함</em></span>
-                            <span role="cell" data-label="담당자">최부장 02-555-1234</span>
+                            <span role="cell" data-label="연락처">02-555-1234</span>
                             <span role="cell" data-label="수정일">2026-05-15</span>
                             <span role="cell" class="row-actions">
                                 <button type="button">수정</button>
@@ -221,7 +217,7 @@
                             <span role="cell" data-label="유형"><em class="badge badge-pending">PC방</em></span>
                             <span role="cell" data-label="역할"><em class="badge badge-info">고객</em></span>
                             <span role="cell" data-label="사용 여부"><em class="badge badge-active">사용 중</em></span>
-                            <span role="cell" data-label="담당자">정매니저 010-8888-2222</span>
+                            <span role="cell" data-label="연락처">010-8888-2222</span>
                             <span role="cell" data-label="수정일">2026-05-18</span>
                             <span role="cell" class="row-actions">
                                 <button type="button">수정</button>
@@ -240,11 +236,11 @@
                     <form class="category-form" action="#" method="post">
                         <label>
                             <span>거래처명</span>
-                            <input type="text" name="partnerName" placeholder="예: 용산전자 본점">
+                            <input type="text" name="partnerName" placeholder="예: 용산전자 본점" required>
                         </label>
                         <label>
                             <span>거래처 유형</span>
-                            <select name="partnerType">
+                            <select name="partnerType" required>
                                 <option value="">선택</option>
                                 <option value="PC_CAFE">PC방</option>
                                 <option value="PERSON">개인</option>
@@ -254,25 +250,37 @@
                         </label>
                         <label>
                             <span>거래 역할</span>
-                            <select name="partnerRole">
+                            <select name="partnerRole" required>
                                 <option value="">선택</option>
                                 <option value="SUPPLIER">공급처 (입고)</option>
                                 <option value="CUSTOMER">고객 (출고)</option>
                                 <option value="BOTH">공급+고객</option>
                             </select>
                         </label>
-                        <label>
-                            <span>담당자명 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
-                            <input type="text" name="contactName" placeholder="예: 김도매">
-                        </label>
-                        <label>
-                            <span>연락처 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
-                            <input type="tel" name="contactPhone" placeholder="예: 010-1234-5678">
-                        </label>
-                        <label>
-                            <span>메모 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
-                            <textarea name="memo" rows="3" placeholder="거래 조건, 주의사항 등"></textarea>
-                        </label>
+                        <details class="optional-fields">
+                            <summary>
+                                <span>상세 정보 입력</span>
+                                <small>연락처, 이메일, 주소, 메모</small>
+                            </summary>
+                            <div class="optional-fields-body">
+                                <label>
+                                    <span>연락처 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
+                                    <input type="tel" name="phone" placeholder="예: 010-1234-5678">
+                                </label>
+                                <label>
+                                    <span>이메일 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
+                                    <input type="email" name="email" placeholder="예: contact@example.com">
+                                </label>
+                                <label>
+                                    <span>주소 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
+                                    <input type="text" name="address" placeholder="예: 서울시 용산구">
+                                </label>
+                                <label>
+                                    <span>메모 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
+                                    <textarea name="memo" rows="3" placeholder="거래 조건, 주의사항 등"></textarea>
+                                </label>
+                            </div>
+                        </details>
                         <label class="switch-row">
                             <input type="checkbox" name="active" checked>
                             <span>사용 중으로 등록</span>
