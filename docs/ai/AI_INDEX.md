@@ -62,12 +62,14 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - `docs/ai/pcs-project-structure-reference.md`
 - 필요한 경우 `docs/ai/pcs-api-spec.md`
 - 해당 기능 문서 1개
+- 로그인 후 업무 화면에서 인증 API를 호출하면 `docs/features/auth.md`도 인증 사용 규칙 섹션만 확인
 
 예시:
 
 - 부품 목록 JS 작성 → `docs/features/part.md`
 - 검수 등록 JS 작성 → `docs/features/inspection.md`
 - 로그인 JS 작성 → `docs/features/auth.md`
+- 대시보드/거래처/부품 등 업무 화면 API 연동 → 해당 기능 문서 + `docs/features/auth.md`
 
 ---
 
@@ -96,12 +98,14 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - `docs/ai/pcs-project-structure-reference.md`
 - `docs/ai/pcs-api-spec.md`
 - 해당 기능 문서 1개
+- `/api/workspaces/{companyCode}/**`처럼 인증이 필요한 API면 `docs/features/auth.md`도 인증 사용 규칙 섹션만 확인
 
 예시:
 
 - Owner 회원가입 구현 → `docs/features/company.md`
 - 업체 로그인 구현 → `docs/features/auth.md`
 - 입고 전표 등록 구현 → `docs/features/stock.md`
+- 거래처/부품/입출고/검수 API 구현 → 해당 기능 문서 + `docs/features/auth.md`
 
 ---
 

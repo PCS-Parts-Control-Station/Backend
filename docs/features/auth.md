@@ -47,6 +47,29 @@ com.pcs.domain.auth
 - 인증이 필요한 Controller는 Authorization 헤더를 직접 파싱하지 않고 `@AuthenticationPrincipal PcsPrincipal`을 사용한다.
 - Security 인증 실패/권한 실패 응답도 `ApiResultDto` JSON 형식으로 반환한다.
 
+## 기능 개발 시 인증 사용 규칙
+
+새 기능을 만들 때 인증을 기존 구조에 끼워 맞추지 말고 아래 기준을 따른다.
+
+백엔드 API:
+
+- `/api/workspaces/{companyCode}/**` API는 인증이 필요한 업무 API로 본다.
+- Controller, Facade, Service에서 `Authorization` 헤더를 직접 읽거나 JWT를 직접 파싱하지 않는다.
+- 인증 사용자 정보가 필요하면 Controller 메서드에서 `@AuthenticationPrincipal PcsPrincipal principal`을 받는다.
+- URL의 `companyCode`는 사용자 입력값이므로 단독 신뢰하지 않는다.
+- `companyCode`, `companyId`, `memberId`, `role`은 `PcsPrincipal` 기준으로 확인한다.
+- 회사 범위 데이터 조회/수정은 항상 `principal.companyId()` 범위 안에서 처리한다.
+- URL의 `companyCode`와 `principal.companyCode()`가 다르면 `AUTH_WORKSPACE_MISMATCH`로 처리한다.
+- 권한 분기는 문자열 직접 비교보다 프로젝트 Enum/권한 규칙을 사용한다.
+
+프론트 JS:
+
+- 로그인 후 업무 화면에서 API 호출은 직접 `fetch`하지 않고 `/js/pcs-api.js`의 공통 래퍼를 사용한다.
+- access token은 `localStorage.pcsAccessToken`에 저장된 값을 공통 래퍼가 `Authorization: Bearer` 헤더에 붙인다.
+- refresh token은 HttpOnly Cookie이므로 JS에서 읽거나 저장하거나 전송하지 않는다.
+- access token 만료 시 공통 래퍼가 `/api/auth/refresh`를 호출하고 원 요청을 1회 재시도한다.
+- 기능별 JS는 토큰 재발급 로직을 중복 구현하지 않는다.
+
 ## 응답 기준
 
 로그인 성공 응답:

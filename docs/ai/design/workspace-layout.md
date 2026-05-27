@@ -12,6 +12,7 @@
 - `/w/{companyCode}/outbound`
 - `/w/{companyCode}/history`
 - `/w/{companyCode}/users`
+- `/w/{companyCode}/partners`
 
 ## 적용 제외
 
@@ -90,6 +91,7 @@ workspace-layout
 검수 관리
 출고 관리
 이력 관리
+거래처 관리
 사용자 관리
 ```
 
@@ -138,6 +140,8 @@ content-grid
 ```
 
 카테고리, 사용자, 거래처, 기준 관리처럼 목록을 보면서 바로 추가하는 화면은 이 구조를 우선 사용한다.
+
+거래처 관리처럼 좌측 목록과 오른쪽 등록 패널을 동시에 쓰는 화면은 `has-collapsible-sidebar` 구조를 사용해 1520px 이하에서 사이드바를 접고 본문 폭을 우선 확보한다.
 
 입고, 검수, 출고, 이력처럼 업무 흐름 맥락이 중요한 화면은 오른쪽 `side-panel`에 등록 폼 대신 `workflow-panel.md` 기준의 업무 흐름 보조 패널을 둘 수 있다.
 
