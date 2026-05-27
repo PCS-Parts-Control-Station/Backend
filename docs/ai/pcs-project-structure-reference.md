@@ -119,6 +119,7 @@ static/js/{page}.js
 
 ```text
 pcs-api.js
+pcs-pagination.js
 common-theme.js
 common-form.js
 common-navbar.js
@@ -126,6 +127,7 @@ common-navbar.js
 
 - 인증이 필요한 정적 화면의 API 호출은 `pcs-api.js`를 사용한다.
 - `pcs-api.js`는 access token 첨부, 401 응답 시 refresh 재발급, 원 요청 1회 재시도를 공통 처리한다.
+- 페이징 목록 화면은 `pcs-pagination.js`를 사용해 `page/size`, 응답 정규화, 이전/다음 버튼 상태, 스크롤 보존 처리를 공통화한다.
 
 ## PageController 기준
 

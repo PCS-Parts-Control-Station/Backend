@@ -747,7 +747,8 @@
                     return;
                 }
 
-                renderPartners(result?.data || []);
+                const partners = Array.isArray(result?.data) ? result.data : result?.data?.content || result?.data?.items || [];
+                renderPartners(partners);
             } catch (error) {
                 partnerSelect.innerHTML = '<option value="">거래처를 불러오지 못했습니다</option>';
                 setPartnerMessage("거래처 조회 요청을 처리할 수 없습니다.", "error");

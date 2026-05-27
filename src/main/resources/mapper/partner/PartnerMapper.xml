@@ -13,18 +13,13 @@
         )
     </select>
 
-    <select id="searchPartners" resultType="com.pcs.domain.partner.dto.response.SearchPartnerResponse">
-        SELECT
-            partner_id,
-            partner_name,
-            partner_type,
-            partner_role,
-            phone,
-            active
-        FROM tb_trade_partner
+    <sql id="partnerSearchWhere">
         WHERE company_id = #{companyId}
         <if test="active != null">
           AND active = #{active}
+        </if>
+        <if test="partnerType != null">
+          AND partner_type = #{partnerType}
         </if>
         <if test="partnerRole != null">
           AND (
@@ -39,8 +34,41 @@
               OR email LIKE CONCAT('%', #{keyword}, '%')
           )
         </if>
-        ORDER BY partner_name ASC, partner_id ASC
-        LIMIT #{limit}
+    </sql>
+
+    <select id="searchPartners" resultType="com.pcs.domain.partner.dto.response.SearchPartnerResponse">
+        SELECT
+            partner_id,
+            partner_name,
+            partner_type,
+            partner_role,
+            phone,
+            email,
+            address,
+            memo,
+            active,
+            updated_at
+        FROM tb_trade_partner
+        <include refid="partnerSearchWhere" />
+        ORDER BY updated_at DESC, partner_id DESC
+        LIMIT #{size}
+        OFFSET #{offset}
+    </select>
+
+    <select id="countPartners" resultType="long">
+        SELECT COUNT(*)
+        FROM tb_trade_partner
+        <include refid="partnerSearchWhere" />
+    </select>
+
+    <select id="summarizePartners" resultType="com.pcs.domain.partner.dto.response.SearchPartnerSummaryResponse">
+        SELECT
+            COUNT(*) AS total_count,
+            COALESCE(SUM(CASE WHEN partner_role IN ('SUPPLIER', 'BOTH') THEN 1 ELSE 0 END), 0) AS supplier_count,
+            COALESCE(SUM(CASE WHEN partner_role IN ('CUSTOMER', 'BOTH') THEN 1 ELSE 0 END), 0) AS customer_count,
+            COALESCE(SUM(CASE WHEN active = TRUE THEN 1 ELSE 0 END), 0) AS active_count
+        FROM tb_trade_partner
+        <include refid="partnerSearchWhere" />
     </select>
 
 </mapper>
