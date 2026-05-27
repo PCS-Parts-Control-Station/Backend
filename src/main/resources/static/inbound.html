@@ -106,6 +106,8 @@
                     </form>
                 </section>
 
+                <div class="created-document-notice" data-created-notice role="status" aria-live="polite" hidden></div>
+
                 <section class="table-card" aria-labelledby="inbound-list-title">
                     <div class="table-header">
                         <div>
@@ -334,6 +336,58 @@
                 closeMenu();
             }
         });
+    })();
+
+    (() => {
+        const params = new URLSearchParams(window.location.search);
+        const documentNo = params.get("created");
+
+        if (!documentNo) {
+            return;
+        }
+
+        const table = document.querySelector(".inbound-table");
+        const tableHead = table?.querySelector(".table-head");
+        const notice = document.querySelector("[data-created-notice]");
+        const partnerName = params.get("partner") || "방금 등록한 거래처";
+        const quantity = Number(params.get("quantity")) || 0;
+        const dateMatch = documentNo.match(/^IN-(\d{4})(\d{2})(\d{2})-/);
+        const createdDate = dateMatch ? `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}` : "";
+        const escapeHtml = (value) => value.replace(/[&<>"']/g, (letter) => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            "\"": "&quot;",
+            "'": "&#039;",
+        }[letter]));
+
+        if (notice) {
+            notice.hidden = false;
+            notice.textContent = `입고 전표 ${documentNo} 가 등록되었습니다.`;
+        }
+
+        if (!table || !tableHead) {
+            return;
+        }
+
+        const row = document.createElement("div");
+        row.className = "data-row inbound-row is-created";
+        row.setAttribute("role", "row");
+        row.innerHTML = `
+            <strong role="cell" data-label="전표번호">${escapeHtml(documentNo)}</strong>
+            <span role="cell" class="cell-stack" data-label="입고 내용">
+                <b>${escapeHtml(partnerName)}</b>
+                <small>방금 등록된 입고 전표</small>
+            </span>
+            <span role="cell" data-label="수량">${quantity ? `${quantity}개` : "-"}</span>
+            <span role="cell" data-label="상태"><em class="badge badge-active">완료</em></span>
+            <span role="cell" data-label="입고일">${createdDate || "-"}</span>
+            <span role="cell" class="row-actions" data-label="관리">
+                <button type="button">상세</button>
+                <button type="button">취소</button>
+            </span>
+        `;
+        tableHead.insertAdjacentElement("afterend", row);
     })();
 </script>
 </body>
