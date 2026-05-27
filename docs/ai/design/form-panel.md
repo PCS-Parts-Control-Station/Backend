@@ -19,6 +19,8 @@
 
 업무 흐름 안내 패널은 `docs/ai/design/workflow-panel.md`를 따른다.
 
+버튼을 눌렀을 때 일시적으로 열리는 등록/수정 입력이나 저장 확인은 `docs/ai/design/modal-dialog.md`를 따른다.
+
 ## 기본 구조
 
 카테고리 관리 화면의 오른쪽 패널을 기준으로 한다.
