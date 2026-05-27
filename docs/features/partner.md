@@ -35,6 +35,14 @@ com.pcs.domain.partner
 - 거래처 목록 응답은 `content`, `page`, `size`, `totalElements`, `totalPages`, `hasPrevious`, `hasNext`, `summary`를 포함한다.
 - `summary`는 현재 검색 조건 기준의 `totalCount`, `supplierCount`, `customerCount`, `activeCount`를 제공한다.
 
+## 화면 규칙
+
+- 거래처 목록 행에는 줄별 수정/거래 상태 버튼을 반복해서 노출하지 않는다.
+- 거래처 행을 선택하면 오른쪽 패널이 상세 모드로 전환된다.
+- 상세 모드에서 수정 또는 새 거래처 등록으로 이어진다.
+- 새 거래처 등록은 같은 오른쪽 패널을 등록 모드로 되돌려 흐름이 끊기지 않게 한다.
+- 거래처 목록 페이징 이동 시 스크롤 위치를 보존한다.
+
 ## 하네스 포인트
 
 - 거래처 조회는 항상 `companyId` 범위 안에서만 수행한다.
