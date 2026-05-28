@@ -427,7 +427,26 @@ strong {
 }
 
 .data-row.partner-data-row {
-    grid-template-columns: 1.1fr 100px 100px 104px 1fr 92px 112px;
+    grid-template-columns: 1.1fr 100px 100px 104px 1fr 92px;
+}
+
+.data-row.partner-data-row.is-selectable {
+    cursor: pointer;
+    transition: background 140ms ease, box-shadow 140ms ease;
+}
+
+.data-row.partner-data-row.is-selectable:hover {
+    background: var(--cyan-soft);
+}
+
+.data-row.partner-data-row.is-selectable:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.18);
+    outline-offset: -3px;
+}
+
+.data-row.partner-data-row.is-selected {
+    background: #f0f7ff;
+    box-shadow: inset 3px 0 0 var(--cyan);
 }
 
 .table-header.partner-table-header {
@@ -774,6 +793,99 @@ textarea:focus {
     padding: 20px;
 }
 
+.partner-work-panel {
+    min-height: 0;
+}
+
+.panel-mode {
+    display: grid;
+    gap: 0;
+}
+
+.panel-mode[hidden] {
+    display: none;
+}
+
+.panel-title-bar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.panel-title-bar > div {
+    min-width: 0;
+}
+
+.panel-link-button {
+    flex: 0 0 auto;
+    min-height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--cyan-dark);
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.panel-link-button:hover {
+    border-color: var(--cyan);
+    background: var(--cyan-soft);
+}
+
+.partner-detail-card {
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+}
+
+.partner-detail-card strong {
+    color: var(--navy);
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+.partner-detail-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.detail-list {
+    display: grid;
+    gap: 12px;
+    margin: 16px 0 18px;
+}
+
+.detail-list div {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.detail-list dt {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.detail-list dd {
+    min-width: 0;
+    margin: 0;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
 .summary-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -937,11 +1049,22 @@ textarea:focus {
     margin-top: 18px;
 }
 
+.optional-field-group {
+    display: grid;
+    gap: 6px;
+}
+
+.optional-field-label {
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 800;
+}
+
 .optional-fields {
     min-width: 0;
-    border: 1px solid var(--line);
+    border: 1px solid var(--line-strong);
     border-radius: var(--radius);
-    background: var(--surface-soft);
+    background: var(--surface);
 }
 
 .optional-fields summary {
@@ -949,8 +1072,8 @@ textarea:focus {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    min-height: 46px;
-    padding: 0 12px;
+    min-height: var(--control-height);
+    padding: 0 14px;
     color: var(--ink);
     font-size: 13px;
     font-weight: 800;
@@ -984,9 +1107,9 @@ textarea:focus {
 
 .optional-fields summary small {
     min-width: 0;
-    margin-left: auto;
-    color: var(--muted);
-    font-size: 12px;
+    margin-left: 0;
+    color: var(--subtle);
+    font-size: 14px;
     font-weight: 700;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -998,7 +1121,7 @@ textarea:focus {
     gap: 14px;
     padding: 12px;
     border-top: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.72);
+    background: rgba(255, 255, 255, 0.86);
 }
 
 .optional-fields:not([open]) .optional-fields-body {

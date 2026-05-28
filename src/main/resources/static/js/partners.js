@@ -38,8 +38,23 @@
     const summarySupplier = document.querySelector("[data-summary-supplier]");
     const summaryCustomer = document.querySelector("[data-summary-customer]");
     const summaryActive = document.querySelector("[data-summary-active]");
-
+    const panelViews = document.querySelectorAll("[data-partner-panel]");
+    const createForm = document.querySelector("[data-partner-create-form]");
+    const editForm = document.querySelector("[data-partner-edit-form]");
+    const detailFields = {
+        name: document.querySelector("[data-detail-name]"),
+        type: document.querySelector("[data-detail-type]"),
+        role: document.querySelector("[data-detail-role]"),
+        active: document.querySelector("[data-detail-active]"),
+        phone: document.querySelector("[data-detail-phone]"),
+        email: document.querySelector("[data-detail-email]"),
+        address: document.querySelector("[data-detail-address]"),
+        memo: document.querySelector("[data-detail-memo]"),
+        updatedAt: document.querySelector("[data-detail-updated-at]")
+    };
     let currentPage = 0;
+    let currentPartners = [];
+    let selectedPartnerId = null;
 
     const getCompanyCode = () => {
         const match = window.location.pathname.match(/^\/w\/([^/]+)/);
@@ -117,36 +132,109 @@
         return cell;
     };
 
-    const createActionCell = (partner) => {
-        const cell = document.createElement("span");
-        cell.setAttribute("role", "cell");
-        cell.className = "row-actions";
+    const setPanelMode = (mode) => {
+        panelViews.forEach((panel) => {
+            const isActive = panel.dataset.partnerPanel === mode;
+            panel.hidden = !isActive;
+            panel.classList.toggle("is-active", isActive);
+        });
+    };
 
-        const editButton = document.createElement("button");
-        editButton.type = "button";
-        editButton.textContent = "수정";
-        editButton.dataset.partnerId = String(partner.partnerId);
+    const getSelectedPartner = () => {
+        return currentPartners.find((partner) => String(partner.partnerId) === String(selectedPartnerId)) || null;
+    };
 
-        const activeButton = document.createElement("button");
-        activeButton.type = "button";
-        activeButton.textContent = partner.active ? "제한" : "재개";
-        activeButton.dataset.partnerId = String(partner.partnerId);
+    const updateSelectedRow = () => {
+        table?.querySelectorAll("[data-partner-id]").forEach((row) => {
+            const isSelected = String(row.dataset.partnerId) === String(selectedPartnerId);
+            row.classList.toggle("is-selected", isSelected);
+            row.setAttribute("aria-selected", String(isSelected));
+        });
+    };
 
-        cell.append(editButton, activeButton);
-        return cell;
+    const setDetailBadge = (element, text, badgeClass) => {
+        if (!element) {
+            return;
+        }
+        element.className = `badge ${badgeClass}`;
+        element.textContent = text;
+    };
+
+    const renderDetail = (partner) => {
+        if (!partner) {
+            return;
+        }
+        detailFields.name.textContent = partner.partnerName || "-";
+        setDetailBadge(
+                detailFields.type,
+                partnerTypeLabels[partner.partnerType] || partner.partnerType || "-",
+                partnerTypeBadgeClasses[partner.partnerType] || "badge-inactive"
+        );
+        setDetailBadge(
+                detailFields.role,
+                partnerRoleLabels[partner.partnerRole] || partner.partnerRole || "-",
+                partnerRoleBadgeClasses[partner.partnerRole] || "badge-info"
+        );
+        setDetailBadge(
+                detailFields.active,
+                partner.active ? "거래 가능" : "거래 불가",
+                partner.active ? "badge-available" : "badge-unavailable"
+        );
+        detailFields.phone.textContent = partner.phone || "-";
+        detailFields.email.textContent = partner.email || "-";
+        detailFields.address.textContent = partner.address || "-";
+        detailFields.memo.textContent = partner.memo || "-";
+        detailFields.updatedAt.textContent = formatDate(partner.updatedAt);
+
+    };
+
+    const fillEditForm = (partner) => {
+        if (!editForm || !partner) {
+            return;
+        }
+        editForm.elements.partnerName.value = partner.partnerName || "";
+        editForm.elements.partnerType.value = partner.partnerType || "";
+        editForm.elements.partnerRole.value = partner.partnerRole || "";
+        editForm.elements.phone.value = partner.phone || "";
+        editForm.elements.email.value = partner.email || "";
+        editForm.elements.address.value = partner.address || "";
+        editForm.elements.memo.value = partner.memo || "";
+        editForm.elements.active.checked = partner.active === true;
+    };
+
+    const selectPartner = (partnerId) => {
+        selectedPartnerId = partnerId;
+        const partner = getSelectedPartner();
+        updateSelectedRow();
+        if (!partner) {
+            return;
+        }
+        renderDetail(partner);
+        setPanelMode("detail");
+    };
+
+    const showCreatePanel = () => {
+        selectedPartnerId = null;
+        updateSelectedRow();
+        createForm?.reset();
+        setPanelMode("create");
     };
 
     const renderRows = (items) => {
         clearRows();
+        currentPartners = items;
         if (!items.length) {
             setEmptyMessage("조회된 거래처가 없습니다.");
+            showCreatePanel();
             return;
         }
 
         items.forEach((partner) => {
             const row = document.createElement("div");
-            row.className = "data-row partner-data-row";
+            row.className = "data-row partner-data-row is-selectable";
             row.setAttribute("role", "row");
+            row.setAttribute("tabindex", "0");
+            row.dataset.partnerId = String(partner.partnerId);
 
             row.append(
                 createTextCell("거래처명", partner.partnerName, "strong"),
@@ -166,12 +254,26 @@
                     partner.active ? "badge-available" : "badge-unavailable"
                 ),
                 createTextCell("연락처", partner.phone),
-                createTextCell("수정일", formatDate(partner.updatedAt)),
-                createActionCell(partner)
+                createTextCell("수정일", formatDate(partner.updatedAt))
             );
+
+            row.addEventListener("click", () => selectPartner(partner.partnerId));
+            row.addEventListener("keydown", (event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    selectPartner(partner.partnerId);
+                }
+            });
 
             table.append(row);
         });
+
+        if (getSelectedPartner()) {
+            renderDetail(getSelectedPartner());
+            updateSelectedRow();
+        } else {
+            showCreatePanel();
+        }
     };
 
     const updateSummary = (pageData) => {
@@ -232,6 +334,9 @@
             );
             const pageData = window.PcsPagination.normalizePageData(data, PAGE_SIZE);
             currentPage = pageData.page;
+            if (options.keepSelection !== true) {
+                selectedPartnerId = null;
+            }
             renderRows(pageData.content);
             updateSummary(pageData);
             updatePagination(pageData);
@@ -258,6 +363,7 @@
                     hasPrevious: false,
                     hasNext: false
                 });
+                showCreatePanel();
             } finally {
                 setLoading(false);
             }
@@ -280,6 +386,52 @@
     form.addEventListener("submit", (event) => {
         event.preventDefault();
         loadPartners(0);
+    });
+
+    document.querySelectorAll("[data-partner-create-mode]").forEach((button) => {
+        button.addEventListener("click", showCreatePanel);
+    });
+
+    document.querySelector("[data-partner-edit-mode]")?.addEventListener("click", () => {
+        const partner = getSelectedPartner();
+        if (!partner) {
+            return;
+        }
+        fillEditForm(partner);
+        setPanelMode("edit");
+    });
+
+    document.querySelector("[data-partner-detail-mode]")?.addEventListener("click", () => {
+        const partner = getSelectedPartner();
+        if (!partner) {
+            showCreatePanel();
+            return;
+        }
+        renderDetail(partner);
+        setPanelMode("detail");
+    });
+
+    createForm?.addEventListener("submit", (event) => {
+        event.preventDefault();
+    });
+
+    editForm?.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const partner = getSelectedPartner();
+        if (!partner) {
+            return;
+        }
+        partner.partnerName = editForm.elements.partnerName.value.trim();
+        partner.partnerType = editForm.elements.partnerType.value;
+        partner.partnerRole = editForm.elements.partnerRole.value;
+        partner.phone = editForm.elements.phone.value.trim();
+        partner.email = editForm.elements.email.value.trim();
+        partner.address = editForm.elements.address.value.trim();
+        partner.memo = editForm.elements.memo.value.trim();
+        partner.active = editForm.elements.active.checked;
+        renderRows(currentPartners);
+        renderDetail(partner);
+        setPanelMode("detail");
     });
 
     prevButton.addEventListener("click", () => {

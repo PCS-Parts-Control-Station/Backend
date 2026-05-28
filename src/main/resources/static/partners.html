@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/admin.css?20260527_partner_page">
+    <link rel="stylesheet" href="/css/admin.css?20260527_partner_panel">
 </head>
 <body class="has-collapsible-sidebar">
 <div class="workspace-layout">
@@ -18,20 +18,20 @@
             <img src="/images/parts-control-station-icon.svg" alt="" width="38" height="38">
             <span>
                 <strong>PCS</strong>
-                <small data-company-code>workspace</small>
+                <small>pcs-seoul</small>
             </span>
         </a>
 
         <nav class="sidebar-nav" aria-label="업무 화면 이동">
-            <a data-route="dashboard">운영 현황</a>
-            <a data-route="categories">카테고리</a>
-            <a data-route="parts">부품 관리</a>
-            <a data-route="inbound">입고 관리</a>
-            <a data-route="inspection">검수 관리</a>
-            <a data-route="outbound">출고 관리</a>
-            <a data-route="history">이력 관리</a>
-            <a data-route="partners" class="active" aria-current="page">거래처 관리</a>
-            <a data-route="users">사용자 관리</a>
+            <a href="/w/pcs-seoul/dashboard">운영 현황</a>
+            <a href="/w/pcs-seoul/categories">카테고리</a>
+            <a href="/w/pcs-seoul/parts">부품 관리</a>
+            <a href="/w/pcs-seoul/inbound">입고 관리</a>
+            <a href="/w/pcs-seoul/inspection">검수 관리</a>
+            <a href="/w/pcs-seoul/outbound">출고 관리</a>
+            <a href="/w/pcs-seoul/history">이력 관리</a>
+            <a href="/w/pcs-seoul/partners" class="active" aria-current="page">거래처 관리</a>
+            <a href="/w/pcs-seoul/users">사용자 관리</a>
         </nav>
 
         <div class="sidebar-footer">
@@ -65,10 +65,10 @@
                         <p>거래처명, 유형, 역할, 거래 상태로 목록을 좁혀 봅니다.</p>
                     </div>
                     <!-- API: GET /api/workspaces/{companyCode}/partners?keyword=&partnerType=&partnerRole=&active=&page=&size= -->
-                    <form class="filter-form partner-filter-form" action="#" method="get">
+                    <form class="filter-form partner-filter-form" action="#" method="get" autocomplete="off">
                         <label>
                             <span>검색어</span>
-                            <input type="search" name="keyword" placeholder="예: 용산전자">
+                            <input type="search" name="keyword" placeholder="예: 용산전자" autocomplete="off">
                         </label>
                         <label>
                             <span>유형</span>
@@ -150,7 +150,6 @@
                             <span role="columnheader">거래 상태</span>
                             <span role="columnheader">연락처</span>
                             <span role="columnheader">수정일</span>
-                            <span role="columnheader">관리</span>
                         </div>
                         <div class="data-row partner-data-row partner-empty-row" role="row" data-partner-empty>
                             <span role="cell" data-label="안내">거래처 목록을 불러오는 중입니다.</span>
@@ -167,14 +166,15 @@
             </div>
 
             <aside class="side-panel" aria-labelledby="partner-form-title">
-                <div class="panel-card">
+                <div class="panel-card partner-work-panel">
+                    <div class="panel-mode is-active" data-partner-panel="create">
                     <h2 id="partner-form-title">거래처 등록</h2>
                     <p>입고/출고 전표에서 선택할 거래처 정보를 등록합니다.</p>
                     <!-- API: POST /api/workspaces/{companyCode}/partners -->
-                    <form class="category-form" action="#" method="post">
+                    <form class="category-form" action="#" method="post" autocomplete="off" data-partner-create-form>
                         <label>
                             <span>거래처명</span>
-                            <input type="text" name="partnerName" placeholder="예: 용산전자 본점" required>
+                            <input type="text" name="partnerName" placeholder="예: 용산전자 본점" autocomplete="off" required>
                         </label>
                         <label>
                             <span>거래처 유형</span>
@@ -195,39 +195,159 @@
                                 <option value="BOTH">공급+고객</option>
                             </select>
                         </label>
-                        <details class="optional-fields">
-                            <summary>
-                                <span>상세 정보 입력</span>
-                                <small>연락처, 이메일, 주소, 메모</small>
-                            </summary>
-                            <div class="optional-fields-body">
-                                <label>
-                                    <span>연락처 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
-                                    <input type="tel" name="phone" placeholder="예: 010-1234-5678">
-                                </label>
-                                <label>
-                                    <span>이메일 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
-                                    <input type="email" name="email" placeholder="예: contact@example.com">
-                                </label>
-                                <label>
-                                    <span>주소 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
-                                    <input type="text" name="address" placeholder="예: 서울시 용산구">
-                                </label>
-                                <label>
-                                    <span>메모 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
-                                    <textarea name="memo" rows="3" placeholder="거래 조건, 주의사항 등"></textarea>
-                                </label>
-                            </div>
-                        </details>
-                        <label class="switch-row">
-                            <input type="checkbox" name="active" checked>
-                            <span>거래 가능 상태로 등록</span>
-                        </label>
+                        <div class="optional-field-group">
+                            <span class="optional-field-label">상세 정보 입력</span>
+                            <details class="optional-fields">
+                                <summary>
+                                    <small>연락처, 이메일, 주소, 메모</small>
+                                </summary>
+                                <div class="optional-fields-body">
+                                    <label>
+                                        <span>연락처 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
+                                        <input type="tel" name="phone" placeholder="예: 010-1234-5678" autocomplete="off">
+                                    </label>
+                                    <label>
+                                        <span>이메일 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
+                                        <input type="email" name="email" placeholder="예: contact@example.com" autocomplete="new-password">
+                                    </label>
+                                    <label>
+                                        <span>주소 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
+                                        <input type="text" name="address" placeholder="예: 서울시 용산구" autocomplete="new-password">
+                                    </label>
+                                    <label>
+                                        <span>메모 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
+                                        <textarea name="memo" rows="3" placeholder="거래 조건, 주의사항 등" autocomplete="off"></textarea>
+                                    </label>
+                                    <label class="switch-row">
+                                        <input type="checkbox" name="active" checked>
+                                        <span>거래 가능 상태로 등록</span>
+                                    </label>
+                                </div>
+                            </details>
+                        </div>
                         <div class="form-actions">
                             <button class="btn btn-primary" type="submit">저장</button>
                             <button class="btn btn-secondary" type="reset">초기화</button>
                         </div>
                     </form>
+                    </div>
+
+                    <div class="panel-mode" data-partner-panel="detail" hidden>
+                        <div class="panel-title-bar">
+                            <div>
+                                <h2>거래처 상세</h2>
+                                <p>선택한 거래처 정보를 확인합니다.</p>
+                            </div>
+                            <button class="panel-link-button" type="button" data-partner-create-mode>새 거래처 등록</button>
+                        </div>
+
+                        <div class="partner-detail-card">
+                            <strong data-detail-name>-</strong>
+                            <div class="partner-detail-badges">
+                                <em class="badge badge-blue" data-detail-type>-</em>
+                                <em class="badge badge-info" data-detail-role>-</em>
+                                <em class="badge badge-available" data-detail-active>-</em>
+                            </div>
+                        </div>
+
+                        <dl class="detail-list">
+                            <div>
+                                <dt>연락처</dt>
+                                <dd data-detail-phone>-</dd>
+                            </div>
+                            <div>
+                                <dt>이메일</dt>
+                                <dd data-detail-email>-</dd>
+                            </div>
+                            <div>
+                                <dt>주소</dt>
+                                <dd data-detail-address>-</dd>
+                            </div>
+                            <div>
+                                <dt>메모</dt>
+                                <dd data-detail-memo>-</dd>
+                            </div>
+                            <div>
+                                <dt>수정일</dt>
+                                <dd data-detail-updated-at>-</dd>
+                            </div>
+                        </dl>
+
+                        <div class="form-actions">
+                            <button class="btn btn-primary" type="button" data-partner-edit-mode>수정</button>
+                        </div>
+                    </div>
+
+                    <div class="panel-mode" data-partner-panel="edit" hidden>
+                        <div class="panel-title-bar">
+                            <div>
+                                <h2>거래처 수정</h2>
+                                <p>선택한 거래처의 기본 정보를 수정합니다.</p>
+                            </div>
+                            <button class="panel-link-button" type="button" data-partner-create-mode>새 거래처 등록</button>
+                        </div>
+
+                        <!-- API: PATCH /api/workspaces/{companyCode}/partners/{partnerId} -->
+                        <form class="category-form" action="#" method="post" autocomplete="off" data-partner-edit-form>
+                            <label>
+                                <span>거래처명</span>
+                                <input type="text" name="partnerName" autocomplete="off" required>
+                            </label>
+                            <label>
+                                <span>거래처 유형</span>
+                                <select name="partnerType" required>
+                                    <option value="">선택</option>
+                                    <option value="PC_CAFE">PC방</option>
+                                    <option value="PERSON">개인</option>
+                                    <option value="COMPANY">기업</option>
+                                    <option value="ETC">기타</option>
+                                </select>
+                            </label>
+                            <label>
+                                <span>거래 역할</span>
+                                <select name="partnerRole" required>
+                                    <option value="">선택</option>
+                                    <option value="SUPPLIER">공급처 (입고)</option>
+                                    <option value="CUSTOMER">고객 (출고)</option>
+                                    <option value="BOTH">공급+고객</option>
+                                </select>
+                            </label>
+                            <div class="optional-field-group">
+                                <span class="optional-field-label">상세 정보 입력</span>
+                                <details class="optional-fields" open>
+                                    <summary>
+                                        <small>연락처, 이메일, 주소, 메모</small>
+                                    </summary>
+                                    <div class="optional-fields-body">
+                                        <label>
+                                            <span>연락처 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
+                                            <input type="tel" name="phone" autocomplete="off">
+                                        </label>
+                                        <label>
+                                            <span>이메일 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
+                                            <input type="email" name="email" autocomplete="new-password">
+                                        </label>
+                                        <label>
+                                            <span>주소 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
+                                            <input type="text" name="address" autocomplete="new-password">
+                                        </label>
+                                        <label>
+                                            <span>메모 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
+                                            <textarea name="memo" rows="3" autocomplete="off"></textarea>
+                                        </label>
+                                        <label class="switch-row">
+                                            <input type="checkbox" name="active">
+                                            <span>거래 가능 상태</span>
+                                        </label>
+                                    </div>
+                                </details>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn btn-primary" type="submit">저장</button>
+                                <button class="btn btn-secondary" type="button" data-partner-detail-mode>취소</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
 
                 <div class="panel-card muted-panel">
@@ -243,12 +363,9 @@
         </section>
     </main>
 </div>
-
-<script src="/js/dashboard.js?20260526_1"></script>
 <script src="/js/pcs-api.js?20260527_partner_page"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
-<script src="/js/partners.js?20260527_pagination"></script>
-
+<script src="/js/partners.js?20260527_partner_panel"></script>
 <script>
     (() => {
         const body = document.body;
