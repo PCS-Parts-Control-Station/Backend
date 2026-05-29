@@ -20,10 +20,18 @@
 <script src="/js/partners.js"></script>
 ```
 
+토스트 피드백을 쓰는 화면:
+
+```html
+<link rel="stylesheet" href="/css/pcs-toast.css">
+<script src="/js/pcs-ui.js"></script>
+```
+
 순서 기준:
 
 - `pcs-api.js`가 먼저 로드되어야 `window.PcsApi`를 사용할 수 있다.
 - `pcs-pagination.js`가 먼저 로드되어야 `window.PcsPagination`을 사용할 수 있다.
+- `pcs-ui.js`가 먼저 로드되어야 `window.PcsUi.toast()`를 사용할 수 있다.
 - 화면별 JS는 항상 공통 JS 뒤에 둔다.
 
 ## API 호출
@@ -64,3 +72,22 @@ const json = await response.json();
 - 저장 API가 아직 없으면 화면에서 저장되는 것처럼 보이게 만들지 않는다.
 - 브라우저 자동완성이 업무 입력을 방해하면 해당 폼이나 입력에 `autocomplete="off"` 또는 목적에 맞는 값을 명시한다.
 - 필수 입력과 선택 입력은 화면에서 구분한다.
+- 등록/수정 API 호출 중에는 해당 폼의 입력과 버튼을 비활성화해 중복 제출을 막는다.
+- 성공/실패 피드백은 브라우저 `alert()`가 아니라 `window.PcsUi.toast()`를 사용한다.
+- 저장 성공 후에는 현재 화면의 목록, 선택값, 요약, 상세 패널을 실제 API 응답 기준으로 갱신한다.
+- 저장 실패 시에는 화면을 임의 성공 상태로 바꾸지 않고 오류 토스트를 보여준다.
+
+사용:
+
+```js
+window.PcsUi.toast({
+    message: "저장했습니다.",
+    type: "success"
+});
+```
+
+금지:
+
+```js
+alert("저장되었습니다.");
+```
