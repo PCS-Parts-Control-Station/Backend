@@ -205,7 +205,8 @@ Owner 회원가입 + 회사 생성 요청 예시:
   "phone": "010-0000-0000",
   "email": null,
   "address": "서울시",
-  "memo": "중고 부품 매입 거래처"
+  "memo": "중고 부품 매입 거래처",
+  "active": true
 }
 ```
 

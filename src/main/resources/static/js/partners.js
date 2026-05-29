@@ -309,6 +309,57 @@
         }
     };
 
+    const showToast = (message, type = "info") => {
+        window.PcsUi?.toast({
+            message,
+            type
+        });
+    };
+
+    const setFormSaving = (targetForm, isSaving, savingText = "저장 중") => {
+        if (!targetForm) {
+            return;
+        }
+
+        targetForm.dataset.saving = String(isSaving);
+        targetForm.querySelectorAll("button, input, select, textarea").forEach((element) => {
+            element.disabled = isSaving;
+        });
+
+        const submitButton = targetForm.querySelector("button[type='submit']");
+        if (!submitButton) {
+            return;
+        }
+
+        if (!submitButton.dataset.defaultText) {
+            submitButton.dataset.defaultText = submitButton.textContent;
+        }
+        submitButton.textContent = isSaving ? savingText : submitButton.dataset.defaultText;
+    };
+
+    const readPartnerForm = (targetForm, options = {}) => ({
+        partnerName: targetForm.elements.partnerName.value.trim(),
+        partnerType: targetForm.elements.partnerType.value,
+        partnerRole: targetForm.elements.partnerRole.value,
+        phone: targetForm.elements.phone.value.trim() || null,
+        email: targetForm.elements.email.value.trim() || null,
+        address: targetForm.elements.address.value.trim() || null,
+        memo: targetForm.elements.memo.value.trim() || null,
+        ...(options.includeActive ? { active: targetForm.elements.active?.checked !== false } : {})
+    });
+
+    const updatePartnerActive = async (companyCode, partnerId, active) => {
+        await window.PcsApi.request(
+                `/api/workspaces/${encodeURIComponent(companyCode)}/partners/${partnerId}/active`,
+                {
+                    method: "PATCH",
+                    body: { active },
+                    authRedirect: true,
+                    loginCompanyCode: companyCode
+                }
+        );
+    };
+
     const loadPartners = async (page = 0, options = {}) => {
         const companyCode = getCompanyCode();
         if (!companyCode) {
@@ -429,33 +480,30 @@
     createForm?.addEventListener("submit", async (event) => {
         event.preventDefault();
         const companyCode = getCompanyCode();
-        if (!companyCode) return;
-
-        const body = {
-            partnerName: createForm.elements.partnerName.value.trim(),
-            partnerType: createForm.elements.partnerType.value,
-            partnerRole: createForm.elements.partnerRole.value,
-            phone: createForm.elements.phone.value.trim() || null,
-            email: createForm.elements.email.value.trim() || null,
-            address: createForm.elements.address.value.trim() || null,
-            memo: createForm.elements.memo.value.trim() || null
-        };
+        if (!companyCode || createForm.dataset.saving === "true") {
+            return;
+        }
 
         try {
+            setFormSaving(createForm, true);
             const data = await window.PcsApi.getData(
                 `/api/workspaces/${encodeURIComponent(companyCode)}/partners`,
                 {
                     method: "POST",
-                    body,
+                    body: readPartnerForm(createForm, { includeActive: true }),
                     authRedirect: true,
                     loginCompanyCode: companyCode
                 }
             );
-            alert("거래처 등록이 완료되었습니다.");
+
             selectedPartnerId = data.partnerId;
             await loadPartners(0, { keepSelection: true });
+            showToast("거래처를 등록했습니다.", "success");
+            createForm.reset();
         } catch (error) {
-            alert(error?.message || "거래처를 등록하지 못했습니다.");
+            showToast(error?.message || "거래처를 등록하지 못했습니다.", "error");
+        } finally {
+            setFormSaving(createForm, false);
         }
     });
 
@@ -463,50 +511,38 @@
         event.preventDefault();
         const companyCode = getCompanyCode();
         const partner = getSelectedPartner();
-        if (!companyCode || !partner) {
+        if (!companyCode || !partner || editForm.dataset.saving === "true") {
             return;
         }
 
-        const body = {
-            partnerName: editForm.elements.partnerName.value.trim(),
-            partnerType: editForm.elements.partnerType.value,
-            partnerRole: editForm.elements.partnerRole.value,
-            phone: editForm.elements.phone.value.trim() || null,
-            email: editForm.elements.email.value.trim() || null,
-            address: editForm.elements.address.value.trim() || null,
-            memo: editForm.elements.memo.value.trim() || null
-        };
-
         try {
-            // 1. 정보 수정
-            const updated = await window.PcsApi.getData(
+            setFormSaving(editForm, true);
+            await window.PcsApi.getData(
                 `/api/workspaces/${encodeURIComponent(companyCode)}/partners/${partner.partnerId}`,
                 {
                     method: "PATCH",
-                    body,
+                    body: readPartnerForm(editForm),
                     authRedirect: true,
                     loginCompanyCode: companyCode
                 }
             );
 
-            // 2. active 변경이 필요할 경우 호출
             const activeChanged = editForm.elements.active.checked !== partner.active;
             if (activeChanged) {
-                await window.PcsApi.request(
-                    `/api/workspaces/${encodeURIComponent(companyCode)}/partners/${partner.partnerId}/active`,
-                    {
-                        method: "PATCH",
-                        body: { active: editForm.elements.active.checked },
-                        authRedirect: true,
-                        loginCompanyCode: companyCode
-                    }
-                );
+                await updatePartnerActive(companyCode, partner.partnerId, editForm.elements.active.checked);
             }
 
-            alert("거래처 수정이 완료되었습니다.");
             await loadPartners(currentPage, { keepSelection: true, preserveScroll: true });
+            const refreshedPartner = getSelectedPartner();
+            if (refreshedPartner) {
+                renderDetail(refreshedPartner);
+                setPanelMode("detail");
+            }
+            showToast("거래처 정보를 수정했습니다.", "success");
         } catch (error) {
-            alert(error?.message || "거래처를 수정하지 못했습니다.");
+            showToast(error?.message || "거래처를 수정하지 못했습니다.", "error");
+        } finally {
+            setFormSaving(editForm, false);
         }
     });
 

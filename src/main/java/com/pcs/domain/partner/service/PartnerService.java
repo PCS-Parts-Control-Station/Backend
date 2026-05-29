@@ -115,6 +115,7 @@ public class PartnerService {
                 request.memo(),
                 memberId
         );
+        partner.setActive(request.active() == null || request.active());
         partnerMapper.insert(partner);
 
         return partnerMapper.findResponseById(companyId, partner.getPartnerId());
