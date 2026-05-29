@@ -174,9 +174,10 @@ SQL 참조 기준:
 
 ## 토큰 절약 규칙
 
-- 한 작업에서 기본적으로 3개 이하의 문서만 읽는다.
-- API 구현처럼 `agent-context`, `structure`, `api-spec`, feature 문서가 모두 필요한 경우에는 예외적으로 4개까지 허용한다.
-- feature 문서는 해당 도메인 문서 1개만 읽는다.
-- `pcs-api-spec.md`와 `pcs-schema-ddl.sql`은 크므로 필요한 경우에만 읽는다.
+- 문서 개수보다 작업 관련성을 우선한다.
+- 위 문서 선택 규칙에 적힌 필수 문서와 조건부 문서만 읽는다.
+- 조건부 문서는 해당 조건에 맞을 때만 읽는다. 예: 페이징이면 `pcs-pagination-rules.md`, 인증 API면 `pcs-auth-client-rules.md`.
+- feature 문서는 기본적으로 해당 도메인 문서 1개만 읽고, DB 작업이면 같은 도메인의 `{feature}-db.md`만 추가로 읽는다.
+- `pcs-api-spec.md`와 `pcs-schema-ddl.sql`은 크므로 API 흐름이나 DB 구조 확인이 필요한 경우에만 읽는다.
 - 이미 읽은 문서라도 내용이 불확실하면 전체 재독해보다 관련 섹션만 확인한다.
 - 작업 완료 후 참조한 문서를 명시한다.
