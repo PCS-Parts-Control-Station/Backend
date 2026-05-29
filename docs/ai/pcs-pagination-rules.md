@@ -4,7 +4,8 @@
 
 ## Backend
 
-목록 API 응답은 `ApiResultDto<PageResultDto<T, S>>`를 기본으로 한다.
+공통 응답 형식은 `docs/ai/pcs-backend-common-rules.md`를 따른다.  
+목록 API의 `data`는 `PageResultDto<T, S>` 구조를 기본으로 한다.
 
 ```json
 {

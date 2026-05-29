@@ -28,14 +28,12 @@ com.pcs.domain.member
 
 - `loginId`는 같은 업체 안에서 중복될 수 없다.
 - OWNER는 회사 소유자 성격의 계정이다.
-- 회사당 OWNER는 1명만 허용한다.
-- OWNER 계정은 `ownerSlot = 1`, ADMIN/STAFF 계정은 `ownerSlot = null`로 저장한다.
-- ADMIN은 사용자, 거래처, 카테고리, 기준 관리 권한을 가진다.
-- STAFF는 입고, 검수, 출고, 이력 조회 중심 권한을 가진다.
-- 사용자 삭제는 하지 않고 `active` 상태만 변경한다.
+- OWNER 저장 규칙과 `ownerSlot` DB 기준은 `docs/features/member-db.md`를 따른다.
+- 역할별 권한 기준은 `docs/ai/pcs-permission-rules.md`를 따른다.
+- 사용자 삭제는 하지 않고 `docs/ai/pcs-status-lifecycle-rules.md` 기준의 `active` 상태만 변경한다.
 
 ## 하네스 포인트
 
 - 사용자 생성/수정 Request DTO에는 validation을 둔다.
-- 권한 변경은 인증 사용자 권한 검증을 거쳐야 한다.
+- 권한 변경은 `docs/ai/pcs-permission-rules.md` 기준으로 인증 사용자 권한 검증을 거쳐야 한다.
 - 비밀번호 해시는 Service 계층 밖으로 노출하지 않는다.

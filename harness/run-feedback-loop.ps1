@@ -2,7 +2,15 @@ param(
     [ValidateSet("bootstrap", "full")]
     [string] $Mode = "bootstrap",
 
+    [ValidateSet("none", "company", "member", "auth", "partner")]
+    [string] $Feature = "none",
+
     [switch] $RunBuild,
+
+    [switch] $RunDb,
+
+    [ValidateSet("none", "company", "member", "auth", "partner")]
+    [string] $DbFeature = "none",
 
     [switch] $CheckPort,
 
@@ -46,8 +54,20 @@ function Invoke-HarnessCheck {
         $Mode
     )
 
+    if ($Feature -ne "none") {
+        $arguments += @("-Feature", $Feature)
+    }
+
     if ($RunBuild) {
         $arguments += "-RunBuild"
+    }
+
+    if ($RunDb) {
+        $arguments += "-RunDb"
+    }
+
+    if ($DbFeature -ne "none") {
+        $arguments += @("-DbFeature", $DbFeature)
     }
 
     if ($CheckPort) {
@@ -56,8 +76,9 @@ function Invoke-HarnessCheck {
 
     Push-Location $ProjectRoot
     try {
-        & $runner @arguments
-        return $LASTEXITCODE
+        & $runner @arguments | Out-Host
+        $harnessExitCode = $LASTEXITCODE
+        return $harnessExitCode
     } finally {
         Pop-Location
     }
@@ -110,6 +131,9 @@ function New-AgentFeedback {
     $feedback.Add("- Source: harness/reports/latest.md") | Out-Null
     $feedback.Add("- GeneratedAt: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')") | Out-Null
     $feedback.Add("- Mode: $Mode") | Out-Null
+    $feedback.Add("- Feature: $Feature") | Out-Null
+    $feedback.Add("- RunDb: $RunDb") | Out-Null
+    $feedback.Add("- DbFeature: $DbFeature") | Out-Null
     $feedback.Add("") | Out-Null
 
     $feedback.Add("## FAIL") | Out-Null
@@ -149,6 +173,9 @@ New-AgentFeedback
 Write-Host ""
 Write-Host "PCS Feedback Loop Result"
 Write-Host "Mode: $Mode"
+Write-Host "Feature: $Feature"
+Write-Host "RunDb: $RunDb"
+Write-Host "DbFeature: $DbFeature"
 Write-Host "HarnessExitCode: $exitCode"
 Write-Host "HarnessReport: $LatestReportPath"
 Write-Host "AgentFeedback: $AgentFeedbackPath"

@@ -90,10 +90,5 @@ STAFF:
 
 ## 하네스 기준
 
-회사 등록 기능이 `tb_member` 구조를 함께 건드렸지만 사용자 관리 기능 전체를 검사하지 않을 때는 아래처럼 실행한다.
-
-```powershell
-.\harness\run-harness.ps1 -Mode bootstrap -DbFeature member
-```
-
-이 명령은 `member.md`의 사용자 관리 기능 전체가 아니라 `member-db.md`의 DB 규칙만 검사한다.
+실행 명령과 `-DbFeature member` 사용 기준은 `docs/ai/pcs-harness-rules.md`를 따른다.  
+회사 등록처럼 `tb_member` 구조만 확인하면 `member.md`의 사용자 관리 기능 전체가 아니라 이 문서의 DB 규칙만 검사한다.

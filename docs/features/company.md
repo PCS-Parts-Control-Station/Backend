@@ -28,15 +28,13 @@ com.pcs.domain.company
 - Owner 계정과 회사는 같은 트랜잭션으로 저장한다.
 - Owner 또는 회사 중 하나만 저장되는 부분 성공은 허용하지 않는다.
 - 회사 생성 후 Owner 계정은 해당 회사의 OWNER 권한으로 연결된다.
-- `tb_company`에는 `owner_member_id`를 두지 않는다.
-- 회사당 OWNER는 1명만 허용한다.
-- `tb_member.owner_slot`은 OWNER만 `1`을 가지고, ADMIN/STAFF는 `NULL`이어야 한다.
-- `UNIQUE(company_id, owner_slot)`로 회사당 OWNER 1명을 보장한다.
+- OWNER 권한 기준은 `docs/ai/pcs-permission-rules.md`를 따른다.
+- OWNER 계정 저장 규칙은 `docs/features/member-db.md`를 따른다.
 - 회사 비활성화 시 업체 업무 API 접근을 차단한다.
-- 회사 삭제는 하지 않고 `active` 상태만 변경한다.
+- 회사 삭제는 하지 않고 `docs/ai/pcs-status-lifecycle-rules.md` 기준의 `active` 상태만 변경한다.
 
 ## 하네스 포인트
 
 - Owner 회원가입 + 회사 생성은 단일 트랜잭션으로 처리한다.
 - 회사 생성 실패 시 Owner와 회사 연결이 부분 저장되면 안 된다.
-- `companyCode` 중복 예외는 명확한 ErrorCode로 처리한다.
+- `companyCode` 중복 예외는 `docs/ai/pcs-backend-common-rules.md` 기준의 ErrorCode로 처리한다.
