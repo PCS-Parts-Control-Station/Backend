@@ -426,27 +426,88 @@
         setPanelMode("detail");
     });
 
-    createForm?.addEventListener("submit", (event) => {
+    createForm?.addEventListener("submit", async (event) => {
         event.preventDefault();
+        const companyCode = getCompanyCode();
+        if (!companyCode) return;
+
+        const body = {
+            partnerName: createForm.elements.partnerName.value.trim(),
+            partnerType: createForm.elements.partnerType.value,
+            partnerRole: createForm.elements.partnerRole.value,
+            phone: createForm.elements.phone.value.trim() || null,
+            email: createForm.elements.email.value.trim() || null,
+            address: createForm.elements.address.value.trim() || null,
+            memo: createForm.elements.memo.value.trim() || null
+        };
+
+        try {
+            const data = await window.PcsApi.getData(
+                `/api/workspaces/${encodeURIComponent(companyCode)}/partners`,
+                {
+                    method: "POST",
+                    body,
+                    authRedirect: true,
+                    loginCompanyCode: companyCode
+                }
+            );
+            alert("거래처 등록이 완료되었습니다.");
+            selectedPartnerId = data.partnerId;
+            await loadPartners(0, { keepSelection: true });
+        } catch (error) {
+            alert(error?.message || "거래처를 등록하지 못했습니다.");
+        }
     });
 
-    editForm?.addEventListener("submit", (event) => {
+    editForm?.addEventListener("submit", async (event) => {
         event.preventDefault();
+        const companyCode = getCompanyCode();
         const partner = getSelectedPartner();
-        if (!partner) {
+        if (!companyCode || !partner) {
             return;
         }
-        partner.partnerName = editForm.elements.partnerName.value.trim();
-        partner.partnerType = editForm.elements.partnerType.value;
-        partner.partnerRole = editForm.elements.partnerRole.value;
-        partner.phone = editForm.elements.phone.value.trim();
-        partner.email = editForm.elements.email.value.trim();
-        partner.address = editForm.elements.address.value.trim();
-        partner.memo = editForm.elements.memo.value.trim();
-        partner.active = editForm.elements.active.checked;
-        renderRows(currentPartners);
-        renderDetail(partner);
-        setPanelMode("detail");
+
+        const body = {
+            partnerName: editForm.elements.partnerName.value.trim(),
+            partnerType: editForm.elements.partnerType.value,
+            partnerRole: editForm.elements.partnerRole.value,
+            phone: editForm.elements.phone.value.trim() || null,
+            email: editForm.elements.email.value.trim() || null,
+            address: editForm.elements.address.value.trim() || null,
+            memo: editForm.elements.memo.value.trim() || null
+        };
+
+        try {
+            // 1. 정보 수정
+            const updated = await window.PcsApi.getData(
+                `/api/workspaces/${encodeURIComponent(companyCode)}/partners/${partner.partnerId}`,
+                {
+                    method: "PATCH",
+                    body,
+                    authRedirect: true,
+                    loginCompanyCode: companyCode
+                }
+            );
+
+            // 2. active 변경이 필요할 경우 호출
+            const activeChanged = editForm.elements.active.checked !== partner.active;
+            if (activeChanged) {
+                await window.PcsApi.request(
+                    `/api/workspaces/${encodeURIComponent(companyCode)}/partners/${partner.partnerId}/active`,
+                    {
+                        method: "PATCH",
+                        body: { active: editForm.elements.active.checked },
+                        authRedirect: true,
+                        loginCompanyCode: companyCode
+                    }
+                );
+            }
+
+            alert("거래처 수정이 완료되었습니다.");
+            await loadPartners(currentPage, { keepSelection: true, preserveScroll: true });
+        } catch (error) {
+            alert(error?.message || "거래처를 수정하지 못했습니다.");
+        }
     });
 
     prevButton.addEventListener("click", () => {

@@ -1,5 +1,8 @@
 package com.pcs.domain.partner.facade;
 
+import com.pcs.domain.partner.dto.request.CreatePartnerRequest;
+import com.pcs.domain.partner.dto.request.UpdatePartnerActiveRequest;
+import com.pcs.domain.partner.dto.request.UpdatePartnerRequest;
 import com.pcs.domain.partner.dto.response.SearchPartnerResponse;
 import com.pcs.domain.partner.dto.response.SearchPartnerSummaryResponse;
 import com.pcs.domain.partner.service.PartnerService;
@@ -58,5 +61,47 @@ public class PartnerFacade {
         if (!tokenCompanyCode.equals(pathCompanyCode.trim().toLowerCase())) {
             throw new BusinessException(ErrorCode.AUTH_WORKSPACE_MISMATCH);
         }
+    }
+
+    public SearchPartnerResponse createPartner(
+            PcsPrincipal principal,
+            String pathCompanyCode,
+            CreatePartnerRequest request
+    ) {
+        validateAuthenticated(principal);
+        validateWorkspace(pathCompanyCode, principal.companyCode());
+        return partnerService.createPartner(principal.companyId(), request, principal.memberId());
+    }
+
+    public SearchPartnerResponse getPartner(
+            PcsPrincipal principal,
+            String pathCompanyCode,
+            Long partnerId
+    ) {
+        validateAuthenticated(principal);
+        validateWorkspace(pathCompanyCode, principal.companyCode());
+        return partnerService.getPartner(principal.companyId(), partnerId);
+    }
+
+    public SearchPartnerResponse updatePartner(
+            PcsPrincipal principal,
+            String pathCompanyCode,
+            Long partnerId,
+            UpdatePartnerRequest request
+    ) {
+        validateAuthenticated(principal);
+        validateWorkspace(pathCompanyCode, principal.companyCode());
+        return partnerService.updatePartner(principal.companyId(), partnerId, request);
+    }
+
+    public void updatePartnerActive(
+            PcsPrincipal principal,
+            String pathCompanyCode,
+            Long partnerId,
+            UpdatePartnerActiveRequest request
+    ) {
+        validateAuthenticated(principal);
+        validateWorkspace(pathCompanyCode, principal.companyCode());
+        partnerService.updatePartnerActive(principal.companyId(), partnerId, request.active());
     }
 }
