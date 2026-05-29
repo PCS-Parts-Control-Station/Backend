@@ -15,33 +15,7 @@
 </head>
 <body class="has-collapsible-sidebar">
 <div class="workspace-layout">
-    <aside class="workspace-sidebar" id="workspace-sidebar" aria-label="업무 메뉴">
-        <a class="sidebar-brand" href="/">
-            <img src="/images/parts-control-station-icon.svg" alt="" width="38" height="38">
-            <span>
-                <strong>PCS</strong>
-                <small data-company-code>workspace</small>
-            </span>
-        </a>
-
-        <nav class="sidebar-nav" aria-label="업무 화면 이동">
-            <a data-route="dashboard">운영 현황</a>
-            <a data-route="categories">카테고리</a>
-            <a data-route="parts">부품 관리</a>
-            <a data-route="inbound" class="active" aria-current="page">입고 관리</a>
-            <a data-route="inspection">검수 관리</a>
-            <a data-route="outbound">출고 관리</a>
-            <a data-route="history">이력 관리</a>
-            <a data-route="partners">거래처 관리</a>
-            <a data-route="users">사용자 관리</a>
-        </nav>
-
-        <div class="sidebar-footer">
-            <span>접속 계정</span>
-            <strong>관리자 김관리</strong>
-        </div>
-    </aside>
-    <button class="sidebar-backdrop" type="button" data-sidebar-backdrop aria-label="메뉴 닫기"></button>
+    <div data-workspace-sidebar data-active-route="inbound"></div>
 
     <main class="workspace-main">
         <header class="workspace-header">
@@ -293,6 +267,8 @@
         </section>
     </main>
 </div>
+<script src="/js/pcs-api.js?20260526_1"></script>
+<script src="/js/workspace-layout.js?20260527_1"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
 <script src="/js/dashboard.js?20260526_1"></script>
 <script>
