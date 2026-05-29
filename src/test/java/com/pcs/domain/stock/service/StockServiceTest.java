@@ -36,6 +36,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DuplicateKeyException;
 
 @ExtendWith(MockitoExtension.class)
 class StockServiceTest {
@@ -120,6 +121,136 @@ class StockServiceTest {
         assertEquals(2, units.size());
         assertTrue(units.get(0).getInternalSerialNo().startsWith("CPU-5600-" + expectedDateToken + "-"));
         assertNotNull(units.get(0).getUnitStatus());
+    }
+
+    @Test
+    void createInboundDocument_success_whenPartStockDoesNotExist() {
+        Long companyId = 1L;
+        Long memberId = 10L;
+        Long partnerId = 100L;
+        Long partId = 1000L;
+
+        CreateInboundDocumentRequest request = new CreateInboundDocumentRequest(
+                partnerId,
+                "최초 입고",
+                List.of(new CreateInboundDocumentLineRequest(partId, 3, null))
+        );
+
+        StockPartner partner = new StockPartner();
+        partner.setPartnerId(partnerId);
+        partner.setPartnerRole(PartnerRole.SUPPLIER);
+        partner.setActive(true);
+
+        StockPart part = new StockPart();
+        part.setPartId(partId);
+        part.setPartCode("GPU-RTX");
+
+        String dateToken = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(stockMapper.findPartner(companyId, partnerId)).thenReturn(partner);
+        when(stockMapper.existsDocumentNo(anyString())).thenReturn(false);
+        when(stockMapper.findPart(companyId, partId)).thenReturn(part);
+        when(stockMapper.findPartStockQuantityForUpdate(companyId, partId)).thenReturn(null);
+        when(stockMapper.findSerialSequence(companyId, "GPU-RTX", dateToken)).thenReturn(0);
+
+        doAnswer(invocation -> {
+            StockDocument document = invocation.getArgument(0);
+            document.setDocumentId(501L);
+            return null;
+        }).when(stockMapper).insertDocument(any(StockDocument.class));
+
+        doAnswer(invocation -> {
+            StockMovement movement = invocation.getArgument(0);
+            movement.setMovementId(901L);
+            return null;
+        }).when(stockMapper).insertMovement(any(StockMovement.class));
+
+        AtomicLong unitIdSequence = new AtomicLong(11000L);
+        doAnswer(invocation -> {
+            StockPartUnit unit = invocation.getArgument(0);
+            unit.setUnitId(unitIdSequence.incrementAndGet());
+            return null;
+        }).when(stockMapper).insertPartUnit(any(StockPartUnit.class));
+
+        CreateInboundDocumentResponse response = stockService.createInboundDocument(companyId, memberId, request);
+
+        assertEquals(501L, response.documentId());
+        assertEquals(1, response.lineCount());
+        assertEquals(3, response.totalQuantity());
+        assertEquals(3, response.createdUnitCount());
+
+        verify(stockMapper).insertPartStock(companyId, partId, 3);
+        verify(stockMapper, never()).updatePartStockQuantity(anyLong(), anyLong(), anyInt());
+        verify(stockMapper, times(3)).insertPartUnit(any(StockPartUnit.class));
+        verify(stockMapper, times(3)).insertMovementUnit(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void createInboundDocument_success_whenPartStockInsertedByAnotherTransaction() {
+        Long companyId = 1L;
+        Long memberId = 10L;
+        Long partnerId = 100L;
+        Long partId = 1000L;
+
+        CreateInboundDocumentRequest request = new CreateInboundDocumentRequest(
+                partnerId,
+                "동시 입고",
+                List.of(new CreateInboundDocumentLineRequest(partId, 2, null))
+        );
+
+        StockPartner partner = new StockPartner();
+        partner.setPartnerId(partnerId);
+        partner.setPartnerRole(PartnerRole.SUPPLIER);
+        partner.setActive(true);
+
+        StockPart part = new StockPart();
+        part.setPartId(partId);
+        part.setPartCode("RAM-16G");
+
+        String dateToken = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(stockMapper.findPartner(companyId, partnerId)).thenReturn(partner);
+        when(stockMapper.existsDocumentNo(anyString())).thenReturn(false);
+        when(stockMapper.findPart(companyId, partId)).thenReturn(part);
+        when(stockMapper.findPartStockQuantityForUpdate(companyId, partId))
+                .thenReturn(null)
+                .thenReturn(7);
+        when(stockMapper.findSerialSequence(companyId, "RAM-16G", dateToken)).thenReturn(5);
+
+        doAnswer(invocation -> {
+            StockDocument document = invocation.getArgument(0);
+            document.setDocumentId(502L);
+            return null;
+        }).when(stockMapper).insertDocument(any(StockDocument.class));
+
+        doAnswer(invocation -> {
+            StockMovement movement = invocation.getArgument(0);
+            movement.setMovementId(902L);
+            return null;
+        }).when(stockMapper).insertMovement(any(StockMovement.class));
+
+        doAnswer(invocation -> {
+            throw new DuplicateKeyException("duplicate part stock");
+        }).when(stockMapper).insertPartStock(companyId, partId, 2);
+
+        AtomicLong unitIdSequence = new AtomicLong(12000L);
+        doAnswer(invocation -> {
+            StockPartUnit unit = invocation.getArgument(0);
+            unit.setUnitId(unitIdSequence.incrementAndGet());
+            return null;
+        }).when(stockMapper).insertPartUnit(any(StockPartUnit.class));
+
+        CreateInboundDocumentResponse response = stockService.createInboundDocument(companyId, memberId, request);
+
+        assertEquals(502L, response.documentId());
+        assertEquals(1, response.lineCount());
+        assertEquals(2, response.totalQuantity());
+        assertEquals(2, response.createdUnitCount());
+
+        verify(stockMapper).insertPartStock(companyId, partId, 2);
+        verify(stockMapper).updatePartStockQuantity(companyId, partId, 9);
+        verify(stockMapper, times(2)).insertPartUnit(any(StockPartUnit.class));
+        verify(stockMapper, times(2)).insertMovementUnit(anyLong(), anyLong(), any());
     }
 
     @Test

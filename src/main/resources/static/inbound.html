@@ -10,7 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/admin.css?20260522_split">
     <link rel="stylesheet" href="/css/workflow.css?20260522_split">
-    <link rel="stylesheet" href="/css/inbound.css?20260522_split">
+    <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
+    <link rel="stylesheet" href="/css/inbound.css?20260527_ui">
 </head>
 <body class="has-collapsible-sidebar">
 <div class="workspace-layout">
@@ -83,12 +84,13 @@
                 <div class="created-document-notice" data-created-notice role="status" aria-live="polite" hidden></div>
 
                 <section class="table-card" aria-labelledby="inbound-list-title">
-                    <div class="table-header compact-summary-header">
+                    <div class="table-header">
                         <div>
                             <h2 id="inbound-list-title">입고 전표 목록</h2>
                             <p>거래처별 입고 묶음과 부품별 관리번호 생성 현황입니다.</p>
                         </div>
                         <div class="list-summary-box" aria-label="입고 전표 목록 요약">
+                            <span class="summary-label">오늘 입고</span>
                             <dl class="list-summary">
                                 <div>
                                     <dt>전표</dt>
@@ -107,6 +109,7 @@
                                     <dd>1</dd>
                                 </div>
                             </dl>
+                            <p>입고 완료 부품은 검수 대기 상태로 관리번호가 발급됨</p>
                         </div>
                     </div>
 
@@ -186,43 +189,43 @@
                 </section>
             </div>
 
-            <aside class="side-panel" aria-labelledby="inbound-guide-title">
+            <aside class="side-panel" aria-labelledby="inbound-form-title">
                 <div class="panel-card process-panel">
-                    <h2 id="inbound-guide-title">입고 전표 관리</h2>
-                    <p>등록된 입고 전표와 검수 대기 수량을 확인합니다.</p>
-                    <ol class="workflow-list" aria-label="입고 전표 관리 흐름">
+                    <h2 id="inbound-form-title">입고부터 출고까지</h2>
+                    <p>현재 화면은 전체 재고 흐름 중 입고 단계입니다.</p>
+                    <ol class="workflow-list" aria-label="재고 업무 흐름">
                         <li class="workflow-step active">
                             <span class="process-dot" aria-hidden="true"></span>
                             <div>
-                                <strong>입고 관리</strong>
-                                <p>전표별 입고 내역을 확인하고 후속 처리를 관리합니다.</p>
-                                <ol class="sub-process-list" aria-label="입고 전표 관리 세부 흐름">
+                                <strong>입고 진행 중</strong>
+                                <p>거래처 입고 부품을 전표로 묶고 관리번호를 생성합니다.</p>
+                                <ol class="sub-process-list" aria-label="입고 세부 처리 흐름">
                                     <li>
                                         <span>1</span>
                                         <div>
-                                            <strong>전표 확인</strong>
-                                            <p>거래처별 입고 묶음을 확인합니다.</p>
+                                            <strong>거래처 선택</strong>
+                                            <p>공급 거래처를 입고 전표에 연결합니다.</p>
                                         </div>
                                     </li>
                                     <li>
                                         <span>2</span>
                                         <div>
-                                            <strong>상세 확인</strong>
-                                            <p>부품 라인과 관리번호를 확인합니다.</p>
+                                            <strong>부품 라인 추가</strong>
+                                            <p>부품 종류와 입고 수량을 입력합니다.</p>
                                         </div>
                                     </li>
                                     <li>
                                         <span>3</span>
                                         <div>
-                                            <strong>취소 관리</strong>
-                                            <p>오입고는 수정 대신 취소로 남깁니다.</p>
+                                            <strong>관리번호 생성</strong>
+                                            <p>입고 수량만큼 개별 관리번호를 발급합니다.</p>
                                         </div>
                                     </li>
                                     <li>
                                         <span>4</span>
                                         <div>
-                                            <strong>검수 이동</strong>
-                                            <p>입고 완료 부품은 검수에서 처리합니다.</p>
+                                            <strong>검수 대기 전환</strong>
+                                            <p>검수 대기, 판매 보류 상태로 시작합니다.</p>
                                         </div>
                                     </li>
                                 </ol>
@@ -255,9 +258,9 @@
                 <div class="panel-card muted-panel">
                     <h2>입고 규칙</h2>
                     <ul>
-                        <li>전표번호는 저장 시 자동 발급</li>
-                        <li>입고 완료 전표는 검수 대기 상태로 연결</li>
-                        <li>오입고는 수정 대신 취소 이력으로 보존</li>
+                        <li>입고 완료 시 수량만큼 관리번호를 생성</li>
+                        <li>개별 부품은 검수 대기, 판매 보류로 시작</li>
+                        <li>입고 오류는 원본 수정 대신 취소 전표로 보존</li>
                     </ul>
                 </div>
             </aside>
@@ -266,20 +269,81 @@
 </div>
 <script src="/js/pcs-api.js?20260526_1"></script>
 <script src="/js/workspace-layout.js?20260527_1"></script>
+<script src="/js/pcs-ui.js?20260527_1"></script>
+<script src="/js/dashboard.js?20260526_1"></script>
 <script>
     (() => {
-        const params = new URLSearchParams(window.location.search);
-        const documentNo = params.get("created");
+        const body = document.body;
+        const toggle = document.querySelector("[data-sidebar-toggle]");
+        const backdrop = document.querySelector("[data-sidebar-backdrop]");
+        const desktopQuery = window.matchMedia("(min-width: 1521px)");
 
-        if (!documentNo) {
+        if (!toggle || !backdrop) {
             return;
         }
 
+        const closeMenu = () => {
+            body.classList.remove("sidebar-open");
+            toggle.setAttribute("aria-expanded", "false");
+            toggle.setAttribute("aria-label", "메뉴 열기");
+        };
+
+        const openMenu = () => {
+            body.classList.add("sidebar-open");
+            toggle.setAttribute("aria-expanded", "true");
+            toggle.setAttribute("aria-label", "메뉴 닫기");
+        };
+
+        toggle.addEventListener("click", () => {
+            if (body.classList.contains("sidebar-open")) {
+                closeMenu();
+                return;
+            }
+            openMenu();
+        });
+
+        backdrop.addEventListener("click", closeMenu);
+
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape") {
+                closeMenu();
+            }
+        });
+
+        desktopQuery.addEventListener("change", (event) => {
+            if (event.matches) {
+                closeMenu();
+            }
+        });
+    })();
+
+    (() => {
+        const createdInboundKey = "pcsCreatedInboundDocument";
+        let createdInbound = null;
+
+        try {
+            const rawCreatedInbound = window.sessionStorage.getItem(createdInboundKey);
+            createdInbound = rawCreatedInbound ? JSON.parse(rawCreatedInbound) : null;
+        } catch (error) {
+            createdInbound = null;
+        }
+
+        try {
+            window.sessionStorage.removeItem(createdInboundKey);
+        } catch (error) {
+            // Ignore storage cleanup failures.
+        }
+
+        if (!createdInbound?.documentNo) {
+            return;
+        }
+
+        const documentNo = String(createdInbound.documentNo);
         const table = document.querySelector(".inbound-table");
         const tableHead = table?.querySelector(".table-head");
         const notice = document.querySelector("[data-created-notice]");
-        const partnerName = params.get("partner") || "방금 등록한 거래처";
-        const quantity = Number(params.get("quantity")) || 0;
+        const partnerName = createdInbound.partnerName || "방금 등록한 거래처";
+        const quantity = Number(createdInbound.quantity) || 0;
         const dateMatch = documentNo.match(/^IN-(\d{4})(\d{2})(\d{2})-/);
         const createdDate = dateMatch ? `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}` : "";
         const escapeHtml = (value) => value.replace(/[&<>"']/g, (letter) => ({

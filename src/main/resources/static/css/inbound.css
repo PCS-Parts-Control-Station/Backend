@@ -143,12 +143,25 @@
     grid-area: partner-message;
 }
 
+.basic-fields {
+    align-items: start;
+    row-gap: 8px;
+}
+
+.basic-field-message {
+    grid-column: 1 / -1;
+}
+
 .field-message {
     min-height: 18px;
     color: var(--muted);
     font-size: 12px;
     font-weight: 800;
     line-height: 1.4;
+}
+
+.field-message:empty {
+    display: none;
 }
 
 .field-message.is-error {
@@ -574,6 +587,45 @@
     border-top: 1px solid var(--line);
 }
 
+.confirm-modal {
+    width: min(520px, calc(100vw - 32px));
+}
+
+.confirm-summary {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 20px;
+}
+
+.confirm-summary div {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+    min-width: 0;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+}
+
+.confirm-summary dt {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.confirm-summary dd {
+    min-width: 0;
+    margin: 0;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
 
 @media (max-width: 1520px) {
     .stock-filter-form {
@@ -593,13 +645,6 @@
     .part-search-results,
     .selected-part-panel {
         grid-template-columns: 1fr;
-    }
-
-    .basic-fields {
-        grid-template-areas:
-            "partner"
-            "partner-message"
-            "reason";
     }
 
     .submit-panel {
@@ -684,6 +729,11 @@
     .part-modal-actions {
         display: grid;
         grid-template-columns: 1fr;
+    }
+
+    .confirm-summary div {
+        grid-template-columns: 1fr;
+        gap: 4px;
     }
 
     .part-result-head {
@@ -857,4 +907,5 @@
         padding-top: 10px;
         border-top: 1px solid var(--line);
     }
+
 }
