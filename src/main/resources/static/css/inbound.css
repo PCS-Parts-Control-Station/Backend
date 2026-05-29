@@ -119,6 +119,30 @@
     padding: 20px;
 }
 
+.register-fields > label {
+    min-width: 0;
+}
+
+.basic-fields {
+    align-items: start;
+    grid-template-areas:
+        "partner reason"
+        "partner-message .";
+    row-gap: 8px;
+}
+
+.basic-partner-field {
+    grid-area: partner;
+}
+
+.basic-reason-field {
+    grid-area: reason;
+}
+
+.basic-field-message {
+    grid-area: partner-message;
+}
+
 .field-message {
     min-height: 18px;
     color: var(--muted);
@@ -569,6 +593,13 @@
     .part-search-results,
     .selected-part-panel {
         grid-template-columns: 1fr;
+    }
+
+    .basic-fields {
+        grid-template-areas:
+            "partner"
+            "partner-message"
+            "reason";
     }
 
     .submit-panel {

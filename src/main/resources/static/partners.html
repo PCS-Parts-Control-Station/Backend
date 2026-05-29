@@ -13,33 +13,7 @@
 </head>
 <body class="has-collapsible-sidebar">
 <div class="workspace-layout">
-    <aside class="workspace-sidebar" id="workspace-sidebar" aria-label="업무 메뉴">
-        <a class="sidebar-brand" href="/">
-            <img src="/images/parts-control-station-icon.svg" alt="" width="38" height="38">
-            <span>
-                <strong>PCS</strong>
-                <small>pcs-seoul</small>
-            </span>
-        </a>
-
-        <nav class="sidebar-nav" aria-label="업무 화면 이동">
-            <a href="/w/pcs-seoul/dashboard">운영 현황</a>
-            <a href="/w/pcs-seoul/categories">카테고리</a>
-            <a href="/w/pcs-seoul/parts">부품 관리</a>
-            <a href="/w/pcs-seoul/inbound">입고 관리</a>
-            <a href="/w/pcs-seoul/inspection">검수 관리</a>
-            <a href="/w/pcs-seoul/outbound">출고 관리</a>
-            <a href="/w/pcs-seoul/history">이력 관리</a>
-            <a href="/w/pcs-seoul/partners" class="active" aria-current="page">거래처 관리</a>
-            <a href="/w/pcs-seoul/users">사용자 관리</a>
-        </nav>
-
-        <div class="sidebar-footer">
-            <span>접속 계정</span>
-            <strong>관리자 김관리</strong>
-        </div>
-    </aside>
-    <button class="sidebar-backdrop" type="button" data-sidebar-backdrop aria-label="메뉴 닫기"></button>
+    <div data-workspace-sidebar data-active-route="partners"></div>
 
     <main class="workspace-main">
         <header class="workspace-header">
@@ -245,52 +219,7 @@
 </div>
 <script src="/js/pcs-api.js?20260527_partner_page"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
+<script src="/js/workspace-layout.js?20260527_1"></script>
 <script src="/js/partners.js?20260527_pagination"></script>
-<script>
-    (() => {
-        const body = document.body;
-        const toggle = document.querySelector("[data-sidebar-toggle]");
-        const backdrop = document.querySelector("[data-sidebar-backdrop]");
-        const desktopQuery = window.matchMedia("(min-width: 1521px)");
-
-        if (!toggle || !backdrop) {
-            return;
-        }
-
-        const closeMenu = () => {
-            body.classList.remove("sidebar-open");
-            toggle.setAttribute("aria-expanded", "false");
-            toggle.setAttribute("aria-label", "메뉴 열기");
-        };
-
-        const openMenu = () => {
-            body.classList.add("sidebar-open");
-            toggle.setAttribute("aria-expanded", "true");
-            toggle.setAttribute("aria-label", "메뉴 닫기");
-        };
-
-        toggle.addEventListener("click", () => {
-            if (body.classList.contains("sidebar-open")) {
-                closeMenu();
-                return;
-            }
-            openMenu();
-        });
-
-        backdrop.addEventListener("click", closeMenu);
-
-        document.addEventListener("keydown", (event) => {
-            if (event.key === "Escape") {
-                closeMenu();
-            }
-        });
-
-        desktopQuery.addEventListener("change", (event) => {
-            if (event.matches) {
-                closeMenu();
-            }
-        });
-    })();
-</script>
 </body>
 </html>

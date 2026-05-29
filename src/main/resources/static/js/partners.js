@@ -46,19 +46,6 @@
         return match ? decodeURIComponent(match[1]) : "";
     };
 
-    const updateWorkspaceLinks = (companyCode) => {
-        if (!companyCode) {
-            return;
-        }
-        document.querySelectorAll("a[href^='/w/pcs-seoul']").forEach((link) => {
-            link.href = link.getAttribute("href").replace("/w/pcs-seoul", `/w/${encodeURIComponent(companyCode)}`);
-        });
-        const brandWorkspace = document.querySelector(".sidebar-brand small");
-        if (brandWorkspace) {
-            brandWorkspace.textContent = companyCode;
-        }
-    };
-
     const formatDate = (value) => {
         if (!value) {
             return "-";
@@ -274,8 +261,6 @@
     if (!form || !table || !pagination || !window.PcsApi || !window.PcsPagination) {
         return;
     }
-
-    updateWorkspaceLinks(getCompanyCode());
 
     form.addEventListener("submit", (event) => {
         event.preventDefault();
