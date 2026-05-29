@@ -298,7 +298,7 @@ box-shadow: var(--shadow-sm);
 
 ```text
 PCS-CPU-000124
-pcs-seoul
+company-code
 unit.serial
 status.history
 ```

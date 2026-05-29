@@ -37,5 +37,4 @@ const loadSession = async () => {
     }
 };
 
-window.PcsUi?.consumeFlashToast();
 loadSession();
