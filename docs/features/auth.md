@@ -53,6 +53,7 @@ com.pcs.domain.auth
 백엔드 API:
 
 - `/api/workspaces/{companyCode}/**` API는 인증이 필요한 업무 API로 본다.
+- 단, `/api/workspaces/{companyCode}/public-info`는 로그인 전 업체 주소 확인용 공개 API다.
 - Controller, Facade, Service에서 `Authorization` 헤더를 직접 읽거나 JWT를 직접 파싱하지 않는다.
 - 인증 사용자 정보가 필요하면 Controller 메서드에서 `@AuthenticationPrincipal PcsPrincipal principal`을 받는다.
 - URL의 `companyCode`는 사용자 입력값이므로 단독 신뢰하지 않는다.
@@ -116,3 +117,4 @@ pcsRefreshToken={token}; HttpOnly; SameSite=Strict; Path=/api/auth
 - MyBatis Mapper XML namespace는 Mapper FQCN과 일치해야 한다.
 - refresh token 저장, 로그인 이력 저장, 로그인 성공 시 `tb_member.last_login_at` 갱신을 확인한다.
 - 업무 화면 JS는 `docs/ai/pcs-auth-client-rules.md` 기준으로 인증 API를 호출한다.
+- URL 업체 코드가 존재하지 않거나 로그인 계정의 업체와 다르면 공통 잘못된 접근 페이지로 이동한다.

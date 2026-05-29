@@ -2,6 +2,7 @@ package com.pcs.domain.company.facade;
 
 import com.pcs.domain.company.dto.request.OwnerSignupRequest;
 import com.pcs.domain.company.dto.response.OwnerSignupResponse;
+import com.pcs.domain.company.dto.response.WorkspacePublicInfoResponse;
 import com.pcs.domain.company.entity.Company;
 import com.pcs.domain.company.service.CompanyService;
 import com.pcs.domain.member.service.MemberService;
@@ -57,6 +58,22 @@ public class CompanyFacade {
         } catch (DuplicateKeyException exception) {
             throw mapDuplicateKeyException(exception);
         }
+    }
+
+    public WorkspacePublicInfoResponse findWorkspacePublicInfo(String companyCode) {
+        String normalizedCompanyCode = normalizeRequired(companyCode).toLowerCase();
+        if (normalizedCompanyCode.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "업체 코드가 필요합니다.");
+        }
+
+        WorkspacePublicInfoResponse response = companyService.findPublicInfoByCompanyCode(normalizedCompanyCode);
+        if (response == null) {
+            throw new BusinessException(ErrorCode.COMPANY_NOT_FOUND);
+        }
+        if (Boolean.FALSE.equals(response.active())) {
+            throw new BusinessException(ErrorCode.COMPANY_INACTIVE);
+        }
+        return response;
     }
 
     private BusinessException mapDuplicateKeyException(DuplicateKeyException exception) {

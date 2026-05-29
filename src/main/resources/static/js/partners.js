@@ -381,7 +381,22 @@
         return;
     }
 
-    updateWorkspaceLinks(getCompanyCode());
+    const initializePage = async () => {
+        const companyCode = getCompanyCode();
+        updateWorkspaceLinks(companyCode);
+
+        try {
+            if (window.PcsApi.validateWorkspacePublic) {
+                const isValidWorkspace = await window.PcsApi.validateWorkspacePublic(companyCode);
+                if (!isValidWorkspace) {
+                    return;
+                }
+            }
+            await loadPartners(0);
+        } catch (error) {
+            setEmptyMessage(error?.message || "업체 주소를 확인할 수 없습니다.");
+        }
+    };
 
     form.addEventListener("submit", (event) => {
         event.preventDefault();
@@ -444,5 +459,5 @@
         loadPartners(currentPage + 1, { preserveScroll: true });
     });
 
-    loadPartners(0);
+    initializePage();
 })();

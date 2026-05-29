@@ -5,6 +5,11 @@
         'AUTH-003',
         'AUTH-004'
     ]);
+    const WORKSPACE_ERROR_CODES = new Set([
+        'AUTH-006',
+        'COMPANY-001',
+        'COMPANY-003'
+    ]);
 
     let refreshPromise = null;
 
@@ -37,6 +42,41 @@
         return error?.status === 401 || AUTH_ERROR_CODES.has(error?.code);
     };
 
+    const isWorkspaceAccessError = (error) => {
+        return WORKSPACE_ERROR_CODES.has(error?.code);
+    };
+
+    const getCompanyCodeFromPath = () => {
+        const match = window.location.pathname.match(/^\/w\/([^/]+)/);
+        return match ? decodeURIComponent(match[1]) : '';
+    };
+
+    const workspaceErrorType = (error) => {
+        if (error?.code === 'AUTH-006') {
+            return 'access';
+        }
+        if (error?.code === 'COMPANY-003') {
+            return 'inactive';
+        }
+        return 'workspace';
+    };
+
+    const redirectToInvalidAccess = (error, companyCode = '') => {
+        const targetCompanyCode = companyCode || getCompanyCodeFromPath();
+        const params = new URLSearchParams({
+            type: workspaceErrorType(error)
+        });
+
+        if (targetCompanyCode) {
+            params.set('code', targetCompanyCode);
+        }
+        if (error?.code) {
+            params.set('reason', error.code);
+        }
+
+        window.location.href = `/workspace-not-found?${params.toString()}`;
+    };
+
     const parseJsonResult = async (response) => {
         const result = await response.json().catch(() => null);
 
@@ -50,6 +90,31 @@
         }
 
         return result;
+    };
+
+    const validateWorkspacePublic = async (companyCode) => {
+        if (!companyCode) {
+            redirectToInvalidAccess({ code: 'COMPANY-001' });
+            return false;
+        }
+
+        try {
+            const response = await fetch(`/api/workspaces/${encodeURIComponent(companyCode)}/public-info`, {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            await parseJsonResult(response);
+            return true;
+        } catch (error) {
+            if (isWorkspaceAccessError(error)) {
+                redirectToInvalidAccess(error, companyCode);
+                return false;
+            }
+            throw error;
+        }
     };
 
     const normalizeHeaders = (headers, hasJsonBody) => {
@@ -142,6 +207,11 @@
         try {
             return await execute();
         } catch (error) {
+            if (options.workspaceErrorRedirect !== false && isWorkspaceAccessError(error)) {
+                redirectToInvalidAccess(error, loginCompanyCode);
+                throw error;
+            }
+
             if (!retryOnAuthError || !isAuthError(error)) {
                 throw error;
             }
@@ -150,6 +220,10 @@
                 await refreshAccessToken();
                 return await execute();
             } catch (refreshError) {
+                if (options.workspaceErrorRedirect !== false && isWorkspaceAccessError(refreshError)) {
+                    redirectToInvalidAccess(refreshError, loginCompanyCode);
+                    throw refreshError;
+                }
                 if (authRedirect) {
                     redirectToLogin(loginCompanyCode);
                 }
@@ -184,6 +258,8 @@
         getAccessToken,
         setAccessToken,
         clearAccessToken,
+        redirectToInvalidAccess,
+        validateWorkspacePublic,
         logout,
         PcsApiError
     };

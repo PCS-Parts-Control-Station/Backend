@@ -107,6 +107,7 @@ sort
 | Method | API | 설명 |
 |---|---|---|
 | POST | `/api/owners/signup` | Owner 회원가입 + 회사 생성 / 회사 코드 발급 |
+| GET | `/api/workspaces/{companyCode}/public-info` | 업체 주소 존재/사용 가능 여부 확인 |
 | GET | `/api/owners/company` | Owner 회사 조회 |
 | PATCH | `/api/owners/company` | 회사 정보 수정 |
 | PATCH | `/api/owners/company/active` | 회사 활성 여부 변경 |

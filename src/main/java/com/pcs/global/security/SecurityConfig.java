@@ -41,6 +41,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.POST, "/api/owners/signup").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/owners/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/workspaces/*/public-info").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/workspaces/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/workspaces/*/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()

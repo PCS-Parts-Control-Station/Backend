@@ -12,6 +12,16 @@
         )
     </select>
 
+    <select id="findPublicInfoByCompanyCode" parameterType="string"
+            resultType="com.pcs.domain.company.dto.response.WorkspacePublicInfoResponse">
+        SELECT
+            company_code,
+            company_name,
+            active
+        FROM tb_company
+        WHERE company_code = #{companyCode}
+    </select>
+
     <insert id="insert" parameterType="com.pcs.domain.company.entity.Company"
             useGeneratedKeys="true" keyProperty="companyId">
         INSERT INTO tb_company (
