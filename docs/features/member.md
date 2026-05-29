@@ -28,8 +28,7 @@ com.pcs.domain.member
 
 - `loginId`는 같은 업체 안에서 중복될 수 없다.
 - OWNER는 회사 소유자 성격의 계정이다.
-- 회사당 OWNER는 1명만 허용한다.
-- OWNER 계정은 `ownerSlot = 1`, ADMIN/STAFF 계정은 `ownerSlot = null`로 저장한다.
+- OWNER 저장 규칙과 `ownerSlot` DB 기준은 `docs/features/member-db.md`를 따른다.
 - ADMIN은 사용자, 거래처, 카테고리, 기준 관리 권한을 가진다.
 - STAFF는 입고, 검수, 출고, 이력 조회 중심 권한을 가진다.
 - 사용자 삭제는 하지 않고 `active` 상태만 변경한다.

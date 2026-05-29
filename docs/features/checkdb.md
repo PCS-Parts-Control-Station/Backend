@@ -111,7 +111,8 @@ tb_auth_refresh_token.uk_auth_refresh_token_hash
 
 ## 하네스 기준
 
-- `-RunDb` 또는 `-DbFeature` 실행 시 `checkdb.md` 기준을 먼저 검사한다.
+- `-RunDb` 또는 `-DbFeature` 실행 시 이 문서의 기준을 먼저 검사한다.
 - DB 연결 실패는 FAIL이다.
 - 필수 테이블, 필수 컬럼, 필수 제약 조건 누락은 FAIL이다.
 - 기능별 저장 시나리오는 `{feature}-db.md`에서 검사한다.
+- 실행 명령과 피드백 리포트 생성 기준은 `docs/ai/pcs-harness-rules.md`를 따른다.

@@ -73,10 +73,7 @@ tb_member.chk_member_owner_slot
 
 - `tb_company`에 회사 정보가 저장된다.
 - `tb_member`에 같은 `company_id`를 가진 OWNER 계정이 저장된다.
-- OWNER 계정은 `role = OWNER`이다.
-- OWNER 계정은 `owner_slot = 1`이다.
-- OWNER 계정은 `password_status = ACTIVE`이다.
-- 비밀번호는 원문이 아니라 `password_hash`로 저장된다.
+- OWNER 계정의 상세 저장 규칙은 `docs/features/member-db.md`를 따른다.
 - 응답용 업체 접속 주소는 `/w/{companyCode}` 기준이다.
 
 ## 실패 시나리오
@@ -88,13 +85,5 @@ tb_member.chk_member_owner_slot
 
 ## 하네스 기준
 
-```powershell
-.\harness\run-harness.ps1 -Mode bootstrap -Feature company -RunBuild -RunDb
-```
-
-이 명령은 아래 기준을 함께 확인한다.
-
-- `company.md` 기능 구조
-- `checkdb.md` DB 사전검사
-- `company-db.md` 회사 등록 DB 시나리오
-- `compileJava`
+실행 명령과 `-Feature`, `-DbFeature` 조합 기준은 `docs/ai/pcs-harness-rules.md`를 따른다.  
+회사 등록 검증 시에는 `company.md`, `company-db.md`, `member-db.md`, `checkdb.md` 기준을 함께 확인한다.

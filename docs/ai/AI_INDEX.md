@@ -11,12 +11,12 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 
 작업 성격을 판단하기 위해 필요한 경우에만 읽는다.
 
-- `docs/ai/pcs-handoff.md`
-    - 이전 채팅의 결정사항, 최근 변경 파일, 다음 작업 흐름 확인
 - `docs/ai/pcs-agent-context.md`
     - 프로젝트 정체성, 전체 작업 원칙, 계층 역할 확인
 - `docs/ai/pcs-harness-rules.md`
     - 하네스 검사 기준, 금지 규칙, 완료 기준 확인
+- `docs/ai/pcs-backend-common-rules.md`
+    - 공통 응답, 예외, ErrorCode, Controller 처리 기준 확인
 
 ## 문서 선택 규칙
 
@@ -62,17 +62,18 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 
 - `docs/ai/pcs-agent-context.md`
 - `docs/ai/pcs-project-structure-reference.md`
+- `docs/ai/pcs-frontend-js-rules.md`
 - 필요한 경우 `docs/ai/pcs-api-spec.md`
 - 페이징 목록이면 `docs/ai/pcs-pagination-rules.md`
 - 해당 기능 문서 1개
-- 로그인 후 업무 화면에서 인증 API를 호출하면 `docs/features/auth.md`도 인증 사용 규칙 섹션만 확인
+- 로그인 후 업무 화면에서 인증 API를 호출하면 `docs/ai/pcs-auth-client-rules.md`도 확인
 
 예시:
 
 - 부품 목록 JS 작성 → `docs/features/part.md`
 - 검수 등록 JS 작성 → `docs/features/inspection.md`
-- 로그인 JS 작성 → `docs/features/auth.md`
-- 대시보드/거래처/부품 등 업무 화면 API 연동 → 해당 기능 문서 + `docs/features/auth.md`
+- 로그인 JS 작성 → `docs/features/auth.md` + `docs/ai/pcs-auth-client-rules.md`
+- 대시보드/거래처/부품 등 업무 화면 API 연동 → 해당 기능 문서 + `docs/ai/pcs-auth-client-rules.md`
 
 ---
 
@@ -99,17 +100,18 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 
 - `docs/ai/pcs-agent-context.md`
 - `docs/ai/pcs-project-structure-reference.md`
+- `docs/ai/pcs-backend-common-rules.md`
 - `docs/ai/pcs-api-spec.md`
 - 목록 API 또는 페이징 API면 `docs/ai/pcs-pagination-rules.md`
 - 해당 기능 문서 1개
-- `/api/workspaces/{companyCode}/**`처럼 인증이 필요한 API면 `docs/features/auth.md`도 인증 사용 규칙 섹션만 확인
+- `/api/workspaces/{companyCode}/**`처럼 인증이 필요한 API면 `docs/ai/pcs-auth-client-rules.md`도 확인
 
 예시:
 
 - Owner 회원가입 구현 → `docs/features/company.md`
 - 업체 로그인 구현 → `docs/features/auth.md`
 - 입고 전표 등록 구현 → `docs/features/stock.md`
-- 거래처/부품/입출고/검수 API 구현 → 해당 기능 문서 + `docs/features/auth.md`
+- 거래처/부품/입출고/검수 API 구현 → 해당 기능 문서 + `docs/ai/pcs-auth-client-rules.md`
 
 ---
 
@@ -130,6 +132,12 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - 재고 정합성 SQL 작성
 - 페이징 목록 SQL 작성 → `docs/ai/pcs-pagination-rules.md`
 
+SQL 참조 기준:
+
+- 기본 DB 구조 확인은 `docs/sql/pcs-schema-ddl.sql`만 본다.
+- `docs/sql/*-alter.sql` 파일은 과거 수동 반영 기록이므로, 사용자가 직접 지정하거나 특정 컬럼 변경 이력을 확인할 때만 본다.
+- DDL과 feature DB 문서가 충돌하면 먼저 실제 DB/DDL 기준을 확인하고 feature DB 문서를 최신화한다.
+
 ---
 
 ### 6. 하네스 수정 작업
@@ -139,6 +147,16 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - `docs/ai/pcs-harness-rules.md`
 - `docs/ai/pcs-agent-context.md`
 - 필요한 경우 `docs/ai/pcs-project-structure-reference.md`
+
+확인 대상:
+
+- `harness/run-harness.ps1`
+- `harness/run-feedback-loop.ps1`
+
+기준:
+
+- 새 `-Feature` 또는 `-DbFeature` 값을 추가하면 두 스크립트의 허용값을 함께 맞춘다.
+- 실제 검사는 `run-harness.ps1`에 구현하고, `run-feedback-loop.ps1`은 옵션 전달과 실패 요약 생성을 담당한다.
 
 ---
 

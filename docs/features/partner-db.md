@@ -36,7 +36,8 @@
 - `partnerRole = CUSTOMER`는 `CUSTOMER`, `BOTH`를 조회한다.
 - `active`가 없으면 거래 가능/거래 불가 거래처를 모두 조회한다.
 - 목록은 `updated_at DESC, partner_id DESC` 순서로 정렬한다.
-- 페이징은 0부터 시작하는 `page`와 `size`를 `LIMIT`, `OFFSET`으로 변환하고 전체 건수는 별도 `COUNT(*)`로 조회한다.
+- 페이징 query와 응답 기준은 `docs/ai/pcs-pagination-rules.md`를 따른다.
+- SQL은 `LIMIT`, `OFFSET`, `COUNT(*)`를 사용해 목록과 전체 건수를 분리 조회한다.
 
 ## 정합성 기준
 

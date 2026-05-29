@@ -1,7 +1,8 @@
 # PCS 프로젝트 구조 기준
 
 기능 구현 시 따라야 할 구조 기준이다.  
-현재 초기 단계에서는 메인 화면과 하네스만 유지하고, 기능 확정 후 아래 구조로 확장한다.
+현재 PCS는 기본 프로젝트와 하네스 위에 회사 등록, 인증, 거래처, 카테고리 등 일부 기능이 붙기 시작한 단계다.  
+새 기능을 추가할 때는 아래 구조를 기준으로 확장하고, 이미 구현된 기능도 같은 기준에서 벗어나면 정리한다.
 
 ## 기본 방향
 
@@ -11,7 +12,7 @@
 - JPA 금지
 - MyBatis 사용
 - 정적 HTML + JS + REST API
-- API 응답은 `ApiResultDto`로 통일
+- API 응답은 `docs/ai/pcs-backend-common-rules.md` 기준으로 통일
 
 ## 의존성 기준
 
@@ -96,38 +97,42 @@ Mapper 인터페이스와 XML namespace는 1:1로 맞춘다.
 ```text
 src/main/resources/static
 ├─ main.html
+├─ company-register.html
+├─ workspace-login.html
 ├─ dashboard.html
-├─ parts.html
-├─ stock.html
-├─ inspection.html
-├─ mypage.html
+├─ categories.html
+├─ partners.html
+├─ inbound.html
+├─ inbound-register.html
 ├─ css
 ├─ js
-├─ fragments
 └─ images
 ```
 
-페이지 쌍:
+페이지 파일 기준:
 
 ```text
 static/{page}.html
-static/css/{page}.css
-static/js/{page}.js
 ```
+
+CSS와 JS 작성 기준은 화면 유형별 문서를 따른다.
+
+- 공개/진입 화면: `docs/ai/pcs-design-system.md`, `docs/ai/design/public-pages.md`
+- 로그인 후 업무 화면: `docs/ai/pcs-design-system.md`, `docs/ai/design/workspace-layout.md`
+- 업무 화면 CSS: `admin.css` 우선, 복잡한 예외가 있을 때만 개별 CSS
+- 화면별 JS: 실제 API 연동이나 상호작용이 있을 때만 작성
 
 공통 JS:
 
 ```text
 pcs-api.js
 pcs-pagination.js
-common-theme.js
-common-form.js
-common-navbar.js
+pcs-ui.js
 ```
 
-- 인증이 필요한 정적 화면의 API 호출은 `pcs-api.js`를 사용한다.
-- `pcs-api.js`는 access token 첨부, 401 응답 시 refresh 재발급, 원 요청 1회 재시도를 공통 처리한다.
-- 페이징 목록 화면은 `pcs-pagination.js`를 사용해 `page/size`, 응답 정규화, 이전/다음 버튼 상태, 스크롤 보존 처리를 공통화한다.
+- 공통 JS 사용 기준은 `docs/ai/pcs-frontend-js-rules.md`를 따른다.
+- 인증 API 호출 방식은 `docs/ai/pcs-auth-client-rules.md`를 따른다.
+- 페이징 목록 화면은 `docs/ai/pcs-pagination-rules.md`를 따른다.
 
 ## PageController 기준
 

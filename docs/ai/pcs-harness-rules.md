@@ -13,9 +13,9 @@
 
 bootstrap:
 
-- 기능 구현 전 초기 프로젝트용
-- 메인 화면과 하네스 구조를 지킨다.
+- 기본 프로젝트 구조와 선택한 feature 기준을 함께 검사하는 기본 모드
 - 기능 명세 없이 코드가 먼저 생기는 것을 막는다.
+- `-Feature`, `-RunBuild`, `-RunDb`, `-DbFeature` 옵션과 함께 기능 구현 후 검증에도 사용한다.
 
 full:
 
@@ -27,13 +27,80 @@ Feature:
 - `Mode`와 별도로 특정 기능 문서 기준의 추가 검사를 실행한다.
 - 기능 구현 방식은 바꾸지 않고, `docs/features/{feature}.md`에 맞는 구조와 핵심 규칙을 더 확인한다.
 
+## 지원 중인 Feature 값
+
+현재 `run-harness.ps1`과 `run-feedback-loop.ps1`의 `-Feature`, `-DbFeature`에서 바로 선택할 수 있는 값:
+
+```text
+none
+company
+member
+auth
+```
+
+새 도메인 문서를 만들었다고 해서 하네스가 자동으로 그 기능의 세부 규칙을 검사하는 것은 아니다.  
+예를 들어 `docs/features/partner.md`가 있어도, `run-harness.ps1`에 `partner` 검사가 추가되기 전까지는 `-Feature partner`를 사용할 수 없다.
+
 예:
 
 ```powershell
-.\harness\run-harness.ps1 -Mode bootstrap -Feature company -RunBuild
-.\harness\run-harness.ps1 -Mode bootstrap -Feature member -RunBuild
-.\harness\run-harness.ps1 -Mode bootstrap -Feature auth -RunBuild -RunDb
+.\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature company -RunBuild -RunDb -DbFeature member
+.\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature auth -RunBuild -RunDb -DbFeature member
+.\harness\run-feedback-loop.ps1 -Mode bootstrap -DbFeature member
 ```
+
+## Feature 검사 추가 방법
+
+새 기능을 하네스에서 직접 검사하려면 `harness/run-harness.ps1`에 기능명을 추가하고 검사 함수를 만든다.
+
+예: `partner` 기능 검사를 추가하는 경우
+
+1. 파라미터 허용값에 기능명을 추가한다.
+
+```powershell
+[ValidateSet("none", "company", "member", "auth", "partner")]
+[string] $Feature = "none",
+
+[ValidateSet("none", "company", "member", "auth", "partner")]
+[string] $DbFeature = "none",
+```
+
+2. 기능 검사 함수를 만든다.
+
+```powershell
+function Test-PartnerFeature {
+    Test-PathRequired "docs/features/partner.md" "PARTNER_DOC" "Create docs/features/partner.md first."
+    Test-PathRequired "src/main/java/com/pcs/domain/partner/api/PartnerApiController.java" "PARTNER_CONTROLLER" "Create PartnerApiController."
+    Test-PathRequired "src/main/java/com/pcs/domain/partner/facade/PartnerFacade.java" "PARTNER_FACADE" "Create PartnerFacade."
+    Test-PathRequired "src/main/java/com/pcs/domain/partner/service/PartnerService.java" "PARTNER_SERVICE" "Create PartnerService."
+    Test-PathRequired "src/main/java/com/pcs/domain/partner/mapper/PartnerMapper.java" "PARTNER_MAPPER" "Create PartnerMapper."
+    Test-PathRequired "src/main/resources/mapper/partner/PartnerMapper.xml" "PARTNER_MAPPER_XML" "Create PartnerMapper.xml."
+}
+```
+
+3. 실행부에 연결한다.
+
+```powershell
+if ($Feature -eq "partner") {
+    Test-PartnerFeature
+}
+```
+
+4. DB 검사가 필요하면 `docs/features/partner-db.md`를 만들고, DB Java 검사 쪽에도 `partner` 체크를 추가한다.
+
+5. `harness/run-feedback-loop.ps1`의 `Feature`, `DbFeature` 허용값에도 같은 기능명을 추가한다.
+
+```powershell
+[ValidateSet("none", "company", "member", "auth", "partner")]
+[string] $Feature = "none",
+
+[ValidateSet("none", "company", "member", "auth", "partner")]
+[string] $DbFeature = "none",
+```
+
+하네스 문서만 추가하면 검사가 생기는 것이 아니다.  
+문서는 기준이고, `run-harness.ps1`의 함수가 실제 검사 코드다.
+`run-feedback-loop.ps1`은 `run-harness.ps1`을 감싸서 실행 결과를 에이전트용으로 요약하는 보조 실행기다.
 
 ## bootstrap 규칙
 
@@ -64,8 +131,7 @@ src/main/resources/static/js/main.js
 - JS 문법 검사
 - `.gitignore` 필수 규칙 확인
 - `domain/{feature}`가 있으면 `docs/features/{feature}.md`가 있어야 함
-- 인증 기능은 `Authorization` 헤더 파싱을 Controller/Facade에 두지 않고 Security 필터에서 처리함
-- 인증 기능은 운영 기본 secret 차단, refresh cookie secure 설정, refresh token 만료/재사용 reason 구분을 유지함
+- 인증 기능은 `docs/features/auth.md`와 `docs/ai/pcs-auth-client-rules.md` 기준을 유지함
 
 ## Feature / DB 문서 작성 규칙
 
@@ -134,13 +200,21 @@ docs/features/checkdb.md
 기능 구현 후 검증 흐름:
 
 ```powershell
-.\harness\run-harness.ps1 -Mode bootstrap -Feature {feature} -RunBuild -RunDb
+.\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature {feature} -RunBuild -RunDb
 ```
 
 다른 도메인의 DB 구조만 함께 확인해야 하면 기능 문서가 아니라 DB 문서 기준으로만 검사한다.
 
 ```powershell
-.\harness\run-harness.ps1 -Mode bootstrap -DbFeature member
+.\harness\run-feedback-loop.ps1 -Mode bootstrap -DbFeature member
+```
+
+기능 DB와 다른 도메인 DB 구조를 한 번에 확인해야 하면 `-RunDb`와 `-DbFeature`를 함께 쓴다.
+
+예: auth 기능 구현 중 member DB 구조도 함께 확인
+
+```powershell
+.\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature auth -RunBuild -RunDb -DbFeature member
 ```
 
 ## 항상 금지
@@ -198,11 +272,7 @@ harness/reports/*
 
 계층:
 
-- Controller는 Facade만 호출
-- Controller에서 Service/Mapper 직접 호출 금지
-- Facade는 유스케이스 흐름 조립
-- Service는 DB 조회/변경과 비즈니스 검증
-- Mapper는 SQL 실행만 담당
+- 계층 역할은 `docs/ai/pcs-project-structure-reference.md` 기준을 따른다.
 
 DTO/Validation:
 
@@ -214,9 +284,8 @@ DTO/Validation:
 
 API/예외:
 
-- `/api/**` 응답은 `ApiResultDto`
-- `ErrorCode`, `BusinessException`, `GlobalExceptionHandler`
-- 인증 실패 API 응답은 JSON
+- 공통 응답, ErrorCode, BusinessException, GlobalExceptionHandler 기준은 `docs/ai/pcs-backend-common-rules.md`를 따른다.
+- 인증 실패 API 응답은 JSON이어야 한다.
 
 MyBatis:
 
@@ -265,16 +334,33 @@ SQL 품질:
 
 ## 실행
 
+권장 실행은 `run-feedback-loop.ps1`이다.  
+이 스크립트는 내부에서 `run-harness.ps1`을 실행하고, 실패/경고 요약 파일을 추가로 만든다.
+
 ```powershell
-.\harness\run-harness.ps1 -Mode bootstrap
-.\harness\run-harness.ps1 -Mode bootstrap -RunBuild
-.\harness\run-harness.ps1 -Mode bootstrap -Feature company -RunBuild -RunDb
-.\harness\run-harness.ps1 -Mode bootstrap -Feature auth -RunBuild -RunDb
-.\harness\run-harness.ps1 -Mode bootstrap -DbFeature member
+.\harness\run-feedback-loop.ps1 -Mode bootstrap
+.\harness\run-feedback-loop.ps1 -Mode bootstrap -RunBuild
+.\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature company -RunBuild -RunDb -DbFeature member
+.\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature auth -RunBuild -RunDb -DbFeature member
+.\harness\run-feedback-loop.ps1 -Mode bootstrap -DbFeature member
 ```
 
 리포트:
 
 ```text
 harness/reports/latest.md
+harness/reports/agent-failures.md
 ```
+
+역할:
+
+- `run-harness.ps1`을 실행한다.
+- `latest.md`에서 FAIL/WARN 섹션을 읽는다.
+- 에이전트가 다음 수정 작업에서 보기 쉬운 `agent-failures.md`를 만든다.
+- `Feature`, `RunDb`, `DbFeature` 옵션을 `run-harness.ps1`에 전달한다.
+
+주의:
+
+- 이 스크립트가 코드를 자동 수정하지는 않는다.
+- 같은 실행에서 여러 DB 기준을 함께 보고 싶으면 `-RunDb -DbFeature {feature}`를 함께 사용한다.
+- `run-feedback-loop.ps1` 결과 파일은 매 실행마다 덮어쓴다.
