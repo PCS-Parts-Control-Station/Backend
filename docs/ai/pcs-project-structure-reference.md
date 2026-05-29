@@ -182,7 +182,7 @@ public StockOutboundResult outbound(...) {
 
 트랜잭션 기준은 Service 호출 개수가 아니라 하나의 유스케이스 작업 단위인지 여부다.
 
-## 주요 도메인 후보
+## 주요 도메인
 
 - Company: 업체 작업 공간, 회사 코드, 회사 활성 상태
 - Member: Owner, Admin, Staff 작업자 계정

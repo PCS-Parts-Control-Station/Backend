@@ -17,6 +17,10 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
     - 하네스 검사 기준, 금지 규칙, 완료 기준 확인
 - `docs/ai/pcs-backend-common-rules.md`
     - 공통 응답, 예외, ErrorCode, Controller 처리 기준 확인
+- `docs/ai/pcs-permission-rules.md`
+    - 권한/role 분기 기준 확인
+- `docs/ai/pcs-status-lifecycle-rules.md`
+    - `active`, 사용 중지, 상태 보존 기준 확인
 
 ## 문서 선택 규칙
 
@@ -103,6 +107,8 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - `docs/ai/pcs-backend-common-rules.md`
 - `docs/ai/pcs-api-spec.md`
 - 목록 API 또는 페이징 API면 `docs/ai/pcs-pagination-rules.md`
+- 권한/role 분기가 있으면 `docs/ai/pcs-permission-rules.md`
+- `active`, 사용 중지, 상태 보존을 다루면 `docs/ai/pcs-status-lifecycle-rules.md`
 - 해당 기능 문서 1개
 - `/api/workspaces/{companyCode}/**`처럼 인증이 필요한 API면 `docs/ai/pcs-auth-client-rules.md`도 확인
 
@@ -123,6 +129,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - `docs/sql/pcs-schema-ddl.sql`
 - 해당 기능 문서 1개
 - DB 검증 기준이 있으면 `docs/features/{feature}-db.md`
+- `active` 의미나 상태 보존 기준을 판단해야 하면 `docs/ai/pcs-status-lifecycle-rules.md`
 
 예시:
 

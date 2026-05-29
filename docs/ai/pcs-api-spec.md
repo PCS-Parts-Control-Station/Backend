@@ -12,6 +12,8 @@
 - 공통 응답, 예외, ErrorCode 사용 방식은 `docs/ai/pcs-backend-common-rules.md`를 따른다.
 - 인증/JWT 정책은 `docs/features/auth.md`, 사용 방식은 `docs/ai/pcs-auth-client-rules.md`를 따른다.
 - 페이징 응답과 화면 연동은 `docs/ai/pcs-pagination-rules.md`를 따른다.
+- 권한 기준은 `docs/ai/pcs-permission-rules.md`를 따른다.
+- `active`와 상태 보존 기준은 `docs/ai/pcs-status-lifecycle-rules.md`를 따른다.
 - 이 문서와 feature 문서가 충돌하면 feature 문서를 최신 기준으로 보고, 필요한 경우 이 문서를 요약 수준으로 갱신한다.
 
 ## 1. API 설계 원칙
@@ -20,7 +22,7 @@
 - 화면 URL과 API URL은 분리한다.
 - 업체 업무 API는 `/api/workspaces/{companyCode}/**` 아래에 둔다.
 - 업체 업무 API의 회사 범위 검증은 `docs/features/auth.md` 기준을 따른다.
-- 마스터 데이터는 `PATCH`로 수정하고, 삭제 대신 `active`를 변경한다.
+- 마스터 데이터는 `PATCH`로 수정하고, 삭제 대신 `docs/ai/pcs-status-lifecycle-rules.md` 기준의 `active`를 변경한다.
 - 입출고와 검수는 이력성 데이터이므로 원본 수정/삭제를 하지 않는다.
 - 입출고 오류는 취소 이력으로 남긴다.
 - 검수 오류는 정정 이력 또는 재검수 이력으로 남긴다.
@@ -69,7 +71,7 @@ sort
 | POST | `/api/auth/logout` | 로그아웃 |
 | GET | `/api/workspaces/{companyCode}/me` | 내 세션 정보 조회 |
 
-업체 로그인 요청 후보:
+업체 로그인 요청 예시:
 
 ```json
 {
@@ -111,7 +113,7 @@ sort
 
 Owner 회원가입은 회사 생성과 하나의 API에서 처리한다. 상세 규칙은 `docs/features/company.md`, OWNER 저장 규칙은 `docs/features/member-db.md`를 따른다.
 
-Owner 회원가입 + 회사 생성 요청 후보:
+Owner 회원가입 + 회사 생성 요청 예시:
 
 ```json
 {
@@ -126,7 +128,7 @@ Owner 회원가입 + 회사 생성 요청 후보:
 }
 ```
 
-응답 data 후보:
+응답 data 예시:
 
 ```json
 {
@@ -149,7 +151,7 @@ Owner 회원가입 + 회사 생성 요청 후보:
 | PATCH | `/api/workspaces/{companyCode}/mypage` | 내 정보 수정 |
 | PATCH | `/api/workspaces/{companyCode}/mypage/password` | 비밀번호 변경 |
 
-사용자 생성 요청 후보:
+사용자 생성 요청 예시:
 
 ```json
 {
@@ -192,7 +194,7 @@ Owner 회원가입 + 회사 생성 요청 후보:
 }
 ```
 
-거래처 생성 요청 후보:
+거래처 생성 요청 예시:
 
 ```json
 {
@@ -216,7 +218,7 @@ Owner 회원가입 + 회사 생성 요청 후보:
 | PATCH | `/api/workspaces/{companyCode}/categories/{categoryId}` | 카테고리 수정 |
 | PATCH | `/api/workspaces/{companyCode}/categories/{categoryId}/active` | 카테고리 사용 여부 변경 |
 
-카테고리 생성 요청 후보:
+카테고리 생성 요청 예시:
 
 ```json
 {
@@ -267,7 +269,7 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&lim
 }
 ```
 
-부품 등록 요청 후보:
+부품 등록 요청 예시:
 
 ```json
 {
@@ -281,7 +283,7 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&lim
 }
 ```
 
-개별 부품 판매 상태 변경 요청 후보:
+개별 부품 판매 상태 변경 요청 예시:
 
 ```json
 {
@@ -304,7 +306,7 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&lim
 | GET | `/api/workspaces/{companyCode}/stock/movements/{movementId}` | 입출고 재고 변화 라인 상세 |
 | GET | `/api/workspaces/{companyCode}/stock/movements/{movementId}/units` | 라인에 포함된 개별 부품 목록 |
 
-입고 전표 등록 요청 후보:
+입고 전표 등록 요청 예시:
 
 ```json
 {
@@ -323,7 +325,7 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&lim
 입고 전표번호는 서버가 `IN-YYYYMMDD-RANDOM16` 형식으로 자동 발급한다.
 내부 정렬과 페이징 기준은 `documentId`를 사용한다.
 
-출고 전표 등록 요청 후보:
+출고 전표 등록 요청 예시:
 
 ```json
 {
@@ -340,7 +342,7 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&lim
 }
 ```
 
-취소 요청 후보:
+취소 요청 예시:
 
 ```json
 {
@@ -371,7 +373,7 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&lim
 | PATCH | `/api/workspaces/{companyCode}/inspection-templates/{templateId}/items/{itemId}/options/{optionId}` | 선택지 수정 |
 | PATCH | `/api/workspaces/{companyCode}/inspection-templates/{templateId}/items/{itemId}/options/{optionId}/active` | 선택지 사용 여부 변경 |
 
-검수 등록 요청 후보:
+검수 등록 요청 예시:
 
 ```json
 {
@@ -410,7 +412,7 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&lim
 | GET | `/api/workspaces/{companyCode}/history/inspections` | 검수/정정/재검수 이력 |
 | GET | `/api/workspaces/{companyCode}/history/status-changes` | 상태 변경 이력 |
 
-공통 query 후보:
+공통 query 예시:
 
 ```text
 partnerId
@@ -433,7 +435,7 @@ size
 | GET | `/api/workspaces/{companyCode}/dashboard/todos` | 우선 처리 목록 |
 | GET | `/api/workspaces/{companyCode}/dashboard/statistics` | 운영 통계 |
 
-통계 query 후보:
+통계 query 예시:
 
 ```text
 from
@@ -457,49 +459,10 @@ com.pcs.domain.dashboard   대시보드
 
 ## 5. 권한 기준
 
+권한 기준 원본은 `docs/ai/pcs-permission-rules.md`이다.
+
 권한 검증은 Controller가 아니라 인증/인가 계층과 Service 검증에서 처리한다.
-
-```text
-OWNER:
-- Owner 로그인
-- 회사 정보 조회/수정/활성 여부 변경
-- 전체 업체 업무 접근
-- 사용자 관리
-- 거래처/카테고리/부품 기준 관리
-- 입고/검수/출고/이력/대시보드 접근
-- 내 정보 관리
-
-ADMIN:
-- 업체 로그인
-- 사용자 관리
-- 거래처 관리
-- 카테고리 관리
-- 부품 기준 관리
-- 부품/재고 조회
-- 입고/검수/출고 처리
-- 입출고 취소
-- 검수 정정/재검수
-- 이력/대시보드 조회
-- 내 정보 관리
-
-STAFF:
-- 업체 로그인
-- 대시보드 조회
-- 부품/재고 조회
-- 입고 등록
-- 검수 등록
-- 출고 등록
-- 이력 조회
-- 내 정보 관리
-```
-
-제한:
-
-- STAFF는 사용자 관리, 거래처 관리, 카테고리 관리, 부품 기준 관리를 할 수 없다.
-- STAFF는 회사 정보 수정 또는 회사 활성 여부 변경을 할 수 없다.
-- STAFF는 다른 사용자의 임시 비밀번호를 발급할 수 없다.
-- 회사 비활성 상태에서는 Owner 로그인과 회사 조회를 제외한 업체 업무 API 접근을 차단한다.
-- 비활성 사용자 계정은 로그인할 수 없다.
+API별 특별 제한이 있으면 각 feature 문서에만 추가한다.
 
 ## 6. 공통 정책 참조
 
@@ -523,7 +486,7 @@ STAFF:
 
 ### 6.4 상태 변경 / 이력
 
-- 마스터 데이터는 물리 삭제하지 않고 `active` 상태로 사용 여부를 관리한다.
+- 마스터 데이터는 물리 삭제하지 않고 `docs/ai/pcs-status-lifecycle-rules.md` 기준의 `active` 상태로 사용 여부를 관리한다.
 - 입출고 원본은 수정/삭제하지 않는다.
 - 입출고 오류는 취소 전표와 취소 movement로 남긴다.
 - 검수 오류는 정정 이력 또는 재검수 이력으로 남긴다.

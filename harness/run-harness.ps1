@@ -2,7 +2,7 @@ param(
     [ValidateSet("bootstrap", "full")]
     [string] $Mode = "bootstrap",
 
-    [ValidateSet("none", "company", "member", "auth")]
+    [ValidateSet("none", "company", "member", "auth", "partner")]
     [string] $Feature = "none",
 
     [switch] $FixGitignore,
@@ -11,7 +11,7 @@ param(
 
     [switch] $RunDb,
 
-    [ValidateSet("none", "company", "member", "auth")]
+    [ValidateSet("none", "company", "member", "auth", "partner")]
     [string] $DbFeature = "none",
 
     [switch] $CheckPort,
@@ -633,6 +633,65 @@ function Test-AuthFeature {
     Add-Result "INFO" "AUTH_FEATURE" "Auth feature checks completed."
 }
 
+function Test-PartnerFeature {
+    Test-PathRequired "docs/features/partner.md" "PARTNER_FEATURE_DOC" "Keep docs/features/partner.md as the partner feature rule source."
+    Test-PathRequired "docs/features/partner-db.md" "PARTNER_DB_DOC" "Keep docs/features/partner-db.md as the partner DB rule source."
+    Test-PathRequired "src/main/java/com/pcs/domain/partner/api/PartnerApiController.java" "PARTNER_API" "Expose partner workspace APIs in partner/api."
+    Test-PathRequired "src/main/java/com/pcs/domain/partner/dto/response/SearchPartnerResponse.java" "PARTNER_SEARCH_RESPONSE" "Keep partner list response DTO."
+    Test-PathRequired "src/main/java/com/pcs/domain/partner/dto/response/SearchPartnerSummaryResponse.java" "PARTNER_SUMMARY_RESPONSE" "Keep partner list summary response DTO."
+    Test-PathRequired "src/main/java/com/pcs/domain/partner/facade/PartnerFacade.java" "PARTNER_FACADE" "Keep partner company-scope validation in partner/facade."
+    Test-PathRequired "src/main/java/com/pcs/domain/partner/service/PartnerService.java" "PARTNER_SERVICE" "Keep partner search rules in partner/service."
+    Test-PathRequired "src/main/java/com/pcs/domain/partner/mapper/PartnerMapper.java" "PARTNER_MAPPER" "Keep MyBatis mapper interface for partner persistence."
+    Test-PathRequired "src/main/resources/mapper/partner/PartnerMapper.xml" "PARTNER_MAPPER_XML" "Keep MyBatis mapper XML for partner persistence."
+    Test-PathRequired "src/main/java/com/pcs/domain/partner/type/PartnerType.java" "PARTNER_TYPE_ENUM" "Keep partner type enum."
+    Test-PathRequired "src/main/java/com/pcs/domain/partner/type/PartnerRole.java" "PARTNER_ROLE_ENUM" "Keep partner role enum."
+
+    $controller = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/partner/api/PartnerApiController.java"
+    if (Test-Path $controller) {
+        $controllerContent = Get-Content -Raw $controller
+        foreach ($pattern in @("@RestController", '@RequestMapping\("/api"\)', '@GetMapping\("/workspaces/\{companyCode\}/partners"\)', "@AuthenticationPrincipal", "ApiResultDto", "PageResultDto")) {
+            if ($controllerContent -notmatch $pattern) {
+                Add-Result "FAIL" "PARTNER_CONTROLLER_PATTERN" "PartnerApiController is missing required pattern: $pattern" "Keep partner list API aligned with docs/features/partner.md."
+            }
+        }
+    }
+
+    $facade = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/partner/facade/PartnerFacade.java"
+    if (Test-Path $facade) {
+        $facadeContent = Get-Content -Raw $facade
+        foreach ($pattern in @("principal.companyId", "principal.companyCode", "AUTH_WORKSPACE_MISMATCH")) {
+            if ($facadeContent -notmatch $pattern) {
+                Add-Result "FAIL" "PARTNER_SCOPE_PATTERN" "PartnerFacade is missing company-scope pattern: $pattern" "Validate URL companyCode against authenticated workspace and query by companyId."
+            }
+        }
+    }
+
+    $service = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/partner/service/PartnerService.java"
+    if (Test-Path $service) {
+        $serviceContent = Get-Content -Raw $service
+        foreach ($pattern in @("DEFAULT_SIZE", "MAX_SIZE", "countPartners", "searchPartners", "summarizePartners", "COMPANY_INACTIVE")) {
+            if ($serviceContent -notmatch $pattern) {
+                Add-Result "FAIL" "PARTNER_SERVICE_PATTERN" "PartnerService is missing required search/paging pattern: $pattern" "Keep partner list paging, summary, and inactive-company guard."
+            }
+        }
+    }
+
+    $mapperXml = Join-Path $ProjectRoot "src/main/resources/mapper/partner/PartnerMapper.xml"
+    if (Test-Path $mapperXml) {
+        $mapperXmlContent = Get-Content -Raw $mapperXml
+        if ($mapperXmlContent -notmatch 'namespace="com\.pcs\.domain\.partner\.mapper\.PartnerMapper"') {
+            Add-Result "FAIL" "PARTNER_MAPPER_NAMESPACE" "PartnerMapper.xml namespace does not match PartnerMapper FQCN." "Match XML namespace to mapper interface."
+        }
+        foreach ($pattern in @("tb_trade_partner", "company_id", "partner_name", "partner_type", "partner_role", "LIMIT", "OFFSET", "COUNT(*)", "updated_at DESC", "partner_id DESC")) {
+            if ($mapperXmlContent -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "PARTNER_MAPPER_PATTERN" "PartnerMapper.xml is missing required SQL pattern: $pattern" "Keep partner search SQL aligned with docs/features/partner-db.md."
+            }
+        }
+    }
+
+    Add-Result "INFO" "PARTNER_FEATURE" "Partner feature checks completed."
+}
+
 function Get-DbConfig {
     $dbUrl = $env:DB_URL
     $dbUser = $env:DB_USER
@@ -767,6 +826,8 @@ public class PcsHarnessDbCheck {
                     checkMemberDb();
                 } else if ("auth".equals(normalized)) {
                     checkAuthDb();
+                } else if ("partner".equals(normalized)) {
+                    checkPartnerDb();
                 } else {
                     fail("DB_CHECK_UNKNOWN", "Unknown DB check: " + normalized);
                 }
@@ -1077,6 +1138,80 @@ public class PcsHarnessDbCheck {
         }
     }
 
+    private static void checkPartnerDb() throws SQLException {
+        requireColumn("tb_trade_partner", "company_id");
+        requireColumn("tb_trade_partner", "partner_name");
+        requireColumn("tb_trade_partner", "partner_type");
+        requireColumn("tb_trade_partner", "partner_role");
+        requireColumn("tb_trade_partner", "phone");
+        requireColumn("tb_trade_partner", "email");
+        requireColumn("tb_trade_partner", "address");
+        requireColumn("tb_trade_partner", "memo");
+        requireColumn("tb_trade_partner", "active");
+        requireColumn("tb_trade_partner", "updated_at");
+        requireEnumValue("tb_trade_partner", "partner_type", "PC_CAFE");
+        requireEnumValue("tb_trade_partner", "partner_type", "PERSON");
+        requireEnumValue("tb_trade_partner", "partner_type", "COMPANY");
+        requireEnumValue("tb_trade_partner", "partner_type", "ETC");
+        requireEnumValue("tb_trade_partner", "partner_role", "SUPPLIER");
+        requireEnumValue("tb_trade_partner", "partner_role", "CUSTOMER");
+        requireEnumValue("tb_trade_partner", "partner_role", "BOTH");
+        requireConstraint("tb_trade_partner", "uk_trade_partner_company_name");
+        requireConstraint("tb_trade_partner", "uk_trade_partner_company_partner_id");
+
+        boolean originalAutoCommit = connection.getAutoCommit();
+        connection.setAutoCommit(false);
+        try {
+            long companyId = insertCompany("PCS Harness Partner Company", "pcs-harness-partner-" + runSuffix, null, null, "444-00-" + runSuffix.substring(Math.max(0, runSuffix.length() - 5)));
+            long otherCompanyId = insertCompany("PCS Harness Partner Other Company", "pcs-harness-partner-other-" + runSuffix, null, null, "443-00-" + runSuffix.substring(Math.max(0, runSuffix.length() - 5)));
+            insertTradePartner(companyId, "Harness Partner Supplier " + runSuffix, "PC_CAFE", "SUPPLIER", "010-1000-0000", "supplier-" + runSuffix + "@pcs.local", "Seoul", "Supplier memo", true);
+            insertTradePartner(companyId, "Harness Partner Customer " + runSuffix, "COMPANY", "CUSTOMER", null, null, null, null, false);
+            insertTradePartner(otherCompanyId, "Harness Partner Supplier " + runSuffix, "PERSON", "BOTH", null, null, null, null, true);
+
+            int companyScopedCount = queryInt(
+                "SELECT COUNT(*) FROM tb_trade_partner WHERE company_id = ? AND partner_name LIKE ?",
+                companyId,
+                "Harness Partner%"
+            );
+            if (companyScopedCount == 2) {
+                pass("PARTNER_COMPANY_SCOPE", "Partner rows are scoped by company_id.");
+            } else {
+                fail("PARTNER_COMPANY_SCOPE", "Expected 2 partner rows in company scope but found " + companyScopedCount + ".");
+            }
+
+            int supplierSelectableCount = queryInt(
+                "SELECT COUNT(*) FROM tb_trade_partner WHERE company_id = ? AND partner_role IN ('SUPPLIER', 'BOTH')",
+                companyId
+            );
+            if (supplierSelectableCount == 1) {
+                pass("PARTNER_SUPPLIER_ROLE_SEARCH", "Supplier search can include supplier-capable partners.");
+            } else {
+                fail("PARTNER_SUPPLIER_ROLE_SEARCH", "Expected 1 supplier-capable partner but found " + supplierSelectableCount + ".");
+            }
+
+            int activeSelectableCount = queryInt(
+                "SELECT COUNT(*) FROM tb_trade_partner WHERE company_id = ? AND active = TRUE",
+                companyId
+            );
+            if (activeSelectableCount == 1) {
+                pass("PARTNER_ACTIVE_FILTER", "Active partner filter can exclude inactive partners.");
+            } else {
+                fail("PARTNER_ACTIVE_FILTER", "Expected 1 active partner but found " + activeSelectableCount + ".");
+            }
+
+            expectSqlFailure("PARTNER_NAME_UNIQUE_PER_COMPANY", new SqlAction() {
+                public void run() throws SQLException {
+                    insertTradePartner(companyId, "Harness Partner Supplier " + runSuffix, "ETC", "SUPPLIER", null, null, null, null, true);
+                }
+            });
+
+            pass("PARTNER_DB_ROLLBACK_SCOPE", "Partner DB scenario was executed inside a rollback transaction.");
+        } finally {
+            connection.rollback();
+            connection.setAutoCommit(originalAutoCommit);
+        }
+    }
+
     private static long insertCompany(String name, String code, String email, String phone, String businessNo) throws SQLException {
         String sql = "INSERT INTO tb_company (company_name, company_code, representative_email, representative_phone, business_registration_no, active) VALUES (?, ?, ?, ?, ?, TRUE)";
         try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -1143,6 +1278,28 @@ public class PcsHarnessDbCheck {
             }
         }
         throw new SQLException("Failed to read generated token_id.");
+    }
+
+    private static long insertTradePartner(long companyId, String partnerName, String partnerType, String partnerRole, String phone, String email, String address, String memo, boolean active) throws SQLException {
+        String sql = "INSERT INTO tb_trade_partner (company_id, partner_name, partner_type, partner_role, phone, email, address, memo, active, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)";
+        try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            statement.setLong(1, companyId);
+            statement.setString(2, partnerName);
+            statement.setString(3, partnerType);
+            statement.setString(4, partnerRole);
+            setNullableString(statement, 5, phone);
+            setNullableString(statement, 6, email);
+            setNullableString(statement, 7, address);
+            setNullableString(statement, 8, memo);
+            statement.setBoolean(9, active);
+            statement.executeUpdate();
+            try (ResultSet keys = statement.getGeneratedKeys()) {
+                if (keys.next()) {
+                    return keys.getLong(1);
+                }
+            }
+        }
+        throw new SQLException("Failed to read generated partner_id.");
     }
 
     private static void rotateRefreshToken(long tokenId, long replacedByTokenId) throws SQLException {
@@ -1481,6 +1638,10 @@ if ($Feature -eq "member") {
 
 if ($Feature -eq "auth") {
     Test-AuthFeature
+}
+
+if ($Feature -eq "partner") {
+    Test-PartnerFeature
 }
 
 Invoke-DbChecks

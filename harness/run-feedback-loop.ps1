@@ -2,14 +2,14 @@ param(
     [ValidateSet("bootstrap", "full")]
     [string] $Mode = "bootstrap",
 
-    [ValidateSet("none", "company", "member", "auth")]
+    [ValidateSet("none", "company", "member", "auth", "partner")]
     [string] $Feature = "none",
 
     [switch] $RunBuild,
 
     [switch] $RunDb,
 
-    [ValidateSet("none", "company", "member", "auth")]
+    [ValidateSet("none", "company", "member", "auth", "partner")]
     [string] $DbFeature = "none",
 
     [switch] $CheckPort,

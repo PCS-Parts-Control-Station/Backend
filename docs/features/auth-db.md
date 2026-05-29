@@ -81,7 +81,7 @@ tb_auth_login_history.idx_auth_login_history_member_date
 로그인 성공 시:
 
 - 업체 코드와 로그인 ID로 `tb_company`, `tb_member`를 함께 조회한다.
-- 비활성 회사 또는 비활성 사용자는 로그인할 수 없다.
+- 비활성 회사 또는 비활성 사용자는 `docs/ai/pcs-status-lifecycle-rules.md` 기준에 따라 로그인할 수 없다.
 - 비밀번호는 `password_hash`와 `PasswordEncoder.matches`로 검증한다.
 - `tb_member.last_login_at`을 갱신한다.
 - `tb_member.login_failed_count`는 `0`으로 초기화한다.

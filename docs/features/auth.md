@@ -32,7 +32,7 @@ com.pcs.domain.auth
 - refresh token cookie의 `Secure` 속성은 환경 설정으로 제어한다. 로컬 HTTP는 `false`, 운영 HTTPS는 `true`로 설정한다.
 - 운영 프로필에서는 기본 JWT secret을 사용할 수 없다.
 - `companyCode`는 URL 값만 믿지 않고 JWT와 DB 기준으로 검증한다.
-- 비활성 회사 또는 비활성 계정은 로그인할 수 없다.
+- 비활성 회사 또는 비활성 계정은 `docs/ai/pcs-status-lifecycle-rules.md` 기준에 따라 로그인할 수 없다.
 - 임시 비밀번호 상태면 비밀번호 변경이 필요한 상태로 응답한다.
 - 임시 비밀번호 만료 시간이 지난 계정은 로그인할 수 없다.
 - 로그인 실패가 반복되면 계정을 일정 시간 잠근다.
@@ -59,7 +59,7 @@ com.pcs.domain.auth
 - `companyCode`, `companyId`, `memberId`, `role`은 `PcsPrincipal` 기준으로 확인한다.
 - 회사 범위 데이터 조회/수정은 항상 `principal.companyId()` 범위 안에서 처리한다.
 - URL의 `companyCode`와 `principal.companyCode()`가 다르면 `AUTH_WORKSPACE_MISMATCH`로 처리한다.
-- 권한 분기는 문자열 직접 비교보다 프로젝트 Enum/권한 규칙을 사용한다.
+- 권한 분기는 문자열 직접 비교보다 프로젝트 Enum과 `docs/ai/pcs-permission-rules.md` 기준을 사용한다.
 
 프론트 JS:
 

@@ -70,6 +70,7 @@ tb_auth_refresh_token.company_id
 ```
 
 마스터성 테이블은 `active` 상태를 가진다.
+`active`의 업무 의미는 `docs/ai/pcs-status-lifecycle-rules.md`를 원본으로 한다.
 
 ```text
 tb_company.active

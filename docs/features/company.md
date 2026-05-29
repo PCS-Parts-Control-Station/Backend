@@ -28,9 +28,10 @@ com.pcs.domain.company
 - Owner 계정과 회사는 같은 트랜잭션으로 저장한다.
 - Owner 또는 회사 중 하나만 저장되는 부분 성공은 허용하지 않는다.
 - 회사 생성 후 Owner 계정은 해당 회사의 OWNER 권한으로 연결된다.
+- OWNER 권한 기준은 `docs/ai/pcs-permission-rules.md`를 따른다.
 - OWNER 계정 저장 규칙은 `docs/features/member-db.md`를 따른다.
 - 회사 비활성화 시 업체 업무 API 접근을 차단한다.
-- 회사 삭제는 하지 않고 `active` 상태만 변경한다.
+- 회사 삭제는 하지 않고 `docs/ai/pcs-status-lifecycle-rules.md` 기준의 `active` 상태만 변경한다.
 
 ## 하네스 포인트
 
