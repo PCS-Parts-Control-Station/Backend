@@ -38,4 +38,24 @@ public interface PartnerMapper {
             @Param("partnerRole") PartnerRole partnerRole,
             @Param("active") Boolean active
     );
+
+    com.pcs.domain.partner.entity.Partner findById(@Param("companyId") Long companyId, @Param("partnerId") Long partnerId);
+
+    SearchPartnerResponse findResponseById(@Param("companyId") Long companyId, @Param("partnerId") Long partnerId);
+
+    void insert(com.pcs.domain.partner.entity.Partner partner);
+
+    void update(com.pcs.domain.partner.entity.Partner partner);
+
+    void updateActive(
+            @Param("companyId") Long companyId,
+            @Param("partnerId") Long partnerId,
+            @Param("active") boolean active
+    );
+
+    boolean existsByName(
+            @Param("companyId") Long companyId,
+            @Param("partnerName") String partnerName,
+            @Param("excludePartnerId") Long excludePartnerId
+    );
 }

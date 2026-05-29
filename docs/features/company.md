@@ -15,6 +15,7 @@ com.pcs.domain.company
 | Method | API | 설명 |
 |---|---|---|
 | POST | `/api/owners/signup` | Owner 회원가입 + 회사 생성 / 회사 코드 발급 |
+| GET | `/api/workspaces/{companyCode}/public-info` | 업체 주소 존재/사용 가능 여부 확인 |
 | GET | `/api/owners/company` | Owner 회사 조회 |
 | PATCH | `/api/owners/company` | 회사 정보 수정 |
 | PATCH | `/api/owners/company/active` | 회사 활성 여부 변경 |
@@ -32,6 +33,8 @@ com.pcs.domain.company
 - OWNER 계정 저장 규칙은 `docs/features/member-db.md`를 따른다.
 - 회사 비활성화 시 업체 업무 API 접근을 차단한다.
 - 회사 삭제는 하지 않고 `docs/ai/pcs-status-lifecycle-rules.md` 기준의 `active` 상태만 변경한다.
+- `/w/{companyCode}` 공개 로그인 진입에서는 `public-info`로 업체 주소를 한 번 확인한다.
+- 존재하지 않거나 비활성화된 업체 주소는 공통 잘못된 접근 페이지로 안내한다.
 
 ## 하네스 포인트
 

@@ -83,6 +83,53 @@ const updateRouteMode = () => {
     if (loginDescription) loginDescription.textContent = '회사에서 받은 계정으로 로그인하면 부품, 입고, 검수, 출고 업무를 바로 이어서 처리할 수 있습니다.';
 };
 
+const redirectToInvalidAccess = (type, companyCode, reason = '') => {
+    const params = new URLSearchParams({ type });
+    if (companyCode) {
+        params.set('code', companyCode);
+    }
+    if (reason) {
+        params.set('reason', reason);
+    }
+    window.location.href = `/workspace-not-found?${params.toString()}`;
+};
+
+const verifyCompanyCodeFromUrl = async () => {
+    const companyCodeFromUrl = getCompanyCodeFromPath();
+    if (!companyCodeFromUrl) {
+        return;
+    }
+
+    loginButton.disabled = true;
+    setMessage('업체 주소를 확인하는 중입니다.');
+
+    try {
+        const response = await fetch(`/api/workspaces/${encodeURIComponent(companyCodeFromUrl)}/public-info`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        const result = await response.json().catch(() => null);
+
+        if (!response.ok || result?.success === false) {
+            const code = result?.code || '';
+            if (code === 'COMPANY-003') {
+                redirectToInvalidAccess('inactive', companyCodeFromUrl, code);
+                return;
+            }
+            redirectToInvalidAccess('workspace', companyCodeFromUrl, code || 'COMPANY-001');
+            return;
+        }
+
+        setMessage('');
+    } catch (error) {
+        setMessage('업체 주소를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.', true);
+    } finally {
+        loginButton.disabled = false;
+    }
+};
+
 companyCodeInput?.addEventListener('input', () => {
     setInvalid(companyCodeInput, false);
 });
@@ -163,3 +210,4 @@ workspaceLoginForm?.addEventListener('submit', async (event) => {
 });
 
 updateRouteMode();
+verifyCompanyCodeFromUrl();
