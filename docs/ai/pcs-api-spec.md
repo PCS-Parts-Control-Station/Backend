@@ -1,47 +1,41 @@
 # PCS API 명세 요약
 
-이 문서는 PCS 백엔드 API를 도메인 기준으로 정리한다.
+이 문서는 PCS 백엔드 API의 전체 흐름과 엔드포인트를 요약한다.
 
 화면 URL은 `PageController`가 정적 HTML을 forward하고, 실제 데이터 처리는 `/api/**`에서 수행한다.
 
+## 문서 역할
+
+- 이 문서는 전체 API의 방향과 엔드포인트를 빠르게 확인하기 위한 요약 문서다.
+- 실제 구현 직전의 세부 규칙은 `docs/features/{feature}.md`를 우선한다.
+- DB 컬럼과 제약 조건은 `docs/sql/pcs-schema-ddl.sql`을 기준으로 확인한다.
+- 공통 응답, 예외, ErrorCode 사용 방식은 `docs/ai/pcs-backend-common-rules.md`를 따른다.
+- 인증/JWT 정책은 `docs/features/auth.md`, 사용 방식은 `docs/ai/pcs-auth-client-rules.md`를 따른다.
+- 페이징 응답과 화면 연동은 `docs/ai/pcs-pagination-rules.md`를 따른다.
+- 권한 기준은 `docs/ai/pcs-permission-rules.md`를 따른다.
+- `active`와 상태 보존 기준은 `docs/ai/pcs-status-lifecycle-rules.md`를 따른다.
+- 이 문서와 feature 문서가 충돌하면 feature 문서를 최신 기준으로 보고, 필요한 경우 이 문서를 요약 수준으로 갱신한다.
+
 ## 1. API 설계 원칙
 
-- 모든 API 응답은 `ApiResultDto<T>`로 감싼다.
+- API 응답은 `docs/ai/pcs-backend-common-rules.md` 기준의 `ApiResultDto<T>`로 감싼다.
 - 화면 URL과 API URL은 분리한다.
 - 업체 업무 API는 `/api/workspaces/{companyCode}/**` 아래에 둔다.
-- `companyCode`는 URL 식별값이며, 인증 토큰과 DB 기준으로 실제 소속 업체를 검증한다.
-- 마스터 데이터는 `PATCH`로 수정하고, 삭제 대신 `active`를 변경한다.
+- 업체 업무 API의 회사 범위 검증은 `docs/features/auth.md` 기준을 따른다.
+- 마스터 데이터는 `PATCH`로 수정하고, 삭제 대신 `docs/ai/pcs-status-lifecycle-rules.md` 기준의 `active`를 변경한다.
 - 입출고와 검수는 이력성 데이터이므로 원본 수정/삭제를 하지 않는다.
 - 입출고 오류는 취소 이력으로 남긴다.
 - 검수 오류는 정정 이력 또는 재검수 이력으로 남긴다.
-- Write API는 Facade public 메서드에서 트랜잭션을 가진다.
+- Write API 트랜잭션 경계는 `docs/ai/pcs-project-structure-reference.md` 기준을 따른다.
 - 목록/검색/통계는 SQL에서 필터링/집계한다.
 
 ## 2. 공통 응답
 
-성공:
+공통 응답, 예외, ErrorCode는 `docs/ai/pcs-backend-common-rules.md`를 원본 기준으로 한다.
 
-```json
-{
-  "success": true,
-  "code": "COMMON-000",
-  "message": "요청이 정상 처리되었습니다.",
-  "data": {}
-}
-```
+페이징 응답은 `docs/ai/pcs-pagination-rules.md`를 원본 기준으로 한다.
 
-실패:
-
-```json
-{
-  "success": false,
-  "code": "PART-001",
-  "message": "부품을 찾을 수 없습니다.",
-  "data": null
-}
-```
-
-페이징 응답 data 후보:
+응답 data 예시:
 
 ```json
 {
@@ -53,7 +47,7 @@
 }
 ```
 
-공통 query 후보:
+공통 query 예시:
 
 ```text
 keyword
@@ -64,7 +58,7 @@ size
 sort
 ```
 
-## 3. 도메인별 API 명세
+## 3. 도메인별 API 요약
 
 ### 3.1 인증 / 세션 `auth`
 
@@ -77,7 +71,7 @@ sort
 | POST | `/api/auth/logout` | 로그아웃 |
 | GET | `/api/workspaces/{companyCode}/me` | 내 세션 정보 조회 |
 
-업체 로그인 요청 후보:
+업체 로그인 요청 예시:
 
 ```json
 {
@@ -88,20 +82,15 @@ sort
 ```
 
 
-인증 저장 기준:
+인증/JWT 정책은 `docs/features/auth.md`, 인증 DB 검증 기준은 `docs/features/auth-db.md`를 따른다.
 
-- `tb_member`는 로그인 실패 횟수, 계정 잠금, 최근 로그인 IP/User-Agent를 가진다.
-- `tb_auth_refresh_token`은 refresh token 원문이 아니라 SHA-256 해시만 저장한다.
-- `tb_auth_refresh_token.token_family_id`로 refresh token 회전 흐름을 추적한다.
-- `tb_auth_login_history`에는 성공/실패/잠금/비활성/임시 비밀번호 만료 결과를 모두 남긴다.
-
-로그인 성공 응답은 `accessToken`을 JSON으로 내려주고, refresh token은 HttpOnly Cookie로 내려준다.
+로그인 성공 응답 예시:
 
 ```json
 {
   "accessToken": "jwt",
   "tokenType": "Bearer",
-  "expiresInSeconds": 1800,
+  "expiresInSeconds": 600,
   "companyId": 1,
   "companyCode": "greenparts",
   "memberId": 10,
@@ -122,16 +111,9 @@ sort
 | PATCH | `/api/owners/company` | 회사 정보 수정 |
 | PATCH | `/api/owners/company/active` | 회사 활성 여부 변경 |
 
-Owner 회원가입은 회사 생성과 하나의 API에서 처리한다. 회사와 OWNER 계정은 같은 트랜잭션으로 저장하며, 둘 중 하나만 저장되는 상태를 허용하지 않는다.
+Owner 회원가입은 회사 생성과 하나의 API에서 처리한다. 상세 규칙은 `docs/features/company.md`, OWNER 저장 규칙은 `docs/features/member-db.md`를 따른다.
 
-Owner 규칙:
-
-- `tb_company`에는 `owner_member_id`를 두지 않는다.
-- 회사당 OWNER는 1명만 허용한다.
-- `tb_member.owner_slot`은 OWNER만 `1`을 가지고, ADMIN/STAFF는 `NULL`이어야 한다.
-- `UNIQUE(company_id, owner_slot)`로 회사당 OWNER 1명을 보장한다.
-
-Owner 회원가입 + 회사 생성 요청 후보:
+Owner 회원가입 + 회사 생성 요청 예시:
 
 ```json
 {
@@ -146,7 +128,7 @@ Owner 회원가입 + 회사 생성 요청 후보:
 }
 ```
 
-응답 data 후보:
+응답 data 예시:
 
 ```json
 {
@@ -169,7 +151,7 @@ Owner 회원가입 + 회사 생성 요청 후보:
 | PATCH | `/api/workspaces/{companyCode}/mypage` | 내 정보 수정 |
 | PATCH | `/api/workspaces/{companyCode}/mypage/password` | 비밀번호 변경 |
 
-사용자 생성 요청 후보:
+사용자 생성 요청 예시:
 
 ```json
 {
@@ -192,7 +174,7 @@ Owner 회원가입 + 회사 생성 요청 후보:
 
 거래처는 회사 하위 데이터지만 역할이 커서 `company`에 넣기보다 `partner` 도메인으로 분리한다.
 
-거래처 목록 응답은 공통 페이징 기준을 따른다.
+거래처 목록 응답은 `docs/ai/pcs-pagination-rules.md`의 공통 페이징 기준을 따른다.
 
 ```json
 {
@@ -212,7 +194,7 @@ Owner 회원가입 + 회사 생성 요청 후보:
 }
 ```
 
-거래처 생성 요청 후보:
+거래처 생성 요청 예시:
 
 ```json
 {
@@ -236,7 +218,7 @@ Owner 회원가입 + 회사 생성 요청 후보:
 | PATCH | `/api/workspaces/{companyCode}/categories/{categoryId}` | 카테고리 수정 |
 | PATCH | `/api/workspaces/{companyCode}/categories/{categoryId}/active` | 카테고리 사용 여부 변경 |
 
-카테고리 생성 요청 후보:
+카테고리 생성 요청 예시:
 
 ```json
 {
@@ -287,7 +269,7 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&lim
 }
 ```
 
-부품 등록 요청 후보:
+부품 등록 요청 예시:
 
 ```json
 {
@@ -301,7 +283,7 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&lim
 }
 ```
 
-개별 부품 판매 상태 변경 요청 후보:
+개별 부품 판매 상태 변경 요청 예시:
 
 ```json
 {
@@ -324,7 +306,7 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&lim
 | GET | `/api/workspaces/{companyCode}/stock/movements/{movementId}` | 입출고 재고 변화 라인 상세 |
 | GET | `/api/workspaces/{companyCode}/stock/movements/{movementId}/units` | 라인에 포함된 개별 부품 목록 |
 
-입고 전표 등록 요청 후보:
+입고 전표 등록 요청 예시:
 
 ```json
 {
@@ -343,7 +325,7 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&lim
 입고 전표번호는 서버가 `IN-YYYYMMDD-RANDOM16` 형식으로 자동 발급한다.
 내부 정렬과 페이징 기준은 `documentId`를 사용한다.
 
-출고 전표 등록 요청 후보:
+출고 전표 등록 요청 예시:
 
 ```json
 {
@@ -360,7 +342,7 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&lim
 }
 ```
 
-취소 요청 후보:
+취소 요청 예시:
 
 ```json
 {
@@ -391,7 +373,7 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&lim
 | PATCH | `/api/workspaces/{companyCode}/inspection-templates/{templateId}/items/{itemId}/options/{optionId}` | 선택지 수정 |
 | PATCH | `/api/workspaces/{companyCode}/inspection-templates/{templateId}/items/{itemId}/options/{optionId}/active` | 선택지 사용 여부 변경 |
 
-검수 등록 요청 후보:
+검수 등록 요청 예시:
 
 ```json
 {
@@ -430,7 +412,7 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&lim
 | GET | `/api/workspaces/{companyCode}/history/inspections` | 검수/정정/재검수 이력 |
 | GET | `/api/workspaces/{companyCode}/history/status-changes` | 상태 변경 이력 |
 
-공통 query 후보:
+공통 query 예시:
 
 ```text
 partnerId
@@ -453,7 +435,7 @@ size
 | GET | `/api/workspaces/{companyCode}/dashboard/todos` | 우선 처리 목록 |
 | GET | `/api/workspaces/{companyCode}/dashboard/statistics` | 운영 통계 |
 
-통계 query 후보:
+통계 query 예시:
 
 ```text
 from
@@ -477,85 +459,24 @@ com.pcs.domain.dashboard   대시보드
 
 ## 5. 권한 기준
 
+권한 기준 원본은 `docs/ai/pcs-permission-rules.md`이다.
+
 권한 검증은 Controller가 아니라 인증/인가 계층과 Service 검증에서 처리한다.
+API별 특별 제한이 있으면 각 feature 문서에만 추가한다.
 
-```text
-OWNER:
-- Owner 로그인
-- 회사 정보 조회/수정/활성 여부 변경
-- 전체 업체 업무 접근
-- 사용자 관리
-- 거래처/카테고리/부품 기준 관리
-- 입고/검수/출고/이력/대시보드 접근
-- 내 정보 관리
+## 6. 공통 정책 참조
 
-ADMIN:
-- 업체 로그인
-- 사용자 관리
-- 거래처 관리
-- 카테고리 관리
-- 부품 기준 관리
-- 부품/재고 조회
-- 입고/검수/출고 처리
-- 입출고 취소
-- 검수 정정/재검수
-- 이력/대시보드 조회
-- 내 정보 관리
+### 6.1 인증 / 토큰 / 회사 범위
 
-STAFF:
-- 업체 로그인
-- 대시보드 조회
-- 부품/재고 조회
-- 입고 등록
-- 검수 등록
-- 출고 등록
-- 이력 조회
-- 내 정보 관리
-```
+- 인증/JWT 정책 원본은 `docs/features/auth.md`이다.
+- 로그인 후 API 사용 방식은 `docs/ai/pcs-auth-client-rules.md`를 따른다.
+- 인증 DB 검증 기준은 `docs/features/auth-db.md`를 따른다.
 
-제한:
+### 6.2 페이징 / 검색 / 정렬
 
-- STAFF는 사용자 관리, 거래처 관리, 카테고리 관리, 부품 기준 관리를 할 수 없다.
-- STAFF는 회사 정보 수정 또는 회사 활성 여부 변경을 할 수 없다.
-- STAFF는 다른 사용자의 임시 비밀번호를 발급할 수 없다.
-- 회사 비활성 상태에서는 Owner 로그인과 회사 조회를 제외한 업체 업무 API 접근을 차단한다.
-- 비활성 사용자 계정은 로그인할 수 없다.
+- 페이징 응답, query 기준, JS 연동은 `docs/ai/pcs-pagination-rules.md`를 따른다.
 
-## 6. 공통 정책
-
-### 6.1 인증 / 토큰
-
-- access token은 `Authorization: Bearer {token}` 헤더로 전달한다.
-- access token 기본 만료 시간은 10분이다.
-- refresh token은 HttpOnly Cookie로 관리한다.
-- refresh token cookie의 `Secure` 속성은 운영 HTTPS에서는 반드시 true로 설정한다.
-- refresh token 원문은 DB에 저장하지 않고 해시만 저장한다.
-- access token 만료 시 `/api/auth/refresh`로 재발급한다.
-- refresh token 재발급 시 기존 토큰은 폐기하고 새 토큰으로 회전한다.
-- refresh token 만료는 `EXPIRED`, 회전된 토큰 재사용은 `REUSE_DETECTED`로 구분한다.
-- 운영 프로필에서는 기본 JWT secret을 사용할 수 없다.
-- JWT 요청 인증은 Spring Security 필터에서 처리한다.
-- Controller는 Authorization 헤더를 직접 파싱하지 않고 인증 사용자 정보가 필요하면 `@AuthenticationPrincipal`을 사용한다.
-- refresh token 재사용이 감지되면 해당 token family를 비정상 흐름으로 처리한다.
-- refresh token이 없거나 만료되면 재로그인이 필요하다.
-- 로그아웃 시 refresh token을 폐기한다.
-
-### 6.2 회사 범위 검증
-
-- 모든 `/api/workspaces/{companyCode}/**` API는 `companyCode`와 인증 사용자의 `companyId`를 함께 검증한다.
-- path variable로 받은 `memberId`, `partnerId`, `categoryId`, `partId`, `unitId`, `documentId`, `movementId`, `inspectionId`, `templateId`는 항상 해당 회사 범위 안에서 조회한다.
-- 다른 회사의 리소스 접근은 `AUTH_WORKSPACE_MISMATCH` 또는 `AUTH_FORBIDDEN`으로 차단한다.
-
-### 6.3 페이징 / 검색 / 정렬
-
-- `page`는 0부터 시작한다.
-- `size` 기본값은 20이다.
-- `size` 최대값은 100이다.
-- `sort`는 API별 허용 필드만 사용한다.
-- `keyword`는 기본적으로 부분 검색으로 처리한다.
-- 목록 API는 페이징을 기본으로 한다.
-
-### 6.4 날짜 / 시간
+### 6.3 날짜 / 시간
 
 - DB 저장 시간은 서버 시간을 기준으로 한다.
 - API 응답의 날짜/시간은 ISO-8601 문자열을 사용한다.
@@ -563,16 +484,16 @@ STAFF:
 - `createdAt`, `updatedAt`, `inspectedAt` 등 서버에서 결정하는 시간은 클라이언트 요청값을 신뢰하지 않는다.
 - 검수 등록 시 `inspectedAt`은 요청 body에서 받지 않고 서버 현재 시각으로 저장한다.
 
-### 6.5 상태 변경 / 이력
+### 6.4 상태 변경 / 이력
 
-- 마스터 데이터는 물리 삭제하지 않고 `active` 상태로 사용 여부를 관리한다.
+- 마스터 데이터는 물리 삭제하지 않고 `docs/ai/pcs-status-lifecycle-rules.md` 기준의 `active` 상태로 사용 여부를 관리한다.
 - 입출고 원본은 수정/삭제하지 않는다.
 - 입출고 오류는 취소 전표와 취소 movement로 남긴다.
 - 검수 오류는 정정 이력 또는 재검수 이력으로 남긴다.
 - 개별 부품의 검수 상태, 등급, 판매 상태 변경은 `tb_part_status_history`에 기록한다.
 - 이력 API는 read-only다.
 
-### 6.6 재고 정합성 / 동시성
+### 6.5 재고 정합성 / 동시성
 
 - 현재 재고의 원천은 `tb_pc_part_unit`이다.
 - `tb_part_stock.quantity`는 빠른 조회용 집계 테이블이다.
@@ -583,19 +504,7 @@ STAFF:
 
 ## 7. 공통 에러 기준
 
-| HTTP Status | ErrorCode 예시 | 기준 |
-|---|---|---|
-| 400 | `INVALID_INPUT_VALUE` | validation 실패, 잘못된 상태 변경 요청 |
-| 400 | `INVALID_REQUEST_BODY` | JSON 요청 본문 파싱 실패 |
-| 401 | `AUTH_REQUIRED` | 인증 정보 없음 |
-| 401 | `AUTH_TOKEN_INVALID` | 인증 토큰이 올바르지 않음 |
-| 401 | `AUTH_TOKEN_EXPIRED` | 인증 토큰 만료 |
-| 403 | `AUTH_FORBIDDEN` | 권한 부족 |
-| 403 | `AUTH_WORKSPACE_MISMATCH` | 업체 코드와 인증 사용자의 회사가 일치하지 않음 |
-| 404 | `*_NOT_FOUND` | 리소스를 찾을 수 없음 |
-| 409 | `*_DUPLICATED` | 고유값 중복 |
-| 409 | `*_ALREADY_CANCELED` | 이미 취소된 이력 |
-| 500 | `INTERNAL_SERVER_ERROR` | 서버 내부 오류 |
+공통 응답, 예외, ErrorCode 기준은 `docs/ai/pcs-backend-common-rules.md`를 따른다.
 
 ## 8. 우선 구현 순서
 

@@ -32,7 +32,7 @@ com.pcs.domain.auth
 - refresh token cookie의 `Secure` 속성은 환경 설정으로 제어한다. 로컬 HTTP는 `false`, 운영 HTTPS는 `true`로 설정한다.
 - 운영 프로필에서는 기본 JWT secret을 사용할 수 없다.
 - `companyCode`는 URL 값만 믿지 않고 JWT와 DB 기준으로 검증한다.
-- 비활성 회사 또는 비활성 계정은 로그인할 수 없다.
+- 비활성 회사 또는 비활성 계정은 `docs/ai/pcs-status-lifecycle-rules.md` 기준에 따라 로그인할 수 없다.
 - 임시 비밀번호 상태면 비밀번호 변경이 필요한 상태로 응답한다.
 - 임시 비밀번호 만료 시간이 지난 계정은 로그인할 수 없다.
 - 로그인 실패가 반복되면 계정을 일정 시간 잠근다.
@@ -40,12 +40,11 @@ com.pcs.domain.auth
 - refresh token 재발급은 rotation 방식으로 처리한다. 재발급 성공 시 새 access token과 새 refresh token을 함께 발급하고, 기존 refresh token은 `ROTATED`로 폐기한다.
 - refresh token 만료는 `EXPIRED`, 회전된 토큰 재사용은 `REUSE_DETECTED`로 분리한다.
 - 회전된 refresh token이 다시 사용되면 같은 token family의 활성 refresh token을 `REUSE_DETECTED`로 폐기한다.
-- 정적 화면의 인증 API 호출은 `/js/pcs-api.js` 공통 fetch 래퍼를 사용한다.
-- 공통 fetch 래퍼는 `localStorage.pcsAccessToken`을 `Authorization` 헤더에 싣고, 401 또는 인증 ErrorCode 응답을 받으면 `/api/auth/refresh`를 한 번 호출한 뒤 원 요청을 재시도한다.
+- 로그인 이후 정적 화면의 인증 API 호출 방식은 `docs/ai/pcs-auth-client-rules.md`를 따른다.
 - API 인증 판별은 Spring Security에서 처리한다.
 - JWT 파싱과 `SecurityContext` 인증 객체 생성은 `global/security/JwtAuthenticationFilter`가 담당한다.
 - 인증이 필요한 Controller는 Authorization 헤더를 직접 파싱하지 않고 `@AuthenticationPrincipal PcsPrincipal`을 사용한다.
-- Security 인증 실패/권한 실패 응답도 `ApiResultDto` JSON 형식으로 반환한다.
+- Security 인증 실패/권한 실패 응답도 `docs/ai/pcs-backend-common-rules.md` 기준의 JSON 형식으로 반환한다.
 
 ## 기능 개발 시 인증 사용 규칙
 
@@ -60,15 +59,11 @@ com.pcs.domain.auth
 - `companyCode`, `companyId`, `memberId`, `role`은 `PcsPrincipal` 기준으로 확인한다.
 - 회사 범위 데이터 조회/수정은 항상 `principal.companyId()` 범위 안에서 처리한다.
 - URL의 `companyCode`와 `principal.companyCode()`가 다르면 `AUTH_WORKSPACE_MISMATCH`로 처리한다.
-- 권한 분기는 문자열 직접 비교보다 프로젝트 Enum/권한 규칙을 사용한다.
+- 권한 분기는 문자열 직접 비교보다 프로젝트 Enum과 `docs/ai/pcs-permission-rules.md` 기준을 사용한다.
 
 프론트 JS:
 
-- 로그인 후 업무 화면에서 API 호출은 직접 `fetch`하지 않고 `/js/pcs-api.js`의 공통 래퍼를 사용한다.
-- access token은 `localStorage.pcsAccessToken`에 저장된 값을 공통 래퍼가 `Authorization: Bearer` 헤더에 붙인다.
-- refresh token은 HttpOnly Cookie이므로 JS에서 읽거나 저장하거나 전송하지 않는다.
-- access token 만료 시 공통 래퍼가 `/api/auth/refresh`를 호출하고 원 요청을 1회 재시도한다.
-- 기능별 JS는 토큰 재발급 로직을 중복 구현하지 않는다.
+- 로그인 이후 업무 화면의 토큰 저장, refresh 재시도, 공통 fetch 사용 방식은 `docs/ai/pcs-auth-client-rules.md`를 따른다.
 
 ## 응답 기준
 
@@ -113,11 +108,11 @@ pcsRefreshToken={token}; HttpOnly; SameSite=Strict; Path=/api/auth
 
 ## 하네스 포인트
 
-- 인증 실패 API 응답은 HTML이 아니라 `ApiResultDto` JSON이어야 한다.
+- 인증 실패 API 응답은 HTML이 아니라 `docs/ai/pcs-backend-common-rules.md` 기준의 JSON이어야 한다.
 - `/api/**`는 인증 실패 시 JSON 에러를 반환해야 한다.
 - Security 설정은 stateless 기준을 유지한다.
-- Controller는 `ApiResultDto`만 반환하고 인증 흐름은 Facade/Service가 담당한다.
+- Controller 응답 형식은 `docs/ai/pcs-backend-common-rules.md`를 따른다.
 - JWT 생성/검증 로직은 `global/jwt`, 요청 인증 연결은 `global/security`에서 처리한다.
 - MyBatis Mapper XML namespace는 Mapper FQCN과 일치해야 한다.
 - refresh token 저장, 로그인 이력 저장, 로그인 성공 시 `tb_member.last_login_at` 갱신을 확인한다.
-- 업무 화면 JS는 인증 API를 직접 `fetch`하지 않고 `/js/pcs-api.js`를 통해 access token 첨부와 refresh 재시도를 공통 처리한다.
+- 업무 화면 JS는 `docs/ai/pcs-auth-client-rules.md` 기준으로 인증 API를 호출한다.

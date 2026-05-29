@@ -27,12 +27,11 @@ com.pcs.domain.partner
 - `partnerRole`은 `SUPPLIER`, `CUSTOMER`, `BOTH` 중 하나다.
 - 입고 전표의 거래처는 `SUPPLIER` 또는 `BOTH`여야 한다.
 - 출고 전표의 거래처는 `CUSTOMER` 또는 `BOTH`여야 한다.
-- `active = true`는 거래 가능 상태다.
-- `active = false`는 거래 불가 상태이며 신규 입출고 전표 거래처 선택 목록에서 제외한다.
-- 거래처 목록은 공통 API 규칙에 따라 `page` 0부터 시작하고 `size` 기본값은 20, 최대값은 100이다.
+- 거래처 `active` 의미는 `docs/ai/pcs-status-lifecycle-rules.md`의 `tb_trade_partner.active` 기준을 따른다.
+- 거래처 목록의 페이징 기본 규칙은 `docs/ai/pcs-pagination-rules.md`를 따른다.
 - 기존 선택 목록 화면과의 호환을 위해 `limit`은 `size` 별칭으로 허용한다.
 - `active`를 보내지 않으면 거래 가능/거래 불가 거래처를 모두 조회한다.
-- 거래처 목록 응답은 `content`, `page`, `size`, `totalElements`, `totalPages`, `hasPrevious`, `hasNext`, `summary`를 포함한다.
+- 거래처 목록 응답은 공통 페이징 응답에 `summary`를 포함한다.
 - `summary`는 현재 검색 조건 기준의 `totalCount`, `supplierCount`, `customerCount`, `activeCount`를 제공한다.
 
 ## 화면 규칙
@@ -45,7 +44,8 @@ com.pcs.domain.partner
 
 ## 하네스 포인트
 
-- 거래처 조회는 항상 `companyId` 범위 안에서만 수행한다.
+- 거래처 조회의 회사 범위 검증은 `docs/features/auth.md` 기준을 따른다.
+- 거래처 관리 권한은 `docs/ai/pcs-permission-rules.md` 기준을 따른다.
 - 거래 불가 상태의 거래처는 신규 입출고 전표에 사용할 수 없다.
-- 거래처 조회 API는 `@AuthenticationPrincipal PcsPrincipal`을 사용하고 Controller/Facade에서 Authorization 헤더를 직접 파싱하지 않는다.
-- 거래처 목록 SQL은 `LIMIT`, `OFFSET`, `COUNT(*)`를 사용해 페이징한다.
+- 인증 사용자 사용 방식은 `docs/ai/pcs-auth-client-rules.md` 기준을 따른다.
+- 거래처 목록 SQL은 `docs/ai/pcs-pagination-rules.md` 기준으로 페이징한다.

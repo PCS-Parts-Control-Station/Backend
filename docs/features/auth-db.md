@@ -81,27 +81,14 @@ tb_auth_login_history.idx_auth_login_history_member_date
 로그인 성공 시:
 
 - 업체 코드와 로그인 ID로 `tb_company`, `tb_member`를 함께 조회한다.
-- 비활성 회사 또는 비활성 사용자는 로그인할 수 없다.
+- 비활성 회사 또는 비활성 사용자는 `docs/ai/pcs-status-lifecycle-rules.md` 기준에 따라 로그인할 수 없다.
 - 비밀번호는 `password_hash`와 `PasswordEncoder.matches`로 검증한다.
 - `tb_member.last_login_at`을 갱신한다.
 - `tb_member.login_failed_count`는 `0`으로 초기화한다.
-- refresh token 원문은 응답 Cookie로만 내려가고 DB에는 `refresh_token_hash`만 저장한다.
+- refresh token DB 저장 방식은 `docs/features/auth.md` 기준을 따른다.
 - `tb_auth_login_history.login_result = SUCCESS` 이력이 저장된다.
 
-토큰 재발급 시:
-
-- 기존 refresh token hash를 조회한다.
-- 만료 또는 폐기된 token은 사용할 수 없다.
-- 새 refresh token을 저장한다.
-- 기존 refresh token은 `revoked_reason = ROTATED`로 폐기한다.
-- 기존 refresh token의 `replaced_by_token_id`에는 새 refresh token ID를 기록한다.
-- 새 access token을 응답한다.
-
-만료/재사용 시:
-
-- 만료된 refresh token은 `revoked_reason = EXPIRED`로 폐기한다.
-- 이미 `ROTATED` 처리된 refresh token이 다시 들어오면 재사용으로 판단한다.
-- 재사용 감지 시 같은 `token_family_id`의 활성 refresh token은 `revoked_reason = REUSE_DETECTED`로 폐기한다.
+토큰 재발급, 만료, 재사용 감지 시 DB 저장 흐름은 `docs/features/auth.md`의 refresh token rotation 정책을 따른다.
 
 로그아웃 시:
 
@@ -113,18 +100,10 @@ tb_auth_login_history.idx_auth_login_history_member_date
 - 업체 코드 또는 로그인 ID가 없으면 로그인 실패 이력을 남긴다.
 - 비밀번호가 틀리면 로그인 실패 횟수를 증가시킨다.
 - 로그인 실패가 기준 횟수 이상이면 `locked_until_at`을 설정한다.
-- 비활성 회사/사용자, 잠긴 계정, 임시 비밀번호 만료는 각각 명확한 ErrorCode로 응답한다.
-- URL의 `companyCode`와 JWT의 `companyCode`가 다르면 `AUTH_WORKSPACE_MISMATCH`로 응답한다.
+- 비활성 회사/사용자, 잠긴 계정, 임시 비밀번호 만료는 `docs/features/auth.md`의 예외 기준을 따른다.
+- URL 업체 코드와 인증 사용자 회사가 다를 때의 응답은 `docs/features/auth.md`의 회사 범위 검증 기준을 따른다.
 
 ## 하네스 기준
 
-```powershell
-.\harness\run-harness.ps1 -Mode bootstrap -Feature auth -RunBuild -RunDb
-```
-
-이 명령은 아래 기준을 함께 확인한다.
-
-- `auth.md` 기능 구조
-- `checkdb.md` DB 사전검사
-- `auth-db.md` 인증 DB 시나리오
-- `compileJava`
+실행 명령과 `-Feature`, `-DbFeature` 조합 기준은 `docs/ai/pcs-harness-rules.md`를 따른다.  
+인증 검증 시에는 `auth.md`, `auth-db.md`, `member-db.md`, `checkdb.md` 기준을 함께 확인한다.
