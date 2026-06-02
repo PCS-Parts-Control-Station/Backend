@@ -34,7 +34,7 @@ src/main/resources/static/css/admin.css
 
 ## 기본 구조
 
-카테고리 관리 화면에서 확정된 업무 레이아웃을 기준으로 한다.
+로그인 후 업무 화면은 아래 구조를 기본으로 한다.
 
 ```text
 workspace-layout
@@ -103,9 +103,12 @@ workspace-layout
 
 ```text
 workspace-header
-- page-kicker
-- h1
-- page-description
+- menu-toggle
+- title block 또는 page-title-row
+  - page-icon 선택
+  - page-kicker
+  - h1
+  - page-description
 - header-actions
 ```
 
@@ -124,6 +127,8 @@ CPU, RAM, GPU, SSD 등 부품 분류 기준을 관리합니다.
 - `h1`: 30~42px 범위, navy, 800 weight
 - 설명문은 한 줄에서 두 줄 안에 끝낸다
 - 우측 액션에서 primary는 생성/추가, secondary는 보조 이동에 사용한다
+- 업무 성격을 아이콘으로 빠르게 구분해야 하면 `page-title-row`와 `page-icon`을 사용한다.
+- 기준 정보 관리처럼 제목 자체가 충분히 명확한 화면은 아이콘 없이 단순 title block을 사용할 수 있다.
 
 ## 콘텐츠 영역
 
@@ -139,11 +144,11 @@ content-grid
   - muted-panel
 ```
 
-카테고리, 사용자, 거래처, 기준 관리처럼 목록을 보면서 바로 추가하는 화면은 이 구조를 우선 사용한다.
+목록을 보면서 바로 추가하거나 수정하는 관리 화면은 이 구조를 우선 사용한다.
 
-거래처 관리처럼 좌측 목록과 오른쪽 등록 패널을 동시에 쓰는 화면은 `has-collapsible-sidebar` 구조를 사용해 1520px 이하에서 사이드바를 접고 본문 폭을 우선 확보한다.
+좌측 목록과 오른쪽 패널을 동시에 쓰는 화면은 `has-collapsible-sidebar` 구조를 사용해 1520px 이하에서 사이드바를 접고 본문 폭을 우선 확보한다.
 
-입고, 검수, 출고, 이력처럼 업무 흐름 맥락이 중요한 화면은 오른쪽 `side-panel`에 등록 폼 대신 `workflow-panel.md` 기준의 업무 흐름 보조 패널을 둘 수 있다.
+업무 흐름 맥락이 중요한 화면은 오른쪽 `side-panel`에 등록 폼 대신 `workflow-panel.md` 기준의 업무 흐름 보조 패널을 둘 수 있다.
 
 ## 반응형 기준
 
@@ -151,12 +156,11 @@ content-grid
 
 요약:
 
-- `1520px` 초과에서는 좌측 사이드바를 sticky로 고정 표시한다.
-- `1520px` 이하에서는 좌측 사이드바를 오프캔버스로 접고 햄버거 버튼을 노출한다.
+- 넓은 화면에서는 좌측 사이드바를 sticky로 고정 표시한다.
+- 중간 폭 이하에서는 좌측 사이드바를 오프캔버스로 접고 햄버거 버튼을 노출한다.
 - 햄버거 메뉴는 왼쪽 슬라이드, 배경 blur/dim, 오버레이 클릭 닫기, `Escape` 닫기를 지원한다.
-- `1180px` 이하에서는 `content-grid`를 1컬럼으로 전환해 오른쪽 패널을 본문 아래에 둔다.
-- `840px` 이하에서는 헤더 액션과 검색 폼을 모바일 배치로 전환한다.
-- `640px` 이하에서는 좁은 목록을 카드형 행으로 전환할 수 있다.
+- 좁은 화면에서는 `content-grid`를 1컬럼으로 전환해 오른쪽 패널을 본문 아래에 둔다.
+- 모바일 폭에서는 헤더 액션, 검색 폼, 목록 행을 모바일 배치로 전환한다.
 
 ## 금지
 
