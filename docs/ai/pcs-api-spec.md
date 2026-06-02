@@ -327,6 +327,110 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&lim
 입고 전표번호는 서버가 `IN-YYYYMMDD-RANDOM16` 형식으로 자동 발급한다.
 내부 정렬과 페이징 기준은 `documentId`를 사용한다.
 
+입출고 전표 목록 query:
+
+| 이름 | 설명 |
+|---|---|
+| `documentType` | `INBOUND`, `OUTBOUND` |
+| `keyword` | 전표번호, 거래처명, 부품명, 모델명, 부품코드 검색 |
+| `partnerId` | 거래처 필터 |
+| `documentStatus` | `COMPLETED`, `CANCELED` |
+| `page` | 0부터 시작 |
+| `size` | 기본 20, 최대 100 |
+| `limit` | `size` 별칭 |
+
+입출고 전표 목록 응답 예시:
+
+```json
+{
+  "success": true,
+  "code": "COMMON-000",
+  "message": "요청이 정상 처리되었습니다.",
+  "data": {
+    "content": [
+      {
+        "documentId": 100,
+        "documentNo": "IN-20260529-23456789ABCDEFGH",
+        "documentType": "INBOUND",
+        "documentStatus": "COMPLETED",
+        "partnerId": 1,
+        "partnerName": "서울 부품사",
+        "firstPartName": "RTX 4060",
+        "lineCount": 2,
+        "totalQuantity": 5,
+        "processedByName": "관리자",
+        "createdAt": "2026-05-29T10:00:00"
+      }
+    ],
+    "page": 0,
+    "size": 20,
+    "totalElements": 1,
+    "totalPages": 1,
+    "hasPrevious": false,
+    "hasNext": false,
+    "summary": {
+      "totalCount": 1,
+      "totalQuantity": 5,
+      "waitingQuantity": 5,
+      "canceledCount": 0
+    }
+  }
+}
+```
+
+입출고 전표 상세 응답 예시:
+
+```json
+{
+  "success": true,
+  "code": "COMMON-000",
+  "message": "요청이 정상 처리되었습니다.",
+  "data": {
+    "documentId": 100,
+    "documentNo": "IN-20260529-23456789ABCDEFGH",
+    "documentType": "INBOUND",
+    "documentStatus": "COMPLETED",
+    "partnerId": 1,
+    "partnerName": "서울 부품사",
+    "reason": "A피시방 매입 부품 입고",
+    "processedByName": "관리자",
+    "createdAt": "2026-05-29T10:00:00",
+    "lineCount": 1,
+    "totalQuantity": 2,
+    "cancelable": true,
+    "cancelBlockedReason": null,
+    "lines": [
+      {
+        "movementId": 200,
+        "partId": 10,
+        "partName": "RTX 4060",
+        "modelName": "RTX 4060 8GB",
+        "partCode": "GPU-4060",
+        "movementType": "INBOUND",
+        "movementStatus": "COMPLETED",
+        "quantity": 2,
+        "beforeQuantity": 0,
+        "afterQuantity": 2,
+        "reason": "그래픽카드 입고",
+        "units": [
+          {
+            "movementId": 200,
+            "unitId": 1000,
+            "internalSerialNo": "GPU-4060-20260529-0001",
+            "manufacturerSerialNo": null,
+            "unitStatus": "IN_STOCK",
+            "grade": "NONE",
+            "inspectionStatus": "WAITING",
+            "salesStatus": "HOLD",
+            "active": true
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
 출고 전표 등록 요청 예시:
 
 ```json
@@ -347,8 +451,23 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&lim
 취소 요청 예시:
 
 ```json
+{}
+```
+
+취소 응답 예시:
+
+```json
 {
-  "reason": "거래처 요청으로 입고 취소"
+  "success": true,
+  "code": "COMMON-000",
+  "message": "입고 전표가 취소되었습니다.",
+  "data": {
+    "documentId": 100,
+    "documentNo": "IN-20260529-23456789ABCDEFGH",
+    "documentStatus": "CANCELED",
+    "canceledMovementCount": 1,
+    "canceledUnitCount": 2
+  }
 }
 ```
 
