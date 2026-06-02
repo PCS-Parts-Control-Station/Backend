@@ -69,6 +69,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - `docs/ai/pcs-frontend-js-rules.md`
 - 필요한 경우 `docs/ai/pcs-api-spec.md`
 - 페이징 목록이면 `docs/ai/pcs-pagination-rules.md`
+- 등록/수정 완료 피드백이나 토스트를 다루면 `docs/ai/design/modal-dialog.md`
 - 해당 기능 문서 1개
 - 로그인 후 업무 화면에서 인증 API를 호출하면 `docs/ai/pcs-auth-client-rules.md`도 확인
 

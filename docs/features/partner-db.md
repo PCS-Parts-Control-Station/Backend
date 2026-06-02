@@ -21,6 +21,39 @@
 - `active`
 - `updated_at`
 
+## 저장 / 수정 대상 컬럼
+
+거래처 생성 시 저장한다.
+
+- `company_id`
+- `partner_name`
+- `partner_type`
+- `partner_role`
+- `phone`
+- `email`
+- `address`
+- `memo`
+- `active`
+- `created_by`
+- `created_at`
+- `updated_at`
+
+거래처 기본 정보 수정 시 갱신한다.
+
+- `partner_name`
+- `partner_type`
+- `partner_role`
+- `phone`
+- `email`
+- `address`
+- `memo`
+- `updated_at`
+
+거래 가능 여부 변경 시 갱신한다.
+
+- `active`
+- `updated_at`
+
 ## 제약 조건
 
 - `UNIQUE(company_id, partner_name)`
@@ -44,3 +77,8 @@
 - 비활성 회사의 거래처는 조회하지 않는다.
 - 거래처 `active` 의미와 신규 입출고 전표 선택 제외 기준은 `docs/ai/pcs-status-lifecycle-rules.md`를 따른다.
 - 거래처 목록 요약 숫자는 현재 검색 조건 기준으로 계산한다.
+- 거래처 생성 시 같은 `company_id` 안에서 `partner_name`이 중복되면 실패한다.
+- 거래처 수정 시 자기 자신을 제외한 같은 `company_id` 안에서 `partner_name`이 중복되면 실패한다.
+- 거래처 생성 요청의 `active`가 없으면 `TRUE`로 저장한다.
+- 거래처 기본 정보 수정은 `active`를 변경하지 않는다. 거래 가능 여부 변경은 별도 API에서만 처리한다.
+- 거래처는 하드 삭제하지 않는다. 업무 제외는 `active = FALSE`로 처리한다.

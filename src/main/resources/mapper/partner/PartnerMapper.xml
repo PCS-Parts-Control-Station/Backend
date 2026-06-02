@@ -71,4 +71,107 @@
         <include refid="partnerSearchWhere" />
     </select>
 
+    <select id="findById" resultType="com.pcs.domain.partner.entity.Partner">
+        SELECT
+            partner_id,
+            company_id,
+            partner_name,
+            partner_type,
+            partner_role,
+            phone,
+            email,
+            address,
+            memo,
+            active,
+            created_by,
+            created_at,
+            updated_at
+        FROM tb_trade_partner
+        WHERE company_id = #{companyId}
+          AND partner_id = #{partnerId}
+    </select>
+
+    <select id="findResponseById" resultType="com.pcs.domain.partner.dto.response.SearchPartnerResponse">
+        SELECT
+            partner_id,
+            partner_name,
+            partner_type,
+            partner_role,
+            phone,
+            email,
+            address,
+            memo,
+            active,
+            updated_at
+        FROM tb_trade_partner
+        WHERE company_id = #{companyId}
+          AND partner_id = #{partnerId}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="partnerId" parameterType="com.pcs.domain.partner.entity.Partner">
+        INSERT INTO tb_trade_partner (
+            company_id,
+            partner_name,
+            partner_type,
+            partner_role,
+            phone,
+            email,
+            address,
+            memo,
+            active,
+            created_by,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{companyId},
+            #{partnerName},
+            #{partnerType},
+            #{partnerRole},
+            #{phone},
+            #{email},
+            #{address},
+            #{memo},
+            #{active},
+            #{createdBy},
+            NOW(6),
+            NOW(6)
+        )
+    </insert>
+
+    <update id="update" parameterType="com.pcs.domain.partner.entity.Partner">
+        UPDATE tb_trade_partner
+        SET
+            partner_name = #{partnerName},
+            partner_type = #{partnerType},
+            partner_role = #{partnerRole},
+            phone = #{phone},
+            email = #{email},
+            address = #{address},
+            memo = #{memo},
+            updated_at = NOW(6)
+        WHERE company_id = #{companyId}
+          AND partner_id = #{partnerId}
+    </update>
+
+    <update id="updateActive">
+        UPDATE tb_trade_partner
+        SET
+            active = #{active},
+            updated_at = NOW(6)
+        WHERE company_id = #{companyId}
+          AND partner_id = #{partnerId}
+    </update>
+
+    <select id="existsByName" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM tb_trade_partner
+            WHERE company_id = #{companyId}
+              AND partner_name = #{partnerName}
+              <if test="excludePartnerId != null">
+                AND partner_id &lt;&gt; #{excludePartnerId}
+              </if>
+        )
+    </select>
+
 </mapper>

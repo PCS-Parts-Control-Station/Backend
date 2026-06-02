@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PCS 잘못된 접근 안내 화면입니다.">
+    <title>PCS | 접근 안내</title>
+    <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/invalid-access.css?20260529_1">
+</head>
+<body>
+<a class="page-brand" href="/" aria-label="PCS 메인">
+    <img src="/images/parts-control-station-icon.svg" alt="" width="38" height="38">
+    <span>
+        <strong>PCS</strong>
+        <small>Parts Control Station</small>
+    </span>
+</a>
+
+<main class="notice-page">
+    <section class="notice-card" aria-labelledby="notice-title">
+        <div class="notice-main">
+            <p class="eyebrow" id="notice-eyebrow">접근 안내</p>
+            <h1 id="notice-title">업체 주소를 확인할 수 없습니다.</h1>
+            <p class="notice-description" id="notice-description">
+                입력한 업체 코드가 잘못되었거나 더 이상 사용할 수 없는 주소입니다.
+            </p>
+
+            <div class="target-box" id="targetBox" hidden>
+                <span id="targetLabel">확인한 주소</span>
+                <strong id="targetValue">/w/company-code</strong>
+            </div>
+
+            <div class="notice-actions">
+                <a class="btn btn-primary" id="primaryAction" href="/w">업체 로그인으로 이동</a>
+                <a class="btn btn-secondary" href="/">메인으로 이동</a>
+            </div>
+        </div>
+
+        <aside class="notice-side" aria-labelledby="notice-guide-title">
+            <h2 id="notice-guide-title">확인할 내용</h2>
+            <div class="guide-list">
+                <article>
+                    <span>01</span>
+                    <p>회사 관리자에게 받은 업체 코드가 맞는지 확인하세요.</p>
+                </article>
+                <article>
+                    <span>02</span>
+                    <p>주소를 직접 입력했다면 `/w/업체코드` 형식인지 확인하세요.</p>
+                </article>
+                <article>
+                    <span>03</span>
+                    <p>업체 사용이 중지된 경우 관리자에게 다시 문의하세요.</p>
+                </article>
+            </div>
+        </aside>
+    </section>
+</main>
+
+<script src="/js/invalid-access.js?20260529_1"></script>
+</body>
+</html>

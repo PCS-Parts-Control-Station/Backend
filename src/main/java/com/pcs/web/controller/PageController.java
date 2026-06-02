@@ -16,6 +16,11 @@ public class PageController {
         return "forward:/company-register.html";
     }
 
+    @GetMapping({"/workspace-not-found", "/page-not-found", "/access-denied", "/wrong-access"})
+    public String invalidAccess() {
+        return "forward:/invalid-access.html";
+    }
+
     @GetMapping({"/w", "/w/", "/w/{companyCode}"})
     public String workspaceLogin() {
         return "forward:/workspace-login.html";
@@ -44,5 +49,10 @@ public class PageController {
     @GetMapping("/w/{companyCode}/inbound/new")
     public String inboundRegister() {
         return "forward:/inbound-register.html";
+    }
+
+    @GetMapping("/w/{companyCode}/{*path}")
+    public String unknownWorkspacePage() {
+        return "forward:/invalid-access.html";
     }
 }

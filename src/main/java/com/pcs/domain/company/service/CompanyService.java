@@ -1,5 +1,6 @@
 package com.pcs.domain.company.service;
 
+import com.pcs.domain.company.dto.response.WorkspacePublicInfoResponse;
 import com.pcs.domain.company.entity.Company;
 import com.pcs.domain.company.mapper.CompanyMapper;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,10 @@ public class CompanyService {
 
     public boolean existsByCompanyCode(String companyCode) {
         return companyMapper.existsByCompanyCode(companyCode);
+    }
+
+    public WorkspacePublicInfoResponse findPublicInfoByCompanyCode(String companyCode) {
+        return companyMapper.findPublicInfoByCompanyCode(companyCode);
     }
 
     public void create(Company company) {
