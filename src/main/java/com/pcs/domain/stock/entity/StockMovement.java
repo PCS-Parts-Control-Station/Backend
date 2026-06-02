@@ -11,6 +11,7 @@ public class StockMovement {
     private final Long partId;
     private final MovementType movementType;
     private final MovementStatus movementStatus;
+    private final Long canceledMovementId;
     private final Integer quantity;
     private final Integer beforeQuantity;
     private final Integer afterQuantity;
@@ -29,11 +30,40 @@ public class StockMovement {
             String reason,
             Long processedBy
     ) {
+        this(
+                companyId,
+                documentId,
+                partId,
+                movementType,
+                movementStatus,
+                null,
+                quantity,
+                beforeQuantity,
+                afterQuantity,
+                reason,
+                processedBy
+        );
+    }
+
+    public StockMovement(
+            Long companyId,
+            Long documentId,
+            Long partId,
+            MovementType movementType,
+            MovementStatus movementStatus,
+            Long canceledMovementId,
+            Integer quantity,
+            Integer beforeQuantity,
+            Integer afterQuantity,
+            String reason,
+            Long processedBy
+    ) {
         this.companyId = companyId;
         this.documentId = documentId;
         this.partId = partId;
         this.movementType = movementType;
         this.movementStatus = movementStatus;
+        this.canceledMovementId = canceledMovementId;
         this.quantity = quantity;
         this.beforeQuantity = beforeQuantity;
         this.afterQuantity = afterQuantity;
@@ -67,6 +97,10 @@ public class StockMovement {
 
     public MovementStatus getMovementStatus() {
         return movementStatus;
+    }
+
+    public Long getCanceledMovementId() {
+        return canceledMovementId;
     }
 
     public Integer getQuantity() {

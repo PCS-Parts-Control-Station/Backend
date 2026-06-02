@@ -7,7 +7,15 @@ import com.pcs.domain.part.type.UnitStatus;
 import com.pcs.domain.partner.type.PartnerRole;
 import com.pcs.domain.stock.dto.request.CreateInboundDocumentLineRequest;
 import com.pcs.domain.stock.dto.request.CreateInboundDocumentRequest;
+import com.pcs.domain.stock.dto.response.CancelStockDocumentResponse;
 import com.pcs.domain.stock.dto.response.CreateInboundDocumentResponse;
+import com.pcs.domain.stock.dto.response.SearchStockDocumentResponse;
+import com.pcs.domain.stock.dto.response.SearchStockDocumentSummaryResponse;
+import com.pcs.domain.stock.dto.response.StockDocumentDetailResponse;
+import com.pcs.domain.stock.dto.response.StockDocumentDetailRow;
+import com.pcs.domain.stock.dto.response.StockDocumentLineResponse;
+import com.pcs.domain.stock.dto.response.StockDocumentLineRow;
+import com.pcs.domain.stock.dto.response.StockDocumentUnitResponse;
 import com.pcs.domain.stock.entity.StockDocument;
 import com.pcs.domain.stock.entity.StockMovement;
 import com.pcs.domain.stock.entity.StockPart;
@@ -18,11 +26,15 @@ import com.pcs.domain.stock.type.MovementStatus;
 import com.pcs.domain.stock.type.MovementType;
 import com.pcs.domain.stock.type.StockDocumentStatus;
 import com.pcs.domain.stock.type.StockDocumentType;
+import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
@@ -33,12 +45,150 @@ public class StockService {
     private static final String DOCUMENT_RANDOM_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
     private static final int DOCUMENT_RANDOM_LENGTH = 16;
     private static final int DOCUMENT_NO_CREATE_MAX_ATTEMPT = 20;
+    private static final int DEFAULT_SIZE = 20;
+    private static final int MAX_SIZE = 100;
 
     private final StockMapper stockMapper;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public StockService(StockMapper stockMapper) {
         this.stockMapper = stockMapper;
+    }
+
+    public PageResultDto<SearchStockDocumentResponse, SearchStockDocumentSummaryResponse> searchDocuments(
+            Long companyId,
+            StockDocumentType documentType,
+            String keyword,
+            Long partnerId,
+            StockDocumentStatus documentStatus,
+            Integer page,
+            Integer size,
+            Integer limit
+    ) {
+        if (!stockMapper.isCompanyActive(companyId)) {
+            throw new BusinessException(ErrorCode.COMPANY_INACTIVE);
+        }
+
+        String normalizedKeyword = normalizeOptional(keyword);
+        int normalizedPage = normalizePage(page);
+        int normalizedSize = normalizeSize(size, limit);
+        int offset = normalizedPage * normalizedSize;
+        long totalElements = stockMapper.countDocuments(
+                companyId,
+                documentType,
+                normalizedKeyword,
+                partnerId,
+                documentStatus
+        );
+        List<SearchStockDocumentResponse> items = totalElements == 0
+                ? List.of()
+                : stockMapper.searchDocuments(
+                        companyId,
+                        documentType,
+                        normalizedKeyword,
+                        partnerId,
+                        documentStatus,
+                        normalizedSize,
+                        offset
+                );
+        SearchStockDocumentSummaryResponse summary = stockMapper.summarizeDocuments(
+                companyId,
+                documentType,
+                normalizedKeyword,
+                partnerId,
+                documentStatus
+        );
+
+        return PageResultDto.of(items, normalizedPage, normalizedSize, totalElements, summary);
+    }
+
+    public StockDocumentDetailResponse getDocument(Long companyId, Long documentId) {
+        if (!stockMapper.isCompanyActive(companyId)) {
+            throw new BusinessException(ErrorCode.COMPANY_INACTIVE);
+        }
+
+        StockDocumentDetailRow document = stockMapper.findDocumentDetail(companyId, documentId);
+        if (document == null) {
+            throw new BusinessException(ErrorCode.STOCK_DOCUMENT_NOT_FOUND);
+        }
+
+        return buildDocumentDetail(companyId, document);
+    }
+
+    public CancelStockDocumentResponse cancelInboundDocument(Long companyId, Long memberId, Long documentId) {
+        if (!stockMapper.isCompanyActive(companyId)) {
+            throw new BusinessException(ErrorCode.COMPANY_INACTIVE);
+        }
+
+        StockDocumentDetailRow document = stockMapper.findDocumentForUpdate(companyId, documentId);
+        if (document == null) {
+            throw new BusinessException(ErrorCode.STOCK_DOCUMENT_NOT_FOUND);
+        }
+        if (document.documentStatus() == StockDocumentStatus.CANCELED) {
+            throw new BusinessException(ErrorCode.STOCK_DOCUMENT_ALREADY_CANCELED);
+        }
+        if (document.documentType() != StockDocumentType.INBOUND) {
+            throw new BusinessException(ErrorCode.STOCK_INVALID_CANCEL_REQUEST, "현재 화면에서는 입고 전표만 취소할 수 있습니다.");
+        }
+
+        List<StockDocumentLineRow> movements = stockMapper.findOriginalInboundMovementsForUpdate(companyId, documentId);
+        if (movements.isEmpty()) {
+            throw new BusinessException(ErrorCode.STOCK_INVALID_CANCEL_REQUEST);
+        }
+        if (stockMapper.countInvalidInboundCancelUnits(companyId, documentId) > 0) {
+            throw new BusinessException(
+                    ErrorCode.STOCK_INVALID_CANCEL_REQUEST,
+                    "검수 또는 출고 흐름이 시작된 부품이 있어 취소할 수 없습니다."
+            );
+        }
+
+        int canceledUnitCount = 0;
+        for (StockDocumentLineRow movement : movements) {
+            Integer currentQuantity = stockMapper.findPartStockQuantityForUpdate(companyId, movement.partId());
+            if (currentQuantity == null || currentQuantity < movement.quantity()) {
+                throw new BusinessException(ErrorCode.STOCK_INVALID_CANCEL_REQUEST, "현재 재고 수량이 부족해 취소할 수 없습니다.");
+            }
+
+            int afterQuantity = currentQuantity - movement.quantity();
+            StockMovement cancelMovement = new StockMovement(
+                    companyId,
+                    documentId,
+                    movement.partId(),
+                    MovementType.INBOUND_CANCEL,
+                    MovementStatus.COMPLETED,
+                    movement.movementId(),
+                    movement.quantity(),
+                    currentQuantity,
+                    afterQuantity,
+                    "입고 전표 취소",
+                    memberId
+            );
+            stockMapper.insertMovement(cancelMovement);
+            stockMapper.updatePartStockQuantity(companyId, movement.partId(), afterQuantity);
+
+            List<Long> unitIds = stockMapper.findMovementUnitIds(movement.movementId());
+            for (Long unitId : unitIds) {
+                stockMapper.insertMovementUnitStatusChange(
+                        cancelMovement.getMovementId(),
+                        unitId,
+                        UnitStatus.IN_STOCK,
+                        UnitStatus.CANCELED
+                );
+                stockMapper.updatePartUnitStatusForInboundCancel(companyId, unitId);
+                canceledUnitCount++;
+            }
+        }
+
+        stockMapper.updateDocumentMovementStatus(companyId, documentId, MovementStatus.CANCELED);
+        stockMapper.updateDocumentStatus(companyId, documentId, StockDocumentStatus.CANCELED);
+
+        return new CancelStockDocumentResponse(
+                document.documentId(),
+                document.documentNo(),
+                StockDocumentStatus.CANCELED,
+                movements.size(),
+                canceledUnitCount
+        );
     }
 
     public CreateInboundDocumentResponse createInboundDocument(
@@ -139,6 +289,60 @@ public class StockService {
         );
     }
 
+    private StockDocumentDetailResponse buildDocumentDetail(Long companyId, StockDocumentDetailRow document) {
+        List<StockDocumentLineRow> lineRows = stockMapper.findDocumentLines(companyId, document.documentId());
+        List<StockDocumentUnitResponse> unitRows = stockMapper.findDocumentUnits(companyId, document.documentId());
+        Map<Long, List<StockDocumentUnitResponse>> unitsByMovementId = unitRows.stream()
+                .collect(Collectors.groupingBy(StockDocumentUnitResponse::movementId));
+        List<StockDocumentLineResponse> lines = lineRows.stream()
+                .map(line -> new StockDocumentLineResponse(
+                        line.movementId(),
+                        line.partId(),
+                        line.partName(),
+                        line.modelName(),
+                        line.partCode(),
+                        line.movementType(),
+                        line.movementStatus(),
+                        line.quantity(),
+                        line.beforeQuantity(),
+                        line.afterQuantity(),
+                        line.reason(),
+                        unitsByMovementId.getOrDefault(line.movementId(), List.of())
+                ))
+                .toList();
+
+        String cancelBlockedReason = getCancelBlockedReason(companyId, document);
+        return new StockDocumentDetailResponse(
+                document.documentId(),
+                document.documentNo(),
+                document.documentType(),
+                document.documentStatus(),
+                document.partnerId(),
+                document.partnerName(),
+                document.reason(),
+                document.processedByName(),
+                document.createdAt(),
+                document.lineCount(),
+                document.totalQuantity(),
+                cancelBlockedReason == null,
+                cancelBlockedReason,
+                lines
+        );
+    }
+
+    private String getCancelBlockedReason(Long companyId, StockDocumentDetailRow document) {
+        if (document.documentStatus() == StockDocumentStatus.CANCELED) {
+            return "이미 취소된 전표입니다.";
+        }
+        if (document.documentType() != StockDocumentType.INBOUND) {
+            return "입고 전표만 이 화면에서 취소할 수 있습니다.";
+        }
+        if (stockMapper.countInvalidInboundCancelUnits(companyId, document.documentId()) > 0) {
+            return "검수 또는 출고 흐름이 시작된 부품이 있어 취소할 수 없습니다.";
+        }
+        return null;
+    }
+
     private void validateInboundPartner(Long companyId, Long partnerId) {
         StockPartner partner = stockMapper.findPartner(companyId, partnerId);
         if (partner == null) {
@@ -231,6 +435,21 @@ public class StockService {
             return null;
         }
         return value.trim();
+    }
+
+    private int normalizePage(Integer page) {
+        if (page == null || page < 0) {
+            return 0;
+        }
+        return page;
+    }
+
+    private int normalizeSize(Integer size, Integer limit) {
+        Integer requestedSize = size == null ? limit : size;
+        if (requestedSize == null || requestedSize < 1) {
+            return DEFAULT_SIZE;
+        }
+        return Math.min(requestedSize, MAX_SIZE);
     }
 
     private String normalizeRequired(String value, String fallback) {

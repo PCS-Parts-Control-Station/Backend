@@ -15,18 +15,35 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.pcs.domain.partner.type.PartnerRole;
+import com.pcs.domain.part.type.InspectionStatus;
+import com.pcs.domain.part.type.PartGrade;
+import com.pcs.domain.part.type.SalesStatus;
+import com.pcs.domain.part.type.UnitStatus;
 import com.pcs.domain.stock.dto.request.CreateInboundDocumentLineRequest;
 import com.pcs.domain.stock.dto.request.CreateInboundDocumentRequest;
+import com.pcs.domain.stock.dto.response.CancelStockDocumentResponse;
 import com.pcs.domain.stock.dto.response.CreateInboundDocumentResponse;
+import com.pcs.domain.stock.dto.response.SearchStockDocumentResponse;
+import com.pcs.domain.stock.dto.response.SearchStockDocumentSummaryResponse;
+import com.pcs.domain.stock.dto.response.StockDocumentDetailResponse;
+import com.pcs.domain.stock.dto.response.StockDocumentDetailRow;
+import com.pcs.domain.stock.dto.response.StockDocumentLineRow;
+import com.pcs.domain.stock.dto.response.StockDocumentUnitResponse;
 import com.pcs.domain.stock.entity.StockDocument;
 import com.pcs.domain.stock.entity.StockMovement;
 import com.pcs.domain.stock.entity.StockPart;
 import com.pcs.domain.stock.entity.StockPartUnit;
 import com.pcs.domain.stock.entity.StockPartner;
 import com.pcs.domain.stock.mapper.StockMapper;
+import com.pcs.domain.stock.type.MovementStatus;
+import com.pcs.domain.stock.type.MovementType;
+import com.pcs.domain.stock.type.StockDocumentStatus;
+import com.pcs.domain.stock.type.StockDocumentType;
+import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -49,6 +66,190 @@ class StockServiceTest {
     @BeforeEach
     void setUp() {
         stockService = new StockService(stockMapper);
+    }
+
+    @Test
+    void searchDocuments_success() {
+        Long companyId = 1L;
+        SearchStockDocumentResponse row = new SearchStockDocumentResponse(
+                500L,
+                "IN-20260529-23456789ABCDEFGH",
+                StockDocumentType.INBOUND,
+                StockDocumentStatus.COMPLETED,
+                100L,
+                "서울 부품사",
+                "RTX 4060",
+                2,
+                5,
+                "관리자",
+                LocalDateTime.of(2026, 5, 29, 10, 0)
+        );
+        SearchStockDocumentSummaryResponse summary = new SearchStockDocumentSummaryResponse(
+                1L,
+                5L,
+                5L,
+                0L
+        );
+
+        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(stockMapper.countDocuments(
+                companyId,
+                StockDocumentType.INBOUND,
+                "RTX",
+                100L,
+                StockDocumentStatus.COMPLETED
+        )).thenReturn(1L);
+        when(stockMapper.searchDocuments(
+                companyId,
+                StockDocumentType.INBOUND,
+                "RTX",
+                100L,
+                StockDocumentStatus.COMPLETED,
+                20,
+                0
+        )).thenReturn(List.of(row));
+        when(stockMapper.summarizeDocuments(
+                companyId,
+                StockDocumentType.INBOUND,
+                "RTX",
+                100L,
+                StockDocumentStatus.COMPLETED
+        )).thenReturn(summary);
+
+        PageResultDto<SearchStockDocumentResponse, SearchStockDocumentSummaryResponse> response =
+                stockService.searchDocuments(
+                        companyId,
+                        StockDocumentType.INBOUND,
+                        " RTX ",
+                        100L,
+                        StockDocumentStatus.COMPLETED,
+                        null,
+                        null,
+                        null
+                );
+
+        assertEquals(1, response.totalElements());
+        assertEquals(1, response.content().size());
+        assertEquals(row, response.content().get(0));
+        assertEquals(summary, response.summary());
+        assertEquals(20, response.size());
+    }
+
+    @Test
+    void getDocument_success() {
+        Long companyId = 1L;
+        Long documentId = 500L;
+        StockDocumentDetailRow document = new StockDocumentDetailRow(
+                documentId,
+                "IN-20260529-23456789ABCDEFGH",
+                StockDocumentType.INBOUND,
+                StockDocumentStatus.COMPLETED,
+                100L,
+                "서울 부품사",
+                "입고",
+                "관리자",
+                LocalDateTime.of(2026, 5, 29, 10, 0),
+                1,
+                2
+        );
+        StockDocumentLineRow line = new StockDocumentLineRow(
+                900L,
+                1000L,
+                "RTX 4060",
+                "RTX 4060 8GB",
+                "GPU-4060",
+                MovementType.INBOUND,
+                MovementStatus.COMPLETED,
+                2,
+                0,
+                2,
+                "라인"
+        );
+        StockDocumentUnitResponse unit = new StockDocumentUnitResponse(
+                900L,
+                10000L,
+                "GPU-4060-20260529-0001",
+                null,
+                UnitStatus.IN_STOCK,
+                PartGrade.NONE,
+                InspectionStatus.WAITING,
+                SalesStatus.HOLD,
+                true
+        );
+
+        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(stockMapper.findDocumentDetail(companyId, documentId)).thenReturn(document);
+        when(stockMapper.findDocumentLines(companyId, documentId)).thenReturn(List.of(line));
+        when(stockMapper.findDocumentUnits(companyId, documentId)).thenReturn(List.of(unit));
+        when(stockMapper.countInvalidInboundCancelUnits(companyId, documentId)).thenReturn(0);
+
+        StockDocumentDetailResponse response = stockService.getDocument(companyId, documentId);
+
+        assertEquals(documentId, response.documentId());
+        assertEquals("IN-20260529-23456789ABCDEFGH", response.documentNo());
+        assertEquals(1, response.lines().size());
+        assertEquals(1, response.lines().get(0).units().size());
+        assertTrue(response.cancelable());
+        assertEquals("GPU-4060-20260529-0001", response.lines().get(0).units().get(0).internalSerialNo());
+    }
+
+    @Test
+    void cancelInboundDocument_success() {
+        Long companyId = 1L;
+        Long memberId = 10L;
+        Long documentId = 500L;
+        StockDocumentDetailRow document = new StockDocumentDetailRow(
+                documentId,
+                "IN-20260529-23456789ABCDEFGH",
+                StockDocumentType.INBOUND,
+                StockDocumentStatus.COMPLETED,
+                100L,
+                "서울 부품사",
+                "입고",
+                "관리자",
+                LocalDateTime.of(2026, 5, 29, 10, 0),
+                0,
+                0
+        );
+        StockDocumentLineRow movement = new StockDocumentLineRow(
+                900L,
+                1000L,
+                "RTX 4060",
+                "RTX 4060 8GB",
+                "GPU-4060",
+                MovementType.INBOUND,
+                MovementStatus.COMPLETED,
+                2,
+                0,
+                2,
+                "라인"
+        );
+
+        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(stockMapper.findDocumentForUpdate(companyId, documentId)).thenReturn(document);
+        when(stockMapper.findOriginalInboundMovementsForUpdate(companyId, documentId)).thenReturn(List.of(movement));
+        when(stockMapper.countInvalidInboundCancelUnits(companyId, documentId)).thenReturn(0);
+        when(stockMapper.findPartStockQuantityForUpdate(companyId, 1000L)).thenReturn(5);
+        when(stockMapper.findMovementUnitIds(900L)).thenReturn(List.of(10000L, 10001L));
+        doAnswer(invocation -> {
+            StockMovement cancelMovement = invocation.getArgument(0);
+            cancelMovement.setMovementId(901L);
+            return null;
+        }).when(stockMapper).insertMovement(any(StockMovement.class));
+
+        CancelStockDocumentResponse response = stockService.cancelInboundDocument(companyId, memberId, documentId);
+
+        assertEquals(documentId, response.documentId());
+        assertEquals(StockDocumentStatus.CANCELED, response.documentStatus());
+        assertEquals(1, response.canceledMovementCount());
+        assertEquals(2, response.canceledUnitCount());
+        verify(stockMapper).updatePartStockQuantity(companyId, 1000L, 3);
+        verify(stockMapper).insertMovementUnitStatusChange(901L, 10000L, UnitStatus.IN_STOCK, UnitStatus.CANCELED);
+        verify(stockMapper).insertMovementUnitStatusChange(901L, 10001L, UnitStatus.IN_STOCK, UnitStatus.CANCELED);
+        verify(stockMapper).updatePartUnitStatusForInboundCancel(companyId, 10000L);
+        verify(stockMapper).updatePartUnitStatusForInboundCancel(companyId, 10001L);
+        verify(stockMapper).updateDocumentMovementStatus(companyId, documentId, MovementStatus.CANCELED);
+        verify(stockMapper).updateDocumentStatus(companyId, documentId, StockDocumentStatus.CANCELED);
     }
 
     @Test
