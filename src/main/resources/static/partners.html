@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/admin.css?20260527_partner_panel">
+    <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
 </head>
 <body class="has-collapsible-sidebar">
 <div class="workspace-layout">
@@ -33,13 +34,13 @@
 
         <section class="content-grid">
             <div class="content-main">
-                <section class="filter-card partner-filter-card" aria-labelledby="filter-title">
+                <section class="filter-card management-filter-card" aria-labelledby="filter-title">
                     <div>
                         <h2 id="filter-title">거래처 검색</h2>
                         <p>거래처명, 유형, 역할, 거래 상태로 목록을 좁혀 봅니다.</p>
                     </div>
                     <!-- API: GET /api/workspaces/{companyCode}/partners?keyword=&partnerType=&partnerRole=&active=&page=&size= -->
-                    <form class="filter-form partner-filter-form" action="#" method="get" autocomplete="off">
+                    <form class="filter-form management-filter-form" action="#" method="get" autocomplete="off">
                         <label>
                             <span>검색어</span>
                             <input type="search" name="keyword" placeholder="예: 용산전자" autocomplete="off">
@@ -76,7 +77,7 @@
                 </section>
 
                 <section class="table-card" aria-labelledby="partner-list-title">
-                    <div class="table-header partner-table-header">
+                    <div class="table-header inline-summary-header">
                         <div>
                             <h2 id="partner-list-title">거래처 목록</h2>
                             <p>입고/출고 전표에서 사용할 수 있는 거래처 목록입니다.</p>
@@ -117,7 +118,7 @@
                         - UpdatePartnerActiveRequest(active)
                     -->
                     <div class="data-table" role="table" aria-label="거래처 목록" data-partner-table>
-                        <div class="data-row partner-data-row table-head" role="row">
+                        <div class="data-row management-data-row table-head" role="row">
                             <span role="columnheader">거래처명</span>
                             <span role="columnheader">유형</span>
                             <span role="columnheader">역할</span>
@@ -125,7 +126,7 @@
                             <span role="columnheader">연락처</span>
                             <span role="columnheader">수정일</span>
                         </div>
-                        <div class="data-row partner-data-row partner-empty-row" role="row" data-partner-empty>
+                        <div class="data-row management-data-row empty-data-row" role="row" data-partner-empty>
                             <span role="cell" data-label="안내">거래처 목록을 불러오는 중입니다.</span>
                         </div>
                     </div>
@@ -140,7 +141,7 @@
             </div>
 
             <aside class="side-panel" aria-labelledby="partner-form-title">
-                <div class="panel-card partner-work-panel">
+                <div class="panel-card side-work-panel">
                     <div class="panel-mode is-active" data-partner-panel="create">
                     <h2 id="partner-form-title">거래처 등록</h2>
                     <p>입고/출고 전표에서 선택할 거래처 정보를 등록합니다.</p>
@@ -215,9 +216,9 @@
                             <button class="panel-link-button" type="button" data-partner-create-mode>새 거래처 등록</button>
                         </div>
 
-                        <div class="partner-detail-card">
+                        <div class="side-detail-card">
                             <strong data-detail-name>-</strong>
-                            <div class="partner-detail-badges">
+                            <div class="detail-badge-row">
                                 <em class="badge badge-blue" data-detail-type>-</em>
                                 <em class="badge badge-info" data-detail-role>-</em>
                                 <em class="badge badge-available" data-detail-active>-</em>
@@ -342,51 +343,5 @@
 <script src="/js/workspace-layout.js?20260527_1"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
 <script src="/js/partners.js?20260602_default_active"></script>
-<script>
-    (() => {
-        const body = document.body;
-        const toggle = document.querySelector("[data-sidebar-toggle]");
-        const backdrop = document.querySelector("[data-sidebar-backdrop]");
-        const desktopQuery = window.matchMedia("(min-width: 1521px)");
-
-        if (!toggle || !backdrop) {
-            return;
-        }
-
-        const closeMenu = () => {
-            body.classList.remove("sidebar-open");
-            toggle.setAttribute("aria-expanded", "false");
-            toggle.setAttribute("aria-label", "메뉴 열기");
-        };
-
-        const openMenu = () => {
-            body.classList.add("sidebar-open");
-            toggle.setAttribute("aria-expanded", "true");
-            toggle.setAttribute("aria-label", "메뉴 닫기");
-        };
-
-        toggle.addEventListener("click", () => {
-            if (body.classList.contains("sidebar-open")) {
-                closeMenu();
-                return;
-            }
-            openMenu();
-        });
-
-        backdrop.addEventListener("click", closeMenu);
-
-        document.addEventListener("keydown", (event) => {
-            if (event.key === "Escape") {
-                closeMenu();
-            }
-        });
-
-        desktopQuery.addEventListener("change", (event) => {
-            if (event.matches) {
-                closeMenu();
-            }
-        });
-    })();
-</script>
 </body>
 </html>

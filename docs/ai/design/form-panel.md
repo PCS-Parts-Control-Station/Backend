@@ -1,4 +1,4 @@
-# Form Panel Design
+﻿# Form Panel Design
 
 등록/수정 입력 패널 기준이다.
 
@@ -76,19 +76,20 @@ side-panel
 - `취소`는 선택 항목 상세 모드로 돌아간다.
 - 등록/상세/수정 모드는 같은 패널 안에서 바뀌어야 하며, 별도 팝업처럼 튀지 않게 한다.
 
-현재 구현 기준:
+공통 패널 전환 기준:
 
 ```text
-panel-card.partner-work-panel
-- panel-mode[data-partner-panel="create"]
-- panel-mode[data-partner-panel="detail"]
-- panel-mode[data-partner-panel="edit"]
+panel-card.side-work-panel
+- panel-mode[data-{domain}-panel="create"]
+- panel-mode[data-{domain}-panel="detail"]
+- panel-mode[data-{domain}-panel="edit"]
 ```
 
 - `panel-mode`는 같은 `panel-card` 안에서 전환한다.
 - 숨겨진 모드는 `hidden`을 사용한다.
 - 상세/수정 모드 상단에는 `panel-title-bar`를 사용한다.
 - 상세/수정 모드에서 새 등록으로 돌아가는 보조 버튼은 `panel-link-button`을 사용한다.
+- `{domain}`에는 기능 도메인명을 사용한다. 예: 거래처 관리 화면은 `data-partner-panel`을 사용할 수 있다.
 
 업무 흐름 안내, 전표 상세, 처리 단계 같은 오른쪽 패널은 이 문서에서 다시 정의하지 않고 `docs/ai/design/workflow-panel.md`를 따른다.
 
@@ -176,9 +177,9 @@ optional-field-group
 상세 모드 표시:
 
 ```text
-partner-detail-card
+side-detail-card
 - 주요 값
-- partner-detail-badges
+- detail-badge-row
 
 detail-list
 - 연락처

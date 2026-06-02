@@ -23,7 +23,7 @@
 
 HTML은 기본적으로 `<dialog>`를 사용한다.
 
-현재 코드 기준 공통 모달 구현은 아래 클래스를 사용한다.
+공통 모달 class 기준은 아래 구조를 사용한다.
 
 ```text
 dialog
@@ -92,7 +92,7 @@ dialog
 [취소] [전표 취소]
 ```
 
-현재 구현 기준:
+확인 모달 class 기준:
 
 ```text
 dialog.part-modal.confirm-modal

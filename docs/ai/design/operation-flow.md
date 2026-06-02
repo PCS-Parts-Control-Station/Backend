@@ -1,6 +1,6 @@
-# Operation Flow Design
+﻿# Operation Flow Design
 
-입고 등록처럼 업무 처리를 순서대로 입력하고 저장하는 화면 기준이다.
+전표 등록처럼 업무 처리를 순서대로 입력하고 저장하는 화면 기준이다.
 
 이 문서는 목록/검색 화면이 아니라, 사용자가 하나의 업무 전표나 처리 결과를 생성하는 화면을 다룬다.
 
@@ -43,11 +43,11 @@ workspace-layout
   - workspace-header
   - content-grid
     - content-main
-      - form.register-flow
-        - table-card.register-card
-        - table-card.register-card
-        - table-card.register-card
-        - table-card.register-card
+      - form.operation-flow-form
+        - table-card.operation-step-card
+        - table-card.operation-step-card
+        - table-card.operation-step-card
+        - table-card.operation-step-card
     - side-panel
       - panel-card.process-panel
       - panel-card.muted-panel
@@ -55,7 +55,7 @@ workspace-layout
 
 기준:
 
-- 본문은 `register-flow` 안에 단계별 `register-card`를 세로로 쌓는다.
+- 본문은 `operation-flow-form` 안에 단계별 `operation-step-card`를 세로로 쌓는다.
 - 오른쪽 패널은 입력 폼이 아니라 현재 업무 흐름과 저장 후 처리 기준을 보여준다.
 - 각 단계는 `table-card`를 재사용하되, 실제 테이블이 아니라 업무 입력 섹션으로 쓸 수 있다.
 - 저장 버튼은 헤더 우측과 마지막 저장 섹션에 둘 수 있다.
@@ -95,16 +95,16 @@ workspace-header
 - 보조 버튼은 목록 복귀나 취소 성격으로 둔다.
 - primary 버튼은 최종 저장을 가리킨다.
 
-## Register Flow
+## Operation Flow Form
 
-`register-flow`는 업무 입력 단계를 담는 세로 흐름이다.
+`operation-flow-form`은 업무 입력 단계를 담는 세로 흐름이다.
 
 ```text
-register-flow
-- register-card: 전표 기본 정보
-- register-card: 부품 검색
-- register-card: 부품 라인
-- register-card: 저장 후 처리
+operation-flow-form
+- operation-step-card: 전표 기본 정보
+- operation-step-card: 부품 검색
+- operation-step-card: 부품 라인
+- operation-step-card: 저장 후 처리
 ```
 
 기준:
@@ -129,7 +129,7 @@ register-flow
 구조:
 
 ```text
-table-card.register-card
+table-card.operation-step-card
 - table-header
   - section-step
   - 제목
@@ -203,7 +203,7 @@ part-search-panel
 구조:
 
 ```text
-table-card.register-card
+table-card.operation-step-card
 - table-header
   - section-step
   - 제목

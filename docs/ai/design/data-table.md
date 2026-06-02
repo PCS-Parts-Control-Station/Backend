@@ -1,4 +1,4 @@
-# Data Table Design
+﻿# Data Table Design
 
 검색/필터/목록 테이블 화면 기준이다.
 
@@ -30,11 +30,11 @@ content-main
 
 오른쪽 등록/수정 패널이 함께 있으면 `form-panel.md`도 같이 적용한다.
 
-현재 구현 modifier 예:
+공통 modifier 기준:
 
 ```text
-선택형 관리 목록: partner-filter-form, partner-table-header, partner-data-row
-전표형 목록: stock-filter-form, compact-summary-header, inbound-table, inbound-row
+선택형 관리 목록: management-filter-form, inline-summary-header, management-data-row
+전표형 목록: document-filter-form, inline-summary-header, document-data-table, document-data-row
 ```
 
 modifier class는 새 규칙을 뜻하지 않는다. 기본 구조를 유지한 상태에서 화면 유형별 grid, 요약 배치, 행 폭만 조정하는 데 사용한다.
@@ -156,16 +156,14 @@ table-card
 - 데스크톱과 태블릿 폭에서는 테이블 헤더 오른쪽 끝에 붙인다.
 - 모바일 폭에서는 제목 아래로 내려가며, 매우 좁은 폭에서만 2열 요약으로 전환한다.
 
-현재 구현 기준:
+공통 modifier 기준:
 
 ```text
-table-header.partner-table-header
-table-header.compact-summary-header
+table-header.inline-summary-header
 - list-summary-box
   - list-summary
 ```
 
-- `partner-table-header`와 `compact-summary-header`는 같은 인라인 요약 패턴을 사용한다.
 - `list-summary-box`는 기존 박스형 클래스명을 유지하더라도, 위 modifier 안에서는 border/background/padding을 제거한 인라인 요약으로 표시한다.
 - 요약 항목은 4개 전후로 제한한다.
 
@@ -210,12 +208,12 @@ table-header.compact-summary-header
 - 선택형 행은 클릭 가능한 행으로 만들고, 선택된 항목의 상세/수정/상태 변경은 오른쪽 작업 패널에서 처리한다.
 - 선택된 행은 왼쪽 accent line과 옅은 배경으로 표시한다.
 
-현재 구현 기준:
+공통 modifier 기준:
 
 ```text
-data-row.partner-data-row
-data-row.partner-data-row.is-selectable
-data-row.partner-data-row.is-selected
+data-row.management-data-row
+data-row.management-data-row.is-selectable
+data-row.management-data-row.is-selected
 ```
 
 - 선택 가능한 행은 hover에서 옅은 blue 배경을 사용한다.
@@ -233,13 +231,13 @@ data-row.partner-data-row.is-selected
 관리
 ```
 
-현재 구현 기준:
+공통 modifier 기준:
 
 ```text
-data-table.inbound-table
-data-row.inbound-row
-data-row.inbound-row.is-selected
-data-row.inbound-row.is-created
+data-table.document-data-table
+data-row.document-data-row
+data-row.document-data-row.is-selected
+data-row.document-data-row.is-created
 ```
 
 - 전표번호는 monospace 계열로 작고 강하게 표시한다.

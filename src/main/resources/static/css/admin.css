@@ -1,4 +1,4 @@
-:root {
+﻿:root {
     --page: #f7faff;
     --surface: #ffffff;
     --surface-soft: #f1f6ff;
@@ -411,58 +411,56 @@ strong {
     align-items: end;
 }
 
-.partner-filter-card {
+.management-filter-card {
     grid-template-columns: 1fr;
     align-items: start;
 }
 
-.partner-filter-form {
+.management-filter-form {
     grid-template-columns: minmax(280px, 1fr) minmax(122px, 144px) minmax(122px, 144px) minmax(122px, 132px) 76px;
 }
 
-.partner-filter-form > * {
+.management-filter-form > * {
     min-width: 0;
 }
 
-.partner-filter-form .btn {
+.management-filter-form .btn {
     min-width: 76px;
     padding-right: 14px;
     padding-left: 14px;
 }
 
-.data-row.partner-data-row {
+.data-row.management-data-row {
     grid-template-columns: 1.1fr 100px 100px 104px 1fr 92px;
 }
 
-.data-row.partner-data-row.is-selectable {
+.data-row.management-data-row.is-selectable {
     cursor: pointer;
     transition: background 140ms ease, box-shadow 140ms ease;
 }
 
-.data-row.partner-data-row.is-selectable:hover {
+.data-row.management-data-row.is-selectable:hover {
     background: var(--cyan-soft);
 }
 
-.data-row.partner-data-row.is-selectable:focus-visible {
+.data-row.management-data-row.is-selectable:focus-visible {
     outline: 3px solid rgba(37, 99, 235, 0.18);
     outline-offset: -3px;
 }
 
-.data-row.partner-data-row.is-selected {
+.data-row.management-data-row.is-selected {
     background: #f0f7ff;
     box-shadow: inset 3px 0 0 var(--cyan);
 }
 
-.table-header.partner-table-header,
-.table-header.compact-summary-header {
+.table-header.inline-summary-header {
     position: static;
     align-items: center;
     min-height: 0;
     padding: 20px;
 }
 
-.partner-table-header .list-summary-box,
-.compact-summary-header .list-summary-box {
+.inline-summary-header .list-summary-box {
     position: static;
     transform: none;
     width: auto;
@@ -472,28 +470,24 @@ strong {
     background: transparent;
 }
 
-.partner-table-header .list-summary,
-.compact-summary-header .list-summary {
+.inline-summary-header .list-summary {
     margin-top: 0;
     gap: 0;
     grid-template-columns: repeat(4, 78px);
 }
 
-.partner-table-header .list-summary div + div,
-.compact-summary-header .list-summary div + div {
+.inline-summary-header .list-summary div + div {
     margin-left: 0;
     padding-left: 16px;
 }
 
-.partner-table-header .list-summary dt,
-.compact-summary-header .list-summary dt {
+.inline-summary-header .list-summary dt {
     color: var(--muted);
     font-size: 14px;
     font-weight: 400;
 }
 
-.partner-table-header .list-summary dd,
-.compact-summary-header .list-summary dd {
+.inline-summary-header .list-summary dd {
     margin-top: 3px;
     color: var(--muted);
     font-size: 14px;
@@ -738,12 +732,12 @@ textarea:focus {
     color: var(--gray);
 }
 
-.partner-empty-row {
+.empty-data-row {
     grid-template-columns: 1fr;
     color: var(--muted);
 }
 
-.partner-empty-row span {
+.empty-data-row span {
     color: var(--muted);
 }
 
@@ -803,7 +797,7 @@ textarea:focus {
     padding: 20px;
 }
 
-.partner-work-panel {
+.side-work-panel {
     min-height: 0;
 }
 
@@ -847,7 +841,7 @@ textarea:focus {
     background: var(--cyan-soft);
 }
 
-.partner-detail-card {
+.side-detail-card {
     display: grid;
     gap: 10px;
     padding: 14px;
@@ -856,14 +850,14 @@ textarea:focus {
     background: var(--surface-soft);
 }
 
-.partner-detail-card strong {
+.side-detail-card strong {
     color: var(--navy);
     font-size: 18px;
     font-weight: 800;
     line-height: 1.3;
 }
 
-.partner-detail-badges {
+.detail-badge-row {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
@@ -1293,8 +1287,7 @@ textarea:focus {
         width: min(100%, 470px);
     }
 
-    .has-collapsible-sidebar .partner-table-header .list-summary-box,
-    .has-collapsible-sidebar .compact-summary-header .list-summary-box {
+    .has-collapsible-sidebar .inline-summary-header .list-summary-box {
         width: auto;
         margin-left: auto;
     }
@@ -1305,11 +1298,11 @@ textarea:focus {
         grid-template-columns: 1fr;
     }
 
-    .has-collapsible-sidebar .partner-filter-form {
+    .has-collapsible-sidebar .management-filter-form {
         grid-template-columns: minmax(0, 1fr) minmax(122px, 144px) minmax(122px, 144px) 76px;
     }
 
-    .has-collapsible-sidebar .partner-filter-form label:first-child {
+    .has-collapsible-sidebar .management-filter-form label:first-child {
         grid-column: 1 / -1;
     }
 
@@ -1332,14 +1325,12 @@ textarea:focus {
         width: 100%;
     }
 
-    .has-collapsible-sidebar .table-header.partner-table-header,
-    .has-collapsible-sidebar .table-header.compact-summary-header {
+    .has-collapsible-sidebar .table-header.inline-summary-header {
         display: flex;
         align-items: center;
     }
 
-    .has-collapsible-sidebar .partner-table-header .list-summary-box,
-    .has-collapsible-sidebar .compact-summary-header .list-summary-box {
+    .has-collapsible-sidebar .inline-summary-header .list-summary-box {
         width: auto;
         margin-left: auto;
     }
@@ -1464,27 +1455,25 @@ textarea:focus {
         grid-template-columns: 1fr;
     }
 
-    .has-collapsible-sidebar .table-header.partner-table-header,
-    .has-collapsible-sidebar .table-header.compact-summary-header {
+    .has-collapsible-sidebar .table-header.inline-summary-header {
         display: grid;
         row-gap: 14px;
     }
 
-    .has-collapsible-sidebar .partner-table-header .list-summary-box,
-    .has-collapsible-sidebar .compact-summary-header .list-summary-box {
+    .has-collapsible-sidebar .inline-summary-header .list-summary-box {
         width: 100%;
         margin-left: 0;
     }
 
-    .has-collapsible-sidebar .partner-filter-form {
+    .has-collapsible-sidebar .management-filter-form {
         grid-template-columns: 1fr;
     }
 
-    .has-collapsible-sidebar .partner-filter-form label:first-child {
+    .has-collapsible-sidebar .management-filter-form label:first-child {
         grid-column: auto;
     }
 
-    .data-row.partner-data-row {
+    .data-row.management-data-row {
         grid-template-columns: 1fr;
     }
 
@@ -1563,14 +1552,12 @@ textarea:focus {
         border-left: 0;
     }
 
-    .partner-table-header .list-summary,
-    .compact-summary-header .list-summary {
+    .inline-summary-header .list-summary {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         row-gap: 8px;
     }
 
-    .partner-table-header .list-summary div:nth-child(3),
-    .compact-summary-header .list-summary div:nth-child(3) {
+    .inline-summary-header .list-summary div:nth-child(3) {
         padding-left: 0;
         border-left: 0;
     }

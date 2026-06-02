@@ -42,7 +42,7 @@ docs/ai/design/history-timeline.md
 - `form-panel.md`: 오른쪽 등록/수정 패널, 보조 메모 패널
 - `modal-dialog.md`: 등록/수정 모달, 저장 확인 모달, 토스트 구분 기준
 - `workflow-panel.md`: 입고/검수/출고/이력 화면의 오른쪽 업무 흐름 보조 패널
-- `operation-flow.md`: 입고 등록처럼 단계별 입력과 최종 저장이 있는 업무 처리 화면
+- `operation-flow.md`: 전표 등록처럼 단계별 입력과 최종 저장이 있는 업무 처리 화면
 - `detail-page.md`: 부품 상세, 사용자 상세, 거래처 상세
 - `history-timeline.md`: 이력 관리, 개별 부품 타임라인
 

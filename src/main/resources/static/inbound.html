@@ -1,10 +1,11 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="PCS 입고 관리 화면입니다. 거래처 입고 전표를 등록하고 부품별 입고 수량과 관리번호 생성 대상을 확인합니다.">
     <title>PCS | 입고 관리</title>
+    <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -27,7 +28,7 @@
                 </svg>
             </button>
             <div class="page-title-row">
-                <span class="page-icon page-icon-inbound" aria-hidden="true">
+                <span class="page-icon page-icon-document" aria-hidden="true">
                     <svg viewBox="0 0 24 24" focusable="false">
                         <path d="M4 11.5 12 16l8-4.5" />
                         <path d="M4 7.5 12 12l8-4.5L12 3 4 7.5Z" />
@@ -50,13 +51,13 @@
 
         <section class="content-grid">
             <div class="content-main">
-                <section class="filter-card stock-filter-card" aria-labelledby="inbound-filter-title">
+                <section class="filter-card document-filter-card" aria-labelledby="inbound-filter-title">
                     <div>
                         <h2 id="inbound-filter-title">입고 전표 검색</h2>
                         <p>전표번호, 거래처, 부품명, 처리 상태로 입고 내역을 좁혀 봅니다.</p>
                     </div>
                     <!-- API: GET /api/workspaces/{companyCode}/stock/documents?documentType=INBOUND&keyword=&partnerId=&documentStatus= -->
-                    <form class="filter-form stock-filter-form" action="#" method="get">
+                    <form class="filter-form document-filter-form" action="#" method="get">
                         <label>
                             <span>검색어</span>
                             <input type="search" name="keyword" placeholder="거래처, 부품명, 전표번호 검색">
@@ -82,7 +83,7 @@
                 <div class="created-document-notice" data-created-notice role="status" aria-live="polite" hidden></div>
 
                 <section class="table-card" aria-labelledby="inbound-list-title">
-                    <div class="table-header compact-summary-header">
+                    <div class="table-header inline-summary-header">
                         <div>
                             <h2 id="inbound-list-title">입고 전표 목록</h2>
                             <p>거래처별 입고 묶음과 부품별 관리번호 생성 현황입니다.</p>
@@ -109,8 +110,8 @@
                         </div>
                     </div>
 
-                    <div class="data-table inbound-table" role="table" aria-label="입고 전표 목록">
-                        <div class="data-row inbound-row table-head" role="row">
+                    <div class="data-table document-data-table" role="table" aria-label="입고 전표 목록">
+                        <div class="data-row document-data-row table-head" role="row">
                             <span role="columnheader">전표번호</span>
                             <span role="columnheader">입고 내용</span>
                             <span role="columnheader">수량</span>
@@ -118,7 +119,7 @@
                             <span role="columnheader">입고일</span>
                             <span role="columnheader">관리</span>
                         </div>
-                        <div class="data-row inbound-row inbound-empty-row" role="row" data-inbound-empty hidden>
+                        <div class="data-row document-data-row empty-data-row" role="row" data-inbound-empty hidden>
                             <span role="cell" data-label="안내">입고 전표 목록을 불러오는 중입니다.</span>
                         </div>
                     </div>
@@ -210,7 +211,7 @@
                 </div>
 
                 <div class="panel-mode" data-inbound-panel="detail" hidden>
-                    <div class="panel-card inbound-detail-panel">
+                    <div class="panel-card document-detail-panel">
                         <div class="panel-title-bar">
                             <div>
                                 <h2>입고 전표 상세</h2>
@@ -219,9 +220,9 @@
                             <button class="panel-link-button" type="button" data-close-detail-panel>닫기</button>
                         </div>
 
-                        <div class="inbound-detail-card">
+                        <div class="document-detail-card">
                             <strong data-detail-document-no>-</strong>
-                            <div class="partner-detail-badges">
+                            <div class="detail-badge-row">
                                 <em class="badge badge-active" data-detail-status>-</em>
                             </div>
                         </div>

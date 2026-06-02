@@ -1,4 +1,4 @@
-# Workflow Panel Design
+﻿# Workflow Panel Design
 
 입고, 검수, 출고, 이력 화면의 오른쪽 업무 흐름 보조 패널 기준이다.
 
@@ -219,13 +219,13 @@ workflow panel 아래에는 화면별 운영 규칙을 `muted-panel`로 둘 수 
 전표형 상세 모드 구조:
 
 ```text
-panel-mode[data-inbound-panel="detail"]
-- panel-card.inbound-detail-panel
+panel-mode[data-{domain}-panel="detail"]
+- panel-card.document-detail-panel
   - panel-title-bar
     - 제목
     - 선택 안내 또는 전표 요약 문구
     - 닫기
-  - inbound-detail-card
+  - document-detail-card
     - 전표번호
     - 상태 배지
   - detail-list
@@ -244,6 +244,7 @@ panel-mode[data-inbound-panel="detail"]
 
 기준:
 
+- `{domain}`에는 기능 도메인명을 사용한다. 예: 입고 화면은 `data-inbound-panel`을 사용할 수 있다.
 - 상세 모드는 오른쪽 패널 안에서 열고, 별도 페이지로 튀지 않는다.
 - `닫기` 또는 `목록 안내`는 안내 모드로 되돌린다.
 - 전표번호와 관리번호 같은 긴 값은 monospace 계열로 표시한다.

@@ -1,4 +1,4 @@
-# Responsive Layout Design
+﻿# Responsive Layout Design
 
 로그인 후 업무 화면의 반응형 레이아웃 공통 기준이다.
 
@@ -188,15 +188,15 @@ CSS 기준:
 검색어 / 유형 / 역할 / 거래 상태 / 검색
 ```
 
-현재 구현 modifier 예:
+공통 modifier 기준:
 
 ```text
-filter-form.partner-filter-form
-filter-form.stock-filter-form
+filter-form.management-filter-form
+filter-form.document-filter-form
 ```
 
-- `partner-filter-form`은 필터가 4개 이상인 선택형 관리 목록 검색 폼에 사용한다.
-- `stock-filter-form`은 전표형 목록 검색 폼에 사용한다.
+- `management-filter-form`은 필터가 4개 이상인 선택형 관리 목록 검색 폼에 사용한다.
+- `document-filter-form`은 전표형 목록 검색 폼에 사용한다.
 - modifier는 grid 폭 조정용이며, 기본 동작은 공통 `filter-form` 기준을 따른다.
 
 기준:
@@ -213,11 +213,10 @@ filter-form.stock-filter-form
 인라인 요약 modifier 예:
 
 ```text
-table-header.partner-table-header
-table-header.compact-summary-header
+table-header.inline-summary-header
 ```
 
-- 두 modifier 모두 `list-summary-box`를 border/background 없는 인라인 요약으로 표시한다.
+- `inline-summary-header`는 `list-summary-box`를 border/background 없는 인라인 요약으로 표시한다.
 - 중간 폭에서는 오른쪽 정렬을 유지하고, 모바일 폭에서만 제목 아래로 내린다.
 
 ## 테이블 전환
@@ -265,15 +264,15 @@ table-header.compact-summary-header
 - 헤더는 유지해서 열 제목을 잃지 않게 한다.
 - 너무 좁은 `640px 이하`에서는 카드형 행으로 전환한다.
 
-현재 전표형 목록 구현 예:
+전표형 목록 modifier 기준:
 
 ```text
-data-table.inbound-table
-data-row.inbound-row
+data-table.document-data-table
+data-row.document-data-row
 ```
 
-- `inbound-table`은 내부 가로 스크롤을 허용한다.
-- `inbound-row`는 중간 폭에서 명확한 `min-width`를 유지한다.
+- `document-data-table`은 내부 가로 스크롤을 허용한다.
+- `document-data-row`는 중간 폭에서 명확한 `min-width`를 유지한다.
 - 매우 좁은 폭에서 카드형으로 전환할 때도 전표번호, 상태, 입고 내용, 수량, 입고일, 관리 버튼의 우선순위를 유지한다.
 
 ## 모바일 폭

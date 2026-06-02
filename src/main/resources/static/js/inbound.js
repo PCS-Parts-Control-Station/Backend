@@ -1,12 +1,12 @@
-(() => {
+﻿(() => {
     const PAGE_SIZE = 20;
 
     window.PcsUi?.consumeFlashToast();
 
-    const filterForm = document.querySelector(".stock-filter-form");
+    const filterForm = document.querySelector(".document-filter-form");
     const searchButton = filterForm?.querySelector("button[type='submit']");
     const partnerFilter = document.querySelector("[data-partner-filter]");
-    const inboundTable = document.querySelector(".inbound-table");
+    const inboundTable = document.querySelector(".document-data-table");
     const tableHead = inboundTable?.querySelector(".table-head");
     const emptyRow = document.querySelector("[data-inbound-empty]");
     const pagination = document.querySelector("[data-inbound-pagination]");
@@ -234,7 +234,7 @@
     };
 
     const clearDocumentRows = () => {
-        inboundTable?.querySelectorAll(".inbound-row:not(.table-head):not([data-inbound-empty])").forEach((row) => {
+        inboundTable?.querySelectorAll(".document-data-row:not(.table-head):not([data-inbound-empty])").forEach((row) => {
             row.remove();
         });
     };
@@ -266,7 +266,7 @@
         const isCreated = createdInbound?.documentNo && createdInbound.documentNo === stockDocument.documentNo;
         const isCanceled = stockDocument.documentStatus === "CANCELED";
         const isSelected = selectedDocumentId && String(selectedDocumentId) === String(stockDocument.documentId);
-        row.className = `data-row inbound-row${isCreated ? " is-created" : ""}${isSelected ? " is-selected" : ""}`;
+        row.className = `data-row document-data-row${isCreated ? " is-created" : ""}${isSelected ? " is-selected" : ""}`;
         row.setAttribute("role", "row");
         row.setAttribute("tabindex", "0");
         row.dataset.documentId = String(stockDocument.documentId);

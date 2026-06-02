@@ -103,6 +103,51 @@ rg -n "검색할 키워드" Backend\docs\ai\design Backend\docs\ai\pcs-design-sy
 
 페이지 이름은 예시로만 쓸 수 있다. 예시는 규칙이 아니며, 예시 문단에는 `예시`라고 명시한다.
 
+## 디자인 class 이름 기준
+
+디자인 class는 페이지 이름이 아니라 화면 역할을 기준으로 붙인다.
+
+기준:
+
+- 특정 도메인 화면에서만 쓰기 시작했더라도, 재사용 가능한 스타일이면 의미 기반 이름을 사용한다.
+- JS/API 식별을 위한 `data-*` 속성은 도메인 이름을 사용할 수 있다.
+- CSS modifier는 화면 유형, 행 유형, 패널 역할을 드러내야 한다.
+
+권장 예:
+
+```text
+management-filter-form
+document-filter-form
+inline-summary-header
+management-data-row
+document-data-table
+document-data-row
+side-work-panel
+side-detail-card
+operation-flow-form
+operation-step-card
+```
+
+피해야 할 예:
+
+```text
+partner-filter-form
+stock-filter-form
+partner-table-header
+inbound-table
+inbound-row
+register-flow
+```
+
+도메인별 동작을 구분해야 하는 경우에는 class가 아니라 `data-*`를 사용한다.
+
+```text
+data-partner-panel
+data-inbound-panel
+data-partner-table
+data-inbound-pagination
+```
+
 ## 충돌 해결 기준
 
 같은 UI 개념이 여러 문서에서 다르게 정의되어 있으면 아래 기준으로 정리한다.
@@ -124,6 +169,22 @@ rg -n "검색할 키워드" Backend\docs\ai\design Backend\docs\ai\pcs-design-sy
 3. 해당 화면에만 필요한 데이터 차이면 feature 또는 페이지 설명에 남긴다.
 4. 다른 문서에서 같은 내용을 설명하고 있으면 제거하고 참조로 바꾼다.
 5. `AI_INDEX.md`에서 해당 문서를 찾을 수 있는지 확인한다.
+
+## MD 변경 후 화면 재적용 순서
+
+디자인 MD를 바꿨다면 해당 규칙을 쓰는 화면도 함께 확인한다.
+
+1. 변경한 class, 문구, 컴포넌트 이름을 `rg`로 검색한다.
+2. 검색된 HTML/CSS/JS가 새 MD 기준과 맞는지 확인한다.
+3. 같은 패턴을 쓰는 대표 화면을 최소 2개 확인한다.
+4. 페이지별 예외가 생기면 공통 규칙을 수정할지, 해당 feature 문서에 예외로 둘지 먼저 판단한다.
+5. 적용 후 `processResources` 또는 관련 하네스 검증을 실행한다.
+
+예:
+
+```powershell
+rg -n "inline-summary-header|management-filter-form" Backend\src\main\resources\static Backend\docs\ai
+```
 
 ## 금지
 
