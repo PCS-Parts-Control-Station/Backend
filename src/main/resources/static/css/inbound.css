@@ -25,6 +25,26 @@
     font-weight: 800;
 }
 
+.btn-danger {
+    border-color: var(--red, #dc2626);
+    background: var(--red, #dc2626);
+    color: #ffffff;
+    box-shadow: 0 8px 20px rgba(220, 38, 38, 0.14);
+}
+
+.btn-danger:hover {
+    border-color: #b91c1c;
+    background: #b91c1c;
+}
+
+.btn-danger:disabled {
+    border-color: var(--line);
+    background: var(--gray-soft);
+    color: var(--gray);
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
 .inbound-table {
     display: block;
     overflow-x: auto;
@@ -45,11 +65,43 @@
     grid-template-columns: 136px minmax(220px, 1fr) 64px 72px 104px 124px;
     gap: 12px;
     min-width: 820px;
+    cursor: pointer;
+}
+
+.inbound-row > strong[role="cell"] {
+    color: var(--navy);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
 }
 
 .inbound-row.is-created {
     border-color: rgba(37, 99, 235, 0.24);
     background: var(--primary-faint, #eff6ff);
+}
+
+.inbound-row.is-selected {
+    background: var(--cyan-soft);
+}
+
+.inbound-empty-row {
+    grid-template-columns: 1fr;
+    min-width: 0;
+}
+
+.inbound-empty-row [role="cell"] {
+    justify-self: center;
+    color: var(--navy);
+    font-size: 15px;
+    font-weight: 800;
+    text-align: center;
+}
+
+[data-inbound-panel="guide"] {
+    gap: 18px;
 }
 
 .cell-stack {
@@ -166,6 +218,175 @@
 
 .field-message.is-error {
     color: var(--danger, #b42318);
+}
+
+.inbound-detail-panel {
+    display: grid;
+    gap: 16px;
+}
+
+.inbound-detail-card {
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+}
+
+.inbound-detail-card strong {
+    color: var(--navy);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.document-line-section {
+    display: grid;
+    gap: 10px;
+}
+
+.section-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.section-title-row h3 {
+    margin: 0;
+    color: var(--navy);
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.section-title-row span {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.document-line-list {
+    display: grid;
+    gap: 10px;
+    max-height: 420px;
+    overflow: auto;
+}
+
+.document-line-item {
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+}
+
+.document-line-item summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 12px;
+    align-items: start;
+    cursor: pointer;
+    list-style: none;
+}
+
+.document-line-item summary::-webkit-details-marker {
+    display: none;
+}
+
+.document-line-item summary::before {
+    content: "접기";
+    grid-column: 1 / -1;
+    justify-self: end;
+    color: var(--cyan-dark);
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.document-line-item:not([open]) summary::before {
+    content: "펼치기";
+}
+
+.document-line-item strong,
+.document-line-item summary b {
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.document-line-item small,
+.document-line-item summary b {
+    color: var(--muted);
+}
+
+.document-line-item ul {
+    display: grid;
+    gap: 6px;
+    max-height: 180px;
+    margin: 12px 0 0;
+    padding: 0;
+    overflow: auto;
+    list-style: none;
+}
+
+.document-line-item li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 7px 9px;
+    border-radius: 6px;
+    background: var(--gray-soft);
+}
+
+.document-line-item code {
+    min-width: 0;
+    color: var(--navy);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.document-line-item li span {
+    flex: 0 0 auto;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.document-line-item li button {
+    min-height: 26px;
+    padding: 0 8px;
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--cyan-dark);
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.document-line-item li button:hover {
+    border-color: var(--cyan);
+    background: var(--cyan-soft);
+}
+
+.detail-empty-text {
+    margin: 0;
+    padding: 14px;
+    border: 1px dashed var(--line-strong);
+    border-radius: var(--radius);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.modal-message {
+    margin: 0 20px;
 }
 
 .line-entry-grid {
@@ -823,7 +1044,7 @@
         grid-column: 1;
         grid-row: 1;
         align-self: center;
-        font-size: 15px;
+        font-size: 12px;
         line-height: 1.35;
     }
 

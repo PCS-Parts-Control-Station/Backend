@@ -127,6 +127,13 @@
         partSearchMessage.classList.toggle("is-error", type === "error");
     };
 
+    const normalizeListData = (data) => {
+        if (Array.isArray(data)) {
+            return data;
+        }
+        return Array.isArray(data?.content) ? data.content : [];
+    };
+
     const dateToken = () => {
         const now = new Date();
         const year = String(now.getFullYear());
@@ -422,11 +429,11 @@
                 active: "true",
                 limit: "100",
             });
-            const partners = await api.getData(`/api/workspaces/${encodeURIComponent(companyCode)}/partners?${params.toString()}`, {
+            const data = await api.getData(`/api/workspaces/${encodeURIComponent(companyCode)}/partners?${params.toString()}`, {
                 authRedirect: true,
                 loginCompanyCode: companyCode,
             });
-            renderPartners(partners || []);
+            renderPartners(normalizeListData(data));
         } catch (error) {
             partnerSelect.innerHTML = '<option value="">거래처를 불러오지 못했습니다</option>';
             setPartnerMessage(error.message || "거래처 조회 요청을 처리할 수 없습니다.", "error");

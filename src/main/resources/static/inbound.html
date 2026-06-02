@@ -59,14 +59,12 @@
                     <form class="filter-form stock-filter-form" action="#" method="get">
                         <label>
                             <span>검색어</span>
-                            <input type="search" name="keyword" placeholder="예: A PC방, RAM, IN-20260521-001">
+                            <input type="search" name="keyword" placeholder="거래처, 부품명, 전표번호 검색">
                         </label>
                         <label>
                             <span>거래처</span>
-                            <select name="partnerId">
+                            <select name="partnerId" data-partner-filter>
                                 <option value="">전체 거래처</option>
-                                <option value="1">A PC방</option>
-                                <option value="2">리퍼 부품 매입처</option>
                             </select>
                         </label>
                         <label>
@@ -84,42 +82,33 @@
                 <div class="created-document-notice" data-created-notice role="status" aria-live="polite" hidden></div>
 
                 <section class="table-card" aria-labelledby="inbound-list-title">
-                    <div class="table-header">
+                    <div class="table-header compact-summary-header">
                         <div>
                             <h2 id="inbound-list-title">입고 전표 목록</h2>
                             <p>거래처별 입고 묶음과 부품별 관리번호 생성 현황입니다.</p>
                         </div>
                         <div class="list-summary-box" aria-label="입고 전표 목록 요약">
-                            <span class="summary-label">오늘 입고</span>
                             <dl class="list-summary">
                                 <div>
                                     <dt>전표</dt>
-                                    <dd>4</dd>
+                                    <dd data-summary-documents>0</dd>
                                 </div>
                                 <div>
                                     <dt>부품</dt>
-                                    <dd>37</dd>
+                                    <dd data-summary-quantity>0</dd>
                                 </div>
                                 <div>
                                     <dt>대기</dt>
-                                    <dd>29</dd>
+                                    <dd data-summary-waiting>0</dd>
                                 </div>
                                 <div>
                                     <dt>취소</dt>
-                                    <dd>1</dd>
+                                    <dd data-summary-canceled>0</dd>
                                 </div>
                             </dl>
-                            <p>입고 완료 부품은 검수 대기 상태로 관리번호가 발급됨</p>
                         </div>
                     </div>
 
-                    <!--
-                        API 연결 예정:
-                        - 목록: GET /api/workspaces/{companyCode}/stock/documents?documentType=INBOUND
-                        - 상세: GET /api/workspaces/{companyCode}/stock/documents/{documentId}
-                        - 라인: GET /api/workspaces/{companyCode}/stock/documents/{documentId}/movements
-                        - 취소: POST /api/workspaces/{companyCode}/stock/documents/{documentId}/cancel
-                    -->
                     <div class="data-table inbound-table" role="table" aria-label="입고 전표 목록">
                         <div class="data-row inbound-row table-head" role="row">
                             <span role="columnheader">전표번호</span>
@@ -129,103 +118,58 @@
                             <span role="columnheader">입고일</span>
                             <span role="columnheader">관리</span>
                         </div>
-                        <div class="data-row inbound-row" role="row">
-                            <strong role="cell" data-label="전표번호">IN-20260521-004</strong>
-                            <span role="cell" class="cell-stack" data-label="입고 내용">
-                                <b>A PC방</b>
-                                <small>RAM DDR4 16GB 외 2종 · 김관리 처리</small>
-                            </span>
-                            <span role="cell" data-label="수량">15개</span>
-                            <span role="cell" data-label="상태"><em class="badge badge-active">완료</em></span>
-                            <span role="cell" data-label="입고일">2026-05-21</span>
-                            <span role="cell" class="row-actions" data-label="관리">
-                                <button type="button">상세</button>
-                                <button type="button">취소</button>
-                            </span>
+                        <div class="data-row inbound-row inbound-empty-row" role="row" data-inbound-empty hidden>
+                            <span role="cell" data-label="안내">입고 전표 목록을 불러오는 중입니다.</span>
                         </div>
-                        <div class="data-row inbound-row" role="row">
-                            <strong role="cell" data-label="전표번호">IN-20260521-003</strong>
-                            <span role="cell" class="cell-stack" data-label="입고 내용">
-                                <b>리퍼 부품 매입처</b>
-                                <small>SSD NVMe 512GB · 박운영 처리</small>
-                            </span>
-                            <span role="cell" data-label="수량">8개</span>
-                            <span role="cell" data-label="상태"><em class="badge badge-active">완료</em></span>
-                            <span role="cell" data-label="입고일">2026-05-21</span>
-                            <span role="cell" class="row-actions" data-label="관리">
-                                <button type="button">상세</button>
-                                <button type="button">취소</button>
-                            </span>
-                        </div>
-                        <div class="data-row inbound-row" role="row">
-                            <strong role="cell" data-label="전표번호">IN-20260520-009</strong>
-                            <span role="cell" class="cell-stack" data-label="입고 내용">
-                                <b>B 사무실 정리</b>
-                                <small>CPU i5-10400, Mainboard · 이검수 처리</small>
-                            </span>
-                            <span role="cell" data-label="수량">9개</span>
-                            <span role="cell" data-label="상태"><em class="badge badge-active">완료</em></span>
-                            <span role="cell" data-label="입고일">2026-05-20</span>
-                            <span role="cell" class="row-actions" data-label="관리">
-                                <button type="button">상세</button>
-                                <button type="button">취소</button>
-                            </span>
-                        </div>
-                        <div class="data-row inbound-row" role="row">
-                            <strong role="cell" data-label="전표번호">IN-20260519-006</strong>
-                            <span role="cell" class="cell-stack" data-label="입고 내용">
-                                <b>A PC방</b>
-                                <small>Power 600W · 김관리 처리</small>
-                            </span>
-                            <span role="cell" data-label="수량">5개</span>
-                            <span role="cell" data-label="상태"><em class="badge badge-inactive">취소</em></span>
-                            <span role="cell" data-label="입고일">2026-05-19</span>
-                            <span role="cell" class="row-actions" data-label="관리">
-                                <button type="button">상세</button>
-                                <button type="button" disabled>취소됨</button>
-                            </span>
+                    </div>
+                    <div class="pagination-bar" data-inbound-pagination hidden>
+                        <p data-page-info>0건</p>
+                        <div class="pagination-actions">
+                            <button type="button" data-page-prev>이전</button>
+                            <button type="button" data-page-next>다음</button>
                         </div>
                     </div>
                 </section>
             </div>
 
             <aside class="side-panel" aria-labelledby="inbound-form-title">
+                <div class="panel-mode is-active" data-inbound-panel="guide">
                 <div class="panel-card process-panel">
                     <h2 id="inbound-form-title">입고부터 출고까지</h2>
-                    <p>현재 화면은 전체 재고 흐름 중 입고 단계입니다.</p>
+                    <p>현재 화면은 재고 흐름의 입고 단계입니다.</p>
                     <ol class="workflow-list" aria-label="재고 업무 흐름">
                         <li class="workflow-step active">
                             <span class="process-dot" aria-hidden="true"></span>
                             <div>
-                                <strong>입고 진행 중</strong>
-                                <p>거래처 입고 부품을 전표로 묶고 관리번호를 생성합니다.</p>
-                                <ol class="sub-process-list" aria-label="입고 세부 처리 흐름">
+                                <strong>입고</strong>
+                                <p>거래처 전표로 부품 입고를 기록합니다.</p>
+                                <ol class="sub-process-list" aria-label="입고 세부 흐름">
                                     <li>
                                         <span>1</span>
                                         <div>
-                                            <strong>거래처 선택</strong>
-                                            <p>공급 거래처를 입고 전표에 연결합니다.</p>
+                                            <strong>거래처 연결</strong>
+                                            <p>공급 거래처를 선택합니다.</p>
                                         </div>
                                     </li>
                                     <li>
                                         <span>2</span>
                                         <div>
-                                            <strong>부품 라인 추가</strong>
-                                            <p>부품 종류와 입고 수량을 입력합니다.</p>
+                                            <strong>부품 라인</strong>
+                                            <p>부품과 수량을 추가합니다.</p>
                                         </div>
                                     </li>
                                     <li>
                                         <span>3</span>
                                         <div>
-                                            <strong>관리번호 생성</strong>
-                                            <p>입고 수량만큼 개별 관리번호를 발급합니다.</p>
+                                            <strong>관리번호 발급</strong>
+                                            <p>수량만큼 개별 번호를 만듭니다.</p>
                                         </div>
                                     </li>
                                     <li>
                                         <span>4</span>
                                         <div>
-                                            <strong>검수 대기 전환</strong>
-                                            <p>검수 대기, 판매 보류 상태로 시작합니다.</p>
+                                            <strong>검수 대기</strong>
+                                            <p>검수 전 상태로 보관합니다.</p>
                                         </div>
                                     </li>
                                 </ol>
@@ -235,7 +179,7 @@
                             <span class="process-dot" aria-hidden="true"></span>
                             <div>
                                 <strong>검수</strong>
-                                <p>등급과 판매 가능 여부를 확정합니다.</p>
+                                <p>등급과 판매 가능 여부를 정합니다.</p>
                             </div>
                         </li>
                         <li class="workflow-step">
@@ -249,139 +193,124 @@
                             <span class="process-dot" aria-hidden="true"></span>
                             <div>
                                 <strong>이력</strong>
-                                <p>입고, 검수, 출고, 상태 변경 기록을 확인합니다.</p>
+                                <p>전표와 상태 변경 기록을 확인합니다.</p>
                             </div>
                         </li>
                     </ol>
                 </div>
 
                 <div class="panel-card muted-panel">
-                    <h2>입고 규칙</h2>
+                    <h2>입고 처리 기준</h2>
                     <ul>
                         <li>입고 완료 시 수량만큼 관리번호를 생성</li>
                         <li>개별 부품은 검수 대기, 판매 보류로 시작</li>
                         <li>입고 오류는 원본 수정 대신 취소 전표로 보존</li>
                     </ul>
                 </div>
+                </div>
+
+                <div class="panel-mode" data-inbound-panel="detail" hidden>
+                    <div class="panel-card inbound-detail-panel">
+                        <div class="panel-title-bar">
+                            <div>
+                                <h2>입고 전표 상세</h2>
+                                <p data-detail-subtitle>전표를 선택해 주세요.</p>
+                            </div>
+                            <button class="panel-link-button" type="button" data-close-detail-panel>닫기</button>
+                        </div>
+
+                        <div class="inbound-detail-card">
+                            <strong data-detail-document-no>-</strong>
+                            <div class="partner-detail-badges">
+                                <em class="badge badge-active" data-detail-status>-</em>
+                            </div>
+                        </div>
+
+                        <dl class="detail-list">
+                            <div>
+                                <dt>거래처</dt>
+                                <dd data-detail-partner>-</dd>
+                            </div>
+                            <div>
+                                <dt>입고일</dt>
+                                <dd data-detail-created-at>-</dd>
+                            </div>
+                            <div>
+                                <dt>처리자</dt>
+                                <dd data-detail-processed-by>-</dd>
+                            </div>
+                            <div>
+                                <dt>입고 사유</dt>
+                                <dd data-detail-reason>-</dd>
+                            </div>
+                            <div>
+                                <dt>취소 가능</dt>
+                                <dd data-detail-cancel-state>-</dd>
+                            </div>
+                        </dl>
+
+                        <div class="document-line-section">
+                            <div class="section-title-row">
+                                <h3>부품 라인</h3>
+                                <span data-detail-line-summary>-</span>
+                            </div>
+                            <div class="document-line-list" data-detail-lines>
+                                <p class="detail-empty-text">전표를 선택해 주세요.</p>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn btn-secondary" type="button" data-close-detail-panel>목록 안내</button>
+                            <button class="btn btn-danger" type="button" data-open-cancel-modal disabled>전표 취소</button>
+                        </div>
+                    </div>
+                </div>
             </aside>
         </section>
     </main>
 </div>
+
+<dialog class="part-modal confirm-modal" data-cancel-modal aria-labelledby="cancel-modal-title">
+    <form class="part-modal-card" method="dialog">
+        <div class="part-modal-header">
+            <div>
+                <p class="page-kicker">입고 전표 취소</p>
+                <h2 id="cancel-modal-title">전표를 취소할까요?</h2>
+                <p>취소 후 원본 전표와 재고 이력은 보존되고, 입고 재고만 되돌립니다.</p>
+            </div>
+            <button class="modal-close-button" type="button" data-close-cancel-modal aria-label="닫기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M6 6l12 12" />
+                    <path d="M18 6 6 18" />
+                </svg>
+            </button>
+        </div>
+        <dl class="confirm-summary">
+            <div>
+                <dt>전표번호</dt>
+                <dd data-cancel-document-no>-</dd>
+            </div>
+            <div>
+                <dt>거래처</dt>
+                <dd data-cancel-partner>-</dd>
+            </div>
+            <div>
+                <dt>부품 수량</dt>
+                <dd data-cancel-quantity>-</dd>
+            </div>
+        </dl>
+        <p class="field-message is-error modal-message" data-cancel-message role="status" aria-live="polite" hidden></p>
+        <div class="part-modal-actions">
+            <button class="btn btn-secondary" type="button" data-close-cancel-modal>취소</button>
+            <button class="btn btn-danger" type="button" data-confirm-cancel>전표 취소</button>
+        </div>
+    </form>
+</dialog>
+
 <script src="/js/pcs-api.js?20260526_1"></script>
+<script src="/js/pcs-pagination.js?20260527_pagination"></script>
 <script src="/js/workspace-layout.js?20260527_1"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/dashboard.js?20260526_1"></script>
-<script>
-    (() => {
-        const body = document.body;
-        const toggle = document.querySelector("[data-sidebar-toggle]");
-        const backdrop = document.querySelector("[data-sidebar-backdrop]");
-        const desktopQuery = window.matchMedia("(min-width: 1521px)");
-
-        if (!toggle || !backdrop) {
-            return;
-        }
-
-        const closeMenu = () => {
-            body.classList.remove("sidebar-open");
-            toggle.setAttribute("aria-expanded", "false");
-            toggle.setAttribute("aria-label", "메뉴 열기");
-        };
-
-        const openMenu = () => {
-            body.classList.add("sidebar-open");
-            toggle.setAttribute("aria-expanded", "true");
-            toggle.setAttribute("aria-label", "메뉴 닫기");
-        };
-
-        toggle.addEventListener("click", () => {
-            if (body.classList.contains("sidebar-open")) {
-                closeMenu();
-                return;
-            }
-            openMenu();
-        });
-
-        backdrop.addEventListener("click", closeMenu);
-
-        document.addEventListener("keydown", (event) => {
-            if (event.key === "Escape") {
-                closeMenu();
-            }
-        });
-
-        desktopQuery.addEventListener("change", (event) => {
-            if (event.matches) {
-                closeMenu();
-            }
-        });
-    })();
-
-    (() => {
-        const createdInboundKey = "pcsCreatedInboundDocument";
-        let createdInbound = null;
-
-        try {
-            const rawCreatedInbound = window.sessionStorage.getItem(createdInboundKey);
-            createdInbound = rawCreatedInbound ? JSON.parse(rawCreatedInbound) : null;
-        } catch (error) {
-            createdInbound = null;
-        }
-
-        try {
-            window.sessionStorage.removeItem(createdInboundKey);
-        } catch (error) {
-            // Ignore storage cleanup failures.
-        }
-
-        if (!createdInbound?.documentNo) {
-            return;
-        }
-
-        const documentNo = String(createdInbound.documentNo);
-        const table = document.querySelector(".inbound-table");
-        const tableHead = table?.querySelector(".table-head");
-        const notice = document.querySelector("[data-created-notice]");
-        const partnerName = createdInbound.partnerName || "방금 등록한 거래처";
-        const quantity = Number(createdInbound.quantity) || 0;
-        const dateMatch = documentNo.match(/^IN-(\d{4})(\d{2})(\d{2})-/);
-        const createdDate = dateMatch ? `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}` : "";
-        const escapeHtml = (value) => value.replace(/[&<>"']/g, (letter) => ({
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            "\"": "&quot;",
-            "'": "&#039;",
-        }[letter]));
-
-        if (notice) {
-            notice.hidden = false;
-            notice.textContent = `입고 전표 ${documentNo} 가 등록되었습니다.`;
-        }
-
-        if (!table || !tableHead) {
-            return;
-        }
-
-        const row = document.createElement("div");
-        row.className = "data-row inbound-row is-created";
-        row.setAttribute("role", "row");
-        row.innerHTML = `
-            <strong role="cell" data-label="전표번호">${escapeHtml(documentNo)}</strong>
-            <span role="cell" class="cell-stack" data-label="입고 내용">
-                <b>${escapeHtml(partnerName)}</b>
-                <small>방금 등록된 입고 전표</small>
-            </span>
-            <span role="cell" data-label="수량">${quantity ? `${quantity}개` : "-"}</span>
-            <span role="cell" data-label="상태"><em class="badge badge-active">완료</em></span>
-            <span role="cell" data-label="입고일">${createdDate || "-"}</span>
-            <span role="cell" class="row-actions" data-label="관리">
-                <button type="button">상세</button>
-                <button type="button">취소</button>
-            </span>
-        `;
-        tableHead.insertAdjacentElement("afterend", row);
-    })();
-</script>
+<script src="/js/inbound.js?20260529_1"></script>
 </body>
 </html>

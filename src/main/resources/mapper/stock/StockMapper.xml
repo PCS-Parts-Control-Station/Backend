@@ -43,6 +43,308 @@
         )
     </select>
 
+    <sql id="documentSearchWhere">
+        WHERE d.company_id = #{companyId}
+        <if test="documentType != null">
+          AND d.document_type = #{documentType}
+        </if>
+        <if test="partnerId != null">
+          AND d.partner_id = #{partnerId}
+        </if>
+        <if test="documentStatus != null">
+          AND d.document_status = #{documentStatus}
+        </if>
+        <if test="keyword != null and keyword != ''">
+          AND (
+              d.document_no LIKE CONCAT('%', #{keyword}, '%')
+              OR tp.partner_name LIKE CONCAT('%', #{keyword}, '%')
+              OR p.part_name LIKE CONCAT('%', #{keyword}, '%')
+              OR p.model_name LIKE CONCAT('%', #{keyword}, '%')
+              OR p.part_code LIKE CONCAT('%', #{keyword}, '%')
+          )
+        </if>
+    </sql>
+
+    <select id="searchDocuments" resultType="com.pcs.domain.stock.dto.response.SearchStockDocumentResponse">
+        SELECT
+            d.document_id,
+            d.document_no,
+            d.document_type,
+            d.document_status,
+            d.partner_id,
+            COALESCE(tp.partner_name, '-') AS partner_name,
+            COALESCE(
+                SUBSTRING_INDEX(GROUP_CONCAT(p.part_name ORDER BY m.movement_id SEPARATOR ','), ',', 1),
+                '-'
+            ) AS first_part_name,
+            COUNT(DISTINCT m.movement_id) AS line_count,
+            COALESCE(SUM(m.quantity), 0) AS total_quantity,
+            COALESCE(pm.name, '-') AS processed_by_name,
+            d.created_at
+        FROM tb_stock_document d
+        LEFT JOIN tb_trade_partner tp
+            ON tp.company_id = d.company_id
+           AND tp.partner_id = d.partner_id
+        LEFT JOIN tb_stock_movement m
+            ON m.company_id = d.company_id
+           AND m.document_id = d.document_id
+        LEFT JOIN tb_pc_part p
+            ON p.company_id = m.company_id
+           AND p.part_id = m.part_id
+        LEFT JOIN tb_member pm
+            ON pm.company_id = d.company_id
+           AND pm.member_id = d.processed_by
+        <include refid="documentSearchWhere" />
+        GROUP BY
+            d.document_id,
+            d.document_no,
+            d.document_type,
+            d.document_status,
+            d.partner_id,
+            tp.partner_name,
+            pm.name,
+            d.created_at
+        ORDER BY d.document_id DESC
+        LIMIT #{size}
+        OFFSET #{offset}
+    </select>
+
+    <select id="countDocuments" resultType="long">
+        SELECT COUNT(DISTINCT d.document_id)
+        FROM tb_stock_document d
+        LEFT JOIN tb_trade_partner tp
+            ON tp.company_id = d.company_id
+           AND tp.partner_id = d.partner_id
+        LEFT JOIN tb_stock_movement m
+            ON m.company_id = d.company_id
+           AND m.document_id = d.document_id
+        LEFT JOIN tb_pc_part p
+            ON p.company_id = m.company_id
+           AND p.part_id = m.part_id
+        <include refid="documentSearchWhere" />
+    </select>
+
+    <select id="summarizeDocuments" resultType="com.pcs.domain.stock.dto.response.SearchStockDocumentSummaryResponse">
+        SELECT
+            COUNT(DISTINCT filtered.document_id) AS total_count,
+            COALESCE(SUM(filtered.total_quantity), 0) AS total_quantity,
+            COALESCE(SUM(filtered.waiting_quantity), 0) AS waiting_quantity,
+            COALESCE(SUM(CASE WHEN filtered.document_status = 'CANCELED' THEN 1 ELSE 0 END), 0) AS canceled_count
+        FROM (
+            SELECT
+                d.document_id,
+                d.document_status,
+                COALESCE(SUM(m.quantity), 0) AS total_quantity,
+                COALESCE((
+                    SELECT COUNT(*)
+                    FROM tb_stock_movement mw
+                    JOIN tb_stock_movement_unit mu
+                        ON mu.movement_id = mw.movement_id
+                    JOIN tb_pc_part_unit u
+                        ON u.company_id = mw.company_id
+                       AND u.unit_id = mu.unit_id
+                    WHERE mw.company_id = d.company_id
+                      AND mw.document_id = d.document_id
+                      AND u.inspection_status = 'WAITING'
+                      AND u.unit_status = 'IN_STOCK'
+                      AND u.active = TRUE
+                ), 0) AS waiting_quantity
+            FROM tb_stock_document d
+            LEFT JOIN tb_trade_partner tp
+                ON tp.company_id = d.company_id
+               AND tp.partner_id = d.partner_id
+            LEFT JOIN tb_stock_movement m
+                ON m.company_id = d.company_id
+               AND m.document_id = d.document_id
+            LEFT JOIN tb_pc_part p
+                ON p.company_id = m.company_id
+               AND p.part_id = m.part_id
+            <include refid="documentSearchWhere" />
+            GROUP BY d.document_id, d.document_status
+        ) filtered
+    </select>
+
+    <sql id="documentDetailSelect">
+        SELECT
+            d.document_id,
+            d.document_no,
+            d.document_type,
+            d.document_status,
+            d.partner_id,
+            COALESCE(tp.partner_name, '-') AS partner_name,
+            d.reason,
+            COALESCE(pm.name, '-') AS processed_by_name,
+            d.created_at,
+            COUNT(DISTINCT m.movement_id) AS line_count,
+            COALESCE(SUM(m.quantity), 0) AS total_quantity
+        FROM tb_stock_document d
+        LEFT JOIN tb_trade_partner tp
+            ON tp.company_id = d.company_id
+           AND tp.partner_id = d.partner_id
+        LEFT JOIN tb_member pm
+            ON pm.company_id = d.company_id
+           AND pm.member_id = d.processed_by
+        LEFT JOIN tb_stock_movement m
+            ON m.company_id = d.company_id
+           AND m.document_id = d.document_id
+           AND m.canceled_movement_id IS NULL
+        WHERE d.company_id = #{companyId}
+          AND d.document_id = #{documentId}
+        GROUP BY
+            d.document_id,
+            d.document_no,
+            d.document_type,
+            d.document_status,
+            d.partner_id,
+            tp.partner_name,
+            d.reason,
+            pm.name,
+            d.created_at
+    </sql>
+
+    <select id="findDocumentDetail" resultType="com.pcs.domain.stock.dto.response.StockDocumentDetailRow">
+        <include refid="documentDetailSelect" />
+    </select>
+
+    <select id="findDocumentForUpdate" resultType="com.pcs.domain.stock.dto.response.StockDocumentDetailRow">
+        SELECT
+            d.document_id,
+            d.document_no,
+            d.document_type,
+            d.document_status,
+            d.partner_id,
+            COALESCE(tp.partner_name, '-') AS partner_name,
+            d.reason,
+            COALESCE(pm.name, '-') AS processed_by_name,
+            d.created_at,
+            0 AS line_count,
+            0 AS total_quantity
+        FROM tb_stock_document d
+        LEFT JOIN tb_trade_partner tp
+            ON tp.company_id = d.company_id
+           AND tp.partner_id = d.partner_id
+        LEFT JOIN tb_member pm
+            ON pm.company_id = d.company_id
+           AND pm.member_id = d.processed_by
+        WHERE d.company_id = #{companyId}
+          AND d.document_id = #{documentId}
+        FOR UPDATE
+    </select>
+
+    <select id="findDocumentLines" resultType="com.pcs.domain.stock.dto.response.StockDocumentLineRow">
+        SELECT
+            m.movement_id,
+            m.part_id,
+            p.part_name,
+            p.model_name,
+            p.part_code,
+            m.movement_type,
+            m.movement_status,
+            m.quantity,
+            m.before_quantity,
+            m.after_quantity,
+            m.reason
+        FROM tb_stock_movement m
+        JOIN tb_pc_part p
+            ON p.company_id = m.company_id
+           AND p.part_id = m.part_id
+        WHERE m.company_id = #{companyId}
+          AND m.document_id = #{documentId}
+          AND m.canceled_movement_id IS NULL
+        ORDER BY m.movement_id
+    </select>
+
+    <select id="findOriginalInboundMovementsForUpdate" resultType="com.pcs.domain.stock.dto.response.StockDocumentLineRow">
+        SELECT
+            m.movement_id,
+            m.part_id,
+            p.part_name,
+            p.model_name,
+            p.part_code,
+            m.movement_type,
+            m.movement_status,
+            m.quantity,
+            m.before_quantity,
+            m.after_quantity,
+            m.reason
+        FROM tb_stock_movement m
+        JOIN tb_pc_part p
+            ON p.company_id = m.company_id
+           AND p.part_id = m.part_id
+        WHERE m.company_id = #{companyId}
+          AND m.document_id = #{documentId}
+          AND m.movement_type = 'INBOUND'
+          AND m.canceled_movement_id IS NULL
+        ORDER BY m.movement_id
+        FOR UPDATE
+    </select>
+
+    <select id="findDocumentUnits" resultType="com.pcs.domain.stock.dto.response.StockDocumentUnitResponse">
+        SELECT
+            m.movement_id,
+            u.unit_id,
+            u.internal_serial_no,
+            u.manufacturer_serial_no,
+            u.unit_status,
+            u.grade,
+            u.inspection_status,
+            u.sales_status,
+            u.active
+        FROM tb_stock_movement m
+        JOIN tb_stock_movement_unit mu
+            ON mu.movement_id = m.movement_id
+        JOIN tb_pc_part_unit u
+            ON u.company_id = m.company_id
+           AND u.unit_id = mu.unit_id
+        WHERE m.company_id = #{companyId}
+          AND m.document_id = #{documentId}
+          AND m.canceled_movement_id IS NULL
+        ORDER BY m.movement_id, u.unit_id
+    </select>
+
+    <select id="findMovementUnitIds" resultType="long">
+        SELECT unit_id
+        FROM tb_stock_movement_unit
+        WHERE movement_id = #{movementId}
+        ORDER BY unit_id
+    </select>
+
+    <select id="countInvalidInboundCancelUnits" resultType="int">
+        SELECT COUNT(*)
+        FROM tb_stock_movement m
+        JOIN tb_stock_movement_unit mu
+            ON mu.movement_id = m.movement_id
+        JOIN tb_pc_part_unit u
+            ON u.company_id = m.company_id
+           AND u.unit_id = mu.unit_id
+        WHERE m.company_id = #{companyId}
+          AND m.document_id = #{documentId}
+          AND m.movement_type = 'INBOUND'
+          AND m.canceled_movement_id IS NULL
+          AND (
+              m.movement_status != 'COMPLETED'
+              OR u.active != TRUE
+              OR u.unit_status != 'IN_STOCK'
+              OR u.inspection_status != 'WAITING'
+              OR u.sales_status != 'HOLD'
+          )
+    </select>
+
+    <update id="updateDocumentStatus">
+        UPDATE tb_stock_document
+        SET document_status = #{documentStatus}
+        WHERE company_id = #{companyId}
+          AND document_id = #{documentId}
+    </update>
+
+    <update id="updateDocumentMovementStatus">
+        UPDATE tb_stock_movement
+        SET movement_status = #{movementStatus}
+        WHERE company_id = #{companyId}
+          AND document_id = #{documentId}
+          AND canceled_movement_id IS NULL
+    </update>
+
     <insert id="insertDocument"
             parameterType="com.pcs.domain.stock.entity.StockDocument"
             useGeneratedKeys="true"
@@ -103,6 +405,7 @@
             part_id,
             movement_type,
             movement_status,
+            canceled_movement_id,
             quantity,
             before_quantity,
             after_quantity,
@@ -114,6 +417,7 @@
             #{partId},
             #{movementType},
             #{movementStatus},
+            #{canceledMovementId},
             #{quantity},
             #{beforeQuantity},
             #{afterQuantity},
@@ -171,5 +475,27 @@
             #{afterUnitStatus}
         )
     </insert>
+
+    <insert id="insertMovementUnitStatusChange">
+        INSERT INTO tb_stock_movement_unit (
+            movement_id,
+            unit_id,
+            before_unit_status,
+            after_unit_status
+        ) VALUES (
+            #{movementId},
+            #{unitId},
+            #{beforeUnitStatus},
+            #{afterUnitStatus}
+        )
+    </insert>
+
+    <update id="updatePartUnitStatusForInboundCancel">
+        UPDATE tb_pc_part_unit
+        SET unit_status = 'CANCELED',
+            active = FALSE
+        WHERE company_id = #{companyId}
+          AND unit_id = #{unitId}
+    </update>
 
 </mapper>

@@ -1,8 +1,15 @@
 package com.pcs.domain.stock.facade;
 
 import com.pcs.domain.stock.dto.request.CreateInboundDocumentRequest;
+import com.pcs.domain.stock.dto.response.CancelStockDocumentResponse;
 import com.pcs.domain.stock.dto.response.CreateInboundDocumentResponse;
+import com.pcs.domain.stock.dto.response.SearchStockDocumentResponse;
+import com.pcs.domain.stock.dto.response.SearchStockDocumentSummaryResponse;
+import com.pcs.domain.stock.dto.response.StockDocumentDetailResponse;
 import com.pcs.domain.stock.service.StockService;
+import com.pcs.domain.stock.type.StockDocumentStatus;
+import com.pcs.domain.stock.type.StockDocumentType;
+import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.jwt.JwtClaims;
@@ -22,6 +29,52 @@ public class StockFacade {
     public StockFacade(StockService stockService, JwtTokenProvider jwtTokenProvider) {
         this.stockService = stockService;
         this.jwtTokenProvider = jwtTokenProvider;
+    }
+
+    public PageResultDto<SearchStockDocumentResponse, SearchStockDocumentSummaryResponse> searchDocuments(
+            String authorizationHeader,
+            String pathCompanyCode,
+            StockDocumentType documentType,
+            String keyword,
+            Long partnerId,
+            StockDocumentStatus documentStatus,
+            Integer page,
+            Integer size,
+            Integer limit
+    ) {
+        JwtClaims claims = jwtTokenProvider.parseAccessToken(extractBearerToken(authorizationHeader));
+        validateWorkspace(pathCompanyCode, claims.companyCode());
+        return stockService.searchDocuments(
+                claims.companyId(),
+                documentType,
+                keyword,
+                partnerId,
+                documentStatus,
+                page,
+                size,
+                limit
+        );
+    }
+
+    public StockDocumentDetailResponse getDocument(
+            String authorizationHeader,
+            String pathCompanyCode,
+            Long documentId
+    ) {
+        JwtClaims claims = jwtTokenProvider.parseAccessToken(extractBearerToken(authorizationHeader));
+        validateWorkspace(pathCompanyCode, claims.companyCode());
+        return stockService.getDocument(claims.companyId(), documentId);
+    }
+
+    @Transactional
+    public CancelStockDocumentResponse cancelDocument(
+            String authorizationHeader,
+            String pathCompanyCode,
+            Long documentId
+    ) {
+        JwtClaims claims = jwtTokenProvider.parseAccessToken(extractBearerToken(authorizationHeader));
+        validateWorkspace(pathCompanyCode, claims.companyCode());
+        return stockService.cancelInboundDocument(claims.companyId(), claims.memberId(), documentId);
     }
 
     @Transactional
