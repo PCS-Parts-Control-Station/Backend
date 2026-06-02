@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/admin.css?20260602_category_design">
+    <link rel="stylesheet" href="/css/admin.css?20260602_category_redesign">
 </head>
 <body class="has-collapsible-sidebar">
 <div class="workspace-layout">
@@ -24,26 +24,10 @@
                     <path d="M4 17h16" />
                 </svg>
             </button>
-            <div class="page-title-row">
-                <span class="page-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" focusable="false">
-                        <path d="M4 7h6" />
-                        <path d="M14 7h6" />
-                        <path d="M4 12h10" />
-                        <path d="M18 12h2" />
-                        <path d="M4 17h4" />
-                        <path d="M12 17h8" />
-                    </svg>
-                </span>
-                <div>
-                    <p class="page-kicker">기준 정보 관리</p>
-                    <h1>카테고리 관리</h1>
-                    <p class="page-description">CPU, RAM, GPU, SSD 등 부품 분류 기준을 관리합니다.</p>
-                </div>
-            </div>
-            <div class="header-actions">
-                <a class="btn btn-secondary" data-route="dashboard">운영 현황</a>
-                <a class="btn btn-primary" href="#category-form-title">카테고리 추가</a>
+            <div>
+                <p class="page-kicker">기준 정보 관리</p>
+                <h1>카테고리 관리</h1>
+                <p class="page-description">CPU, RAM, GPU, SSD 등 부품 분류 기준을 관리합니다.</p>
             </div>
         </header>
 
@@ -55,7 +39,7 @@
                         <p>카테고리명, 설명, 사용 여부로 목록을 좁혀 봅니다.</p>
                     </div>
                     <!-- API: GET /api/workspaces/{companyCode}/categories?keyword=&active= -->
-                    <form class="filter-form" action="#" method="get" autocomplete="off">
+                    <form class="filter-form" action="#" method="get" autocomplete="off" data-category-filter-form>
                         <label>
                             <span>검색어</span>
                             <input type="search" name="keyword" placeholder="예: RAM" autocomplete="off">
@@ -73,150 +57,137 @@
                 </section>
 
                 <section class="table-card" aria-labelledby="category-list-title">
-                    <div class="table-header">
+                    <div class="table-header inline-summary-header">
                         <div>
                             <h2 id="category-list-title">카테고리 목록</h2>
                             <p>회사 작업공간에서 사용하는 부품 분류 기준입니다.</p>
                         </div>
                         <div class="list-summary-box" aria-label="카테고리 목록 요약">
-                            <span class="summary-label">목록 현황</span>
                             <dl class="list-summary">
                                 <div>
                                     <dt>전체</dt>
-                                    <dd>8</dd>
+                                    <dd data-summary-total>0</dd>
                                 </div>
                                 <div>
                                     <dt>사용</dt>
-                                    <dd>6</dd>
+                                    <dd data-summary-active>0</dd>
                                 </div>
                                 <div>
                                     <dt>중지</dt>
-                                    <dd>2</dd>
-                                </div>
-                                <div>
-                                    <dt>템플릿</dt>
-                                    <dd>5</dd>
+                                    <dd data-summary-inactive>0</dd>
                                 </div>
                             </dl>
-                            <p>사용 중 6개는 부품 등록 가능, 템플릿 5개는 검수 기준과 연결됨</p>
                         </div>
                     </div>
 
-                    <!--
-                        API 연결 예정:
-                        - 목록: GET /api/workspaces/{companyCode}/categories
-                        - 생성: POST /api/workspaces/{companyCode}/categories
-                        - 수정: PATCH /api/workspaces/{companyCode}/categories/{categoryId}
-                        - 사용 여부: PATCH /api/workspaces/{companyCode}/categories/{categoryId}/active
-
-                        DTO 후보:
-                        - CategoryListResponse(categoryId, categoryName, description, active, createdByName, createdAt, updatedAt)
-                        - CreateCategoryRequest(categoryName, description, active)
-                        - UpdateCategoryRequest(categoryName, description)
-                        - UpdateCategoryActiveRequest(active)
-                    -->
-                    <div class="data-table" role="table" aria-label="카테고리 목록">
-                        <div class="data-row table-head" role="row">
+                    <div class="data-table" role="table" aria-label="카테고리 목록" data-category-table>
+                        <div class="data-row management-data-row table-head" role="row">
                             <span role="columnheader">카테고리명</span>
                             <span role="columnheader">설명</span>
                             <span role="columnheader">사용 여부</span>
-                            <span role="columnheader">등록자</span>
                             <span role="columnheader">수정일</span>
-                            <span role="columnheader">관리</span>
                         </div>
-                        <div class="data-row" role="row">
-                            <strong role="cell" data-label="카테고리명">CPU</strong>
-                            <span role="cell" data-label="설명">데스크톱/서버 프로세서</span>
-                            <span role="cell" data-label="사용 여부"><em class="badge badge-active">사용 중</em></span>
-                            <span role="cell" data-label="등록자">김관리</span>
-                            <span role="cell" data-label="수정일">2026-05-18</span>
-                            <span role="cell" class="row-actions" data-label="관리">
-                                <button type="button">수정</button>
-                                <button type="button">중지</button>
-                            </span>
+                        <div class="data-row management-data-row category-empty-row" role="row" data-category-empty>
+                            <span role="cell" data-label="안내">카테고리 목록을 불러오는 중입니다.</span>
                         </div>
-                        <div class="data-row" role="row">
-                            <strong role="cell" data-label="카테고리명">RAM</strong>
-                            <span role="cell" data-label="설명">DDR3, DDR4, DDR5 메모리</span>
-                            <span role="cell" data-label="사용 여부"><em class="badge badge-active">사용 중</em></span>
-                            <span role="cell" data-label="등록자">박운영</span>
-                            <span role="cell" data-label="수정일">2026-05-17</span>
-                            <span role="cell" class="row-actions" data-label="관리">
-                                <button type="button">수정</button>
-                                <button type="button">중지</button>
-                            </span>
-                        </div>
-                        <div class="data-row" role="row">
-                            <strong role="cell" data-label="카테고리명">GPU</strong>
-                            <span role="cell" data-label="설명">그래픽카드, 쿨러 상태 검수 대상</span>
-                            <span role="cell" data-label="사용 여부"><em class="badge badge-active">사용 중</em></span>
-                            <span role="cell" data-label="등록자">김관리</span>
-                            <span role="cell" data-label="수정일">2026-05-16</span>
-                            <span role="cell" class="row-actions" data-label="관리">
-                                <button type="button">수정</button>
-                                <button type="button">중지</button>
-                            </span>
-                        </div>
-                        <div class="data-row" role="row">
-                            <strong role="cell" data-label="카테고리명">SSD</strong>
-                            <span role="cell" data-label="설명">SATA/NVMe 저장장치</span>
-                            <span role="cell" data-label="사용 여부"><em class="badge badge-active">사용 중</em></span>
-                            <span role="cell" data-label="등록자">이검수</span>
-                            <span role="cell" data-label="수정일">2026-05-15</span>
-                            <span role="cell" class="row-actions" data-label="관리">
-                                <button type="button">수정</button>
-                                <button type="button">중지</button>
-                            </span>
-                        </div>
-                        <div class="data-row" role="row">
-                            <strong role="cell" data-label="카테고리명">Mainboard</strong>
-                            <span role="cell" data-label="설명">메인보드, 소켓/핀 상태 확인</span>
-                            <span role="cell" data-label="사용 여부"><em class="badge badge-active">사용 중</em></span>
-                            <span role="cell" data-label="등록자">김관리</span>
-                            <span role="cell" data-label="수정일">2026-05-13</span>
-                            <span role="cell" class="row-actions" data-label="관리">
-                                <button type="button">수정</button>
-                                <button type="button">중지</button>
-                            </span>
-                        </div>
-                        <div class="data-row" role="row">
-                            <strong role="cell" data-label="카테고리명">Power</strong>
-                            <span role="cell" data-label="설명">파워서플라이, 출력 테스트 대상</span>
-                            <span role="cell" data-label="사용 여부"><em class="badge badge-inactive">사용 안 함</em></span>
-                            <span role="cell" data-label="등록자">박운영</span>
-                            <span role="cell" data-label="수정일">2026-05-10</span>
-                            <span role="cell" class="row-actions" data-label="관리">
-                                <button type="button">수정</button>
-                                <button type="button">사용</button>
-                            </span>
+                    </div>
+                    <div class="pagination-bar" data-category-pagination hidden>
+                        <p data-page-info>1 / 1 페이지</p>
+                        <div class="pagination-actions">
+                            <button type="button" data-page-prev>이전</button>
+                            <button type="button" data-page-next>다음</button>
                         </div>
                     </div>
                 </section>
             </div>
 
             <aside class="side-panel" aria-labelledby="category-form-title">
-                <div class="panel-card">
-                    <h2 id="category-form-title">카테고리 등록</h2>
-                    <p>부품 마스터 등록 전에 사용할 분류 기준을 먼저 만듭니다.</p>
-                    <!-- API: POST /api/workspaces/{companyCode}/categories -->
-                    <form class="category-form" action="#" method="post" autocomplete="off">
-                        <label>
-                            <span>카테고리명</span>
-                            <input type="text" name="categoryName" placeholder="예: Cooling Fan" autocomplete="off">
-                        </label>
-                        <label>
-                            <span>설명</span>
-                            <textarea name="description" rows="4" placeholder="쿨러, 팬, 방열 부품 검수 기준"></textarea>
-                        </label>
-                        <label class="switch-row">
-                            <input type="checkbox" name="active" checked>
-                            <span>사용 중으로 등록</span>
-                        </label>
-                        <div class="form-actions">
-                            <button class="btn btn-primary" type="submit">저장</button>
-                            <button class="btn btn-secondary" type="reset">초기화</button>
+                <div class="panel-card category-work-panel">
+                    <div class="panel-mode is-active" data-category-panel="create">
+                        <h2 id="category-form-title">카테고리 등록</h2>
+                        <p>부품 마스터 등록 전에 사용할 분류 기준을 먼저 만듭니다.</p>
+                        <!-- API: POST /api/workspaces/{companyCode}/categories -->
+                        <form class="category-form" action="#" method="post" autocomplete="off" data-category-create-form>
+                            <label>
+                                <span>카테고리명</span>
+                                <input type="text" name="categoryName" placeholder="예: Cooling Fan" autocomplete="off" required>
+                            </label>
+                            <label>
+                                <span>설명</span>
+                                <textarea name="description" rows="4" placeholder="쿨러, 팬, 방열 부품 검수 기준"></textarea>
+                            </label>
+                            <label class="switch-row">
+                                <input type="checkbox" name="active" checked>
+                                <span>사용 중으로 등록</span>
+                            </label>
+                            <div class="form-actions">
+                                <button class="btn btn-primary" type="submit">저장</button>
+                                <button class="btn btn-secondary" type="reset">초기화</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="panel-mode" data-category-panel="detail" hidden>
+                        <div class="panel-title-bar">
+                            <div>
+                                <h2>카테고리 상세</h2>
+                                <p>선택한 카테고리 정보를 확인합니다.</p>
+                            </div>
+                            <button class="panel-link-button" type="button" data-category-create-mode>새 카테고리 등록</button>
                         </div>
-                    </form>
+
+                        <div class="side-detail-card">
+                            <strong data-detail-name>-</strong>
+                            <div class="detail-badge-row">
+                                <em class="badge badge-active" data-detail-active>-</em>
+                            </div>
+                        </div>
+
+                        <dl class="detail-list">
+                            <div>
+                                <dt>설명</dt>
+                                <dd data-detail-description>-</dd>
+                            </div>
+                            <div>
+                                <dt>수정일</dt>
+                                <dd data-detail-updated-at>-</dd>
+                            </div>
+                        </dl>
+
+                        <div class="form-actions">
+                            <button class="btn btn-primary" type="button" data-category-edit-mode>수정</button>
+                        </div>
+                    </div>
+
+                    <div class="panel-mode" data-category-panel="edit" hidden>
+                        <div class="panel-title-bar">
+                            <div>
+                                <h2>카테고리 수정</h2>
+                                <p>선택한 카테고리의 정보를 수정합니다.</p>
+                            </div>
+                            <button class="panel-link-button" type="button" data-category-create-mode>새 카테고리 등록</button>
+                        </div>
+
+                        <!-- API: PATCH /api/workspaces/{companyCode}/categories/{categoryId} -->
+                        <form class="category-form" action="#" method="post" autocomplete="off" data-category-edit-form>
+                            <label>
+                                <span>카테고리명</span>
+                                <input type="text" name="categoryName" autocomplete="off" required>
+                            </label>
+                            <label>
+                                <span>설명</span>
+                                <textarea name="description" rows="4"></textarea>
+                            </label>
+                            <label class="switch-row">
+                                <input type="checkbox" name="active">
+                                <span>사용 중</span>
+                            </label>
+                            <div class="form-actions">
+                                <button class="btn btn-primary" type="submit">저장</button>
+                                <button class="btn btn-secondary" type="button" data-category-detail-mode>취소</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
 
                 <div class="panel-card muted-panel">
