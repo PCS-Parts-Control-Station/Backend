@@ -134,6 +134,18 @@ pcs-ui.js
 - 인증 API 호출 방식은 `docs/ai/pcs-auth-client-rules.md`를 따른다.
 - 페이징 목록 화면은 `docs/ai/pcs-pagination-rules.md`를 따른다.
 
+입고 화면 JS:
+
+```text
+inbound.js
+inbound-register.js
+```
+
+- `inbound.js`는 입고 전표 목록, 검색, 페이지네이션, 우측 상세 패널, 전표 취소 모달을 담당한다.
+- `inbound-register.js`는 입고 전표 등록, 부품 검색, 부품 라인 편집, 저장 확인 모달을 담당한다.
+- 입고 목록은 `pcs-api.js`, `pcs-pagination.js`, `pcs-ui.js`를 함께 사용한다.
+- 입고 등록은 `pcs-api.js`, `pcs-ui.js`를 함께 사용한다.
+
 ## PageController 기준
 
 PageController는 정적 HTML forward만 한다.

@@ -24,6 +24,58 @@ com.pcs.domain.stock
 | GET | `/api/workspaces/{companyCode}/stock/movements/{movementId}` | 입출고 재고 변화 라인 상세 |
 | GET | `/api/workspaces/{companyCode}/stock/movements/{movementId}/units` | 라인에 포함된 개별 부품 목록 |
 
+## 전표 목록
+
+`GET /api/workspaces/{companyCode}/stock/documents`
+
+Query:
+
+| 이름 | 설명 |
+|---|---|
+| `documentType` | `INBOUND`, `OUTBOUND` |
+| `keyword` | 전표번호, 거래처명, 부품명, 모델명, 부품코드 검색 |
+| `partnerId` | 거래처 필터 |
+| `documentStatus` | `COMPLETED`, `CANCELED` |
+| `page` | 0부터 시작 |
+| `size` | 기본 20, 최대 100 |
+| `limit` | 기존 단순 목록 호환용 size 별칭 |
+
+응답은 `PageResultDto<SearchStockDocumentResponse, SearchStockDocumentSummaryResponse>` 구조를 사용한다.
+
+목록 정렬은 `document_id DESC` 기준이다. 전표번호는 긴 랜덤 식별자를 포함하므로 정렬 기준으로 쓰지 않는다.
+
+요약 필드:
+
+| 이름 | 설명 |
+|---|---|
+| `totalCount` | 조회 조건에 맞는 전표 수 |
+| `totalQuantity` | 조회 조건에 맞는 원본 movement 수량 합계 |
+| `waitingQuantity` | `IN_STOCK`, `WAITING`, `active=true` 개별 부품 수 |
+| `canceledCount` | 취소 전표 수 |
+
+## 전표 상세
+
+`GET /api/workspaces/{companyCode}/stock/documents/{documentId}`
+
+상세 응답은 전표 헤더, 부품 라인, 라인별 개별 부품 목록을 한 번에 내려준다.
+
+주요 필드:
+
+| 이름 | 설명 |
+|---|---|
+| `documentId` | 내부 식별자 |
+| `documentNo` | 사용자 확인용 전표번호 |
+| `documentType` | `INBOUND`, `OUTBOUND` |
+| `documentStatus` | `COMPLETED`, `CANCELED` |
+| `partnerId`, `partnerName` | 거래처 정보 |
+| `reason` | 전표 사유 |
+| `processedByName` | 처리자 이름 |
+| `lineCount`, `totalQuantity` | 라인 수와 총 수량 |
+| `cancelable` | 현재 취소 가능 여부 |
+| `cancelBlockedReason` | 취소 불가 사유 |
+| `lines` | 부품별 movement 목록 |
+| `lines[].units` | movement에 포함된 개별 부품 목록 |
+
 ## 주요 규칙
 
 - `tb_stock_document`는 거래처와 연결된 입출고 전표 헤더다.
@@ -47,6 +99,26 @@ movement_type = INBOUND_CANCEL 또는 OUTBOUND_CANCEL
 movement_status = COMPLETED
 canceled_movement_id = 원본 movement_id
 ```
+
+입고 전표 취소 가능 조건:
+
+- 전표가 `CANCELED` 상태가 아니어야 한다.
+- 현재 입고 관리 화면에서는 `document_type = INBOUND` 전표만 취소한다.
+- 원본 입고 movement의 개별 부품이 모두 `unit_status = IN_STOCK`이어야 한다.
+- 원본 입고 movement의 개별 부품이 모두 `inspection_status = WAITING`이어야 한다.
+- 원본 입고 movement의 개별 부품이 모두 `sales_status = HOLD`이어야 한다.
+- 원본 입고 movement의 개별 부품이 모두 `active = true`여야 한다.
+
+입고 전표 취소 처리:
+
+- 원본 document의 `document_status`를 `CANCELED`로 변경한다.
+- 원본 movement의 `movement_status`를 `CANCELED`로 변경한다.
+- 원본 movement마다 `INBOUND_CANCEL` movement를 추가한다.
+- 취소 movement의 `before_quantity`, `after_quantity`를 저장한다.
+- 원본 movement에 연결된 개별 부품은 취소 movement에도 매핑한다.
+- 취소 movement unit 이력은 `before_unit_status = IN_STOCK`, `after_unit_status = CANCELED`로 저장한다.
+- 개별 부품은 `unit_status = CANCELED`, `active = false`로 변경한다.
+- `tb_part_stock.quantity`는 취소 수량만큼 차감한다.
 
 ## 하네스 포인트
 
