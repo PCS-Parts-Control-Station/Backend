@@ -9,22 +9,41 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/admin.css?20260519_1">
+    <link rel="stylesheet" href="/css/admin.css?20260602_category_design">
 </head>
-<body>
+<body class="has-collapsible-sidebar">
 <div class="workspace-layout">
     <div data-workspace-sidebar data-active-route="categories"></div>
 
     <main class="workspace-main">
         <header class="workspace-header">
-            <div>
-                <p class="page-kicker">기준 정보 관리</p>
-                <h1>카테고리 관리</h1>
-                <p class="page-description">CPU, RAM, GPU, SSD 등 부품 분류 기준을 관리합니다.</p>
+            <button class="menu-toggle" type="button" data-sidebar-toggle aria-controls="workspace-sidebar" aria-expanded="false" aria-label="메뉴 열기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M4 7h16" />
+                    <path d="M4 12h16" />
+                    <path d="M4 17h16" />
+                </svg>
+            </button>
+            <div class="page-title-row">
+                <span class="page-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <path d="M4 7h6" />
+                        <path d="M14 7h6" />
+                        <path d="M4 12h10" />
+                        <path d="M18 12h2" />
+                        <path d="M4 17h4" />
+                        <path d="M12 17h8" />
+                    </svg>
+                </span>
+                <div>
+                    <p class="page-kicker">기준 정보 관리</p>
+                    <h1>카테고리 관리</h1>
+                    <p class="page-description">CPU, RAM, GPU, SSD 등 부품 분류 기준을 관리합니다.</p>
+                </div>
             </div>
             <div class="header-actions">
                 <a class="btn btn-secondary" data-route="dashboard">운영 현황</a>
-                <button class="btn btn-primary" type="button">카테고리 추가</button>
+                <a class="btn btn-primary" href="#category-form-title">카테고리 추가</a>
             </div>
         </header>
 
@@ -36,10 +55,10 @@
                         <p>카테고리명, 설명, 사용 여부로 목록을 좁혀 봅니다.</p>
                     </div>
                     <!-- API: GET /api/workspaces/{companyCode}/categories?keyword=&active= -->
-                    <form class="filter-form" action="#" method="get">
+                    <form class="filter-form" action="#" method="get" autocomplete="off">
                         <label>
                             <span>검색어</span>
-                            <input type="search" name="keyword" placeholder="예: RAM">
+                            <input type="search" name="keyword" placeholder="예: RAM" autocomplete="off">
                         </label>
                         <label>
                             <span>사용 여부</span>
@@ -106,67 +125,67 @@
                             <span role="columnheader">관리</span>
                         </div>
                         <div class="data-row" role="row">
-                            <strong role="cell">CPU</strong>
-                            <span role="cell">데스크톱/서버 프로세서</span>
-                            <span role="cell"><em class="badge badge-active">사용 중</em></span>
-                            <span role="cell">김관리</span>
-                            <span role="cell">2026-05-18</span>
-                            <span role="cell" class="row-actions">
+                            <strong role="cell" data-label="카테고리명">CPU</strong>
+                            <span role="cell" data-label="설명">데스크톱/서버 프로세서</span>
+                            <span role="cell" data-label="사용 여부"><em class="badge badge-active">사용 중</em></span>
+                            <span role="cell" data-label="등록자">김관리</span>
+                            <span role="cell" data-label="수정일">2026-05-18</span>
+                            <span role="cell" class="row-actions" data-label="관리">
                                 <button type="button">수정</button>
                                 <button type="button">중지</button>
                             </span>
                         </div>
                         <div class="data-row" role="row">
-                            <strong role="cell">RAM</strong>
-                            <span role="cell">DDR3, DDR4, DDR5 메모리</span>
-                            <span role="cell"><em class="badge badge-active">사용 중</em></span>
-                            <span role="cell">박운영</span>
-                            <span role="cell">2026-05-17</span>
-                            <span role="cell" class="row-actions">
+                            <strong role="cell" data-label="카테고리명">RAM</strong>
+                            <span role="cell" data-label="설명">DDR3, DDR4, DDR5 메모리</span>
+                            <span role="cell" data-label="사용 여부"><em class="badge badge-active">사용 중</em></span>
+                            <span role="cell" data-label="등록자">박운영</span>
+                            <span role="cell" data-label="수정일">2026-05-17</span>
+                            <span role="cell" class="row-actions" data-label="관리">
                                 <button type="button">수정</button>
                                 <button type="button">중지</button>
                             </span>
                         </div>
                         <div class="data-row" role="row">
-                            <strong role="cell">GPU</strong>
-                            <span role="cell">그래픽카드, 쿨러 상태 검수 대상</span>
-                            <span role="cell"><em class="badge badge-active">사용 중</em></span>
-                            <span role="cell">김관리</span>
-                            <span role="cell">2026-05-16</span>
-                            <span role="cell" class="row-actions">
+                            <strong role="cell" data-label="카테고리명">GPU</strong>
+                            <span role="cell" data-label="설명">그래픽카드, 쿨러 상태 검수 대상</span>
+                            <span role="cell" data-label="사용 여부"><em class="badge badge-active">사용 중</em></span>
+                            <span role="cell" data-label="등록자">김관리</span>
+                            <span role="cell" data-label="수정일">2026-05-16</span>
+                            <span role="cell" class="row-actions" data-label="관리">
                                 <button type="button">수정</button>
                                 <button type="button">중지</button>
                             </span>
                         </div>
                         <div class="data-row" role="row">
-                            <strong role="cell">SSD</strong>
-                            <span role="cell">SATA/NVMe 저장장치</span>
-                            <span role="cell"><em class="badge badge-active">사용 중</em></span>
-                            <span role="cell">이검수</span>
-                            <span role="cell">2026-05-15</span>
-                            <span role="cell" class="row-actions">
+                            <strong role="cell" data-label="카테고리명">SSD</strong>
+                            <span role="cell" data-label="설명">SATA/NVMe 저장장치</span>
+                            <span role="cell" data-label="사용 여부"><em class="badge badge-active">사용 중</em></span>
+                            <span role="cell" data-label="등록자">이검수</span>
+                            <span role="cell" data-label="수정일">2026-05-15</span>
+                            <span role="cell" class="row-actions" data-label="관리">
                                 <button type="button">수정</button>
                                 <button type="button">중지</button>
                             </span>
                         </div>
                         <div class="data-row" role="row">
-                            <strong role="cell">Mainboard</strong>
-                            <span role="cell">메인보드, 소켓/핀 상태 확인</span>
-                            <span role="cell"><em class="badge badge-active">사용 중</em></span>
-                            <span role="cell">김관리</span>
-                            <span role="cell">2026-05-13</span>
-                            <span role="cell" class="row-actions">
+                            <strong role="cell" data-label="카테고리명">Mainboard</strong>
+                            <span role="cell" data-label="설명">메인보드, 소켓/핀 상태 확인</span>
+                            <span role="cell" data-label="사용 여부"><em class="badge badge-active">사용 중</em></span>
+                            <span role="cell" data-label="등록자">김관리</span>
+                            <span role="cell" data-label="수정일">2026-05-13</span>
+                            <span role="cell" class="row-actions" data-label="관리">
                                 <button type="button">수정</button>
                                 <button type="button">중지</button>
                             </span>
                         </div>
                         <div class="data-row" role="row">
-                            <strong role="cell">Power</strong>
-                            <span role="cell">파워서플라이, 출력 테스트 대상</span>
-                            <span role="cell"><em class="badge badge-inactive">사용 안 함</em></span>
-                            <span role="cell">박운영</span>
-                            <span role="cell">2026-05-10</span>
-                            <span role="cell" class="row-actions">
+                            <strong role="cell" data-label="카테고리명">Power</strong>
+                            <span role="cell" data-label="설명">파워서플라이, 출력 테스트 대상</span>
+                            <span role="cell" data-label="사용 여부"><em class="badge badge-inactive">사용 안 함</em></span>
+                            <span role="cell" data-label="등록자">박운영</span>
+                            <span role="cell" data-label="수정일">2026-05-10</span>
+                            <span role="cell" class="row-actions" data-label="관리">
                                 <button type="button">수정</button>
                                 <button type="button">사용</button>
                             </span>
@@ -180,14 +199,14 @@
                     <h2 id="category-form-title">카테고리 등록</h2>
                     <p>부품 마스터 등록 전에 사용할 분류 기준을 먼저 만듭니다.</p>
                     <!-- API: POST /api/workspaces/{companyCode}/categories -->
-                    <form class="category-form" action="#" method="post">
+                    <form class="category-form" action="#" method="post" autocomplete="off">
                         <label>
                             <span>카테고리명</span>
-                            <input type="text" name="categoryName" value="Cooling Fan">
+                            <input type="text" name="categoryName" placeholder="예: Cooling Fan" autocomplete="off">
                         </label>
                         <label>
                             <span>설명</span>
-                            <textarea name="description" rows="4">쿨러, 팬, 방열 부품 검수 기준</textarea>
+                            <textarea name="description" rows="4" placeholder="쿨러, 팬, 방열 부품 검수 기준"></textarea>
                         </label>
                         <label class="switch-row">
                             <input type="checkbox" name="active" checked>
@@ -201,7 +220,7 @@
                 </div>
 
                 <div class="panel-card muted-panel">
-                    <h2>연동 메모</h2>
+                    <h2>운영 메모</h2>
                     <ul>
                         <li>카테고리명은 회사 안에서 중복 불가</li>
                         <li>사용 안 함 상태는 신규 부품 등록에서 제외</li>
@@ -212,8 +231,7 @@
         </section>
     </main>
 </div>
-<script src="/js/pcs-api.js?20260526_1"></script>
+<script src="/js/pcs-api.js?20260529_workspace_guard"></script>
 <script src="/js/workspace-layout.js?20260527_1"></script>
-<script src="/js/dashboard.js?20260526_1"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
     const PAGE_SIZE = 10;
 
     const partnerTypeLabels = {
@@ -27,7 +27,7 @@
         BOTH: "badge-active"
     };
 
-    const form = document.querySelector(".partner-filter-form");
+    const form = document.querySelector(".management-filter-form");
     const table = document.querySelector("[data-partner-table]");
     const pagination = document.querySelector("[data-partner-pagination]");
     const pageInfo = document.querySelector("[data-page-info]");
@@ -98,7 +98,7 @@
     const setEmptyMessage = (message) => {
         clearRows();
         const row = document.createElement("div");
-        row.className = "data-row partner-data-row partner-empty-row";
+        row.className = "data-row management-data-row empty-data-row";
         row.setAttribute("role", "row");
 
         const cell = document.createElement("span");
@@ -231,7 +231,7 @@
 
         items.forEach((partner) => {
             const row = document.createElement("div");
-            row.className = "data-row partner-data-row is-selectable";
+            row.className = "data-row management-data-row is-selectable";
             row.setAttribute("role", "row");
             row.setAttribute("tabindex", "0");
             row.dataset.partnerId = String(partner.partnerId);

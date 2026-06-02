@@ -1,0 +1,195 @@
+# Design MD Rules
+
+디자인 MD를 추가하거나 수정할 때의 운영 규칙이다.
+
+목적은 화면을 하나 만들 때마다 문서가 다시 꼬이지 않게 하는 것이다. 디자인 변경은 화면별 기록으로 남기지 않고, 가능한 한 공통 규칙의 올바른 위치에 반영한다.
+
+## 문서 우선순위
+
+디자인 기준은 아래 순서로 강하다.
+
+```text
+1. pcs-design-system.md
+2. design-md-rules.md
+3. design/*.md 컴포넌트/화면 유형 문서
+4. features/*.md 또는 페이지별 설명
+```
+
+기준:
+
+- 상위 문서와 하위 문서가 충돌하면 상위 문서를 우선한다.
+- 하위 문서가 상위 문서와 다르게 가야 하면 먼저 상위 문서를 수정할지 판단한다.
+- 페이지별 문서는 공통 디자인을 새로 정의하지 않는다.
+- 페이지별 문서는 필드, 데이터, API, 업무 문구, 정말 필요한 예외만 적는다.
+
+## 한 규칙은 한 곳에만 둔다
+
+이미 정해진 규칙을 다른 문서에서 다시 정의하지 않는다.
+
+예:
+
+- 버튼 색과 높이: `pcs-design-system.md`
+- 업무 화면 큰 배치: `workspace-layout.md`
+- 검색/목록/요약/페이징: `data-table.md`
+- 오른쪽 등록/수정 폼: `form-panel.md`
+- 입고/검수/출고/이력 흐름 패널: `workflow-panel.md`
+- 단계별 업무 입력/전표 등록 흐름: `operation-flow.md`
+- 모달/토스트: `modal-dialog.md`
+- 브레이크포인트/모바일 전환: `responsive-layout.md`
+
+다른 문서에서 언급해야 하면 규칙을 반복하지 말고 해당 문서를 참조한다.
+
+## 수정 위치 찾는 순서
+
+디자인 변경 후 MD를 수정할 때는 먼저 아래 순서로 위치를 찾는다.
+
+1. 색, 폰트, radius, 그림자, 버튼, 입력창, 배지 같은 시각 토큰인가?
+   - `pcs-design-system.md`
+2. 좌측 사이드바, 본문 헤더, `content-grid`, `side-panel` 같은 업무 화면 구조인가?
+   - `workspace-layout.md`
+3. 검색 폼, 필터, 목록, 요약, 페이징, 행 선택인가?
+   - `data-table.md`
+4. 오른쪽 패널 안의 등록/수정 입력 폼인가?
+   - `form-panel.md`
+5. 오른쪽 패널 안의 업무 흐름 안내, 전표 상세, 작업 단계인가?
+   - `workflow-panel.md`
+6. 본문에서 여러 단계 입력 후 전표나 처리 결과를 저장하는 업무 흐름인가?
+   - `operation-flow.md`
+7. 확인 모달, 입력 모달, 토스트인가?
+   - `modal-dialog.md`
+8. 화면 폭, 사이드바 접힘, 모바일 카드형 전환인가?
+   - `responsive-layout.md`
+9. 상세 페이지, 이력 타임라인, 대시보드 전용 구조인가?
+   - 해당 디자인 문서
+
+위에 맞는 문서가 없을 때만 새 디자인 MD를 만든다.
+
+## 변경 전 검색
+
+문서를 수정하기 전에 같은 규칙이 이미 있는지 검색한다.
+
+```powershell
+rg -n "검색할 키워드" Backend\docs\ai\design Backend\docs\ai\pcs-design-system.md
+```
+
+이미 있으면 그 문서를 수정한다.
+
+새 문서를 만들면 반드시 아래도 갱신한다.
+
+- `docs/ai/pcs-design-system.md`의 하위 디자인 문서 목록
+- `docs/ai/AI_INDEX.md`의 디자인 문서 선택 기준
+
+## 페이지 이름보다 조건을 쓴다
+
+공통 디자인 규칙은 페이지 이름으로 쓰지 않는다.
+
+피해야 할 표현:
+
+```text
+거래처 화면처럼
+카테고리 화면 기준
+입고 화면은 예외적으로
+```
+
+권장 표현:
+
+```text
+필터가 4개 이상인 검색 폼
+단순 관리 목록
+전표형 목록
+요약 숫자가 보조 정보인 목록
+업무 흐름을 보여주는 오른쪽 패널
+```
+
+페이지 이름은 예시로만 쓸 수 있다. 예시는 규칙이 아니며, 예시 문단에는 `예시`라고 명시한다.
+
+## 디자인 class 이름 기준
+
+디자인 class는 페이지 이름이 아니라 화면 역할을 기준으로 붙인다.
+
+기준:
+
+- 특정 도메인 화면에서만 쓰기 시작했더라도, 재사용 가능한 스타일이면 의미 기반 이름을 사용한다.
+- JS/API 식별을 위한 `data-*` 속성은 도메인 이름을 사용할 수 있다.
+- CSS modifier는 화면 유형, 행 유형, 패널 역할을 드러내야 한다.
+
+권장 예:
+
+```text
+management-filter-form
+document-filter-form
+inline-summary-header
+management-data-row
+document-data-table
+document-data-row
+side-work-panel
+side-detail-card
+operation-flow-form
+operation-step-card
+```
+
+피해야 할 예:
+
+```text
+partner-filter-form
+stock-filter-form
+partner-table-header
+inbound-table
+inbound-row
+register-flow
+```
+
+도메인별 동작을 구분해야 하는 경우에는 class가 아니라 `data-*`를 사용한다.
+
+```text
+data-partner-panel
+data-inbound-panel
+data-partner-table
+data-inbound-pagination
+```
+
+## 충돌 해결 기준
+
+같은 UI 개념이 여러 문서에서 다르게 정의되어 있으면 아래 기준으로 정리한다.
+
+- 검색 폼 충돌: `data-table.md`에는 구조, `responsive-layout.md`에는 폭별 전환만 둔다.
+- 목록 요약 충돌: `data-table.md`에서 요약 중요도 기준으로 정의한다.
+- 테이블 모바일 충돌: `responsive-layout.md`에서 단순 목록과 전표형 목록을 나눠 정의한다.
+- 오른쪽 패널 충돌: 입력 폼은 `form-panel.md`, 업무 흐름/상세 안내는 `workflow-panel.md`로 분리한다.
+- 모달/토스트 충돌: `modal-dialog.md`에서 공통 구조와 실행 전/후 피드백 기준을 정의한다.
+
+충돌을 해결할 때는 한 문서를 기준 문서로 남기고, 다른 문서의 중복 정의는 참조 문장으로 바꾼다.
+
+## 화면 완성 후 MD 반영 순서
+
+완성된 화면에서 좋은 패턴이 생기면 아래 순서로 반영한다.
+
+1. 이 패턴이 다른 화면에도 쓰일 수 있는지 판단한다.
+2. 재사용 가능하면 컴포넌트/화면 유형 문서에 반영한다.
+3. 해당 화면에만 필요한 데이터 차이면 feature 또는 페이지 설명에 남긴다.
+4. 다른 문서에서 같은 내용을 설명하고 있으면 제거하고 참조로 바꾼다.
+5. `AI_INDEX.md`에서 해당 문서를 찾을 수 있는지 확인한다.
+
+## MD 변경 후 화면 재적용 순서
+
+디자인 MD를 바꿨다면 해당 규칙을 쓰는 화면도 함께 확인한다.
+
+1. 변경한 class, 문구, 컴포넌트 이름을 `rg`로 검색한다.
+2. 검색된 HTML/CSS/JS가 새 MD 기준과 맞는지 확인한다.
+3. 같은 패턴을 쓰는 대표 화면을 최소 2개 확인한다.
+4. 페이지별 예외가 생기면 공통 규칙을 수정할지, 해당 feature 문서에 예외로 둘지 먼저 판단한다.
+5. 적용 후 `processResources` 또는 관련 하네스 검증을 실행한다.
+
+예:
+
+```powershell
+rg -n "inline-summary-header|management-filter-form" Backend\src\main\resources\static Backend\docs\ai
+```
+
+## 금지
+
+- 화면 하나를 완성한 뒤 그 화면 이름으로 공통 규칙을 새로 만들지 않는다.
+- 같은 스타일을 `data-table.md`와 `responsive-layout.md`에 동시에 정의하지 않는다.
+- 특정 페이지에서 생긴 예외를 검토 없이 공통 규칙으로 올리지 않는다.
+- 이미 존재하는 규칙을 복사해 다른 문서에 붙이지 않는다.
+- 디자인 MD를 수정했는데 `AI_INDEX.md`에서 찾을 수 없게 두지 않는다.

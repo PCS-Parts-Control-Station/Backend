@@ -1,10 +1,11 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="PCS 입고 등록 화면입니다. 거래처와 입고 부품 라인을 입력하고 관리번호 발급 대상을 확인합니다.">
     <title>PCS | 입고 등록</title>
+    <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -27,7 +28,7 @@
                 </svg>
             </button>
             <div class="page-title-row">
-                <span class="page-icon page-icon-inbound" aria-hidden="true">
+                <span class="page-icon page-icon-document" aria-hidden="true">
                     <svg viewBox="0 0 24 24" focusable="false">
                         <path d="M4 11.5 12 16l8-4.5" />
                         <path d="M4 7.5 12 12l8-4.5L12 3 4 7.5Z" />
@@ -51,8 +52,8 @@
         <section class="content-grid">
             <div class="content-main">
                 <!-- API: POST /api/workspaces/{companyCode}/stock/documents/inbounds -->
-                <form class="register-flow" id="inbound-register-form" action="#" method="post">
-                    <section class="table-card register-card" aria-labelledby="inbound-register-basic-title">
+                <form class="operation-flow-form" id="inbound-register-form" action="#" method="post">
+                    <section class="table-card operation-step-card" aria-labelledby="inbound-register-basic-title">
                         <div class="table-header">
                             <div>
                                 <h2 id="inbound-register-basic-title">
@@ -78,7 +79,7 @@
                         </div>
                     </section>
 
-                    <section class="table-card register-card" aria-labelledby="part-search-title">
+                    <section class="table-card operation-step-card" aria-labelledby="part-search-title">
                         <div class="table-header">
                             <div>
                                 <h2 id="part-search-title">
@@ -134,7 +135,7 @@
                         </div>
                     </section>
 
-                    <section class="table-card register-card" aria-labelledby="inbound-line-title">
+                    <section class="table-card operation-step-card" aria-labelledby="inbound-line-title">
                         <div class="table-header">
                             <div>
                                 <h2 id="inbound-line-title">
@@ -150,7 +151,7 @@
                         </div>
                     </section>
 
-                    <section class="table-card register-card" aria-labelledby="inbound-submit-title">
+                    <section class="table-card operation-step-card" aria-labelledby="inbound-submit-title">
                         <div class="submit-panel">
                             <div>
                                 <h2 id="inbound-submit-title">

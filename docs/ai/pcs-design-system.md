@@ -20,11 +20,13 @@
 docs/ai/design/public-pages.md
 docs/ai/design/workspace-layout.md
 docs/ai/design/responsive-layout.md
+docs/ai/design/design-md-rules.md
 docs/ai/design/dashboard.md
 docs/ai/design/data-table.md
 docs/ai/design/form-panel.md
 docs/ai/design/modal-dialog.md
 docs/ai/design/workflow-panel.md
+docs/ai/design/operation-flow.md
 docs/ai/design/detail-page.md
 docs/ai/design/history-timeline.md
 ```
@@ -32,6 +34,7 @@ docs/ai/design/history-timeline.md
 문서 역할:
 
 - `public-pages.md`: `/`, `/company/register`, `/w`, `/w/{companyCode}` 같은 업무공간 밖 화면
+- `design-md-rules.md`: 디자인 MD 추가/수정 위치, 중복 정의 금지, 충돌 해결 기준
 - `workspace-layout.md`: 로그인 후 좌측 사이드바 기반 업무 화면 공통 레이아웃
 - `responsive-layout.md`: 업무 화면 반응형, 햄버거 사이드바, 테이블 모바일 전환
 - `dashboard.md`: 운영 현황, 통계, 우선 처리 목록
@@ -39,6 +42,7 @@ docs/ai/design/history-timeline.md
 - `form-panel.md`: 오른쪽 등록/수정 패널, 보조 메모 패널
 - `modal-dialog.md`: 등록/수정 모달, 저장 확인 모달, 토스트 구분 기준
 - `workflow-panel.md`: 입고/검수/출고/이력 화면의 오른쪽 업무 흐름 보조 패널
+- `operation-flow.md`: 전표 등록처럼 단계별 입력과 최종 저장이 있는 업무 처리 화면
 - `detail-page.md`: 부품 상세, 사용자 상세, 거래처 상세
 - `history-timeline.md`: 이력 관리, 개별 부품 타임라인
 
@@ -383,11 +387,15 @@ src/main/resources/static/css/admin.css
 
 화면별로 즉흥적으로 색, 버튼, 카드 스타일을 바꾸지 않는다.
 
+디자인 MD를 추가하거나 수정할 때는 먼저 `docs/ai/design/design-md-rules.md`를 따른다. 이미 정해진 규칙이 있는 문서를 찾아 수정하고, 다른 문서에는 같은 내용을 다시 정의하지 않는다.
+
 디자인을 바꿀 때:
 
-1. 해당 화면 유형의 디자인 문서를 먼저 수정한다.
-2. 수정된 기준에 맞춰 화면을 수정한다.
-3. 완성된 화면에서 반복 가능한 패턴이 생기면 다시 디자인 문서에 반영한다.
-4. 데스크톱과 모바일에서 텍스트가 잘리지 않는지 확인한다.
+1. 변경 내용이 어느 디자인 문서의 책임인지 먼저 찾는다.
+2. 이미 같은 규칙이 있으면 그 문서를 수정한다.
+3. 다른 문서에서 언급해야 하면 재정의하지 말고 참조만 둔다.
+4. 수정된 기준에 맞춰 화면을 수정한다.
+5. 완성된 화면에서 반복 가능한 패턴이 생기면 다시 올바른 디자인 문서에 반영한다.
+6. 데스크톱과 모바일에서 텍스트가 잘리지 않는지 확인한다.
 
 이 문서와 하위 디자인 문서가 현재 PCS 화면 디자인의 기준이다.

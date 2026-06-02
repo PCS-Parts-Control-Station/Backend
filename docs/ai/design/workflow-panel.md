@@ -1,4 +1,4 @@
-# Workflow Panel Design
+﻿# Workflow Panel Design
 
 입고, 검수, 출고, 이력 화면의 오른쪽 업무 흐름 보조 패널 기준이다.
 
@@ -26,32 +26,51 @@ PCS 재고 업무의 기본 흐름은 아래 순서를 따른다.
 -> 이력
 ```
 
-화면별 active 단계:
+업무별 active 단계:
 
 ```text
-입고 화면: 입고 active
-검수 화면: 검수 active
-출고 화면: 출고 active
-이력 화면: 이력 active
+입고 업무: 입고 active
+검수 업무: 검수 active
+출고 업무: 출고 active
+이력 업무: 이력 active
 ```
 
 ## 기본 구조
 
+CSS 기준:
+
+```text
+workflow.css
+```
+
+기준:
+
+- `process-panel`, `workflow-list`, `workflow-step`, `process-dot`, `sub-process-list` 시각 구조는 `workflow.css`를 따른다.
+- 오른쪽 패널 카드 자체의 기본 여백과 표면은 `admin.css`의 `panel-card` 기준을 따른다.
+
 ```text
 side-panel
-- panel-card.process-panel
-  - 제목
-  - 짧은 설명
-  - workflow-list
-    - workflow-step.active
-      - process-dot
-      - 현재 단계 제목/설명
-      - sub-process-list
-    - workflow-step
-    - workflow-step
-    - workflow-step
-- panel-card.muted-panel
-  - 운영 규칙
+- panel-mode[data-*-panel="guide"]
+  - panel-card.process-panel
+    - 제목
+    - 짧은 설명
+    - workflow-list
+      - workflow-step.active
+        - process-dot
+        - 현재 단계 제목/설명
+        - sub-process-list
+      - workflow-step
+      - workflow-step
+      - workflow-step
+  - panel-card.muted-panel
+    - 운영 규칙
+- panel-mode[data-*-panel="detail"]
+  - panel-card detail panel
+    - panel-title-bar
+    - 상세 요약 카드
+    - detail-list
+    - 관련 라인 목록
+    - form-actions
 ```
 
 HTML 예:
@@ -85,6 +104,8 @@ HTML 예:
 - 전체 흐름은 세로 타임라인 형태로 보여준다.
 - 타임라인 선은 얇은 `--line` 색상을 사용한다.
 - 패널은 오른쪽 보조 영역이므로 본문 목록보다 강하게 튀면 안 된다.
+- 목록 행을 선택하면 같은 오른쪽 영역에서 상세 모드로 전환할 수 있다.
+- 안내 모드와 상세 모드는 `panel-mode`로 전환하고, 숨겨진 모드는 `hidden`을 사용한다.
 
 ## Active Dot
 
@@ -113,9 +134,9 @@ CSS 기준:
 }
 ```
 
-## 입고 화면 세부 단계
+## 입고 단계 세부 흐름
 
-입고 화면의 active 단계는 아래 세부 흐름을 보여준다.
+입고 업무가 active인 화면은 아래 세부 흐름을 보여준다.
 
 ```text
 1. 거래처 선택
@@ -140,9 +161,9 @@ CSS 기준:
 검수 대기, 판매 보류 상태로 시작합니다.
 ```
 
-## 검수 화면 세부 단계
+## 검수 단계 세부 흐름
 
-검수 화면의 active 단계는 아래 세부 흐름을 사용한다.
+검수 업무가 active인 화면은 아래 세부 흐름을 사용한다.
 
 ```text
 1. 검수 대상 선택
@@ -151,9 +172,9 @@ CSS 기준:
 4. 판매 상태 반영
 ```
 
-## 출고 화면 세부 단계
+## 출고 단계 세부 흐름
 
-출고 화면의 active 단계는 아래 세부 흐름을 사용한다.
+출고 업무가 active인 화면은 아래 세부 흐름을 사용한다.
 
 ```text
 1. 출고 거래처 선택
@@ -162,9 +183,9 @@ CSS 기준:
 4. 재고 차감 및 이력 저장
 ```
 
-## 이력 화면 세부 단계
+## 이력 단계 세부 흐름
 
-이력 화면은 특정 처리 단계보다 추적 흐름을 보여준다.
+이력 업무는 특정 처리 단계보다 추적 흐름을 보여준다.
 
 ```text
 1. 기간/대상 검색
@@ -177,7 +198,7 @@ CSS 기준:
 
 workflow panel 아래에는 화면별 운영 규칙을 `muted-panel`로 둘 수 있다.
 
-입고 화면 예:
+입고 운영 규칙 예:
 
 ```text
 입고 완료 시 수량만큼 관리번호를 생성
@@ -190,6 +211,54 @@ workflow panel 아래에는 화면별 운영 규칙을 `muted-panel`로 둘 수 
 - 목록은 3~4개 이하로 유지한다.
 - 기능 설명보다 운영 판단에 필요한 규칙을 적는다.
 - 등록 입력 필드와 섞지 않는다.
+
+## 상세 모드
+
+업무 목록에서 행을 선택하면 오른쪽 패널을 상세 모드로 바꿀 수 있다.
+
+전표형 상세 모드 구조:
+
+```text
+panel-mode[data-{domain}-panel="detail"]
+- panel-card.document-detail-panel
+  - panel-title-bar
+    - 제목
+    - 선택 안내 또는 전표 요약 문구
+    - 닫기
+  - document-detail-card
+    - 전표번호
+    - 상태 배지
+  - detail-list
+    - 거래처
+    - 입고일
+    - 처리자
+    - 입고 사유
+    - 취소 가능
+  - document-line-section
+    - section-title-row
+    - document-line-list
+  - form-actions
+    - 목록 안내
+    - 전표 취소
+```
+
+기준:
+
+- `{domain}`에는 기능 도메인명을 사용한다. 예: 입고 화면은 `data-inbound-panel`을 사용할 수 있다.
+- 상세 모드는 오른쪽 패널 안에서 열고, 별도 페이지로 튀지 않는다.
+- `닫기` 또는 `목록 안내`는 안내 모드로 되돌린다.
+- 전표번호와 관리번호 같은 긴 값은 monospace 계열로 표시한다.
+- 상태는 배지로 표시한다.
+- 라인 목록은 길어질 수 있으므로 내부 스크롤을 허용한다.
+- 라인별 관리번호 목록은 접기/펼치기를 제공할 수 있다.
+- 관리번호 옆에는 작은 복사 버튼을 둘 수 있다.
+- 위험 작업은 오른쪽 패널에서 바로 실행하지 않고 확인 모달을 거친다.
+
+전표 취소 액션:
+
+- 취소 가능 여부와 불가 사유를 상세 모드에 먼저 표시한다.
+- 취소 버튼은 취소 가능할 때만 활성화한다.
+- 취소 확인과 결과 피드백은 `modal-dialog.md`와 `pcs-frontend-js-rules.md`를 따른다.
 
 ## 금지
 

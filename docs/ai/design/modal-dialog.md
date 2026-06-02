@@ -23,20 +23,25 @@
 
 HTML은 기본적으로 `<dialog>`를 사용한다.
 
+공통 모달 class 기준은 아래 구조를 사용한다.
+
 ```text
 dialog
-- modal-card
-  - modal-header
+- part-modal
+  - part-modal-card
+  - part-modal-header
     - page-kicker
     - h2
     - 짧은 설명
     - close button
-  - modal-body
+  - part-modal-fields 또는 confirm-summary
     - form fields 또는 summary
-  - modal-actions
+  - part-modal-actions
     - 취소
     - 주요 액션
 ```
+
+`part-modal`이라는 이름은 부품 빠른 등록에서 시작했지만 현재 입고 확인 모달도 같은 구조를 사용한다. 새 모달을 만들 때는 도메인별 카드 클래스를 추가로 늘리지 말고 이 구조를 재사용한다. 추후 클래스명을 `modal-card`로 바꾸려면 HTML/CSS/MD를 한 번에 일괄 변경한다.
 
 기준:
 
@@ -87,6 +92,17 @@ dialog
 [취소] [전표 취소]
 ```
 
+확인 모달 class 기준:
+
+```text
+dialog.part-modal.confirm-modal
+- form.part-modal-card
+  - part-modal-header
+  - confirm-summary
+  - modal-message
+  - part-modal-actions
+```
+
 기준:
 
 - 취소 API는 모달의 `전표 취소` 버튼에서만 호출한다.
@@ -97,6 +113,17 @@ dialog
 ## 등록/수정 모달
 
 현재 화면을 유지하면서 작은 입력을 받을 때 사용한다.
+
+빠른 등록 모달 구현 기준:
+
+```text
+dialog.part-modal
+- form.part-modal-card
+  - part-modal-header
+  - part-modal-fields
+  - field-message
+  - part-modal-actions
+```
 
 기준:
 
