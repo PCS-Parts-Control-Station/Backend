@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PCS 검수 관리 화면입니다. 입고된 개별 부품의 검수 대기 상태와 최근 검수 이력을 확인합니다.">
+    <title>PCS | 검수 관리</title>
+    <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/admin.css?20260602_sidebar_resize2">
+    <link rel="stylesheet" href="/css/workflow.css?20260522_split">
+    <style>
+        .inspection-rule-panel {
+            margin-top: 18px;
+        }
+    </style>
+</head>
+<body class="has-collapsible-sidebar">
+<div class="workspace-layout">
+    <div data-workspace-sidebar data-active-route="inspection"></div>
+
+    <main class="workspace-main">
+        <header class="workspace-header">
+            <button class="menu-toggle" type="button" data-sidebar-toggle aria-controls="workspace-sidebar" aria-expanded="false" aria-label="메뉴 열기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M4 7h16" />
+                    <path d="M4 12h16" />
+                    <path d="M4 17h16" />
+                </svg>
+            </button>
+            <div class="page-title-row">
+                <span class="page-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <path d="M5 4h14" />
+                        <path d="M7 4v7a5 5 0 0 0 10 0V4" />
+                        <path d="M8 20h8" />
+                        <path d="M12 16v4" />
+                        <path d="m9 10 2 2 4-5" />
+                    </svg>
+                </span>
+                <div>
+                    <p class="page-kicker">재고 품질 관리</p>
+                    <h1>검수 관리</h1>
+                    <p class="page-description">입고된 개별 부품의 검수 상태, 등급, 판매 가능 여부를 확인합니다.</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a class="btn btn-secondary" data-route="inbound">입고 관리</a>
+                <a class="btn btn-primary" data-route="history">이력 관리</a>
+            </div>
+        </header>
+
+        <section class="content-grid">
+            <div class="content-main">
+                <section class="filter-card management-filter-card" aria-labelledby="inspection-filter-title">
+                    <div>
+                        <h2 id="inspection-filter-title">검수 대상 검색</h2>
+                        <p>관리번호, 부품명, 검수 상태, 등급으로 대상 부품을 좁혀 봅니다.</p>
+                    </div>
+                    <!-- API: GET /api/workspaces/{companyCode}/inspections/waiting-units?keyword=&inspectionStatus=&grade=&salesStatus=&page=&size= -->
+                    <form class="filter-form management-filter-form" action="#" method="get" autocomplete="off">
+                        <label>
+                            <span>검색어</span>
+                            <input type="search" name="keyword" placeholder="관리번호, 부품명 검색" autocomplete="off">
+                        </label>
+                        <label>
+                            <span>검수 상태</span>
+                            <select name="inspectionStatus">
+                                <option value="">전체</option>
+                                <option value="WAITING">대기</option>
+                                <option value="COMPLETED">완료</option>
+                                <option value="RECHECK_REQUIRED">재검수 필요</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>등급</span>
+                            <select name="grade">
+                                <option value="">전체</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="DEFECTIVE">불량</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>판매 상태</span>
+                            <select name="salesStatus">
+                                <option value="">전체</option>
+                                <option value="HOLD">보류</option>
+                                <option value="AVAILABLE">판매 가능</option>
+                                <option value="UNAVAILABLE">판매 불가</option>
+                            </select>
+                        </label>
+                        <button class="btn btn-primary" type="submit">검색</button>
+                    </form>
+                </section>
+
+                <section class="table-card" aria-labelledby="inspection-waiting-title">
+                    <div class="table-header inline-summary-header">
+                        <div>
+                            <h2 id="inspection-waiting-title">검수 대상 목록</h2>
+                            <p>입고 후 검수가 필요하거나 재검수가 필요한 개별 부품입니다.</p>
+                        </div>
+                        <div class="list-summary-box" aria-label="검수 대상 요약">
+                            <dl class="list-summary">
+                                <div>
+                                    <dt>대상</dt>
+                                    <dd data-summary-total>0</dd>
+                                </div>
+                                <div>
+                                    <dt>대기</dt>
+                                    <dd data-summary-waiting>0</dd>
+                                </div>
+                                <div>
+                                    <dt>재검수</dt>
+                                    <dd data-summary-recheck>0</dd>
+                                </div>
+                                <div>
+                                    <dt>불량</dt>
+                                    <dd data-summary-defective>0</dd>
+                                </div>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <div class="data-table" role="table" aria-label="검수 대상 목록" data-inspection-waiting-table>
+                        <div class="data-row management-data-row table-head" role="row">
+                            <span role="columnheader">관리번호</span>
+                            <span role="columnheader">부품</span>
+                            <span role="columnheader">검수 상태</span>
+                            <span role="columnheader">등급</span>
+                            <span role="columnheader">판매 상태</span>
+                            <span role="columnheader">관리</span>
+                        </div>
+                        <div class="data-row management-data-row empty-data-row" role="row" data-inspection-waiting-empty>
+                            <span role="cell" data-label="안내">검수 대상 목록을 불러오는 중입니다.</span>
+                        </div>
+                    </div>
+                    <div class="pagination-bar" data-inspection-waiting-pagination hidden>
+                        <p data-page-info>0건</p>
+                        <div class="pagination-actions">
+                            <button type="button" data-page-prev>이전</button>
+                            <button type="button" data-page-next>다음</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="table-card" aria-labelledby="inspection-history-title">
+                    <div class="table-header inline-summary-header">
+                        <div>
+                            <h2 id="inspection-history-title">최근 검수 이력</h2>
+                            <p>최근 등록된 검수, 정정, 재검수 기록입니다.</p>
+                        </div>
+                    </div>
+
+                    <!-- API: GET /api/workspaces/{companyCode}/inspections?keyword=&inspectionType=&grade=&page=&size= -->
+                    <div class="data-table" role="table" aria-label="최근 검수 이력" data-inspection-history-table>
+                        <div class="data-row management-data-row table-head" role="row">
+                            <span role="columnheader">검수일</span>
+                            <span role="columnheader">부품</span>
+                            <span role="columnheader">유형</span>
+                            <span role="columnheader">등급</span>
+                            <span role="columnheader">처리자</span>
+                            <span role="columnheader">상세</span>
+                        </div>
+                        <div class="data-row management-data-row empty-data-row" role="row" data-inspection-history-empty>
+                            <span role="cell" data-label="안내">검수 이력을 불러오는 중입니다.</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="side-panel" aria-labelledby="inspection-flow-title">
+                <div class="panel-mode is-active" data-inspection-panel="guide">
+                    <div class="panel-card process-panel">
+                        <h2 id="inspection-flow-title">입고부터 출고까지</h2>
+                        <p>현재 화면은 재고 흐름의 검수 단계입니다.</p>
+                        <ol class="workflow-list" aria-label="재고 업무 흐름">
+                            <li class="workflow-step">
+                                <span class="process-dot" aria-hidden="true"></span>
+                                <div>
+                                    <strong>입고</strong>
+                                    <p>거래처 전표로 부품 입고를 기록합니다.</p>
+                                </div>
+                            </li>
+                            <li class="workflow-step active">
+                                <span class="process-dot" aria-hidden="true"></span>
+                                <div>
+                                    <strong>검수</strong>
+                                    <p>등급과 판매 가능 여부를 정합니다.</p>
+                                    <ol class="sub-process-list" aria-label="검수 세부 흐름">
+                                        <li>
+                                            <span>1</span>
+                                            <div>
+                                                <strong>대상 선택</strong>
+                                                <p>검수가 필요한 개별 부품을 선택합니다.</p>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <span>2</span>
+                                            <div>
+                                                <strong>결과 입력</strong>
+                                                <p>항목별 상태와 메모를 기록합니다.</p>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <span>3</span>
+                                            <div>
+                                                <strong>등급 확정</strong>
+                                                <p>판매 판단에 사용할 등급을 정합니다.</p>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <span>4</span>
+                                            <div>
+                                                <strong>상태 반영</strong>
+                                                <p>판매 가능 여부와 상태 이력을 저장합니다.</p>
+                                            </div>
+                                        </li>
+                                    </ol>
+                                </div>
+                            </li>
+                            <li class="workflow-step">
+                                <span class="process-dot" aria-hidden="true"></span>
+                                <div>
+                                    <strong>출고</strong>
+                                    <p>판매 가능 부품을 전표로 출고합니다.</p>
+                                </div>
+                            </li>
+                            <li class="workflow-step">
+                                <span class="process-dot" aria-hidden="true"></span>
+                                <div>
+                                    <strong>이력</strong>
+                                    <p>전표와 상태 변경 기록을 확인합니다.</p>
+                                </div>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <div class="panel-card muted-panel inspection-rule-panel">
+                        <h2>검수 처리 기준</h2>
+                        <ul>
+                            <li>검수 결과는 원본 수정 대신 새 이력으로 저장</li>
+                            <li>불량 등급은 판매 불가 상태로 반영</li>
+                            <li>상태 변경 시 부품 상태 이력을 함께 저장</li>
+                        </ul>
+                    </div>
+                </div>
+            </aside>
+        </section>
+    </main>
+</div>
+
+<script src="/js/pcs-api.js?20260526_1"></script>
+<script src="/js/workspace-layout.js?20260602_sidebar_resize2"></script>
+</body>
+</html>

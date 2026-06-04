@@ -119,26 +119,28 @@ CREATE TABLE tb_auth_login_history (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE tb_trade_partner (
-    partner_id BIGINT NOT NULL AUTO_INCREMENT,
-    company_id BIGINT NOT NULL,
-    partner_name VARCHAR(150) NOT NULL,
-    partner_type ENUM('PC_CAFE', 'PERSON', 'COMPANY', 'ETC') NOT NULL,
-    partner_role ENUM('SUPPLIER', 'CUSTOMER', 'BOTH') NOT NULL,
-    phone VARCHAR(50) NULL,
-    email VARCHAR(150) NULL,
-    address VARCHAR(500) NULL,
-    memo VARCHAR(1000) NULL,
-    active BOOLEAN NOT NULL DEFAULT TRUE,
-    created_by BIGINT NULL,
-    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    partner_id bigint(20) NOT NULL AUTO_INCREMENT,
+    company_id bigint(20) NOT NULL,
+    partner_name varchar(150) NOT NULL,
+    partner_type enum('PC_CAFE','PERSON','COMPANY','ETC') NOT NULL,
+    partner_role enum('SUPPLIER','CUSTOMER','BOTH') NOT NULL,
+    phone varchar(50) DEFAULT NULL,
+    email varchar(150) DEFAULT NULL,
+    address varchar(500) DEFAULT NULL,
+    memo varchar(1000) DEFAULT NULL,
+    active tinyint(1) NOT NULL DEFAULT 1,
+    created_by bigint(20) DEFAULT NULL,
+    created_at datetime(6) NOT NULL DEFAULT current_timestamp(6),
+    updated_at datetime(6) NOT NULL DEFAULT current_timestamp(6) ON UPDATE current_timestamp(6),
+    last_transaction_at datetime(6) DEFAULT NULL,
     PRIMARY KEY (partner_id),
-    CONSTRAINT uk_trade_partner_company_name UNIQUE (company_id, partner_name),
-    CONSTRAINT uk_trade_partner_company_partner_id UNIQUE (company_id, partner_id),
-    INDEX idx_trade_partner_company_role (company_id, partner_role, active),
-    INDEX idx_trade_partner_company_type (company_id, partner_type, active),
-    INDEX idx_trade_partner_company_created_by (company_id, created_by)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    UNIQUE KEY uk_trade_partner_company_name (company_id,partner_name),
+    UNIQUE KEY uk_trade_partner_company_partner_id (company_id,partner_id),
+    KEY idx_trade_partner_company_role (company_id,partner_role,active),
+    KEY idx_trade_partner_company_type (company_id,partner_type,active),
+    KEY idx_trade_partner_company_created_by (company_id,created_by),
+    KEY idx_trade_partner_company_last_transaction (company_id,last_transaction_at)
+) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE tb_part_category (
     category_id BIGINT NOT NULL AUTO_INCREMENT,
