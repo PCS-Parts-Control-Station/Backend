@@ -24,7 +24,10 @@
         }
 
         const segments = window.location.pathname.split("/").filter(Boolean);
-        return segments[0] === "w" ? segments[2] || "dashboard" : "dashboard";
+        if (segments[0] === "w") {
+            return segments.slice(2).join("/") || "dashboard";
+        }
+        return "dashboard";
     };
 
     const applyActiveRoute = () => {
@@ -33,9 +36,9 @@
 
         document.querySelectorAll(".sidebar-nav [data-route]").forEach((link) => {
             const route = link.dataset.route;
-            const isActive = route === activeRoute || (
-                    route === "inbound" && currentPath.includes("/inbound/")
-            );
+            const isActive = route === activeRoute || 
+                             activeRoute.startsWith(route + "/") ||
+                             (route === "inbound" && currentPath.includes("/inbound/"));
             link.classList.toggle("active", isActive);
             if (isActive) {
                 link.setAttribute("aria-current", "page");
