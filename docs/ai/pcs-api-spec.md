@@ -219,6 +219,7 @@ Owner 회원가입 + 회사 생성 요청 예시:
 | POST | `/api/workspaces/{companyCode}/categories` | 카테고리 생성 |
 | GET | `/api/workspaces/{companyCode}/categories/{categoryId}` | 카테고리 상세 |
 | PATCH | `/api/workspaces/{companyCode}/categories/{categoryId}` | 카테고리 수정 |
+| DELETE | `/api/workspaces/{companyCode}/categories/{categoryId}` | 카테고리 삭제 |
 
 카테고리 생성 요청 예시:
 
@@ -229,7 +230,7 @@ Owner 회원가입 + 회사 생성 요청 예시:
 }
 ```
 
-카테고리 목록 응답은 `docs/ai/pcs-pagination-rules.md`의 공통 페이징 구조를 따른다. 각 항목은 해당 카테고리에 연결된 부품 마스터 수 `partCount`를 포함한다.
+카테고리 목록 응답은 `docs/ai/pcs-pagination-rules.md`의 공통 페이징 구조를 따른다. 각 항목은 해당 카테고리에 연결된 부품 마스터 수 `partCount`를 포함한다. 삭제는 `partCount = 0`인 카테고리만 허용하며, 연결된 부품이 있으면 `CATEGORY_IN_USE`로 실패한다.
 
 ```json
 {

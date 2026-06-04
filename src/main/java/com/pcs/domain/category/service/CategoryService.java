@@ -94,6 +94,19 @@ public class CategoryService {
         return categoryMapper.findResponseById(companyId, categoryId);
     }
 
+    @Transactional
+    public void deleteCategory(Long companyId, Long categoryId) {
+        validateCompanyActive(companyId);
+        PartCategory category = categoryMapper.findById(companyId, categoryId);
+        if (category == null) {
+            throw new BusinessException(ErrorCode.CATEGORY_NOT_FOUND);
+        }
+        if (categoryMapper.countPartsByCategory(companyId, categoryId) > 0) {
+            throw new BusinessException(ErrorCode.CATEGORY_IN_USE);
+        }
+        categoryMapper.deleteById(companyId, categoryId);
+    }
+
     private void validateCompanyActive(Long companyId) {
         if (!categoryMapper.isCompanyActive(companyId)) {
             throw new BusinessException(ErrorCode.COMPANY_INACTIVE);

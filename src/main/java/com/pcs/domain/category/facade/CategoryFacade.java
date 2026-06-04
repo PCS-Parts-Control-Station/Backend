@@ -69,6 +69,16 @@ public class CategoryFacade {
         return categoryService.updateCategory(principal.companyId(), categoryId, request);
     }
 
+    public void deleteCategory(
+            PcsPrincipal principal,
+            String pathCompanyCode,
+            Long categoryId
+    ) {
+        validateAuthenticated(principal);
+        validateWorkspace(pathCompanyCode, principal.companyCode());
+        categoryService.deleteCategory(principal.companyId(), categoryId);
+    }
+
     private void validateAuthenticated(PcsPrincipal principal) {
         if (principal == null) {
             throw new BusinessException(ErrorCode.AUTH_REQUIRED);

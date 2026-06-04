@@ -113,6 +113,19 @@
           AND category_id = #{categoryId}
     </update>
 
+    <select id="countPartsByCategory" resultType="long">
+        SELECT COUNT(*)
+        FROM tb_pc_part
+        WHERE company_id = #{companyId}
+          AND category_id = #{categoryId}
+    </select>
+
+    <delete id="deleteById">
+        DELETE FROM tb_part_category
+        WHERE company_id = #{companyId}
+          AND category_id = #{categoryId}
+    </delete>
+
     <select id="existsByName" resultType="boolean">
         SELECT EXISTS (
             SELECT 1

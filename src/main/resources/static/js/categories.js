@@ -11,11 +11,20 @@
     const panelViews = document.querySelectorAll("[data-category-panel]");
     const createForm = document.querySelector("[data-category-create-form]");
     const editForm = document.querySelector("[data-category-edit-form]");
+    const deleteModal = document.querySelector("[data-category-delete-modal]");
+    const openDeleteModalButton = document.querySelector("[data-open-category-delete-modal]");
+    const closeDeleteModalButtons = document.querySelectorAll("[data-close-category-delete-modal]");
+    const confirmDeleteButton = document.querySelector("[data-confirm-category-delete]");
     const detailFields = {
         name: document.querySelector("[data-detail-name]"),
         description: document.querySelector("[data-detail-description]"),
         partCount: document.querySelector("[data-detail-part-count]"),
         updatedAt: document.querySelector("[data-detail-updated-at]")
+    };
+    const deleteModalFields = {
+        name: document.querySelector("[data-delete-category-name]"),
+        partCount: document.querySelector("[data-delete-category-part-count]"),
+        message: document.querySelector("[data-category-delete-message]")
     };
 
     let currentPage = 0;
@@ -100,6 +109,12 @@
         detailFields.description.textContent = category.description || "-";
         detailFields.partCount.textContent = `${numberText(category.partCount)}개`;
         detailFields.updatedAt.textContent = formatDate(category.updatedAt);
+
+        if (openDeleteModalButton) {
+            openDeleteModalButton.title = Number(category.partCount || 0) > 0
+                ? "연결된 부품이 있어 삭제할 수 없습니다."
+                : "";
+        }
     };
 
     const fillEditForm = (category) => {
@@ -225,6 +240,57 @@
         submitButton.textContent = isSaving ? savingText : submitButton.dataset.defaultText;
     };
 
+    const setDeleteModalMessage = (message = "") => {
+        if (!deleteModalFields.message) {
+            return;
+        }
+        deleteModalFields.message.textContent = message;
+        deleteModalFields.message.hidden = !message;
+    };
+
+    const setDeleteSaving = (isSaving) => {
+        if (!deleteModal || !confirmDeleteButton) {
+            return;
+        }
+
+        deleteModal.dataset.saving = String(isSaving);
+        confirmDeleteButton.disabled = isSaving;
+        closeDeleteModalButtons.forEach((button) => {
+            button.disabled = isSaving;
+        });
+
+        if (!confirmDeleteButton.dataset.defaultText) {
+            confirmDeleteButton.dataset.defaultText = confirmDeleteButton.textContent;
+        }
+        confirmDeleteButton.textContent = isSaving ? "삭제 중" : confirmDeleteButton.dataset.defaultText;
+    };
+
+    const closeDeleteModal = () => {
+        if (!deleteModal || deleteModal.dataset.saving === "true") {
+            return;
+        }
+        setDeleteModalMessage();
+        deleteModal.close();
+    };
+
+    const openDeleteModal = () => {
+        const category = getSelectedCategory();
+        if (!deleteModal || !category) {
+            return;
+        }
+
+        const partCount = Number(category.partCount || 0);
+        if (partCount > 0) {
+            showToast("연결된 부품이 있는 카테고리는 삭제할 수 없습니다.", "error");
+            return;
+        }
+
+        deleteModalFields.name.textContent = category.categoryName || "-";
+        deleteModalFields.partCount.textContent = `${numberText(partCount)}개`;
+        setDeleteModalMessage();
+        deleteModal.showModal();
+    };
+
     const readCategoryForm = (targetForm) => ({
         categoryName: targetForm.elements.categoryName.value.trim(),
         description: targetForm.elements.description.value.trim() || null
@@ -238,6 +304,17 @@
         }
 
         const preserveScroll = options.preserveScroll === true;
+        const fetchPage = async (targetPage) => {
+            const params = buildParams(targetPage);
+            const data = await window.PcsApi.getData(
+                `/api/workspaces/${encodeURIComponent(companyCode)}/categories?${params.toString()}`,
+                {
+                    authRedirect: true,
+                    loginCompanyCode: companyCode
+                }
+            );
+            return window.PcsPagination.normalizePageData(data, PAGE_SIZE);
+        };
 
         const requestPage = async () => {
             currentPage = page;
@@ -246,15 +323,10 @@
                 setEmptyMessage("카테고리 목록을 불러오는 중입니다.");
             }
 
-            const params = buildParams(page);
-            const data = await window.PcsApi.getData(
-                `/api/workspaces/${encodeURIComponent(companyCode)}/categories?${params.toString()}`,
-                {
-                    authRedirect: true,
-                    loginCompanyCode: companyCode
-                }
-            );
-            const pageData = window.PcsPagination.normalizePageData(data, PAGE_SIZE);
+            let pageData = await fetchPage(page);
+            if (pageData.content.length === 0 && pageData.totalElements > 0 && pageData.page > 0) {
+                pageData = await fetchPage(pageData.page - 1);
+            }
             currentPage = pageData.page;
 
             if (options.keepSelection !== true) {
@@ -401,6 +473,50 @@
             showToast(error?.message || "카테고리를 수정하지 못했습니다.", "error");
         } finally {
             setFormSaving(editForm, false);
+        }
+    });
+
+    openDeleteModalButton?.addEventListener("click", openDeleteModal);
+
+    closeDeleteModalButtons.forEach((button) => {
+        button.addEventListener("click", closeDeleteModal);
+    });
+
+    deleteModal?.addEventListener("click", (event) => {
+        if (event.target === deleteModal) {
+            closeDeleteModal();
+        }
+    });
+
+    confirmDeleteButton?.addEventListener("click", async () => {
+        const companyCode = getCompanyCode();
+        const category = getSelectedCategory();
+        if (!companyCode || !category || deleteModal?.dataset.saving === "true") {
+            return;
+        }
+
+        try {
+            setDeleteSaving(true);
+            await window.PcsApi.request(
+                `/api/workspaces/${encodeURIComponent(companyCode)}/categories/${category.categoryId}`,
+                {
+                    method: "DELETE",
+                    authRedirect: true,
+                    loginCompanyCode: companyCode
+                }
+            );
+
+            selectedCategoryId = null;
+            setDeleteModalMessage();
+            deleteModal?.close();
+            await loadCategories(currentPage, { preserveScroll: true });
+            showToast("카테고리를 삭제했습니다.", "success");
+        } catch (error) {
+            const message = error?.message || "카테고리를 삭제하지 못했습니다.";
+            setDeleteModalMessage(message);
+            showToast(message, "error");
+        } finally {
+            setDeleteSaving(false);
         }
     });
 

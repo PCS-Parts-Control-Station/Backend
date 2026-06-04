@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.pcs.domain.category.dto.response.SearchCategoryResponse;
+import com.pcs.domain.category.entity.PartCategory;
 import com.pcs.domain.category.mapper.CategoryMapper;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
@@ -97,5 +98,60 @@ class CategoryServiceTest {
         );
 
         assertEquals(ErrorCode.COMPANY_INACTIVE, exception.getErrorCode());
+    }
+
+    @Test
+    void deleteCategory_deletesWhenNoLinkedParts() {
+        Long companyId = 1L;
+        Long categoryId = 10L;
+        PartCategory category = new PartCategory();
+        category.setCompanyId(companyId);
+        category.setCategoryId(categoryId);
+
+        when(categoryMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(categoryMapper.findById(companyId, categoryId)).thenReturn(category);
+        when(categoryMapper.countPartsByCategory(companyId, categoryId)).thenReturn(0L);
+
+        categoryService.deleteCategory(companyId, categoryId);
+
+        verify(categoryMapper).deleteById(companyId, categoryId);
+    }
+
+    @Test
+    void deleteCategory_failsWhenCategoryHasLinkedParts() {
+        Long companyId = 1L;
+        Long categoryId = 10L;
+        PartCategory category = new PartCategory();
+        category.setCompanyId(companyId);
+        category.setCategoryId(categoryId);
+
+        when(categoryMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(categoryMapper.findById(companyId, categoryId)).thenReturn(category);
+        when(categoryMapper.countPartsByCategory(companyId, categoryId)).thenReturn(2L);
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> categoryService.deleteCategory(companyId, categoryId)
+        );
+
+        assertEquals(ErrorCode.CATEGORY_IN_USE, exception.getErrorCode());
+        verify(categoryMapper, never()).deleteById(companyId, categoryId);
+    }
+
+    @Test
+    void deleteCategory_failsWhenCategoryNotFound() {
+        Long companyId = 1L;
+        Long categoryId = 10L;
+
+        when(categoryMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(categoryMapper.findById(companyId, categoryId)).thenReturn(null);
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> categoryService.deleteCategory(companyId, categoryId)
+        );
+
+        assertEquals(ErrorCode.CATEGORY_NOT_FOUND, exception.getErrorCode());
+        verify(categoryMapper, never()).deleteById(companyId, categoryId);
     }
 }

@@ -37,6 +37,16 @@ public interface CategoryMapper {
 
     void update(PartCategory category);
 
+    long countPartsByCategory(
+            @Param("companyId") Long companyId,
+            @Param("categoryId") Long categoryId
+    );
+
+    int deleteById(
+            @Param("companyId") Long companyId,
+            @Param("categoryId") Long categoryId
+    );
+
     boolean existsByName(
             @Param("companyId") Long companyId,
             @Param("categoryName") String categoryName,
