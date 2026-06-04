@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="PCS 카테고리 관리 화면입니다. 중고 PC 부품의 카테고리를 등록하고 사용 여부를 관리합니다.">
+    <meta name="description" content="PCS 카테고리 관리 화면입니다. 중고 PC 부품의 카테고리를 등록하고 관리합니다.">
     <title>PCS | 카테고리 관리</title>
     <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/admin.css?20260602_category_redesign">
+    <link rel="stylesheet" href="/css/admin.css?20260604_category_design">
+    <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
 </head>
 <body class="has-collapsible-sidebar">
 <div class="workspace-layout">
@@ -36,21 +37,13 @@
                 <section class="filter-card" aria-labelledby="filter-title">
                     <div>
                         <h2 id="filter-title">카테고리 검색</h2>
-                        <p>카테고리명, 설명, 사용 여부로 목록을 좁혀 봅니다.</p>
+                        <p>카테고리명과 설명으로 목록을 좁혀 봅니다.</p>
                     </div>
-                    <!-- API: GET /api/workspaces/{companyCode}/categories?keyword=&active= -->
+                    <!-- API: GET /api/workspaces/{companyCode}/categories?keyword=&page=&size= -->
                     <form class="filter-form" action="#" method="get" autocomplete="off" data-category-filter-form>
                         <label>
                             <span>검색어</span>
                             <input type="search" name="keyword" placeholder="예: RAM" autocomplete="off">
-                        </label>
-                        <label>
-                            <span>사용 여부</span>
-                            <select name="active">
-                                <option value="">전체</option>
-                                <option value="true">사용 중</option>
-                                <option value="false">사용 안 함</option>
-                            </select>
                         </label>
                         <button class="btn btn-primary" type="submit">검색</button>
                     </form>
@@ -62,32 +55,16 @@
                             <h2 id="category-list-title">카테고리 목록</h2>
                             <p>회사 작업공간에서 사용하는 부품 분류 기준입니다.</p>
                         </div>
-                        <div class="list-summary-box" aria-label="카테고리 목록 요약">
-                            <dl class="list-summary">
-                                <div>
-                                    <dt>전체</dt>
-                                    <dd data-summary-total>0</dd>
-                                </div>
-                                <div>
-                                    <dt>사용</dt>
-                                    <dd data-summary-active>0</dd>
-                                </div>
-                                <div>
-                                    <dt>중지</dt>
-                                    <dd data-summary-inactive>0</dd>
-                                </div>
-                            </dl>
-                        </div>
                     </div>
 
                     <div class="data-table" role="table" aria-label="카테고리 목록" data-category-table>
-                        <div class="data-row management-data-row table-head" role="row">
+                        <div class="data-row simple-management-data-row table-head" role="row">
                             <span role="columnheader">카테고리명</span>
                             <span role="columnheader">설명</span>
-                            <span role="columnheader">사용 여부</span>
+                            <span role="columnheader">부품 수</span>
                             <span role="columnheader">수정일</span>
                         </div>
-                        <div class="data-row management-data-row category-empty-row" role="row" data-category-empty>
+                        <div class="data-row simple-management-data-row empty-data-row" role="row" data-category-empty>
                             <span role="cell" data-label="안내">카테고리 목록을 불러오는 중입니다.</span>
                         </div>
                     </div>
@@ -102,7 +79,7 @@
             </div>
 
             <aside class="side-panel" aria-labelledby="category-form-title">
-                <div class="panel-card category-work-panel">
+                <div class="panel-card side-work-panel">
                     <div class="panel-mode is-active" data-category-panel="create">
                         <h2 id="category-form-title">카테고리 등록</h2>
                         <p>부품 마스터 등록 전에 사용할 분류 기준을 먼저 만듭니다.</p>
@@ -115,10 +92,6 @@
                             <label>
                                 <span>설명</span>
                                 <textarea name="description" rows="4" placeholder="쿨러, 팬, 방열 부품 검수 기준"></textarea>
-                            </label>
-                            <label class="switch-row">
-                                <input type="checkbox" name="active" checked>
-                                <span>사용 중으로 등록</span>
                             </label>
                             <div class="form-actions">
                                 <button class="btn btn-primary" type="submit">저장</button>
@@ -138,15 +111,16 @@
 
                         <div class="side-detail-card">
                             <strong data-detail-name>-</strong>
-                            <div class="detail-badge-row">
-                                <em class="badge badge-active" data-detail-active>-</em>
-                            </div>
                         </div>
 
                         <dl class="detail-list">
                             <div>
                                 <dt>설명</dt>
                                 <dd data-detail-description>-</dd>
+                            </div>
+                            <div>
+                                <dt>부품 수</dt>
+                                <dd data-detail-part-count>-</dd>
                             </div>
                             <div>
                                 <dt>수정일</dt>
@@ -178,10 +152,6 @@
                                 <span>설명</span>
                                 <textarea name="description" rows="4"></textarea>
                             </label>
-                            <label class="switch-row">
-                                <input type="checkbox" name="active">
-                                <span>사용 중</span>
-                            </label>
                             <div class="form-actions">
                                 <button class="btn btn-primary" type="submit">저장</button>
                                 <button class="btn btn-secondary" type="button" data-category-detail-mode>취소</button>
@@ -194,8 +164,7 @@
                     <h2>운영 메모</h2>
                     <ul>
                         <li>카테고리명은 회사 안에서 중복 불가</li>
-                        <li>사용 안 함 상태는 신규 부품 등록에서 제외</li>
-                        <li>삭제 대신 active 변경으로 이력 보존</li>
+                        <li>부품에 연결된 카테고리는 삭제하지 않고 이름과 설명을 정리</li>
                     </ul>
                 </div>
             </aside>
@@ -203,6 +172,9 @@
     </main>
 </div>
 <script src="/js/pcs-api.js?20260529_workspace_guard"></script>
+<script src="/js/pcs-pagination.js?20260527_pagination"></script>
 <script src="/js/workspace-layout.js?20260527_1"></script>
+<script src="/js/pcs-ui.js?20260527_1"></script>
+<script src="/js/categories.js?20260604_category_list"></script>
 </body>
 </html>

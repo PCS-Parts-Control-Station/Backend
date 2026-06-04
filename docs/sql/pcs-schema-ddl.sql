@@ -145,15 +145,13 @@ CREATE TABLE tb_part_category (
     company_id BIGINT NOT NULL,
     category_name VARCHAR(100) NOT NULL,
     description VARCHAR(500) NULL,
-    active BOOLEAN NOT NULL DEFAULT TRUE,
     created_by BIGINT NULL,
     created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     PRIMARY KEY (category_id),
     CONSTRAINT uk_part_category_company_name UNIQUE (company_id, category_name),
     CONSTRAINT uk_part_category_company_category_id UNIQUE (company_id, category_id),
-    INDEX idx_part_category_company_created_by (company_id, created_by),
-    INDEX idx_part_category_company_active (company_id, active)
+    INDEX idx_part_category_company_created_by (company_id, created_by)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE tb_pc_part (

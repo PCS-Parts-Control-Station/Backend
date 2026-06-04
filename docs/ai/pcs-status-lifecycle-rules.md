@@ -35,13 +35,6 @@ tb_trade_partner.active
 - 과거 전표와 이력 조회에서는 그대로 참조할 수 있어야 한다.
 
 ```text
-tb_part_category.active
-```
-
-- 신규 부품 등록에서 선택 가능한 카테고리인지 나타낸다.
-- 기존 부품과 이력은 유지한다.
-
-```text
 tb_pc_part.active
 ```
 

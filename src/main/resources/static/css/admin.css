@@ -449,6 +449,10 @@ strong {
     grid-template-columns: 1.1fr 100px 100px 104px 1fr 92px;
 }
 
+.data-row.simple-management-data-row {
+    grid-template-columns: minmax(160px, 0.9fr) minmax(220px, 1.35fr) 88px 92px;
+}
+
 .data-row.management-data-row.is-selectable {
     cursor: pointer;
     transition: background 140ms ease, box-shadow 140ms ease;
@@ -464,6 +468,25 @@ strong {
 }
 
 .data-row.management-data-row.is-selected {
+    background: #f0f7ff;
+    box-shadow: inset 3px 0 0 var(--cyan);
+}
+
+.data-row.simple-management-data-row.is-selectable {
+    cursor: pointer;
+    transition: background 140ms ease, box-shadow 140ms ease;
+}
+
+.data-row.simple-management-data-row.is-selectable:hover {
+    background: var(--cyan-soft);
+}
+
+.data-row.simple-management-data-row.is-selectable:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.18);
+    outline-offset: -3px;
+}
+
+.data-row.simple-management-data-row.is-selected {
     background: #f0f7ff;
     box-shadow: inset 3px 0 0 var(--cyan);
 }
@@ -489,6 +512,10 @@ strong {
     margin-top: 0;
     gap: 0;
     grid-template-columns: repeat(4, 78px);
+}
+
+.inline-summary-header .list-summary.summary-compact {
+    grid-template-columns: repeat(3, 58px);
 }
 
 .inline-summary-header .list-summary div + div {
@@ -1492,6 +1519,10 @@ textarea:focus {
         grid-template-columns: 1fr;
     }
 
+    .data-row.simple-management-data-row {
+        grid-template-columns: 1fr;
+    }
+
     .data-row {
         min-width: 0;
         grid-template-columns: 1fr;
@@ -1522,6 +1553,14 @@ textarea:focus {
 
     .data-row span[role="cell"]:not([data-label]):nth-child(4)::before {
         content: "등록자";
+    }
+
+    .data-row.simple-management-data-row span[role="cell"]:not([data-label]):nth-child(3)::before {
+        content: "부품 수";
+    }
+
+    .data-row.simple-management-data-row span[role="cell"]:not([data-label]):nth-child(4)::before {
+        content: "수정일";
     }
 
     .data-row span[role="cell"]:not([data-label]):nth-child(5)::before {
@@ -1570,6 +1609,10 @@ textarea:focus {
     .inline-summary-header .list-summary {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         row-gap: 8px;
+    }
+
+    .inline-summary-header .list-summary.summary-compact {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .inline-summary-header .list-summary div:nth-child(3) {
