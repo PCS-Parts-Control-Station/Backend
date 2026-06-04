@@ -23,6 +23,7 @@
 - 업체 업무 API는 `/api/workspaces/{companyCode}/**` 아래에 둔다.
 - 업체 업무 API의 회사 범위 검증은 `docs/features/auth.md` 기준을 따른다.
 - 마스터 데이터는 `PATCH`로 수정하고, 삭제 대신 `docs/ai/pcs-status-lifecycle-rules.md` 기준의 `active`를 변경한다.
+- 카테고리는 예외적으로 `active`를 두지 않는다.
 - 입출고와 검수는 이력성 데이터이므로 원본 수정/삭제를 하지 않는다.
 - 입출고 오류는 취소 이력으로 남긴다.
 - 검수 오류는 정정 이력 또는 재검수 이력으로 남긴다.
@@ -214,11 +215,11 @@ Owner 회원가입 + 회사 생성 요청 예시:
 
 | Method | API | 설명 |
 |---|---|---|
-| GET | `/api/workspaces/{companyCode}/categories` | 카테고리 목록 |
+| GET | `/api/workspaces/{companyCode}/categories` | 카테고리 목록. `keyword`, `page`, `size`, `limit` 지원 |
 | POST | `/api/workspaces/{companyCode}/categories` | 카테고리 생성 |
 | GET | `/api/workspaces/{companyCode}/categories/{categoryId}` | 카테고리 상세 |
 | PATCH | `/api/workspaces/{companyCode}/categories/{categoryId}` | 카테고리 수정 |
-| PATCH | `/api/workspaces/{companyCode}/categories/{categoryId}/active` | 카테고리 사용 여부 변경 |
+| DELETE | `/api/workspaces/{companyCode}/categories/{categoryId}` | 카테고리 삭제 |
 
 카테고리 생성 요청 예시:
 
@@ -226,6 +227,29 @@ Owner 회원가입 + 회사 생성 요청 예시:
 {
   "categoryName": "GPU",
   "description": "그래픽카드"
+}
+```
+
+카테고리 목록 응답은 `docs/ai/pcs-pagination-rules.md`의 공통 페이징 구조를 따른다. 각 항목은 해당 카테고리에 연결된 부품 마스터 수 `partCount`를 포함한다. 삭제는 `partCount = 0`인 카테고리만 허용하며, 연결된 부품이 있으면 `CATEGORY_IN_USE`로 실패한다.
+
+```json
+{
+  "content": [
+    {
+      "categoryId": 1,
+      "categoryName": "GPU",
+      "description": "그래픽카드",
+      "partCount": 12,
+      "updatedAt": "2026-06-04T10:00:00"
+    }
+  ],
+  "page": 0,
+  "size": 10,
+  "totalElements": 1,
+  "totalPages": 1,
+  "hasPrevious": false,
+  "hasNext": false,
+  "summary": null
 }
 ```
 
@@ -608,6 +632,7 @@ API별 특별 제한이 있으면 각 feature 문서에만 추가한다.
 ### 6.4 상태 변경 / 이력
 
 - 마스터 데이터는 물리 삭제하지 않고 `docs/ai/pcs-status-lifecycle-rules.md` 기준의 `active` 상태로 사용 여부를 관리한다.
+- 카테고리는 이 기준의 예외이며, `active` 없이 이름/설명 수정으로 관리한다.
 - 입출고 원본은 수정/삭제하지 않는다.
 - 입출고 오류는 취소 전표와 취소 movement로 남긴다.
 - 검수 오류는 정정 이력 또는 재검수 이력으로 남긴다.

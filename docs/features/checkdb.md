@@ -76,13 +76,14 @@ tb_auth_refresh_token.company_id
 tb_company.active
 tb_member.active
 tb_trade_partner.active
-tb_part_category.active
 tb_pc_part.active
 tb_pc_part_unit.active
 tb_inspection_template.active
 tb_inspection_template_item.active
 tb_inspection_template_item_option.active
 ```
+
+카테고리는 `active` 상태를 두지 않는다.
 
 인증 공통 컬럼은 로그인/토큰 검증에 필요하다.
 

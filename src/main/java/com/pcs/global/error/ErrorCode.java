@@ -39,7 +39,7 @@ public enum ErrorCode {
 
     CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "CATEGORY-001", "카테고리를 찾을 수 없습니다."),
     CATEGORY_NAME_DUPLICATED(HttpStatus.CONFLICT, "CATEGORY-002", "이미 사용 중인 카테고리명입니다."),
-    CATEGORY_IN_USE(HttpStatus.CONFLICT, "CATEGORY-003", "사용 중인 부품이 있는 카테고리입니다."),
+    CATEGORY_IN_USE(HttpStatus.CONFLICT, "CATEGORY-003", "연결된 부품이 있는 카테고리는 삭제할 수 없습니다."),
 
     PART_NOT_FOUND(HttpStatus.NOT_FOUND, "PART-001", "부품을 찾을 수 없습니다."),
     PART_CODE_DUPLICATED(HttpStatus.CONFLICT, "PART-002", "이미 사용 중인 부품 코드입니다."),

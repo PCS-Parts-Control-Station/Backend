@@ -119,6 +119,7 @@ rg -n "검색할 키워드" Backend\docs\ai\design Backend\docs\ai\pcs-design-sy
 management-filter-form
 document-filter-form
 inline-summary-header
+simple-management-data-row
 management-data-row
 document-data-table
 document-data-row
