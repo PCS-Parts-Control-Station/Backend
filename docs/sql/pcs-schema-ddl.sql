@@ -147,15 +147,13 @@ CREATE TABLE tb_part_category (
     company_id BIGINT NOT NULL,
     category_name VARCHAR(100) NOT NULL,
     description VARCHAR(500) NULL,
-    active BOOLEAN NOT NULL DEFAULT TRUE,
     created_by BIGINT NULL,
     created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     PRIMARY KEY (category_id),
     CONSTRAINT uk_part_category_company_name UNIQUE (company_id, category_name),
     CONSTRAINT uk_part_category_company_category_id UNIQUE (company_id, category_id),
-    INDEX idx_part_category_company_created_by (company_id, created_by),
-    INDEX idx_part_category_company_active (company_id, active)
+    INDEX idx_part_category_company_created_by (company_id, created_by)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE tb_pc_part (
@@ -392,4 +390,62 @@ CREATE TABLE tb_inspection_item_result (
     INDEX idx_inspection_item_result_inspection (inspection_id),
     INDEX idx_inspection_item_result_item (item_id),
     INDEX idx_inspection_item_result_selected_option (selected_option_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE tb_part_spec_definition (
+     spec_definition_id BIGINT NOT NULL AUTO_INCREMENT,
+     company_id BIGINT NOT NULL,
+     category_id BIGINT NOT NULL,
+     spec_key VARCHAR(80) NOT NULL,
+     spec_name VARCHAR(100) NOT NULL,
+     input_type ENUM('TEXT', 'NUMBER', 'SELECT', 'BOOLEAN') NOT NULL,
+     unit VARCHAR(30) NULL,
+     required BOOLEAN NOT NULL DEFAULT FALSE,
+     searchable BOOLEAN NOT NULL DEFAULT FALSE,
+     sort_order INT NOT NULL DEFAULT 0,
+     active BOOLEAN NOT NULL DEFAULT TRUE,
+     created_by BIGINT NULL,
+     created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+     updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+     PRIMARY KEY (spec_definition_id),
+     CONSTRAINT uk_part_spec_definition_company_spec_id UNIQUE (company_id, spec_definition_id),
+     CONSTRAINT uk_part_spec_definition_company_category_key UNIQUE (company_id, category_id, spec_key),
+     CONSTRAINT chk_part_spec_definition_sort_order CHECK (sort_order >= 0),
+     INDEX idx_part_spec_definition_category_sort (company_id, category_id, active, sort_order),
+     INDEX idx_part_spec_definition_created_by (company_id, created_by)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE tb_part_spec_option (
+     option_id BIGINT NOT NULL AUTO_INCREMENT,
+     spec_definition_id BIGINT NOT NULL,
+     option_label VARCHAR(100) NOT NULL,
+     option_value VARCHAR(100) NOT NULL,
+     sort_order INT NOT NULL DEFAULT 0,
+     active BOOLEAN NOT NULL DEFAULT TRUE,
+     PRIMARY KEY (option_id),
+     CONSTRAINT uk_part_spec_option_definition_value UNIQUE (spec_definition_id, option_value),
+     CONSTRAINT chk_part_spec_option_sort_order CHECK (sort_order >= 0),
+     INDEX idx_part_spec_option_definition_sort (spec_definition_id, active, sort_order)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE tb_part_spec_value (
+    spec_value_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_id BIGINT NOT NULL,
+    part_id BIGINT NOT NULL,
+    spec_definition_id BIGINT NOT NULL,
+    value_text VARCHAR(1000) NULL,
+    value_number DECIMAL(15, 4) NULL,
+    value_boolean BOOLEAN NULL,
+    selected_option_id BIGINT NULL,
+    selected_option_label_snapshot VARCHAR(100) NULL,
+    selected_option_value_snapshot VARCHAR(100) NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (spec_value_id),
+    CONSTRAINT uk_part_spec_value_part_definition UNIQUE (part_id, spec_definition_id),
+    INDEX idx_part_spec_value_company_part (company_id, part_id),
+    INDEX idx_part_spec_value_definition (spec_definition_id),
+    INDEX idx_part_spec_value_number (company_id, spec_definition_id, value_number),
+    INDEX idx_part_spec_value_text (company_id, spec_definition_id, value_text(100)),
+    INDEX idx_part_spec_value_option (selected_option_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

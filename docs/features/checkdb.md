@@ -76,7 +76,6 @@ tb_auth_refresh_token.company_id
 tb_company.active
 tb_member.active
 tb_trade_partner.active
-tb_part_category.active
 tb_pc_part.active
 tb_pc_part_unit.active
 tb_inspection_template.active

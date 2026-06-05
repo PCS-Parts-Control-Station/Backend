@@ -218,7 +218,6 @@ Owner 회원가입 + 회사 생성 요청 예시:
 | POST | `/api/workspaces/{companyCode}/categories` | 카테고리 생성 |
 | GET | `/api/workspaces/{companyCode}/categories/{categoryId}` | 카테고리 상세 |
 | PATCH | `/api/workspaces/{companyCode}/categories/{categoryId}` | 카테고리 수정 |
-| PATCH | `/api/workspaces/{companyCode}/categories/{categoryId}/active` | 카테고리 사용 여부 변경 |
 
 카테고리 생성 요청 예시:
 
@@ -475,8 +474,11 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&lim
 
 | Method | API | 설명 |
 |---|---|---|
+| GET | `/api/workspaces/{companyCode}/inspections/waiting-documents` | 검수 대상 입고 전표 목록 |
+| GET | `/api/workspaces/{companyCode}/inspections/waiting-documents/{documentId}/units` | 전표별 검수 대상 관리번호 목록 |
 | GET | `/api/workspaces/{companyCode}/inspections/waiting-units` | 검수 대기 개별 부품 조회 |
 | POST | `/api/workspaces/{companyCode}/inspections` | 최초 검수 등록 |
+| POST | `/api/workspaces/{companyCode}/inspections/bulk` | 여러 관리번호 일괄 최초 검수 등록 |
 | POST | `/api/workspaces/{companyCode}/inspections/{inspectionId}/corrections` | 검수 정정 이력 생성 |
 | POST | `/api/workspaces/{companyCode}/inspections/{inspectionId}/reinspections` | 재검수 이력 생성 |
 | GET | `/api/workspaces/{companyCode}/inspections` | 검수 이력 목록 |
@@ -516,6 +518,99 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&lim
   ]
 }
 ```
+
+일괄 검수 등록 요청 예시:
+
+```json
+{
+  "unitIds": [101, 102, 103],
+  "templateId": 3,
+  "result": "PASS",
+  "grade": "A",
+  "salesStatus": "AVAILABLE",
+  "memo": "동일 로트 일괄 검수",
+  "itemResults": [
+    {
+      "itemId": 301,
+      "result": "PASS",
+      "valueText": null,
+      "valueNumber": null,
+      "selectedOptionId": null,
+      "memo": null
+    },
+    {
+      "itemId": 303,
+      "result": "PASS",
+      "valueText": null,
+      "valueNumber": null,
+      "selectedOptionId": 3031,
+      "memo": null
+    }
+  ]
+}
+```
+
+검수 템플릿 응답 구조 초안:
+
+```json
+{
+  "templateId": 3,
+  "categoryId": 12,
+  "templateName": "메모리 검수",
+  "version": 1,
+  "active": true,
+  "items": [
+    {
+      "itemId": 301,
+      "itemGroup": "BASIC",
+      "itemName": "외관 상태",
+      "inputType": "CHECK",
+      "required": true,
+      "sortOrder": 1,
+      "gradeImpact": "LOW",
+      "failPolicy": "NONE",
+      "active": true,
+      "options": []
+    },
+    {
+      "itemId": 303,
+      "itemGroup": "DETAIL",
+      "itemName": "메모리 테스트 결과",
+      "inputType": "SELECT",
+      "required": true,
+      "sortOrder": 3,
+      "gradeImpact": "HIGH",
+      "failPolicy": "MARK_DEFECTIVE",
+      "active": true,
+      "options": [
+        {
+          "optionId": 3031,
+          "optionLabel": "오류 없음",
+          "optionValue": "NO_ERROR",
+          "sortOrder": 1,
+          "active": true
+        },
+        {
+          "optionId": 3032,
+          "optionLabel": "오류 발생",
+          "optionValue": "ERROR_FOUND",
+          "sortOrder": 2,
+          "active": true
+        }
+      ]
+    }
+  ]
+}
+```
+
+검수 관리 화면 연결 초안:
+
+- 검수 관리 화면은 전표를 먼저 선택한 뒤 전표 안의 관리번호를 검수한다.
+- 전표 목록은 `waiting-documents`, 전표별 관리번호는 `waiting-documents/{documentId}/units`에서 조회한다.
+- 3단계 검수 등록 폼은 `inspection-templates` 목록과 `inspection-templates/{templateId}` 상세를 기준으로 동적 렌더링한다.
+- `tb_inspection_template_item.input_type`에 따라 `CHECK`, `NUMBER`, `TEXT`, `SELECT` 입력 UI를 다르게 표시한다.
+- `SELECT` 항목은 `tb_inspection_template_item_option` 선택지를 사용한다.
+- 신규 저장 시 항목명과 선택지 라벨/값은 `tb_inspection_item_result` snapshot 컬럼에 함께 저장한다.
 
 검수 시각 규칙:
 
