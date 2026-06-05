@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PCS 검수 관리 화면입니다. 입고된 개별 부품의 검수 대기 상태와 최근 검수 이력을 확인합니다.">
+    <title>PCS | 검수 관리</title>
+    <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/admin.css?20260602_sidebar_resize2">
+    <link rel="stylesheet" href="/css/workflow.css?20260522_split">
+    <link rel="stylesheet" href="/css/inspection.css?20260605_ui_tune2">
+</head>
+<body class="has-collapsible-sidebar inspection-page">
+<div class="workspace-layout">
+    <div data-workspace-sidebar data-active-route="inspection"></div>
+
+    <main class="workspace-main">
+        <header class="workspace-header">
+            <button class="menu-toggle" type="button" data-sidebar-toggle aria-controls="workspace-sidebar" aria-expanded="false" aria-label="메뉴 열기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M4 7h16" />
+                    <path d="M4 12h16" />
+                    <path d="M4 17h16" />
+                </svg>
+            </button>
+            <div class="page-title-row">
+                <span class="page-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <path d="M5 4h14" />
+                        <path d="M7 4v7a5 5 0 0 0 10 0V4" />
+                        <path d="M8 20h8" />
+                        <path d="M12 16v4" />
+                        <path d="m9 10 2 2 4-5" />
+                    </svg>
+                </span>
+                <div>
+                    <p class="page-kicker">재고 품질 관리</p>
+                    <h1>검수 관리</h1>
+                    <p class="page-description">입고 전표를 선택하고, 전표 안의 관리번호를 기준으로 검수 결과를 등록합니다.</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a class="btn btn-secondary" data-route="inbound">입고 관리</a>
+                <a class="btn btn-primary" data-route="history">이력 관리</a>
+            </div>
+        </header>
+
+        <section class="content-grid">
+            <div class="content-main inspection-step-flow">
+                <section class="table-card inspection-step-card inspection-document-card" aria-labelledby="inspection-filter-title">
+                    <div class="table-header inspection-step-header">
+                        <div>
+                            <h2 id="inspection-filter-title"><span class="inspection-step-number">1</span>전표 선택</h2>
+                            <p>입고 전표를 먼저 고른 뒤 전표 안의 관리번호를 검수합니다.</p>
+                        </div>
+                    </div>
+
+                    <form class="filter-form management-filter-form inspection-filter-form" action="#" method="get" autocomplete="off">
+                        <label>
+                            <span>검색어</span>
+                            <input type="search" name="keyword" placeholder="전표번호, 거래처, 부품명 검색" autocomplete="off">
+                        </label>
+                        <label>
+                            <span>진행 상태</span>
+                            <select name="inspectionStatus">
+                                <option value="">전체</option>
+                                <option value="WAITING">대기</option>
+                                <option value="IN_PROGRESS">진행 중</option>
+                                <option value="COMPLETED">완료</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>거래처</span>
+                            <select name="partnerId">
+                                <option value="">전체</option>
+                                <option value="1">용산전자</option>
+                                <option value="2">강남PC</option>
+                                <option value="3">개인매입</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>입고일</span>
+                            <select name="period">
+                                <option value="">전체</option>
+                                <option value="today">오늘</option>
+                                <option value="7d">최근 7일</option>
+                                <option value="30d">최근 30일</option>
+                            </select>
+                        </label>
+                        <button class="btn btn-primary" type="submit">검색</button>
+                    </form>
+
+                    <div class="table-header inline-summary-header inspection-list-header">
+                        <div>
+                            <h3>검수 대상 전표</h3>
+                            <p>전표별 검수 진행률과 남은 수량입니다.</p>
+                        </div>
+                        <div class="list-summary-box" aria-label="검수 대상 전표 요약">
+                            <dl class="list-summary">
+                                <div>
+                                    <dt>전표</dt>
+                                    <dd data-summary-total>3</dd>
+                                </div>
+                                <div>
+                                    <dt>총수량</dt>
+                                    <dd data-summary-waiting>348</dd>
+                                </div>
+                                <div>
+                                    <dt>완료</dt>
+                                    <dd data-summary-recheck>100</dd>
+                                </div>
+                                <div>
+                                    <dt>대기</dt>
+                                    <dd data-summary-defective>248</dd>
+                                </div>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <div class="data-table" role="table" aria-label="검수 대상 전표" data-inspection-waiting-table>
+                        <div class="data-row management-data-row inspection-document-row table-head" role="row">
+                            <span role="columnheader">전표번호</span>
+                            <span role="columnheader">입고 내용</span>
+                            <span role="columnheader">총수량</span>
+                            <span role="columnheader">완료</span>
+                            <span role="columnheader">진행률</span>
+                            <span role="columnheader">선택</span>
+                        </div>
+                        <div class="data-row management-data-row inspection-document-row is-selectable" role="row" tabindex="0" data-mock-inspection-document="IN-20260529-K8J4P2M9">
+                            <strong role="cell" data-label="전표번호">IN-20260529-K8J4P2M9</strong>
+                            <span class="inspection-stack-cell" role="cell" data-label="입고 내용">
+                                <strong>용산전자 / DDR4 16GB 외 3종</strong>
+                                <small>입고일 2026-05-29 · 검수 대기 220개</small>
+                            </span>
+                            <span role="cell" data-label="총수량">300</span>
+                            <span role="cell" data-label="완료">80</span>
+                            <span class="inspection-progress" role="cell" data-label="진행률">
+                                <strong>27%</strong>
+                                <span class="inspection-progress-track" aria-hidden="true"><i style="--progress: 27%"></i></span>
+                            </span>
+                            <span class="row-actions" role="cell" data-label="선택">
+                                <button type="button" data-inspection-document-action="IN-20260529-K8J4P2M9">전표 선택</button>
+                            </span>
+                        </div>
+                        <div class="data-row management-data-row inspection-document-row is-selectable" role="row" tabindex="0" data-mock-inspection-document="IN-20260528-Q2HD7Z1A">
+                            <strong role="cell" data-label="전표번호">IN-20260528-Q2HD7Z1A</strong>
+                            <span class="inspection-stack-cell" role="cell" data-label="입고 내용">
+                                <strong>강남PC / RTX 3060 외 1종</strong>
+                                <small>입고일 2026-05-28 · 검수 대기 28개</small>
+                            </span>
+                            <span role="cell" data-label="총수량">40</span>
+                            <span role="cell" data-label="완료">12</span>
+                            <span class="inspection-progress" role="cell" data-label="진행률">
+                                <strong>30%</strong>
+                                <span class="inspection-progress-track" aria-hidden="true"><i style="--progress: 30%"></i></span>
+                            </span>
+                            <span class="row-actions" role="cell" data-label="선택">
+                                <button type="button" data-inspection-document-action="IN-20260528-Q2HD7Z1A">전표 선택</button>
+                            </span>
+                        </div>
+                        <div class="data-row management-data-row inspection-document-row is-selectable" role="row" tabindex="0" data-mock-inspection-document="IN-20260527-M6F8TN3B">
+                            <strong role="cell" data-label="전표번호">IN-20260527-M6F8TN3B</strong>
+                            <span class="inspection-stack-cell" role="cell" data-label="입고 내용">
+                                <strong>개인매입 / SSD 500GB</strong>
+                                <small>입고일 2026-05-27 · 검수 완료</small>
+                            </span>
+                            <span role="cell" data-label="총수량">8</span>
+                            <span role="cell" data-label="완료">8</span>
+                            <span class="inspection-progress" role="cell" data-label="진행률">
+                                <strong>100%</strong>
+                                <span class="inspection-progress-track" aria-hidden="true"><i style="--progress: 100%"></i></span>
+                            </span>
+                            <span class="row-actions" role="cell" data-label="선택">
+                                <button type="button" data-inspection-document-action="IN-20260527-M6F8TN3B">전표 선택</button>
+                            </span>
+                        </div>
+                        <div class="data-row management-data-row empty-data-row inspection-empty-row" role="row" data-inspection-waiting-empty hidden>
+                            <span role="cell" data-label="안내">검수 대상 전표를 불러오는 중입니다.</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="table-card inspection-step-card inspection-target-card" aria-labelledby="inspection-target-title" data-inspection-target-step>
+                    <div class="table-header inspection-step-header">
+                        <div>
+                            <h2 id="inspection-target-title"><span class="inspection-step-number">2</span> 부품별 검수 대상</h2>
+                            <p data-inspection-document-subtitle>1번에서 전표를 선택하면 부품 묶음과 관리번호가 표시됩니다.</p>
+                        </div>
+                    </div>
+
+                    <div class="inspection-selected-document" data-inspection-document-summary-card hidden>
+                        <div class="inspection-detail-card">
+                            <strong data-inspection-document-no>-</strong>
+                            <div class="detail-badge-row">
+                                <em class="badge badge-warning" data-inspection-document-status>-</em>
+                            </div>
+                        </div>
+                        <div class="inspection-summary-grid" aria-label="선택 전표 검수 요약">
+                            <div>
+                                <span>총수량</span>
+                                <strong data-inspection-document-total>-</strong>
+                            </div>
+                            <div>
+                                <span>완료</span>
+                                <strong data-inspection-document-completed>-</strong>
+                            </div>
+                            <div>
+                                <span>대기</span>
+                                <strong data-inspection-document-waiting>-</strong>
+                            </div>
+                            <div>
+                                <span>불량</span>
+                                <strong data-inspection-document-defective>-</strong>
+                            </div>
+                        </div>
+                        <dl class="detail-list inspection-selected-meta">
+                            <div>
+                                <dt>거래처</dt>
+                                <dd data-inspection-document-partner>-</dd>
+                            </div>
+                            <div>
+                                <dt>입고일</dt>
+                                <dd data-inspection-document-created-at>-</dd>
+                            </div>
+                            <div>
+                                <dt>입고 내용</dt>
+                                <dd data-inspection-document-summary>-</dd>
+                            </div>
+                        </dl>
+                    </div>
+
+                    <div class="inspection-line-section">
+                        <div class="section-title-row">
+                            <h3>부품 묶음</h3>
+                            <span data-inspection-document-line-count>전표 미선택</span>
+                        </div>
+                        <div class="inspection-target-list" data-inspection-document-lines>
+                            <p class="detail-empty-text">검수할 전표를 먼저 선택해 주세요.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="table-card inspection-step-card inspection-form-card" aria-labelledby="inspection-form-title" data-inspection-form-step>
+                    <div class="table-header inspection-step-header">
+                        <div>
+                            <h2 id="inspection-form-title"><span class="inspection-step-number">3</span> 검수 등록</h2>
+                            <p data-inspection-form-subtitle>2번에서 관리번호를 선택하면 검수 결과를 입력할 수 있습니다.</p>
+                        </div>
+                    </div>
+
+                    <div class="inspection-form-waiting" data-inspection-form-waiting>
+                        <strong>관리번호 선택 대기</strong>
+                        <p>2번에서 개별 관리번호나 선택 항목을 검수 대상으로 지정하면 입력 폼이 열립니다.</p>
+                    </div>
+
+                    <div class="inspection-form-target">
+                        <div class="inspection-detail-card">
+                            <strong data-inspection-form-unit>검수 대상 없음</strong>
+                            <div class="detail-badge-row" data-inspection-form-badges>
+                                <em class="badge badge-warning" data-inspection-form-status>-</em>
+                                <em class="badge badge-blue" data-inspection-form-grade>-</em>
+                                <em class="badge badge-warning" data-inspection-form-sales>-</em>
+                            </div>
+                            <div class="inspection-selected-serials" data-inspection-form-serials hidden></div>
+                            <p class="inspection-apply-note" data-inspection-form-apply-note>관리번호를 선택하면 저장 적용 범위가 표시됩니다.</p>
+                        </div>
+                        <dl class="detail-list inspection-selected-meta">
+                            <div>
+                                <dt>입고 전표</dt>
+                                <dd data-inspection-form-document-no>-</dd>
+                            </div>
+                            <div>
+                                <dt>부품</dt>
+                                <dd data-inspection-form-part>-</dd>
+                            </div>
+                            <div>
+                                <dt>모델</dt>
+                                <dd data-inspection-form-model>-</dd>
+                            </div>
+                        </dl>
+                    </div>
+
+                    <form class="inspection-form" data-inspection-form autocomplete="off">
+                        <label>
+                            <span>검수 템플릿</span>
+                            <select name="templateId" required disabled>
+                                <option value="basic">기본 부품 검수</option>
+                                <option value="gpu">그래픽카드 검수</option>
+                                <option value="storage">저장장치 검수</option>
+                            </select>
+                        </label>
+
+                        <div class="inspection-form-grid">
+                            <label>
+                                <span>검수 결과</span>
+                                <select name="result" required disabled>
+                                    <option value="PASS">통과</option>
+                                    <option value="FAIL">불합격</option>
+                                </select>
+                            </label>
+                            <label>
+                                <span>등급</span>
+                                <select name="grade" required disabled>
+                                    <option value="A">A</option>
+                                    <option value="B">B</option>
+                                    <option value="C">C</option>
+                                    <option value="DEFECTIVE">불량</option>
+                                </select>
+                            </label>
+                            <label>
+                                <span>판매상태</span>
+                                <select name="salesStatus" required disabled>
+                                    <option value="AVAILABLE">판매 가능</option>
+                                    <option value="HOLD">판매 보류</option>
+                                    <option value="UNAVAILABLE">판매 불가</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="inspection-line-section inspection-template-item-section">
+                            <div class="section-title-row">
+                                <h3>템플릿 항목</h3>
+                                <span data-inspection-template-item-count>항목 없음</span>
+                            </div>
+                            <div class="inspection-checklist" data-inspection-template-items>
+                                <p class="detail-empty-text">검수 템플릿을 선택하면 항목이 표시됩니다.</p>
+                            </div>
+                        </div>
+
+                        <label>
+                            <span>검수 메모</span>
+                            <textarea name="memo" rows="4" placeholder="검수 중 확인한 내용을 입력해 주세요" disabled></textarea>
+                        </label>
+
+                        <p class="field-message" data-inspection-form-message role="status" aria-live="polite">검수할 관리번호를 먼저 선택해 주세요.</p>
+
+                        <div class="form-actions">
+                            <button class="btn btn-secondary" type="button" data-inspection-form-clear disabled>선택 초기화</button>
+                            <button class="btn btn-primary" type="submit" disabled>저장</button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="table-card inspection-step-card inspection-history-card" aria-labelledby="inspection-history-title">
+                    <div class="table-header inspection-step-header">
+                        <div>
+                            <h2 id="inspection-history-title"><span class="inspection-step-number inspection-step-number-muted">4</span> 참고 이력</h2>
+                            <p>최근 검수, 정정, 재검수 기록입니다. 전표번호는 추적용 보조 정보입니다.</p>
+                        </div>
+                    </div>
+
+                    <div class="data-table" role="table" aria-label="최근 검수 이력" data-inspection-history-table>
+                        <div class="data-row management-data-row inspection-history-row table-head" role="row">
+                            <span role="columnheader">검수일</span>
+                            <span role="columnheader">부품</span>
+                            <span role="columnheader">전표번호</span>
+                            <span role="columnheader">유형</span>
+                            <span role="columnheader">등급</span>
+                            <span role="columnheader">처리자</span>
+                            <span role="columnheader">상세</span>
+                        </div>
+                        <div class="data-row management-data-row inspection-history-row is-selectable" role="row" tabindex="0" data-mock-inspection-id="10024">
+                            <strong role="cell" data-label="검수일">2026-06-02</strong>
+                            <span class="inspection-stack-cell" role="cell" data-label="부품">
+                                <strong>PCS-SSD-000128</strong>
+                                <small>Samsung 970 EVO Plus 500GB</small>
+                            </span>
+                            <span role="cell" data-label="전표번호">IN-20260527-M6F8TN3B</span>
+                            <span role="cell" data-label="유형"><em class="badge badge-active">최초</em></span>
+                            <span role="cell" data-label="등급"><em class="badge badge-blue">A</em></span>
+                            <span role="cell" data-label="처리자">김관리</span>
+                            <span class="row-actions" role="cell" data-label="상세">
+                                <button type="button" data-inspection-history-action="10024">상세</button>
+                            </span>
+                        </div>
+                        <div class="data-row management-data-row inspection-history-row is-selectable" role="row" tabindex="0" data-mock-inspection-id="10023">
+                            <strong role="cell" data-label="검수일">2026-06-01</strong>
+                            <span class="inspection-stack-cell" role="cell" data-label="부품">
+                                <strong>PCS-GPU-000172</strong>
+                                <small>RTX 2060 Ventus OC</small>
+                            </span>
+                            <span role="cell" data-label="전표번호">IN-20260528-Q2HD7Z1A</span>
+                            <span role="cell" data-label="유형"><em class="badge badge-warning">정정</em></span>
+                            <span role="cell" data-label="등급"><em class="badge badge-danger">불량</em></span>
+                            <span role="cell" data-label="처리자">박검수</span>
+                            <span class="row-actions" role="cell" data-label="상세">
+                                <button type="button" data-inspection-history-action="10023">상세</button>
+                            </span>
+                        </div>
+                        <div class="data-row management-data-row empty-data-row inspection-empty-row" role="row" data-inspection-history-empty hidden>
+                            <span role="cell" data-label="안내">검수 이력을 불러오는 중입니다.</span>
+                        </div>
+                    </div>
+
+                    <div class="inspection-history-detail" data-inspection-history-detail hidden>
+                        <div class="section-title-row">
+                            <h3>검수 이력 상세</h3>
+                            <span data-inspection-history-item-count>-</span>
+                        </div>
+                        <div class="inspection-history-detail-grid">
+                            <div class="inspection-detail-card">
+                                <strong data-inspection-history-unit>-</strong>
+                                <div class="detail-badge-row">
+                                    <em class="badge badge-active" data-inspection-history-type>-</em>
+                                    <em class="badge badge-blue" data-inspection-history-grade>-</em>
+                                    <em class="badge badge-active" data-inspection-history-result>-</em>
+                                </div>
+                            </div>
+                            <dl class="detail-list inspection-selected-meta">
+                                <div>
+                                    <dt>입고 전표</dt>
+                                    <dd data-inspection-history-document-no>-</dd>
+                                </div>
+                                <div>
+                                    <dt>부품</dt>
+                                    <dd data-inspection-history-part>-</dd>
+                                </div>
+                                <div>
+                                    <dt>검수일</dt>
+                                    <dd data-inspection-history-date>-</dd>
+                                </div>
+                                <div>
+                                    <dt>처리자</dt>
+                                    <dd data-inspection-history-worker>-</dd>
+                                </div>
+                                <div>
+                                    <dt>판매상태</dt>
+                                    <dd data-inspection-history-sales>-</dd>
+                                </div>
+                                <div>
+                                    <dt>메모</dt>
+                                    <dd data-inspection-history-memo>-</dd>
+                                </div>
+                                <div>
+                                    <dt>이력 관계</dt>
+                                    <dd data-inspection-history-relation>-</dd>
+                                </div>
+                            </dl>
+                        </div>
+                        <div class="inspection-result-list" data-inspection-history-items>
+                            <p class="detail-empty-text">검수 이력을 선택해 주세요.</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="side-panel" aria-labelledby="inspection-flow-title">
+                <div class="panel-card process-panel">
+                    <h2 id="inspection-flow-title">입고부터 출고까지</h2>
+                    <p>현재 화면은 재고 흐름의 검수 단계입니다.</p>
+                    <ol class="workflow-list" aria-label="재고 업무 흐름">
+                        <li class="workflow-step">
+                            <span class="process-dot" aria-hidden="true"></span>
+                            <div>
+                                <strong>입고</strong>
+                                <p>거래처 전표로 부품 입고를 기록합니다.</p>
+                            </div>
+                        </li>
+                        <li class="workflow-step active">
+                            <span class="process-dot" aria-hidden="true"></span>
+                            <div>
+                                <strong>검수</strong>
+                                <p>전표에서 관리번호를 선택하고 결과를 등록합니다.</p>
+                                <ol class="sub-process-list" aria-label="검수 세부 흐름">
+                                    <li>
+                                        <span>1</span>
+                                        <div>
+                                            <strong>전표 선택</strong>
+                                            <p>검수할 입고 전표를 고릅니다.</p>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <span>2</span>
+                                        <div>
+                                            <strong>대상 선택</strong>
+                                            <p>관리번호를 개별 또는 일괄 선택합니다.</p>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <span>3</span>
+                                        <div>
+                                            <strong>결과 등록</strong>
+                                            <p>등급과 판매상태를 저장합니다.</p>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <span>4</span>
+                                        <div>
+                                            <strong>이력 확인</strong>
+                                            <p>최근 검수와 정정 기록을 확인합니다.</p>
+                                        </div>
+                                    </li>
+                                </ol>
+                            </div>
+                        </li>
+                        <li class="workflow-step">
+                            <span class="process-dot" aria-hidden="true"></span>
+                            <div>
+                                <strong>출고</strong>
+                                <p>판매 가능 부품을 전표로 출고합니다.</p>
+                            </div>
+                        </li>
+                        <li class="workflow-step">
+                            <span class="process-dot" aria-hidden="true"></span>
+                            <div>
+                                <strong>이력</strong>
+                                <p>전표와 상태 변경 기록을 확인합니다.</p>
+                            </div>
+                        </li>
+                    </ol>
+                </div>
+
+                <div class="panel-card muted-panel inspection-rule-panel">
+                    <h2>검수 처리 기준</h2>
+                    <ul>
+                        <li>검수 결과는 원본 수정 대신 새 이력으로 저장</li>
+                        <li>불량 등급은 판매 불가 상태로 반영</li>
+                        <li>상태 변경 시 부품 상태 이력을 함께 저장</li>
+                    </ul>
+                </div>
+            </aside>
+        </section>
+    </main>
+</div>
+
+<dialog class="part-modal confirm-modal" data-inspection-confirm-modal aria-labelledby="confirm-modal-title">
+    <form class="part-modal-card" method="dialog">
+        <div class="part-modal-header">
+            <div>
+                <p class="page-kicker">검수 결과 저장</p>
+                <h2 id="confirm-modal-title">검수 결과를 저장하시겠습니까?</h2>
+                <p>저장 시 선택한 관리번호에 동일한 결과가 반영됩니다.</p>
+            </div>
+            <button class="modal-close-button" type="button" data-close-confirm-modal aria-label="닫기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M6 6l12 12" />
+                    <path d="M18 6 6 18" />
+                </svg>
+            </button>
+        </div>
+        <dl class="confirm-summary">
+            <div>
+                <dt>검수 대상</dt>
+                <dd data-confirm-unit>-</dd>
+            </div>
+            <div>
+                <dt>저장 결과</dt>
+                <dd data-confirm-result>-</dd>
+            </div>
+        </dl>
+        <div class="part-modal-actions">
+            <button class="btn btn-secondary" type="button" data-close-confirm-modal>취소</button>
+            <button class="btn btn-primary" type="button" data-confirm-save>저장</button>
+        </div>
+    </form>
+</dialog>
+
+<script src="/js/pcs-api.js?20260526_1"></script>
+<script src="/js/workspace-layout.js?20260602_sidebar_resize2"></script>
+<script src="/js/inspection.js?20260605_ui_tune2"></script>
+</body>
+</html>

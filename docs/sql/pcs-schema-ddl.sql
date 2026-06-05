@@ -119,26 +119,28 @@ CREATE TABLE tb_auth_login_history (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE tb_trade_partner (
-    partner_id BIGINT NOT NULL AUTO_INCREMENT,
-    company_id BIGINT NOT NULL,
-    partner_name VARCHAR(150) NOT NULL,
-    partner_type ENUM('PC_CAFE', 'PERSON', 'COMPANY', 'ETC') NOT NULL,
-    partner_role ENUM('SUPPLIER', 'CUSTOMER', 'BOTH') NOT NULL,
-    phone VARCHAR(50) NULL,
-    email VARCHAR(150) NULL,
-    address VARCHAR(500) NULL,
-    memo VARCHAR(1000) NULL,
-    active BOOLEAN NOT NULL DEFAULT TRUE,
-    created_by BIGINT NULL,
-    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    partner_id bigint(20) NOT NULL AUTO_INCREMENT,
+    company_id bigint(20) NOT NULL,
+    partner_name varchar(150) NOT NULL,
+    partner_type enum('PC_CAFE','PERSON','COMPANY','ETC') NOT NULL,
+    partner_role enum('SUPPLIER','CUSTOMER','BOTH') NOT NULL,
+    phone varchar(50) DEFAULT NULL,
+    email varchar(150) DEFAULT NULL,
+    address varchar(500) DEFAULT NULL,
+    memo varchar(1000) DEFAULT NULL,
+    active tinyint(1) NOT NULL DEFAULT 1,
+    created_by bigint(20) DEFAULT NULL,
+    created_at datetime(6) NOT NULL DEFAULT current_timestamp(6),
+    updated_at datetime(6) NOT NULL DEFAULT current_timestamp(6) ON UPDATE current_timestamp(6),
+    last_transaction_at datetime(6) DEFAULT NULL,
     PRIMARY KEY (partner_id),
-    CONSTRAINT uk_trade_partner_company_name UNIQUE (company_id, partner_name),
-    CONSTRAINT uk_trade_partner_company_partner_id UNIQUE (company_id, partner_id),
-    INDEX idx_trade_partner_company_role (company_id, partner_role, active),
-    INDEX idx_trade_partner_company_type (company_id, partner_type, active),
-    INDEX idx_trade_partner_company_created_by (company_id, created_by)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    UNIQUE KEY uk_trade_partner_company_name (company_id,partner_name),
+    UNIQUE KEY uk_trade_partner_company_partner_id (company_id,partner_id),
+    KEY idx_trade_partner_company_role (company_id,partner_role,active),
+    KEY idx_trade_partner_company_type (company_id,partner_type,active),
+    KEY idx_trade_partner_company_created_by (company_id,created_by),
+    KEY idx_trade_partner_company_last_transaction (company_id,last_transaction_at)
+) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE tb_part_category (
     category_id BIGINT NOT NULL AUTO_INCREMENT,
@@ -388,4 +390,62 @@ CREATE TABLE tb_inspection_item_result (
     INDEX idx_inspection_item_result_inspection (inspection_id),
     INDEX idx_inspection_item_result_item (item_id),
     INDEX idx_inspection_item_result_selected_option (selected_option_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE tb_part_spec_definition (
+     spec_definition_id BIGINT NOT NULL AUTO_INCREMENT,
+     company_id BIGINT NOT NULL,
+     category_id BIGINT NOT NULL,
+     spec_key VARCHAR(80) NOT NULL,
+     spec_name VARCHAR(100) NOT NULL,
+     input_type ENUM('TEXT', 'NUMBER', 'SELECT', 'BOOLEAN') NOT NULL,
+     unit VARCHAR(30) NULL,
+     required BOOLEAN NOT NULL DEFAULT FALSE,
+     searchable BOOLEAN NOT NULL DEFAULT FALSE,
+     sort_order INT NOT NULL DEFAULT 0,
+     active BOOLEAN NOT NULL DEFAULT TRUE,
+     created_by BIGINT NULL,
+     created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+     updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+     PRIMARY KEY (spec_definition_id),
+     CONSTRAINT uk_part_spec_definition_company_spec_id UNIQUE (company_id, spec_definition_id),
+     CONSTRAINT uk_part_spec_definition_company_category_key UNIQUE (company_id, category_id, spec_key),
+     CONSTRAINT chk_part_spec_definition_sort_order CHECK (sort_order >= 0),
+     INDEX idx_part_spec_definition_category_sort (company_id, category_id, active, sort_order),
+     INDEX idx_part_spec_definition_created_by (company_id, created_by)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE tb_part_spec_option (
+     option_id BIGINT NOT NULL AUTO_INCREMENT,
+     spec_definition_id BIGINT NOT NULL,
+     option_label VARCHAR(100) NOT NULL,
+     option_value VARCHAR(100) NOT NULL,
+     sort_order INT NOT NULL DEFAULT 0,
+     active BOOLEAN NOT NULL DEFAULT TRUE,
+     PRIMARY KEY (option_id),
+     CONSTRAINT uk_part_spec_option_definition_value UNIQUE (spec_definition_id, option_value),
+     CONSTRAINT chk_part_spec_option_sort_order CHECK (sort_order >= 0),
+     INDEX idx_part_spec_option_definition_sort (spec_definition_id, active, sort_order)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE tb_part_spec_value (
+    spec_value_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_id BIGINT NOT NULL,
+    part_id BIGINT NOT NULL,
+    spec_definition_id BIGINT NOT NULL,
+    value_text VARCHAR(1000) NULL,
+    value_number DECIMAL(15, 4) NULL,
+    value_boolean BOOLEAN NULL,
+    selected_option_id BIGINT NULL,
+    selected_option_label_snapshot VARCHAR(100) NULL,
+    selected_option_value_snapshot VARCHAR(100) NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (spec_value_id),
+    CONSTRAINT uk_part_spec_value_part_definition UNIQUE (part_id, spec_definition_id),
+    INDEX idx_part_spec_value_company_part (company_id, part_id),
+    INDEX idx_part_spec_value_definition (spec_definition_id),
+    INDEX idx_part_spec_value_number (company_id, spec_definition_id, value_number),
+    INDEX idx_part_spec_value_text (company_id, spec_definition_id, value_text(100)),
+    INDEX idx_part_spec_value_option (selected_option_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

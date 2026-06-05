@@ -9,14 +9,21 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/admin.css?20260522_1">
+    <link rel="stylesheet" href="/css/admin.css?20260602_sidebar_resize2">
 </head>
-<body>
+<body class="has-collapsible-sidebar">
 <div class="workspace-layout">
     <div data-workspace-sidebar data-active-route="dashboard"></div>
 
     <main class="workspace-main">
         <header class="workspace-header">
+            <button class="menu-toggle" type="button" data-sidebar-toggle aria-controls="workspace-sidebar" aria-expanded="false" aria-label="메뉴 열기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M4 7h16" />
+                    <path d="M4 12h16" />
+                    <path d="M4 17h16" />
+                </svg>
+            </button>
             <div>
                 <p class="page-kicker">업무 대시보드</p>
                 <h1>운영 현황</h1>
@@ -107,6 +114,6 @@
     </main>
 </div>
 <script src="/js/pcs-api.js?20260526_1"></script>
-<script src="/js/workspace-layout.js?20260527_1"></script>
+<script src="/js/workspace-layout.js?20260602_sidebar_resize2"></script>
 </body>
 </html>
