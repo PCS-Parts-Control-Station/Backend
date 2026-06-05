@@ -2,7 +2,7 @@ param(
     [ValidateSet("bootstrap", "full")]
     [string] $Mode = "bootstrap",
 
-    [ValidateSet("none", "company", "member", "auth", "partner")]
+    [ValidateSet("none", "company", "member", "auth", "partner", "category")]
     [string] $Feature = "none",
 
     [switch] $FixGitignore,
@@ -11,7 +11,7 @@ param(
 
     [switch] $RunDb,
 
-    [ValidateSet("none", "company", "member", "auth", "partner")]
+    [ValidateSet("none", "company", "member", "auth", "partner", "category")]
     [string] $DbFeature = "none",
 
     [switch] $CheckPort,
@@ -692,6 +692,54 @@ function Test-PartnerFeature {
     Add-Result "INFO" "PARTNER_FEATURE" "Partner feature checks completed."
 }
 
+function Test-CategoryFeature {
+    Test-PathRequired "docs/features/category.md" "CATEGORY_FEATURE_DOC" "Keep docs/features/category.md as the category feature rule source."
+    Test-PathRequired "src/main/java/com/pcs/domain/category/api/CategoryApiController.java" "CATEGORY_API" "Expose category workspace APIs in category/api."
+    Test-PathRequired "src/main/java/com/pcs/domain/category/dto/request/CreateCategoryRequest.java" "CATEGORY_CREATE_REQUEST" "Keep category create request DTO."
+    Test-PathRequired "src/main/java/com/pcs/domain/category/dto/request/UpdateCategoryRequest.java" "CATEGORY_UPDATE_REQUEST" "Keep category update request DTO."
+    Test-PathRequired "src/main/java/com/pcs/domain/category/dto/response/SearchCategoryResponse.java" "CATEGORY_SEARCH_RESPONSE" "Keep category list/detail response DTO."
+    Test-PathRequired "src/main/java/com/pcs/domain/category/entity/PartCategory.java" "CATEGORY_ENTITY" "Keep tb_part_category row state in category/entity."
+    Test-PathRequired "src/main/java/com/pcs/domain/category/facade/CategoryFacade.java" "CATEGORY_FACADE" "Keep category company-scope validation in category/facade."
+    Test-PathRequired "src/main/java/com/pcs/domain/category/service/CategoryService.java" "CATEGORY_SERVICE" "Keep category business rules in category/service."
+    Test-PathRequired "src/main/java/com/pcs/domain/category/mapper/CategoryMapper.java" "CATEGORY_MAPPER" "Keep MyBatis mapper interface for category persistence."
+    Test-PathRequired "src/main/resources/mapper/category/CategoryMapper.xml" "CATEGORY_MAPPER_XML" "Keep MyBatis mapper XML for category persistence."
+
+    $controller = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/category/api/CategoryApiController.java"
+    if (Test-Path $controller) {
+        $controllerContent = Get-Content -Raw $controller
+        foreach ($pattern in @("@RestController", '@RequestMapping\("/api"\)', '@GetMapping\("/workspaces/\{companyCode\}/categories"\)', '@PostMapping\("/workspaces/\{companyCode\}/categories"\)', '@PatchMapping\("/workspaces/\{companyCode\}/categories/\{categoryId\}"\)', '@DeleteMapping\("/workspaces/\{companyCode\}/categories/\{categoryId\}"\)', "@AuthenticationPrincipal", "ApiResultDto", "PageResultDto")) {
+            if ($controllerContent -notmatch $pattern) {
+                Add-Result "FAIL" "CATEGORY_CONTROLLER_PATTERN" "CategoryApiController is missing required pattern: $pattern" "Keep category CRUD API aligned with docs/features/category.md."
+            }
+        }
+    }
+
+    $service = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/category/service/CategoryService.java"
+    if (Test-Path $service) {
+        $serviceContent = Get-Content -Raw $service
+        foreach ($pattern in @("DEFAULT_SIZE", "MAX_SIZE", "countCategories", "searchCategories", "existsByName", "countPartsByCategory", "deleteById", "CATEGORY_IN_USE", "COMPANY_INACTIVE")) {
+            if ($serviceContent -notmatch $pattern) {
+                Add-Result "FAIL" "CATEGORY_SERVICE_PATTERN" "CategoryService is missing required rule pattern: $pattern" "Keep category paging, duplicate-name, delete guard, and inactive-company checks."
+            }
+        }
+    }
+
+    $mapperXml = Join-Path $ProjectRoot "src/main/resources/mapper/category/CategoryMapper.xml"
+    if (Test-Path $mapperXml) {
+        $mapperXmlContent = Get-Content -Raw $mapperXml
+        if ($mapperXmlContent -notmatch 'namespace="com\.pcs\.domain\.category\.mapper\.CategoryMapper"') {
+            Add-Result "FAIL" "CATEGORY_MAPPER_NAMESPACE" "CategoryMapper.xml namespace does not match CategoryMapper FQCN." "Match XML namespace to mapper interface."
+        }
+        foreach ($pattern in @("tb_part_category", "tb_pc_part", "part_count", "LIMIT", "OFFSET", "COUNT(*)", "updated_at DESC", "category_id DESC", "DELETE FROM tb_part_category")) {
+            if ($mapperXmlContent -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "CATEGORY_MAPPER_PATTERN" "CategoryMapper.xml is missing required SQL pattern: $pattern" "Keep category search, partCount, and delete SQL aligned with docs/features/category.md."
+            }
+        }
+    }
+
+    Add-Result "INFO" "CATEGORY_FEATURE" "Category feature checks completed."
+}
+
 function Get-DbConfig {
     $dbUrl = $env:DB_URL
     $dbUser = $env:DB_USER
@@ -828,6 +876,8 @@ public class PcsHarnessDbCheck {
                     checkAuthDb();
                 } else if ("partner".equals(normalized)) {
                     checkPartnerDb();
+                } else if ("category".equals(normalized)) {
+                    checkCategoryDb();
                 } else {
                     fail("DB_CHECK_UNKNOWN", "Unknown DB check: " + normalized);
                 }
@@ -1212,6 +1262,63 @@ public class PcsHarnessDbCheck {
         }
     }
 
+    private static void checkCategoryDb() throws SQLException {
+        requireColumn("tb_part_category", "company_id");
+        requireColumn("tb_part_category", "category_name");
+        requireColumn("tb_part_category", "description");
+        requireColumn("tb_part_category", "created_by");
+        requireColumn("tb_part_category", "created_at");
+        requireColumn("tb_part_category", "updated_at");
+        requireColumnAbsent("tb_part_category", "active");
+        requireConstraint("tb_part_category", "uk_part_category_company_name");
+        requireConstraint("tb_part_category", "uk_part_category_company_category_id");
+
+        boolean originalAutoCommit = connection.getAutoCommit();
+        connection.setAutoCommit(false);
+        try {
+            long companyId = insertCompany("PCS Harness Category Company", "pcs-harness-category-" + runSuffix, null, null, "445-00-" + runSuffix.substring(Math.max(0, runSuffix.length() - 5)));
+            long otherCompanyId = insertCompany("PCS Harness Category Other Company", "pcs-harness-category-other-" + runSuffix, null, null, "446-00-" + runSuffix.substring(Math.max(0, runSuffix.length() - 5)));
+            long memberId = insertMember(companyId, "category-owner-" + runSuffix, "Category Owner", "OWNER", 1, "ACTIVE");
+
+            long categoryId = insertCategory(companyId, "Harness Category " + runSuffix, "Category memo", memberId);
+            insertCategory(otherCompanyId, "Harness Category " + runSuffix, "Other company category", null);
+
+            int companyScopedCount = queryInt(
+                "SELECT COUNT(*) FROM tb_part_category WHERE company_id = ? AND category_name LIKE ?",
+                companyId,
+                "Harness Category%"
+            );
+            if (companyScopedCount == 1) {
+                pass("CATEGORY_COMPANY_SCOPE", "Category rows are scoped by company_id.");
+            } else {
+                fail("CATEGORY_COMPANY_SCOPE", "Expected 1 category row in company scope but found " + companyScopedCount + ".");
+            }
+
+            expectSqlFailure("CATEGORY_NAME_UNIQUE_PER_COMPANY", new SqlAction() {
+                public void run() throws SQLException {
+                    insertCategory(companyId, "Harness Category " + runSuffix, "Duplicate category", null);
+                }
+            });
+
+            int deleted = deleteCategory(companyId, categoryId);
+            int remaining = queryInt(
+                "SELECT COUNT(*) FROM tb_part_category WHERE company_id = ? AND category_id = ?",
+                companyId,
+                categoryId
+            );
+            if (deleted == 1 && remaining == 0) {
+                pass("CATEGORY_DELETE_UNUSED", "Unused category row can be deleted.");
+            } else {
+                fail("CATEGORY_DELETE_UNUSED", "Unused category row was not deleted as expected.");
+            }
+
+            pass("CATEGORY_DB_ROLLBACK_SCOPE", "Category DB scenario was executed inside a rollback transaction.");
+        } finally {
+            connection.rollback();
+            connection.setAutoCommit(originalAutoCommit);
+        }
+    }
+
     private static long insertCompany(String name, String code, String email, String phone, String businessNo) throws SQLException {
         String sql = "INSERT INTO tb_company (company_name, company_code, representative_email, representative_phone, business_registration_no, active) VALUES (?, ?, ?, ?, ?, TRUE)";
         try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -1302,6 +1409,36 @@ public class PcsHarnessDbCheck {
         throw new SQLException("Failed to read generated partner_id.");
     }
 
+    private static long insertCategory(long companyId, String categoryName, String description, Long createdBy) throws SQLException {
+        String sql = "INSERT INTO tb_part_category (company_id, category_name, description, created_by) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            statement.setLong(1, companyId);
+            statement.setString(2, categoryName);
+            setNullableString(statement, 3, description);
+            if (createdBy == null) {
+                statement.setNull(4, Types.BIGINT);
+            } else {
+                statement.setLong(4, createdBy.longValue());
+            }
+            statement.executeUpdate();
+            try (ResultSet keys = statement.getGeneratedKeys()) {
+                if (keys.next()) {
+                    return keys.getLong(1);
+                }
+            }
+        }
+        throw new SQLException("Failed to read generated category_id.");
+    }
+
+    private static int deleteCategory(long companyId, long categoryId) throws SQLException {
+        String sql = "DELETE FROM tb_part_category WHERE company_id = ? AND category_id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, companyId);
+            statement.setLong(2, categoryId);
+            return statement.executeUpdate();
+        }
+    }
+
     private static void rotateRefreshToken(long tokenId, long replacedByTokenId) throws SQLException {
         String sql = "UPDATE tb_auth_refresh_token SET revoked_at = CURRENT_TIMESTAMP(6), revoked_reason = 'ROTATED', replaced_by_token_id = ? WHERE token_id = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -1356,6 +1493,15 @@ public class PcsHarnessDbCheck {
             pass("DB_COLUMN_" + tableName.toUpperCase() + "_" + columnName.toUpperCase(), tableName + "." + columnName + " exists.");
         } else {
             fail("DB_COLUMN_" + tableName.toUpperCase() + "_" + columnName.toUpperCase(), tableName + "." + columnName + " is missing.");
+        }
+    }
+
+    private static void requireColumnAbsent(String tableName, String columnName) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?";
+        if (queryInt(sql, tableName, columnName) == 0) {
+            pass("DB_COLUMN_ABSENT_" + tableName.toUpperCase() + "_" + columnName.toUpperCase(), tableName + "." + columnName + " is absent.");
+        } else {
+            fail("DB_COLUMN_ABSENT_" + tableName.toUpperCase() + "_" + columnName.toUpperCase(), tableName + "." + columnName + " should be absent.");
         }
     }
 
@@ -1642,6 +1788,10 @@ if ($Feature -eq "auth") {
 
 if ($Feature -eq "partner") {
     Test-PartnerFeature
+}
+
+if ($Feature -eq "category") {
+    Test-CategoryFeature
 }
 
 Invoke-DbChecks

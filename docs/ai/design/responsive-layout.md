@@ -218,6 +218,7 @@ table-header.inline-summary-header
 ```
 
 - `inline-summary-header`는 `list-summary-box`를 border/background 없는 인라인 요약으로 표시한다.
+- 요약 항목이 3개 이하인 경우 `summary-compact`로 폭을 줄인다.
 - 중간 폭에서는 오른쪽 정렬을 유지하고, 모바일 폭에서만 제목 아래로 내린다.
 
 ## 테이블 전환
@@ -230,6 +231,7 @@ table-header.inline-summary-header
 
 기준:
 
+- 4열 전후의 단순 관리 목록은 `simple-management-data-row`를 사용할 수 있다.
 - 테이블 헤더는 숨긴다.
 - 각 cell은 `data-label` 또는 `::before` 라벨로 제목을 표시한다.
 - 행별 액션은 행 하단에 배치한다.

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pcs.domain.category.mapper.CategoryMapper">
+
+    <select id="isCompanyActive" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM tb_company
+            WHERE company_id = #{companyId}
+              AND active = TRUE
+        )
+    </select>
+
+    <sql id="categorySearchWhere">
+        WHERE c.company_id = #{companyId}
+        <if test="keyword != null and keyword != ''">
+          AND (
+              c.category_name LIKE CONCAT('%', #{keyword}, '%')
+              OR c.description LIKE CONCAT('%', #{keyword}, '%')
+          )
+        </if>
+    </sql>
+
+    <select id="searchCategories" resultType="com.pcs.domain.category.dto.response.SearchCategoryResponse">
+        SELECT
+            c.category_id,
+            c.category_name,
+            c.description,
+            COUNT(p.part_id) AS part_count,
+            c.updated_at
+        FROM tb_part_category c
+        LEFT JOIN tb_pc_part p
+            ON p.company_id = c.company_id
+           AND p.category_id = c.category_id
+        <include refid="categorySearchWhere" />
+        GROUP BY
+            c.category_id,
+            c.category_name,
+            c.description,
+            c.updated_at
+        ORDER BY c.updated_at DESC, c.category_id DESC
+        LIMIT #{size}
+        OFFSET #{offset}
+    </select>
+
+    <select id="countCategories" resultType="long">
+        SELECT COUNT(*)
+        FROM tb_part_category c
+        <include refid="categorySearchWhere" />
+    </select>
+
+    <select id="findById" resultType="com.pcs.domain.category.entity.PartCategory">
+        SELECT
+            category_id,
+            company_id,
+            category_name,
+            description,
+            created_by,
+            created_at,
+            updated_at
+        FROM tb_part_category
+        WHERE company_id = #{companyId}
+          AND category_id = #{categoryId}
+    </select>
+
+    <select id="findResponseById" resultType="com.pcs.domain.category.dto.response.SearchCategoryResponse">
+        SELECT
+            c.category_id,
+            c.category_name,
+            c.description,
+            COUNT(p.part_id) AS part_count,
+            c.updated_at
+        FROM tb_part_category c
+        LEFT JOIN tb_pc_part p
+            ON p.company_id = c.company_id
+           AND p.category_id = c.category_id
+        WHERE c.company_id = #{companyId}
+          AND c.category_id = #{categoryId}
+        GROUP BY
+            c.category_id,
+            c.category_name,
+            c.description,
+            c.updated_at
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="categoryId" parameterType="com.pcs.domain.category.entity.PartCategory">
+        INSERT INTO tb_part_category (
+            company_id,
+            category_name,
+            description,
+            created_by,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{companyId},
+            #{categoryName},
+            #{description},
+            #{createdBy},
+            NOW(6),
+            NOW(6)
+        )
+    </insert>
+
+    <update id="update" parameterType="com.pcs.domain.category.entity.PartCategory">
+        UPDATE tb_part_category
+        SET
+            category_name = #{categoryName},
+            description = #{description},
+            updated_at = NOW(6)
+        WHERE company_id = #{companyId}
+          AND category_id = #{categoryId}
+    </update>
+
+    <select id="countPartsByCategory" resultType="long">
+        SELECT COUNT(*)
+        FROM tb_pc_part
+        WHERE company_id = #{companyId}
+          AND category_id = #{categoryId}
+    </select>
+
+    <delete id="deleteById">
+        DELETE FROM tb_part_category
+        WHERE company_id = #{companyId}
+          AND category_id = #{categoryId}
+    </delete>
+
+    <select id="existsByName" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM tb_part_category
+            WHERE company_id = #{companyId}
+              AND category_name = #{categoryName}
+              <if test="excludeCategoryId != null">
+                AND category_id &lt;&gt; #{excludeCategoryId}
+              </if>
+        )
+    </select>
+
+</mapper>

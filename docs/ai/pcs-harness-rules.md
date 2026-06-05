@@ -37,10 +37,11 @@ company
 member
 auth
 partner
+category
 ```
 
 새 도메인 문서를 만들었다고 해서 하네스가 자동으로 그 기능의 세부 규칙을 검사하는 것은 아니다.  
-예를 들어 `docs/features/category.md`가 있어도, `run-harness.ps1`에 `category` 검사가 추가되기 전까지는 `-Feature category`를 사용할 수 없다.
+`-Feature`로 검사하려면 `run-harness.ps1`에 해당 기능 검사 함수가 실제로 연결되어 있어야 한다.
 
 예:
 
@@ -48,6 +49,7 @@ partner
 .\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature company -RunBuild -RunDb -DbFeature member
 .\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature auth -RunBuild -RunDb -DbFeature member
 .\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature partner -RunBuild -RunDb
+.\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature category -RunBuild -RunDb
 .\harness\run-feedback-loop.ps1 -Mode bootstrap -DbFeature member
 ```
 
@@ -55,36 +57,36 @@ partner
 
 새 기능을 하네스에서 직접 검사하려면 `harness/run-harness.ps1`에 기능명을 추가하고 검사 함수를 만든다.
 
-예: `category` 기능 검사를 추가하는 경우
+예: `inspection` 기능 검사를 추가하는 경우
 
 1. 파라미터 허용값에 기능명을 추가한다.
 
 ```powershell
-[ValidateSet("none", "company", "member", "auth", "partner", "category")]
+[ValidateSet("none", "company", "member", "auth", "partner", "category", "inspection")]
 [string] $Feature = "none",
 
-[ValidateSet("none", "company", "member", "auth", "partner", "category")]
+[ValidateSet("none", "company", "member", "auth", "partner", "category", "inspection")]
 [string] $DbFeature = "none",
 ```
 
 2. 기능 검사 함수를 만든다.
 
 ```powershell
-function Test-CategoryFeature {
-    Test-PathRequired "docs/features/category.md" "CATEGORY_DOC" "Create docs/features/category.md first."
-    Test-PathRequired "src/main/java/com/pcs/domain/category/api/CategoryApiController.java" "CATEGORY_CONTROLLER" "Create CategoryApiController."
-    Test-PathRequired "src/main/java/com/pcs/domain/category/facade/CategoryFacade.java" "CATEGORY_FACADE" "Create CategoryFacade."
-    Test-PathRequired "src/main/java/com/pcs/domain/category/service/CategoryService.java" "CATEGORY_SERVICE" "Create CategoryService."
-    Test-PathRequired "src/main/java/com/pcs/domain/category/mapper/CategoryMapper.java" "CATEGORY_MAPPER" "Create CategoryMapper."
-    Test-PathRequired "src/main/resources/mapper/category/CategoryMapper.xml" "CATEGORY_MAPPER_XML" "Create CategoryMapper.xml."
+function Test-InspectionFeature {
+    Test-PathRequired "docs/features/inspection.md" "INSPECTION_DOC" "Create docs/features/inspection.md first."
+    Test-PathRequired "src/main/java/com/pcs/domain/inspection/api/InspectionApiController.java" "INSPECTION_CONTROLLER" "Create InspectionApiController."
+    Test-PathRequired "src/main/java/com/pcs/domain/inspection/facade/InspectionFacade.java" "INSPECTION_FACADE" "Create InspectionFacade."
+    Test-PathRequired "src/main/java/com/pcs/domain/inspection/service/InspectionService.java" "INSPECTION_SERVICE" "Create InspectionService."
+    Test-PathRequired "src/main/java/com/pcs/domain/inspection/mapper/InspectionMapper.java" "INSPECTION_MAPPER" "Create InspectionMapper."
+    Test-PathRequired "src/main/resources/mapper/inspection/InspectionMapper.xml" "INSPECTION_MAPPER_XML" "Create InspectionMapper.xml."
 }
 ```
 
 3. 실행부에 연결한다.
 
 ```powershell
-if ($Feature -eq "category") {
-    Test-CategoryFeature
+if ($Feature -eq "inspection") {
+    Test-InspectionFeature
 }
 ```
 
@@ -93,10 +95,10 @@ if ($Feature -eq "category") {
 5. `harness/run-feedback-loop.ps1`의 `Feature`, `DbFeature` 허용값에도 같은 기능명을 추가한다.
 
 ```powershell
-[ValidateSet("none", "company", "member", "auth", "partner", "category")]
+[ValidateSet("none", "company", "member", "auth", "partner", "category", "inspection")]
 [string] $Feature = "none",
 
-[ValidateSet("none", "company", "member", "auth", "partner", "category")]
+[ValidateSet("none", "company", "member", "auth", "partner", "category", "inspection")]
 [string] $DbFeature = "none",
 ```
 
@@ -345,6 +347,7 @@ SQL 품질:
 .\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature company -RunBuild -RunDb -DbFeature member
 .\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature auth -RunBuild -RunDb -DbFeature member
 .\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature partner -RunBuild -RunDb
+.\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature category -RunBuild -RunDb
 .\harness\run-feedback-loop.ps1 -Mode bootstrap -DbFeature member
 ```
 

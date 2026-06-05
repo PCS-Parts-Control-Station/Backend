@@ -33,6 +33,7 @@ content-main
 공통 modifier 기준:
 
 ```text
+단순 관리 목록: simple-management-data-row
 선택형 관리 목록: management-filter-form, inline-summary-header, management-data-row
 전표형 목록: document-filter-form, inline-summary-header, document-data-table, document-data-row
 ```
@@ -73,7 +74,7 @@ filter-card
 
 ```text
 카테고리 검색
-카테고리명, 설명으로 목록을 좁혀 봅니다.
+카테고리명과 설명으로 목록을 좁혀 봅니다.
 검색어 / 검색
 ```
 
@@ -114,7 +115,7 @@ table-card
 
 - 테이블 상단에는 제목과 설명을 둔다.
 - 오른쪽에는 목록 현황 요약 박스를 둘 수 있다.
-- 요약 박스는 `전체`, `사용`, `중지`, `템플릿`처럼 목록 판단에 필요한 숫자만 둔다.
+- 요약 박스는 `전체`, `거래 가능`, `거래 불가`, `템플릿`처럼 목록 판단에 필요한 숫자만 둔다.
 - 데이터 행은 얇은 구분선으로 나눈다.
 - 열 개수가 많으면 불필요한 열을 줄이고 상세 페이지로 넘긴다.
 
@@ -128,7 +129,7 @@ table-card
 
 ```text
 목록 현황
-전체 / 사용 / 중지 / 템플릿
+전체 / 거래 가능 / 거래 불가 / 템플릿
 짧은 운영 설명
 ```
 
@@ -162,10 +163,12 @@ table-card
 table-header.inline-summary-header
 - list-summary-box
   - list-summary
+  - list-summary.summary-compact
 ```
 
 - `list-summary-box`는 기존 박스형 클래스명을 유지하더라도, 위 modifier 안에서는 border/background/padding을 제거한 인라인 요약으로 표시한다.
 - 요약 항목은 4개 전후로 제한한다.
+- 요약 항목이 3개 이하이면 `summary-compact`를 함께 사용해 항목 사이가 과하게 벌어지지 않게 한다.
 
 ## 데이터 행
 
@@ -184,9 +187,31 @@ table-header.inline-summary-header
 
 - 첫 번째 열은 가장 중요한 값이다.
 - 상태는 `.badge`로 표현한다.
-- 행별 액션은 작은 outline 버튼을 사용한다.
-- 행별 액션은 `수정`, `중지`, `사용`, `상세`처럼 짧은 명령어로 둔다.
-- 삭제보다 비활성화/중지 표현을 우선한다.
+- 행별 액션을 쓰는 경우 작은 outline 버튼을 사용한다.
+- 행별 액션은 `수정`, `상세`처럼 짧은 명령어로 둔다.
+- 상태 변경은 행마다 반복하기보다 오른쪽 패널이나 상세 화면에서 처리한다.
+- 삭제보다 상태 변경으로 이력을 보존하는 흐름을 우선한다.
+
+선택형 관리 목록 행 예:
+
+```text
+카테고리명
+설명
+부품 수
+수정일
+```
+
+공통 modifier 기준:
+
+```text
+data-row.simple-management-data-row
+```
+
+- 단순 관리 목록은 4열 전후의 적은 정보만 보여준다.
+- 행 안에 상세 액션이 없거나 오른쪽 패널에서 처리하는 경우 사용한다.
+- 카테고리 목록은 상태 열을 표시하지 않는다.
+- 카테고리 목록은 해당 카테고리에 연결된 부품 수를 보조 정보로 보여준다.
+- 모바일 전환 시 `수정일` 라벨이 `등록자`로 잘못 보이지 않게 별도 라벨 기준을 둔다.
 
 선택형 관리 목록 행 예:
 
@@ -250,7 +275,7 @@ data-row.document-data-row.is-created
 
 목록 화면에서 상태값은 텍스트만 쓰지 않는다.
 
-사용 여부 배지:
+active 상태 배지:
 
 ```text
 사용 중: green

@@ -14,18 +14,27 @@ com.pcs.domain.category
 
 | Method | API | 설명 |
 |---|---|---|
-| GET | `/api/workspaces/{companyCode}/categories` | 카테고리 목록 |
+| GET | `/api/workspaces/{companyCode}/categories` | 카테고리 목록. `keyword`, `page`, `size`, `limit` 지원 |
 | POST | `/api/workspaces/{companyCode}/categories` | 카테고리 생성 |
 | GET | `/api/workspaces/{companyCode}/categories/{categoryId}` | 카테고리 상세 |
 | PATCH | `/api/workspaces/{companyCode}/categories/{categoryId}` | 카테고리 수정 |
+| DELETE | `/api/workspaces/{companyCode}/categories/{categoryId}` | 카테고리 삭제 |
 
 ## 주요 규칙
 
 - `categoryName`은 같은 업체 안에서 중복될 수 없다.
-- 카테고리는 별도 `active` 상태를 갖지 않는다.
-- 카테고리는 부품 분류 기준이므로 삭제/비활성화 정책은 별도 설계 후 추가한다.
+- 카테고리는 `active` 상태를 두지 않는다.
+- 카테고리 목록은 이름과 설명으로 검색한다.
+- 카테고리 목록은 공통 `PageResultDto` 구조로 응답한다.
+- 카테고리 목록/상세 응답에는 해당 카테고리에 연결된 부품 마스터 수 `partCount`를 포함한다.
+- 카테고리 목록은 `updatedAt DESC, categoryId DESC` 순서로 조회한다.
+- 연결된 부품 마스터가 없는 카테고리만 삭제할 수 있다.
+- 부품에 연결된 카테고리는 삭제하지 않고 이름과 설명을 수정해 정리한다.
+- 연결된 부품이 있는 카테고리 삭제 요청은 `CATEGORY_IN_USE`로 실패한다.
 
 ## 하네스 포인트
 
-- 카테고리 등록/수정 권한은 `docs/ai/pcs-permission-rules.md` 기준을 따른다.
-- 카테고리명 중복과 회사 범위 격리를 검증한다.
+- 카테고리 등록/수정/삭제 권한은 `docs/ai/pcs-permission-rules.md` 기준을 따른다.
+- `tb_part_category`에 `active` 컬럼이 없음을 확인한다.
+- 카테고리 목록은 `tb_pc_part` 집계로 `partCount`를 계산한다.
+- 카테고리 삭제 전에는 `tb_pc_part` 연결 수를 확인한다.

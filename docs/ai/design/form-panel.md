@@ -118,7 +118,6 @@ panel-card.side-work-panel
 ```text
 카테고리명
 설명
-사용 중으로 등록
 저장 / 초기화
 ```
 
@@ -201,7 +200,7 @@ detail-list
 간단한 boolean 설정은 checkbox 기반 switch row로 처리할 수 있다.
 
 ```text
-[checkbox] 사용 중으로 등록
+[checkbox] 거래 가능 상태로 등록
 ```
 
 기준:
@@ -209,6 +208,7 @@ detail-list
 - 텍스트는 명령형보다 상태 설명형으로 쓴다.
 - `accent-color`는 `--cyan`을 사용한다.
 - 너무 많은 switch를 한 패널에 넣지 않는다.
+- 카테고리 등록/수정에는 `active` switch를 두지 않는다.
 
 ## Form Actions
 
@@ -227,8 +227,7 @@ detail-list
 
 ```text
 카테고리명은 회사 안에서 중복 불가
-사용 안 함 상태는 신규 부품 등록에서 제외
-삭제 대신 active 변경으로 이력 보존
+부품에 연결된 카테고리는 삭제하지 않고 이름과 설명을 정리
 ```
 
 거래처 생성/수정 폼 운영 메모 예:
