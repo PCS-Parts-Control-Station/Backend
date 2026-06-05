@@ -4,10 +4,10 @@
 - Feature: category
 - RunDb: True
 - DbFeature: none
-- GeneratedAt: 2026-06-04 15:36:54
+- GeneratedAt: 2026-06-05 15:47:14
 - FAIL: 0
 - WARN: 0
-- INFO: 74
+- INFO: 110
 
 ## FAIL
 
@@ -87,10 +87,46 @@
 66. [DB_COLUMN_ABSENT_TB_PART_CATEGORY_ACTIVE] tb_part_category.active is absent.
 67. [DB_CONSTRAINT_UK_PART_CATEGORY_COMPANY_NAME] tb_part_category.uk_part_category_company_name exists.
 68. [DB_CONSTRAINT_UK_PART_CATEGORY_COMPANY_CATEGORY_ID] tb_part_category.uk_part_category_company_category_id exists.
-69. [CATEGORY_COMPANY_SCOPE] Category rows are scoped by company_id.
-70. [DB_CHECK_OUTPUT] [ WARN] (main) Error: 1062-23000: Duplicate entry '32-Harness Category 1780555013002' for key 'uk_part_category_company_name'
-71. [CATEGORY_NAME_UNIQUE_PER_COMPANY] Expected SQL failure occurred: 1062
-72. [CATEGORY_DELETE_UNUSED] Unused category row can be deleted.
-73. [CATEGORY_DB_ROLLBACK_SCOPE] Category DB scenario was executed inside a rollback transaction.
-74. [COMPILE_JAVA] compileJava passed.
+69. [DB_COLUMN_TB_PART_SPEC_DEFINITION_COMPANY_ID] tb_part_spec_definition.company_id exists.
+70. [DB_COLUMN_TB_PART_SPEC_DEFINITION_CATEGORY_ID] tb_part_spec_definition.category_id exists.
+71. [DB_COLUMN_TB_PART_SPEC_DEFINITION_SPEC_KEY] tb_part_spec_definition.spec_key exists.
+72. [DB_COLUMN_TB_PART_SPEC_DEFINITION_SPEC_NAME] tb_part_spec_definition.spec_name exists.
+73. [DB_COLUMN_TB_PART_SPEC_DEFINITION_INPUT_TYPE] tb_part_spec_definition.input_type exists.
+74. [DB_COLUMN_TB_PART_SPEC_DEFINITION_UNIT] tb_part_spec_definition.unit exists.
+75. [DB_COLUMN_TB_PART_SPEC_DEFINITION_REQUIRED] tb_part_spec_definition.required exists.
+76. [DB_COLUMN_TB_PART_SPEC_DEFINITION_SEARCHABLE] tb_part_spec_definition.searchable exists.
+77. [DB_COLUMN_TB_PART_SPEC_DEFINITION_SORT_ORDER] tb_part_spec_definition.sort_order exists.
+78. [DB_COLUMN_TB_PART_SPEC_DEFINITION_ACTIVE] tb_part_spec_definition.active exists.
+79. [DB_COLUMN_TB_PART_SPEC_DEFINITION_CREATED_BY] tb_part_spec_definition.created_by exists.
+80. [DB_COLUMN_TB_PART_SPEC_DEFINITION_CREATED_AT] tb_part_spec_definition.created_at exists.
+81. [DB_COLUMN_TB_PART_SPEC_DEFINITION_UPDATED_AT] tb_part_spec_definition.updated_at exists.
+82. [DB_CONSTRAINT_UK_PART_SPEC_DEFINITION_COMPANY_CATEGORY_KEY] tb_part_spec_definition.uk_part_spec_definition_company_category_key exists.
+83. [DB_COLUMN_TB_PART_SPEC_OPTION_SPEC_DEFINITION_ID] tb_part_spec_option.spec_definition_id exists.
+84. [DB_COLUMN_TB_PART_SPEC_OPTION_OPTION_LABEL] tb_part_spec_option.option_label exists.
+85. [DB_COLUMN_TB_PART_SPEC_OPTION_OPTION_VALUE] tb_part_spec_option.option_value exists.
+86. [DB_COLUMN_TB_PART_SPEC_OPTION_SORT_ORDER] tb_part_spec_option.sort_order exists.
+87. [DB_COLUMN_TB_PART_SPEC_OPTION_ACTIVE] tb_part_spec_option.active exists.
+88. [DB_CONSTRAINT_UK_PART_SPEC_OPTION_DEFINITION_VALUE] tb_part_spec_option.uk_part_spec_option_definition_value exists.
+89. [DB_COLUMN_TB_PART_SPEC_VALUE_COMPANY_ID] tb_part_spec_value.company_id exists.
+90. [DB_COLUMN_TB_PART_SPEC_VALUE_PART_ID] tb_part_spec_value.part_id exists.
+91. [DB_COLUMN_TB_PART_SPEC_VALUE_SPEC_DEFINITION_ID] tb_part_spec_value.spec_definition_id exists.
+92. [DB_COLUMN_TB_PART_SPEC_VALUE_VALUE_TEXT] tb_part_spec_value.value_text exists.
+93. [DB_COLUMN_TB_PART_SPEC_VALUE_VALUE_NUMBER] tb_part_spec_value.value_number exists.
+94. [DB_COLUMN_TB_PART_SPEC_VALUE_VALUE_BOOLEAN] tb_part_spec_value.value_boolean exists.
+95. [DB_COLUMN_TB_PART_SPEC_VALUE_SELECTED_OPTION_ID] tb_part_spec_value.selected_option_id exists.
+96. [DB_COLUMN_TB_PART_SPEC_VALUE_SELECTED_OPTION_LABEL_SNAPSHOT] tb_part_spec_value.selected_option_label_snapshot exists.
+97. [DB_COLUMN_TB_PART_SPEC_VALUE_SELECTED_OPTION_VALUE_SNAPSHOT] tb_part_spec_value.selected_option_value_snapshot exists.
+98. [DB_CONSTRAINT_UK_PART_SPEC_VALUE_PART_DEFINITION] tb_part_spec_value.uk_part_spec_value_part_definition exists.
+99. [CATEGORY_COMPANY_SCOPE] Category rows are scoped by company_id.
+100. [DB_CHECK_OUTPUT] [ WARN] (main) Error: 1062-23000: Duplicate entry '36-Harness Category 1780642033091' for key 'uk_part_category_company_name'
+101. [CATEGORY_NAME_UNIQUE_PER_COMPANY] Expected SQL failure occurred: 1062
+102. [CATEGORY_SPEC_DEFINITION_INSERT] Category spec definition can be inserted and scoped by category.
+103. [CATEGORY_SPEC_OPTION_INSERT] Select spec options can be inserted for a spec definition.
+104. [DB_CHECK_OUTPUT] [ WARN] (main) Error: 1062-23000: Duplicate entry '36-27-memory_type' for key 'uk_part_spec_definition_company_category_key'
+105. [CATEGORY_SPEC_KEY_UNIQUE_PER_CATEGORY] Expected SQL failure occurred: 1062
+106. [DB_CHECK_OUTPUT] [ WARN] (main) Error: 1062-23000: Duplicate entry '3-DDR4' for key 'uk_part_spec_option_definition_value'
+107. [CATEGORY_SPEC_OPTION_UNIQUE_PER_DEFINITION] Expected SQL failure occurred: 1062
+108. [CATEGORY_DELETE_UNUSED] Unused category row can be deleted.
+109. [CATEGORY_DB_ROLLBACK_SCOPE] Category DB scenario was executed inside a rollback transaction.
+110. [COMPILE_JAVA] compileJava passed.
 

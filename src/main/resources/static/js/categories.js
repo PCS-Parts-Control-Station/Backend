@@ -1,5 +1,11 @@
 (function () {
     const PAGE_SIZE = 10;
+    const SPEC_TYPE_LABELS = {
+        TEXT: "텍스트",
+        NUMBER: "숫자",
+        SELECT: "선택",
+        BOOLEAN: "체크"
+    };
 
     const filterForm = document.querySelector("[data-category-filter-form]");
     const table = document.querySelector("[data-category-table]");
@@ -15,6 +21,10 @@
     const openDeleteModalButton = document.querySelector("[data-open-category-delete-modal]");
     const closeDeleteModalButtons = document.querySelectorAll("[data-close-category-delete-modal]");
     const confirmDeleteButton = document.querySelector("[data-confirm-category-delete]");
+    const createSpecList = document.querySelector("[data-create-spec-list]");
+    const createSpecEmpty = document.querySelector("[data-create-spec-empty]");
+    const addCreateSpecButton = document.querySelector("[data-add-create-spec]");
+    const detailSpecList = document.querySelector("[data-detail-spec-list]");
     const detailFields = {
         name: document.querySelector("[data-detail-name]"),
         description: document.querySelector("[data-detail-description]"),
@@ -100,6 +110,64 @@
         });
     };
 
+    const mergeCategory = (category) => {
+        const exists = currentCategories.some((item) => String(item.categoryId) === String(category.categoryId));
+        if (!exists) {
+            return;
+        }
+        currentCategories = currentCategories.map((item) => (
+            String(item.categoryId) === String(category.categoryId) ? { ...item, ...category } : item
+        ));
+    };
+
+    const showToast = (message, type = "info") => {
+        window.PcsUi?.toast({
+            message,
+            type
+        });
+    };
+
+    const renderSpecDetail = (specDefinitions = []) => {
+        if (!detailSpecList) {
+            return;
+        }
+
+        detailSpecList.innerHTML = "";
+        if (!specDefinitions.length) {
+            const empty = document.createElement("p");
+            empty.textContent = "등록된 스펙 항목이 없습니다.";
+            detailSpecList.append(empty);
+            return;
+        }
+
+        specDefinitions.forEach((spec) => {
+            const item = document.createElement("article");
+            item.className = "spec-detail-item";
+
+            const title = document.createElement("strong");
+            title.textContent = spec.specName || "-";
+
+            const meta = document.createElement("small");
+            const metaParts = [
+                SPEC_TYPE_LABELS[spec.inputType] || spec.inputType || "텍스트",
+                spec.required ? "필수" : "선택",
+                spec.searchable ? "검색 기준" : "",
+                spec.unit ? `단위: ${spec.unit}` : ""
+            ].filter(Boolean);
+            meta.textContent = metaParts.join(" · ");
+
+            item.append(title, meta);
+
+            if (Array.isArray(spec.options) && spec.options.length > 0) {
+                const options = document.createElement("small");
+                options.textContent = `선택지: ${spec.options.map((option) => option.optionLabel).join(", ")}`;
+                item.append(options);
+            }
+
+            detailSpecList.append(item);
+        });
+    };
+
     const renderDetail = (category) => {
         if (!category) {
             return;
@@ -109,6 +177,7 @@
         detailFields.description.textContent = category.description || "-";
         detailFields.partCount.textContent = `${numberText(category.partCount)}개`;
         detailFields.updatedAt.textContent = formatDate(category.updatedAt);
+        renderSpecDetail(category.specDefinitions || []);
 
         if (openDeleteModalButton) {
             openDeleteModalButton.title = Number(category.partCount || 0) > 0
@@ -125,21 +194,168 @@
         editForm.elements.description.value = category.description || "";
     };
 
-    const selectCategory = (categoryId) => {
+    const fetchCategoryDetail = async (categoryId) => {
+        const companyCode = getCompanyCode();
+        return window.PcsApi.getData(
+            `/api/workspaces/${encodeURIComponent(companyCode)}/categories/${categoryId}`,
+            {
+                authRedirect: true,
+                loginCompanyCode: companyCode
+            }
+        );
+    };
+
+    const selectCategory = async (categoryId) => {
         selectedCategoryId = categoryId;
         const category = getSelectedCategory();
         updateSelectedRow();
-        if (!category) {
+        if (category) {
+            renderDetail(category);
+            setPanelMode("detail");
+        }
+
+        try {
+            const detail = await fetchCategoryDetail(categoryId);
+            mergeCategory(detail);
+            renderDetail(detail);
+            setPanelMode("detail");
+        } catch (error) {
+            showToast(error?.message || "카테고리 상세 정보를 불러오지 못했습니다.", "error");
+        }
+    };
+
+    const clearSpecRows = () => {
+        createSpecList?.querySelectorAll("[data-spec-row]").forEach((row) => row.remove());
+    };
+
+    const updateSpecEmptyState = () => {
+        if (!createSpecEmpty || !createSpecList) {
             return;
         }
-        renderDetail(category);
-        setPanelMode("detail");
+        createSpecEmpty.hidden = createSpecList.querySelectorAll("[data-spec-row]").length > 0;
+    };
+
+    const updateSpecOptionVisibility = (row) => {
+        if (!row) {
+            return;
+        }
+        const inputType = row.querySelector("[data-spec-input-type]")?.value;
+        const optionsWrap = row.querySelector("[data-spec-options-wrap]");
+        if (optionsWrap) {
+            optionsWrap.hidden = inputType !== "SELECT";
+        }
+    };
+
+    const createSpecRow = (values = {}) => {
+        const row = document.createElement("div");
+        row.className = "spec-builder-row";
+        row.setAttribute("data-spec-row", "");
+        row.innerHTML = `
+            <div class="spec-builder-row-head">
+                <strong>스펙 항목</strong>
+                <button class="spec-remove-button" type="button" data-remove-spec>삭제</button>
+            </div>
+            <label>
+                <span>항목명</span>
+                <input type="text" data-spec-name placeholder="예: 용량" autocomplete="off">
+            </label>
+            <label>
+                <span>입력 방식</span>
+                <select data-spec-input-type>
+                    <option value="TEXT">텍스트</option>
+                    <option value="NUMBER">숫자</option>
+                    <option value="SELECT">선택</option>
+                    <option value="BOOLEAN">체크</option>
+                </select>
+            </label>
+            <label>
+                <span>단위 <em class="field-optional">선택</em></span>
+                <input type="text" data-spec-unit placeholder="예: GB, MHz, W" autocomplete="off">
+            </label>
+            <label data-spec-options-wrap hidden>
+                <span>선택지 <em class="field-optional">쉼표로 구분</em></span>
+                <input type="text" data-spec-options placeholder="예: DDR3, DDR4, DDR5" autocomplete="off">
+            </label>
+            <label class="switch-row">
+                <input type="checkbox" data-spec-required>
+                <span>필수 입력</span>
+            </label>
+            <label class="switch-row">
+                <input type="checkbox" data-spec-searchable>
+                <span>검색 기준 포함</span>
+            </label>
+        `;
+
+        row.querySelector("[data-spec-name]").value = values.specName || "";
+        row.querySelector("[data-spec-input-type]").value = values.inputType || "TEXT";
+        row.querySelector("[data-spec-unit]").value = values.unit || "";
+        row.querySelector("[data-spec-options]").value = Array.isArray(values.options)
+            ? values.options.map((option) => option.optionLabel || option.optionValue).filter(Boolean).join(", ")
+            : "";
+        row.querySelector("[data-spec-required]").checked = values.required === true;
+        row.querySelector("[data-spec-searchable]").checked = values.searchable === true;
+        updateSpecOptionVisibility(row);
+        return row;
+    };
+
+    const addSpecRow = (values = {}) => {
+        if (!createSpecList) {
+            return;
+        }
+        const row = createSpecRow(values);
+        createSpecList.append(row);
+        updateSpecEmptyState();
+        row.querySelector("[data-spec-name]")?.focus();
+    };
+
+    const resetSpecBuilder = () => {
+        clearSpecRows();
+        updateSpecEmptyState();
+    };
+
+    const readSpecDefinitions = () => {
+        if (!createSpecList) {
+            return [];
+        }
+
+        return Array.from(createSpecList.querySelectorAll("[data-spec-row]"))
+            .map((row, index) => {
+                const specName = row.querySelector("[data-spec-name]")?.value.trim() || "";
+                if (!specName) {
+                    return null;
+                }
+
+                const inputType = row.querySelector("[data-spec-input-type]")?.value || "TEXT";
+                const optionText = row.querySelector("[data-spec-options]")?.value || "";
+                const options = inputType === "SELECT"
+                    ? optionText.split(",")
+                        .map((value) => value.trim())
+                        .filter(Boolean)
+                        .map((value, optionIndex) => ({
+                            optionLabel: value,
+                            optionValue: value,
+                            sortOrder: optionIndex
+                        }))
+                    : [];
+
+                return {
+                    specName,
+                    inputType,
+                    unit: row.querySelector("[data-spec-unit]")?.value.trim() || null,
+                    required: row.querySelector("[data-spec-required]")?.checked === true,
+                    searchable: row.querySelector("[data-spec-searchable]")?.checked === true,
+                    sortOrder: index,
+                    options
+                };
+            })
+            .filter(Boolean);
     };
 
     const showCreatePanel = () => {
         selectedCategoryId = null;
         updateSelectedRow();
         createForm?.reset();
+        resetSpecBuilder();
         setPanelMode("create");
     };
 
@@ -212,20 +428,13 @@
         searchButton.textContent = isLoading ? "조회 중" : "검색";
     };
 
-    const showToast = (message, type = "info") => {
-        window.PcsUi?.toast({
-            message,
-            type
-        });
-    };
-
     const setFormSaving = (targetForm, isSaving, savingText = "저장 중") => {
         if (!targetForm) {
             return;
         }
 
         targetForm.dataset.saving = String(isSaving);
-        targetForm.querySelectorAll("button, input, textarea").forEach((element) => {
+        targetForm.querySelectorAll("button, input, textarea, select").forEach((element) => {
             element.disabled = isSaving;
         });
 
@@ -291,10 +500,16 @@
         deleteModal.showModal();
     };
 
-    const readCategoryForm = (targetForm) => ({
-        categoryName: targetForm.elements.categoryName.value.trim(),
-        description: targetForm.elements.description.value.trim() || null
-    });
+    const readCategoryForm = (targetForm) => {
+        const body = {
+            categoryName: targetForm.elements.categoryName.value.trim(),
+            description: targetForm.elements.description.value.trim() || null
+        };
+        if (targetForm === createForm) {
+            body.specDefinitions = readSpecDefinitions();
+        }
+        return body;
+    };
 
     const loadCategories = async (page = 0, options = {}) => {
         const companyCode = getCompanyCode();
@@ -377,6 +592,7 @@
                     return;
                 }
             }
+            resetSpecBuilder();
             await loadCategories(0);
         } catch (error) {
             setEmptyMessage(error?.message || "업체 주소를 확인할 수 없습니다.");
@@ -390,6 +606,28 @@
 
     document.querySelectorAll("[data-category-create-mode]").forEach((button) => {
         button.addEventListener("click", showCreatePanel);
+    });
+
+    addCreateSpecButton?.addEventListener("click", () => addSpecRow());
+
+    createSpecList?.addEventListener("click", (event) => {
+        const removeButton = event.target.closest("[data-remove-spec]");
+        if (!removeButton) {
+            return;
+        }
+        removeButton.closest("[data-spec-row]")?.remove();
+        updateSpecEmptyState();
+    });
+
+    createSpecList?.addEventListener("change", (event) => {
+        if (!event.target.matches("[data-spec-input-type]")) {
+            return;
+        }
+        updateSpecOptionVisibility(event.target.closest("[data-spec-row]"));
+    });
+
+    createForm?.addEventListener("reset", () => {
+        window.setTimeout(resetSpecBuilder, 0);
     });
 
     document.querySelector("[data-category-edit-mode]")?.addEventListener("click", () => {
@@ -432,8 +670,12 @@
 
             selectedCategoryId = data.categoryId;
             await loadCategories(0, { keepSelection: true });
+            mergeCategory(data);
+            renderDetail(data);
+            setPanelMode("detail");
             showToast("카테고리를 등록했습니다.", "success");
             createForm.reset();
+            resetSpecBuilder();
         } catch (error) {
             showToast(error?.message || "카테고리를 등록하지 못했습니다.", "error");
         } finally {
@@ -463,11 +705,9 @@
 
             selectedCategoryId = data.categoryId;
             await loadCategories(currentPage, { keepSelection: true, preserveScroll: true });
-            const refreshedCategory = getSelectedCategory();
-            if (refreshedCategory) {
-                renderDetail(refreshedCategory);
-                setPanelMode("detail");
-            }
+            mergeCategory(data);
+            renderDetail(data);
+            setPanelMode("detail");
             showToast("카테고리 정보를 수정했습니다.", "success");
         } catch (error) {
             showToast(error?.message || "카테고리를 수정하지 못했습니다.", "error");

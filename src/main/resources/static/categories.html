@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/admin.css?20260604_category_crud">
+    <link rel="stylesheet" href="/css/admin.css?20260605_category_specs">
     <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
 </head>
 <body class="has-collapsible-sidebar">
@@ -93,6 +93,15 @@
                                 <span>설명</span>
                                 <textarea name="description" rows="4" placeholder="쿨러, 팬, 방열 부품 검수 기준"></textarea>
                             </label>
+                            <div class="spec-builder-section" data-spec-builder-section>
+                                <div class="optional-field-group">
+                                    <span class="optional-field-label">스펙 항목</span>
+                                    <div class="spec-builder" data-create-spec-list>
+                                        <p class="spec-builder-empty" data-create-spec-empty>부품 등록 때 입력받을 스펙 항목을 추가하세요.</p>
+                                    </div>
+                                    <button class="panel-link-button spec-add-button" type="button" data-add-create-spec>스펙 항목 추가</button>
+                                </div>
+                            </div>
                             <div class="form-actions">
                                 <button class="btn btn-primary" type="submit">저장</button>
                                 <button class="btn btn-secondary" type="reset">초기화</button>
@@ -127,6 +136,13 @@
                                 <dd data-detail-updated-at>-</dd>
                             </div>
                         </dl>
+
+                        <div class="spec-detail-block">
+                            <h3>스펙 항목</h3>
+                            <div class="spec-detail-list" data-detail-spec-list>
+                                <p>등록된 스펙 항목이 없습니다.</p>
+                            </div>
+                        </div>
 
                         <div class="form-actions">
                             <button class="btn btn-primary" type="button" data-category-edit-mode>수정</button>
@@ -165,6 +181,7 @@
                     <h2>운영 메모</h2>
                     <ul>
                         <li>카테고리명은 회사 안에서 중복 불가</li>
+                        <li>스펙 항목은 부품 등록 때 카테고리별 입력 기준으로 사용</li>
                         <li>부품에 연결된 카테고리는 삭제하지 않고 이름과 설명을 정리</li>
                         <li>연결된 부품이 없는 카테고리만 삭제 가능</li>
                     </ul>
@@ -211,6 +228,6 @@
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
 <script src="/js/workspace-layout.js?20260527_1"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/categories.js?20260604_category_crud"></script>
+<script src="/js/categories.js?20260605_category_specs"></script>
 </body>
 </html>

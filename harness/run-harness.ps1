@@ -697,8 +697,14 @@ function Test-CategoryFeature {
     Test-PathRequired "src/main/java/com/pcs/domain/category/api/CategoryApiController.java" "CATEGORY_API" "Expose category workspace APIs in category/api."
     Test-PathRequired "src/main/java/com/pcs/domain/category/dto/request/CreateCategoryRequest.java" "CATEGORY_CREATE_REQUEST" "Keep category create request DTO."
     Test-PathRequired "src/main/java/com/pcs/domain/category/dto/request/UpdateCategoryRequest.java" "CATEGORY_UPDATE_REQUEST" "Keep category update request DTO."
+    Test-PathRequired "src/main/java/com/pcs/domain/category/dto/request/CategorySpecDefinitionRequest.java" "CATEGORY_SPEC_DEFINITION_REQUEST" "Keep category spec definition request DTO."
+    Test-PathRequired "src/main/java/com/pcs/domain/category/dto/request/CategorySpecOptionRequest.java" "CATEGORY_SPEC_OPTION_REQUEST" "Keep category spec option request DTO."
     Test-PathRequired "src/main/java/com/pcs/domain/category/dto/response/SearchCategoryResponse.java" "CATEGORY_SEARCH_RESPONSE" "Keep category list/detail response DTO."
+    Test-PathRequired "src/main/java/com/pcs/domain/category/dto/response/CategoryDetailResponse.java" "CATEGORY_DETAIL_RESPONSE" "Keep category detail response with specDefinitions."
+    Test-PathRequired "src/main/java/com/pcs/domain/category/dto/response/CategorySpecDefinitionResponse.java" "CATEGORY_SPEC_DEFINITION_RESPONSE" "Keep category spec definition response DTO."
     Test-PathRequired "src/main/java/com/pcs/domain/category/entity/PartCategory.java" "CATEGORY_ENTITY" "Keep tb_part_category row state in category/entity."
+    Test-PathRequired "src/main/java/com/pcs/domain/category/entity/PartSpecDefinition.java" "CATEGORY_SPEC_DEFINITION_ENTITY" "Keep tb_part_spec_definition row state in category/entity."
+    Test-PathRequired "src/main/java/com/pcs/domain/category/entity/PartSpecOption.java" "CATEGORY_SPEC_OPTION_ENTITY" "Keep tb_part_spec_option row state in category/entity."
     Test-PathRequired "src/main/java/com/pcs/domain/category/facade/CategoryFacade.java" "CATEGORY_FACADE" "Keep category company-scope validation in category/facade."
     Test-PathRequired "src/main/java/com/pcs/domain/category/service/CategoryService.java" "CATEGORY_SERVICE" "Keep category business rules in category/service."
     Test-PathRequired "src/main/java/com/pcs/domain/category/mapper/CategoryMapper.java" "CATEGORY_MAPPER" "Keep MyBatis mapper interface for category persistence."
@@ -717,7 +723,7 @@ function Test-CategoryFeature {
     $service = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/category/service/CategoryService.java"
     if (Test-Path $service) {
         $serviceContent = Get-Content -Raw $service
-        foreach ($pattern in @("DEFAULT_SIZE", "MAX_SIZE", "countCategories", "searchCategories", "existsByName", "countPartsByCategory", "deleteById", "CATEGORY_IN_USE", "COMPANY_INACTIVE")) {
+        foreach ($pattern in @("DEFAULT_SIZE", "MAX_SIZE", "countCategories", "searchCategories", "existsByName", "createSpecDefinitions", "insertSpecDefinition", "insertSpecOption", "findSpecDefinitions", "countPartsByCategory", "deleteById", "CATEGORY_IN_USE", "COMPANY_INACTIVE")) {
             if ($serviceContent -notmatch $pattern) {
                 Add-Result "FAIL" "CATEGORY_SERVICE_PATTERN" "CategoryService is missing required rule pattern: $pattern" "Keep category paging, duplicate-name, delete guard, and inactive-company checks."
             }
@@ -730,7 +736,7 @@ function Test-CategoryFeature {
         if ($mapperXmlContent -notmatch 'namespace="com\.pcs\.domain\.category\.mapper\.CategoryMapper"') {
             Add-Result "FAIL" "CATEGORY_MAPPER_NAMESPACE" "CategoryMapper.xml namespace does not match CategoryMapper FQCN." "Match XML namespace to mapper interface."
         }
-        foreach ($pattern in @("tb_part_category", "tb_pc_part", "part_count", "LIMIT", "OFFSET", "COUNT(*)", "updated_at DESC", "category_id DESC", "DELETE FROM tb_part_category")) {
+        foreach ($pattern in @("tb_part_category", "tb_part_spec_definition", "tb_part_spec_option", "tb_pc_part", "part_count", "LIMIT", "OFFSET", "COUNT(*)", "updated_at DESC", "category_id DESC", "DELETE FROM tb_part_category")) {
             if ($mapperXmlContent -notmatch [regex]::Escape($pattern)) {
                 Add-Result "FAIL" "CATEGORY_MAPPER_PATTERN" "CategoryMapper.xml is missing required SQL pattern: $pattern" "Keep category search, partCount, and delete SQL aligned with docs/features/category.md."
             }
@@ -1272,6 +1278,36 @@ public class PcsHarnessDbCheck {
         requireColumnAbsent("tb_part_category", "active");
         requireConstraint("tb_part_category", "uk_part_category_company_name");
         requireConstraint("tb_part_category", "uk_part_category_company_category_id");
+        requireColumn("tb_part_spec_definition", "company_id");
+        requireColumn("tb_part_spec_definition", "category_id");
+        requireColumn("tb_part_spec_definition", "spec_key");
+        requireColumn("tb_part_spec_definition", "spec_name");
+        requireColumn("tb_part_spec_definition", "input_type");
+        requireColumn("tb_part_spec_definition", "unit");
+        requireColumn("tb_part_spec_definition", "required");
+        requireColumn("tb_part_spec_definition", "searchable");
+        requireColumn("tb_part_spec_definition", "sort_order");
+        requireColumn("tb_part_spec_definition", "active");
+        requireColumn("tb_part_spec_definition", "created_by");
+        requireColumn("tb_part_spec_definition", "created_at");
+        requireColumn("tb_part_spec_definition", "updated_at");
+        requireConstraint("tb_part_spec_definition", "uk_part_spec_definition_company_category_key");
+        requireColumn("tb_part_spec_option", "spec_definition_id");
+        requireColumn("tb_part_spec_option", "option_label");
+        requireColumn("tb_part_spec_option", "option_value");
+        requireColumn("tb_part_spec_option", "sort_order");
+        requireColumn("tb_part_spec_option", "active");
+        requireConstraint("tb_part_spec_option", "uk_part_spec_option_definition_value");
+        requireColumn("tb_part_spec_value", "company_id");
+        requireColumn("tb_part_spec_value", "part_id");
+        requireColumn("tb_part_spec_value", "spec_definition_id");
+        requireColumn("tb_part_spec_value", "value_text");
+        requireColumn("tb_part_spec_value", "value_number");
+        requireColumn("tb_part_spec_value", "value_boolean");
+        requireColumn("tb_part_spec_value", "selected_option_id");
+        requireColumn("tb_part_spec_value", "selected_option_label_snapshot");
+        requireColumn("tb_part_spec_value", "selected_option_value_snapshot");
+        requireConstraint("tb_part_spec_value", "uk_part_spec_value_part_definition");
 
         boolean originalAutoCommit = connection.getAutoCommit();
         connection.setAutoCommit(false);
@@ -1282,6 +1318,9 @@ public class PcsHarnessDbCheck {
 
             long categoryId = insertCategory(companyId, "Harness Category " + runSuffix, "Category memo", memberId);
             insertCategory(otherCompanyId, "Harness Category " + runSuffix, "Other company category", null);
+            long specDefinitionId = insertPartSpecDefinition(companyId, categoryId, "memory_type", "Memory Type", "SELECT", null, true, true, 0, memberId);
+            insertPartSpecOption(specDefinitionId, "DDR4", "DDR4", 0);
+            insertPartSpecOption(specDefinitionId, "DDR5", "DDR5", 1);
 
             int companyScopedCount = queryInt(
                 "SELECT COUNT(*) FROM tb_part_category WHERE company_id = ? AND category_name LIKE ?",
@@ -1300,6 +1339,41 @@ public class PcsHarnessDbCheck {
                 }
             });
 
+            int specDefinitionCount = queryInt(
+                "SELECT COUNT(*) FROM tb_part_spec_definition WHERE company_id = ? AND category_id = ? AND active = TRUE",
+                companyId,
+                categoryId
+            );
+            if (specDefinitionCount == 1) {
+                pass("CATEGORY_SPEC_DEFINITION_INSERT", "Category spec definition can be inserted and scoped by category.");
+            } else {
+                fail("CATEGORY_SPEC_DEFINITION_INSERT", "Expected 1 category spec definition but found " + specDefinitionCount + ".");
+            }
+
+            int specOptionCount = queryInt(
+                "SELECT COUNT(*) FROM tb_part_spec_option WHERE spec_definition_id = ? AND active = TRUE",
+                specDefinitionId
+            );
+            if (specOptionCount == 2) {
+                pass("CATEGORY_SPEC_OPTION_INSERT", "Select spec options can be inserted for a spec definition.");
+            } else {
+                fail("CATEGORY_SPEC_OPTION_INSERT", "Expected 2 spec options but found " + specOptionCount + ".");
+            }
+
+            expectSqlFailure("CATEGORY_SPEC_KEY_UNIQUE_PER_CATEGORY", new SqlAction() {
+                public void run() throws SQLException {
+                    insertPartSpecDefinition(companyId, categoryId, "memory_type", "Duplicate Spec", "TEXT", null, false, false, 1, memberId);
+                }
+            });
+
+            expectSqlFailure("CATEGORY_SPEC_OPTION_UNIQUE_PER_DEFINITION", new SqlAction() {
+                public void run() throws SQLException {
+                    insertPartSpecOption(specDefinitionId, "DDR4 Duplicate", "DDR4", 2);
+                }
+            });
+
+            deletePartSpecOptionsByCategory(companyId, categoryId);
+            deletePartSpecDefinitionsByCategory(companyId, categoryId);
             int deleted = deleteCategory(companyId, categoryId);
             int remaining = queryInt(
                 "SELECT COUNT(*) FROM tb_part_category WHERE company_id = ? AND category_id = ?",
@@ -1428,6 +1502,68 @@ public class PcsHarnessDbCheck {
             }
         }
         throw new SQLException("Failed to read generated category_id.");
+    }
+
+    private static long insertPartSpecDefinition(long companyId, long categoryId, String specKey, String specName, String inputType, String unit, boolean required, boolean searchable, int sortOrder, Long createdBy) throws SQLException {
+        String sql = "INSERT INTO tb_part_spec_definition (company_id, category_id, spec_key, spec_name, input_type, unit, required, searchable, sort_order, active, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?)";
+        try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            statement.setLong(1, companyId);
+            statement.setLong(2, categoryId);
+            statement.setString(3, specKey);
+            statement.setString(4, specName);
+            statement.setString(5, inputType);
+            setNullableString(statement, 6, unit);
+            statement.setBoolean(7, required);
+            statement.setBoolean(8, searchable);
+            statement.setInt(9, sortOrder);
+            if (createdBy == null) {
+                statement.setNull(10, Types.BIGINT);
+            } else {
+                statement.setLong(10, createdBy.longValue());
+            }
+            statement.executeUpdate();
+            try (ResultSet keys = statement.getGeneratedKeys()) {
+                if (keys.next()) {
+                    return keys.getLong(1);
+                }
+            }
+        }
+        throw new SQLException("Failed to read generated spec_definition_id.");
+    }
+
+    private static long insertPartSpecOption(long specDefinitionId, String optionLabel, String optionValue, int sortOrder) throws SQLException {
+        String sql = "INSERT INTO tb_part_spec_option (spec_definition_id, option_label, option_value, sort_order, active) VALUES (?, ?, ?, ?, TRUE)";
+        try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            statement.setLong(1, specDefinitionId);
+            statement.setString(2, optionLabel);
+            statement.setString(3, optionValue);
+            statement.setInt(4, sortOrder);
+            statement.executeUpdate();
+            try (ResultSet keys = statement.getGeneratedKeys()) {
+                if (keys.next()) {
+                    return keys.getLong(1);
+                }
+            }
+        }
+        throw new SQLException("Failed to read generated option_id.");
+    }
+
+    private static int deletePartSpecOptionsByCategory(long companyId, long categoryId) throws SQLException {
+        String sql = "DELETE FROM tb_part_spec_option WHERE spec_definition_id IN (SELECT spec_definition_id FROM tb_part_spec_definition WHERE company_id = ? AND category_id = ?)";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, companyId);
+            statement.setLong(2, categoryId);
+            return statement.executeUpdate();
+        }
+    }
+
+    private static int deletePartSpecDefinitionsByCategory(long companyId, long categoryId) throws SQLException {
+        String sql = "DELETE FROM tb_part_spec_definition WHERE company_id = ? AND category_id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, companyId);
+            statement.setLong(2, categoryId);
+            return statement.executeUpdate();
+        }
     }
 
     private static int deleteCategory(long companyId, long categoryId) throws SQLException {

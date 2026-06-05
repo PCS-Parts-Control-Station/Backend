@@ -41,6 +41,26 @@ public class PageController {
         return "forward:/partners.html";
     }
 
+    @GetMapping("/w/{companyCode}/parts")
+    public String parts() {
+        return "forward:/parts.html";
+    }
+
+    @GetMapping("/w/{companyCode}/users")
+    public String users() {
+        return "forward:/users.html";
+    }
+
+    @GetMapping("/w/{companyCode}/history/stock")
+    public String historyStock() {
+        return "forward:/history-stock.html";
+    }
+
+    @GetMapping("/w/{companyCode}/history/inspection")
+    public String historyInspection() {
+        return "forward:/history-inspection.html";
+    }
+
     @GetMapping("/w/{companyCode}/inbound")
     public String inbound() {
         return "forward:/inbound.html";

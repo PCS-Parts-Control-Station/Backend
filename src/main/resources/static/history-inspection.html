@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PCS 검수 이력 화면입니다. 개별 부품의 검수 처리 기록을 조회합니다.">
+    <title>PCS | 검수 이력</title>
+    <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/admin.css?20260604_history">
+    <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
+</head>
+<body class="has-collapsible-sidebar">
+<div class="workspace-layout">
+    <div data-workspace-sidebar data-active-route="history/inspection"></div>
+
+    <main class="workspace-main">
+        <header class="workspace-header">
+            <button class="menu-toggle" type="button" data-sidebar-toggle aria-controls="workspace-sidebar" aria-expanded="false" aria-label="메뉴 열기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M4 7h16" />
+                    <path d="M4 12h16" />
+                    <path d="M4 17h16" />
+                </svg>
+            </button>
+            <div>
+                <p class="page-kicker">이력</p>
+                <h1>검수 이력</h1>
+                <p class="page-description">부품 검수 및 상태 변경 기록을 시간순으로 확인합니다.</p>
+            </div>
+        </header>
+
+        <section class="content-grid" style="grid-template-columns: 1fr;">
+            <div class="content-main">
+                <section class="filter-card management-filter-card" aria-labelledby="filter-title">
+                    <div>
+                        <h2 id="filter-title">이력 검색</h2>
+                        <p>기간, 부품명, 식별번호로 검수 기록을 좁혀 봅니다.</p>
+                    </div>
+                    <!-- API: GET /api/workspaces/{companyCode}/history/inspections?keyword=&startDate=&endDate=&page=&size= -->
+                    <form class="filter-form management-filter-form" action="#" method="get" autocomplete="off" data-history-filter-form>
+                        <label>
+                            <span>검색어</span>
+                            <input type="search" name="keyword" placeholder="부품명 또는 관리번호" autocomplete="off">
+                        </label>
+                        <label>
+                            <span>시작일</span>
+                            <input type="date" name="startDate">
+                        </label>
+                        <label>
+                            <span>종료일</span>
+                            <input type="date" name="endDate">
+                        </label>
+                        <button class="btn btn-primary" type="submit">검색</button>
+                    </form>
+                </section>
+
+                <section class="table-card" aria-labelledby="history-list-title">
+                    <div class="table-header inline-summary-header">
+                        <div>
+                            <h2 id="history-list-title">검수 이력</h2>
+                            <p>검수 처리된 개별 부품 내역입니다.</p>
+                        </div>
+                    </div>
+
+                    <div class="data-table document-data-table" role="table" aria-label="검수 이력" data-history-table>
+                        <div class="data-row document-data-row table-head" role="row">
+                            <span role="columnheader">부품명</span>
+                            <span role="columnheader">관리번호</span>
+                            <span role="columnheader">검수 상태</span>
+                            <span role="columnheader">등급</span>
+                            <span role="columnheader">처리자</span>
+                            <span role="columnheader">처리일</span>
+                        </div>
+                        <div class="data-row document-data-row empty-data-row" role="row" data-history-empty>
+                            <span role="cell" data-label="안내">이력을 불러오는 중입니다.</span>
+                        </div>
+                    </div>
+                    <div class="pagination-bar" data-history-pagination hidden>
+                        <p data-page-info>1 / 1 페이지</p>
+                        <div class="pagination-actions">
+                            <button type="button" data-page-prev>이전</button>
+                            <button type="button" data-page-next>다음</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </section>
+    </main>
+</div>
+<script src="/js/pcs-api.js?20260529_workspace_guard"></script>
+<script src="/js/pcs-pagination.js?20260527_pagination"></script>
+<script src="/js/workspace-layout.js?20260527_1"></script>
+<script src="/js/pcs-ui.js?20260527_1"></script>
+<script src="/js/history-inspection.js?20260604_history"></script>
+</body>
+</html>

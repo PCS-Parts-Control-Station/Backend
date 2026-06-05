@@ -3,12 +3,23 @@ package com.pcs.domain.category.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.pcs.domain.category.dto.request.CategorySpecDefinitionRequest;
+import com.pcs.domain.category.dto.request.CategorySpecOptionRequest;
+import com.pcs.domain.category.dto.request.CreateCategoryRequest;
+import com.pcs.domain.category.dto.response.CategoryDetailResponse;
+import com.pcs.domain.category.dto.response.CategorySpecDefinitionRow;
+import com.pcs.domain.category.dto.response.CategorySpecOptionResponse;
 import com.pcs.domain.category.dto.response.SearchCategoryResponse;
 import com.pcs.domain.category.entity.PartCategory;
+import com.pcs.domain.category.entity.PartSpecDefinition;
+import com.pcs.domain.category.entity.PartSpecOption;
 import com.pcs.domain.category.mapper.CategoryMapper;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
@@ -98,6 +109,70 @@ class CategoryServiceTest {
         );
 
         assertEquals(ErrorCode.COMPANY_INACTIVE, exception.getErrorCode());
+    }
+
+    @Test
+    void createCategory_savesSpecDefinitionsAndSelectOptions() {
+        Long companyId = 1L;
+        Long memberId = 7L;
+        CreateCategoryRequest request = new CreateCategoryRequest(
+                "RAM",
+                "메모리",
+                List.of(
+                        new CategorySpecDefinitionRequest(null, "용량", "NUMBER", "GB", true, true, 0, List.of()),
+                        new CategorySpecDefinitionRequest(
+                                null,
+                                "세대",
+                                "SELECT",
+                                null,
+                                false,
+                                true,
+                                1,
+                                List.of(
+                                        new CategorySpecOptionRequest("DDR4", "DDR4", 0),
+                                        new CategorySpecOptionRequest("DDR5", "DDR5", 1)
+                                )
+                        )
+                )
+        );
+
+        when(categoryMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(categoryMapper.existsByName(companyId, "RAM", null)).thenReturn(false);
+        doAnswer(invocation -> {
+            PartCategory category = invocation.getArgument(0);
+            category.setCategoryId(10L);
+            return null;
+        }).when(categoryMapper).insert(any(PartCategory.class));
+        doAnswer(invocation -> {
+            PartSpecDefinition specDefinition = invocation.getArgument(0);
+            specDefinition.setSpecDefinitionId("세대".equals(specDefinition.getSpecName()) ? 102L : 101L);
+            return null;
+        }).when(categoryMapper).insertSpecDefinition(any(PartSpecDefinition.class));
+
+        when(categoryMapper.findResponseById(companyId, 10L)).thenReturn(new SearchCategoryResponse(
+                10L,
+                "RAM",
+                "메모리",
+                0L,
+                LocalDateTime.of(2026, 6, 5, 10, 0)
+        ));
+        when(categoryMapper.findSpecDefinitions(companyId, 10L)).thenReturn(List.of(
+                new CategorySpecDefinitionRow(101L, 10L, "spec_1", "용량", "NUMBER", "GB", true, true, 0, true),
+                new CategorySpecDefinitionRow(102L, 10L, "spec_2", "세대", "SELECT", null, false, true, 1, true)
+        ));
+        when(categoryMapper.findSpecOptions(List.of(101L, 102L))).thenReturn(List.of(
+                new CategorySpecOptionResponse(201L, 102L, "DDR4", "DDR4", 0, true),
+                new CategorySpecOptionResponse(202L, 102L, "DDR5", "DDR5", 1, true)
+        ));
+
+        CategoryDetailResponse response = categoryService.createCategory(companyId, request, memberId);
+
+        assertEquals(10L, response.categoryId());
+        assertEquals(2, response.specDefinitions().size());
+        assertEquals("용량", response.specDefinitions().get(0).specName());
+        assertEquals(2, response.specDefinitions().get(1).options().size());
+        verify(categoryMapper, times(2)).insertSpecDefinition(any(PartSpecDefinition.class));
+        verify(categoryMapper, times(2)).insertSpecOption(any(PartSpecOption.class));
     }
 
     @Test

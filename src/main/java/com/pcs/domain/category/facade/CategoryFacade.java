@@ -2,6 +2,7 @@ package com.pcs.domain.category.facade;
 
 import com.pcs.domain.category.dto.request.CreateCategoryRequest;
 import com.pcs.domain.category.dto.request.UpdateCategoryRequest;
+import com.pcs.domain.category.dto.response.CategoryDetailResponse;
 import com.pcs.domain.category.dto.response.SearchCategoryResponse;
 import com.pcs.domain.category.service.CategoryService;
 import com.pcs.global.dto.PageResultDto;
@@ -38,7 +39,7 @@ public class CategoryFacade {
         );
     }
 
-    public SearchCategoryResponse createCategory(
+    public CategoryDetailResponse createCategory(
             PcsPrincipal principal,
             String pathCompanyCode,
             CreateCategoryRequest request
@@ -48,7 +49,7 @@ public class CategoryFacade {
         return categoryService.createCategory(principal.companyId(), request, principal.memberId());
     }
 
-    public SearchCategoryResponse getCategory(
+    public CategoryDetailResponse getCategory(
             PcsPrincipal principal,
             String pathCompanyCode,
             Long categoryId
@@ -58,7 +59,7 @@ public class CategoryFacade {
         return categoryService.getCategory(principal.companyId(), categoryId);
     }
 
-    public SearchCategoryResponse updateCategory(
+    public CategoryDetailResponse updateCategory(
             PcsPrincipal principal,
             String pathCompanyCode,
             Long categoryId,
