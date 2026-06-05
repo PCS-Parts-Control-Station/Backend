@@ -93,11 +93,37 @@
 }
 
 .empty-data-row [role="cell"] {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     justify-self: center;
     color: var(--navy);
     font-size: 15px;
     font-weight: 800;
     text-align: center;
+}
+
+.empty-data-row [role="cell"]::before {
+    content: "";
+    flex: 0 0 auto;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--line-strong);
+    border-top-color: var(--cyan);
+    border-radius: 999px;
+    animation: inboundLoadingSpin 0.8s linear infinite;
+}
+
+@keyframes inboundLoadingSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .empty-data-row [role="cell"]::before {
+        animation: none;
+    }
 }
 
 [data-inbound-panel="guide"] {
