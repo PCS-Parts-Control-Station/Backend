@@ -211,6 +211,17 @@
           AND category_id = #{categoryId}
     </select>
 
+    <delete id="deleteSpecValuesByCategory">
+        DELETE FROM tb_part_spec_value
+        WHERE company_id = #{companyId}
+          AND spec_definition_id IN (
+            SELECT spec_definition_id
+            FROM tb_part_spec_definition
+            WHERE company_id = #{companyId}
+              AND category_id = #{categoryId}
+          )
+    </delete>
+
     <delete id="deleteSpecOptionsByCategory">
         DELETE FROM tb_part_spec_option
         WHERE spec_definition_id IN (

@@ -79,3 +79,4 @@
 - `SELECT` 스펙 항목은 선택지 테이블에 1개 이상 저장되어야 한다.
 - 연결된 부품이 없는 카테고리 행은 삭제할 수 있다.
 - 실제 서비스에서는 삭제 전 `tb_pc_part` 연결 수를 확인하고, 연결된 부품이 있으면 `CATEGORY_IN_USE`로 실패해야 한다.
+- 카테고리 삭제 또는 스펙 항목 교체 시 `tb_part_spec_value` -> `tb_part_spec_option` -> `tb_part_spec_definition` 순서로 하위 데이터를 먼저 정리해야 한다.

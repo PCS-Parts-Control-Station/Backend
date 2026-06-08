@@ -17,7 +17,7 @@ com.pcs.domain.category
 | GET | `/api/workspaces/{companyCode}/categories` | 카테고리 목록. `keyword`, `page`, `size`, `limit` 지원 |
 | POST | `/api/workspaces/{companyCode}/categories` | 카테고리 생성. 필요하면 `specDefinitions`를 함께 등록 |
 | GET | `/api/workspaces/{companyCode}/categories/{categoryId}` | 카테고리 상세. 스펙 항목 포함 |
-| PATCH | `/api/workspaces/{companyCode}/categories/{categoryId}` | 카테고리명/설명 수정 |
+| PATCH | `/api/workspaces/{companyCode}/categories/{categoryId}` | 카테고리명/설명 수정. 연결 부품이 없으면 스펙 항목 교체 가능 |
 | DELETE | `/api/workspaces/{companyCode}/categories/{categoryId}` | 카테고리 삭제 |
 
 ## 주요 규칙
@@ -43,7 +43,10 @@ com.pcs.domain.category
 - 한 스펙 항목의 선택지는 최대 30개다.
 - 같은 카테고리 생성 요청 안에서 스펙 항목명과 스펙 키는 중복될 수 없다.
 - 화면에서 스펙 키를 받지 않으면 서버가 `spec_1`, `spec_2` 형태로 생성한다.
-- 현재 구현 범위에서는 카테고리 수정 시 스펙 항목을 수정하지 않는다. 스펙 수정은 기존 부품 스펙 값과의 정합성 정책이 정해진 뒤 별도 기능으로 다룬다.
+- 카테고리 수정 시 `specDefinitions`를 생략하면 카테고리명과 설명만 수정한다.
+- 연결된 부품 마스터가 없는 카테고리는 수정 요청에서 `specDefinitions`를 보내 스펙 항목 전체를 교체할 수 있다.
+- 연결된 부품 마스터가 있는 카테고리에 `specDefinitions`가 포함되면 `INVALID_INPUT_VALUE`로 실패한다.
+- 스펙 항목 교체는 기존 스펙 값, 선택지, 스펙 정의를 삭제한 뒤 새 스펙 정의를 저장한다.
 
 ## 하네스 포인트
 
@@ -52,4 +55,4 @@ com.pcs.domain.category
 - 카테고리 목록은 `tb_pc_part` 집계로 `partCount`를 계산한다.
 - 카테고리 상세는 `tb_part_spec_definition`, `tb_part_spec_option`을 조회할 수 있어야 한다.
 - 카테고리 삭제 전에는 `tb_pc_part` 연결 수를 확인한다.
-- 연결된 부품이 없는 카테고리 삭제 시 스펙 선택지, 스펙 정의, 카테고리 순서로 삭제한다.
+- 연결된 부품이 없는 카테고리 삭제 시 스펙 값, 스펙 선택지, 스펙 정의, 카테고리 순서로 삭제한다.

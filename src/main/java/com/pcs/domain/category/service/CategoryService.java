@@ -93,11 +93,23 @@ public class CategoryService {
     }
 
     @Transactional
-    public CategoryDetailResponse updateCategory(Long companyId, Long categoryId, UpdateCategoryRequest request) {
+    public CategoryDetailResponse updateCategory(
+            Long companyId,
+            Long categoryId,
+            UpdateCategoryRequest request,
+            Long memberId
+    ) {
         validateCompanyActive(companyId);
         PartCategory category = categoryMapper.findById(companyId, categoryId);
         if (category == null) {
             throw new BusinessException(ErrorCode.CATEGORY_NOT_FOUND);
+        }
+        long partCount = categoryMapper.countPartsByCategory(companyId, categoryId);
+        if (request.specDefinitions() != null && partCount > 0) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT_VALUE,
+                    "연결된 부품이 있는 카테고리는 스펙 항목을 수정할 수 없습니다."
+            );
         }
 
         String categoryName = normalizeRequired(request.categoryName());
@@ -108,6 +120,10 @@ public class CategoryService {
         category.setCategoryName(categoryName);
         category.setDescription(normalizeOptional(request.description()));
         categoryMapper.update(category);
+
+        if (request.specDefinitions() != null) {
+            replaceSpecDefinitions(companyId, categoryId, request.specDefinitions(), memberId);
+        }
 
         return getCategory(companyId, categoryId);
     }
@@ -122,9 +138,22 @@ public class CategoryService {
         if (categoryMapper.countPartsByCategory(companyId, categoryId) > 0) {
             throw new BusinessException(ErrorCode.CATEGORY_IN_USE);
         }
+        categoryMapper.deleteSpecValuesByCategory(companyId, categoryId);
         categoryMapper.deleteSpecOptionsByCategory(companyId, categoryId);
         categoryMapper.deleteSpecDefinitionsByCategory(companyId, categoryId);
         categoryMapper.deleteById(companyId, categoryId);
+    }
+
+    private void replaceSpecDefinitions(
+            Long companyId,
+            Long categoryId,
+            List<CategorySpecDefinitionRequest> requests,
+            Long memberId
+    ) {
+        categoryMapper.deleteSpecValuesByCategory(companyId, categoryId);
+        categoryMapper.deleteSpecOptionsByCategory(companyId, categoryId);
+        categoryMapper.deleteSpecDefinitionsByCategory(companyId, categoryId);
+        createSpecDefinitions(companyId, categoryId, requests, memberId);
     }
 
     private void createSpecDefinitions(

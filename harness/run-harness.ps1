@@ -723,7 +723,7 @@ function Test-CategoryFeature {
     $service = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/category/service/CategoryService.java"
     if (Test-Path $service) {
         $serviceContent = Get-Content -Raw $service
-        foreach ($pattern in @("DEFAULT_SIZE", "MAX_SIZE", "countCategories", "searchCategories", "existsByName", "createSpecDefinitions", "insertSpecDefinition", "insertSpecOption", "findSpecDefinitions", "countPartsByCategory", "deleteById", "CATEGORY_IN_USE", "COMPANY_INACTIVE")) {
+        foreach ($pattern in @("DEFAULT_SIZE", "MAX_SIZE", "countCategories", "searchCategories", "existsByName", "createSpecDefinitions", "replaceSpecDefinitions", "insertSpecDefinition", "insertSpecOption", "findSpecDefinitions", "countPartsByCategory", "deleteSpecValuesByCategory", "deleteById", "CATEGORY_IN_USE", "COMPANY_INACTIVE")) {
             if ($serviceContent -notmatch $pattern) {
                 Add-Result "FAIL" "CATEGORY_SERVICE_PATTERN" "CategoryService is missing required rule pattern: $pattern" "Keep category paging, duplicate-name, delete guard, and inactive-company checks."
             }
@@ -736,7 +736,7 @@ function Test-CategoryFeature {
         if ($mapperXmlContent -notmatch 'namespace="com\.pcs\.domain\.category\.mapper\.CategoryMapper"') {
             Add-Result "FAIL" "CATEGORY_MAPPER_NAMESPACE" "CategoryMapper.xml namespace does not match CategoryMapper FQCN." "Match XML namespace to mapper interface."
         }
-        foreach ($pattern in @("tb_part_category", "tb_part_spec_definition", "tb_part_spec_option", "tb_pc_part", "part_count", "LIMIT", "OFFSET", "COUNT(*)", "updated_at DESC", "category_id DESC", "DELETE FROM tb_part_category")) {
+        foreach ($pattern in @("tb_part_category", "tb_part_spec_definition", "tb_part_spec_option", "tb_part_spec_value", "tb_pc_part", "part_count", "LIMIT", "OFFSET", "COUNT(*)", "updated_at DESC", "category_id DESC", "DELETE FROM tb_part_spec_value", "DELETE FROM tb_part_category")) {
             if ($mapperXmlContent -notmatch [regex]::Escape($pattern)) {
                 Add-Result "FAIL" "CATEGORY_MAPPER_PATTERN" "CategoryMapper.xml is missing required SQL pattern: $pattern" "Keep category search, partCount, and delete SQL aligned with docs/features/category.md."
             }
@@ -1372,6 +1372,7 @@ public class PcsHarnessDbCheck {
                 }
             });
 
+            deletePartSpecValuesByCategory(companyId, categoryId);
             deletePartSpecOptionsByCategory(companyId, categoryId);
             deletePartSpecDefinitionsByCategory(companyId, categoryId);
             int deleted = deleteCategory(companyId, categoryId);
@@ -1546,6 +1547,16 @@ public class PcsHarnessDbCheck {
             }
         }
         throw new SQLException("Failed to read generated option_id.");
+    }
+
+    private static int deletePartSpecValuesByCategory(long companyId, long categoryId) throws SQLException {
+        String sql = "DELETE FROM tb_part_spec_value WHERE company_id = ? AND spec_definition_id IN (SELECT spec_definition_id FROM tb_part_spec_definition WHERE company_id = ? AND category_id = ?)";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, companyId);
+            statement.setLong(2, companyId);
+            statement.setLong(3, categoryId);
+            return statement.executeUpdate();
+        }
     }
 
     private static int deletePartSpecOptionsByCategory(long companyId, long categoryId) throws SQLException {

@@ -67,7 +67,7 @@ public class CategoryFacade {
     ) {
         validateAuthenticated(principal);
         validateWorkspace(pathCompanyCode, principal.companyCode());
-        return categoryService.updateCategory(principal.companyId(), categoryId, request);
+        return categoryService.updateCategory(principal.companyId(), categoryId, request, principal.memberId());
     }
 
     public void deleteCategory(

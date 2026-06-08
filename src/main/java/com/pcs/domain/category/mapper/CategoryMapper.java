@@ -59,6 +59,11 @@ public interface CategoryMapper {
             @Param("categoryId") Long categoryId
     );
 
+    int deleteSpecValuesByCategory(
+            @Param("companyId") Long companyId,
+            @Param("categoryId") Long categoryId
+    );
+
     int deleteSpecOptionsByCategory(
             @Param("companyId") Long companyId,
             @Param("categoryId") Long categoryId
