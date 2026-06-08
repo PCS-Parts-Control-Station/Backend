@@ -898,6 +898,73 @@
     align-items: start;
 }
 
+.inspection-history-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 2px;
+}
+
+.inspection-history-workflow {
+    display: grid;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid rgba(37, 99, 235, 0.18);
+    border-radius: var(--radius);
+    background: #f8fbff;
+}
+
+.inspection-history-workflow[hidden] {
+    display: none;
+}
+
+.inspection-history-form {
+    display: grid;
+    gap: 12px;
+}
+
+.inspection-history-form label {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+}
+
+.inspection-history-form label > span {
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.inspection-history-form select,
+.inspection-history-form textarea {
+    width: 100%;
+    min-width: 0;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.inspection-history-form select {
+    min-height: 42px;
+    padding: 0 12px;
+}
+
+.inspection-history-form textarea {
+    min-height: 84px;
+    padding: 10px 12px;
+    resize: vertical;
+}
+
+.inspection-history-form select:focus,
+.inspection-history-form textarea:focus {
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    outline: 0;
+}
+
 .inspection-selected-meta {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
@@ -1226,6 +1293,17 @@
     .inspection-unit-list button {
         grid-column: 3;
         grid-row: 1 / span 2;
+    }
+
+    .inspection-history-actions,
+    .inspection-history-form .form-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .inspection-history-actions .btn,
+    .inspection-history-form .form-actions .btn {
+        width: 100%;
     }
 }
 

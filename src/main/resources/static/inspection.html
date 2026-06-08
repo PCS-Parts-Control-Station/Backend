@@ -440,6 +440,55 @@
                                 </div>
                             </dl>
                         </div>
+                        <div class="inspection-history-actions" data-inspection-history-actions>
+                            <button class="btn btn-secondary" type="button" data-inspection-correction-start>정정 등록</button>
+                            <button class="btn btn-primary" type="button" data-inspection-reinspection-start>재검수 등록</button>
+                        </div>
+                        <div class="inspection-history-workflow" data-inspection-history-workflow hidden>
+                            <div class="section-title-row">
+                                <h3 data-inspection-workflow-title>정정 등록</h3>
+                                <span data-inspection-workflow-base>-</span>
+                            </div>
+                            <!-- API: POST /api/workspaces/{companyCode}/inspections/{inspectionId}/corrections -->
+                            <!-- API: POST /api/workspaces/{companyCode}/inspections/{inspectionId}/reinspections -->
+                            <form class="inspection-history-form" data-inspection-workflow-form autocomplete="off">
+                                <div class="inspection-form-grid">
+                                    <label>
+                                        <span>검수 결과</span>
+                                        <select name="result" required>
+                                            <option value="PASS">통과</option>
+                                            <option value="FAIL">불합격</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        <span>등급</span>
+                                        <select name="grade" required>
+                                            <option value="A">A</option>
+                                            <option value="B">B</option>
+                                            <option value="C">C</option>
+                                            <option value="DEFECTIVE">불량</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        <span>판매상태</span>
+                                        <select name="salesStatus" required>
+                                            <option value="AVAILABLE">판매 가능</option>
+                                            <option value="HOLD">판매 보류</option>
+                                            <option value="UNAVAILABLE">판매 불가</option>
+                                        </select>
+                                    </label>
+                                </div>
+                                <label>
+                                    <span data-inspection-workflow-memo-label>정정 사유</span>
+                                    <textarea name="memo" rows="3" placeholder="변경 사유를 입력해 주세요" required></textarea>
+                                </label>
+                                <p class="field-message" data-inspection-workflow-message role="status" aria-live="polite" hidden></p>
+                                <div class="form-actions">
+                                    <button class="btn btn-secondary" type="button" data-inspection-workflow-cancel>취소</button>
+                                    <button class="btn btn-primary" type="submit" data-inspection-workflow-submit>저장</button>
+                                </div>
+                            </form>
+                        </div>
                         <div class="inspection-result-list" data-inspection-history-items>
                             <p class="detail-empty-text">검수 이력을 선택해 주세요.</p>
                         </div>

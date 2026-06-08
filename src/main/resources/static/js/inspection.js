@@ -5,6 +5,9 @@
     const clearFormButton = document.querySelector("[data-inspection-form-clear]");
     const documentSummaryCard = document.querySelector("[data-inspection-document-summary-card]");
     const historyDetailPanel = document.querySelector("[data-inspection-history-detail]");
+    const historyTable = document.querySelector("[data-inspection-history-table]");
+    const historyWorkflowPanel = document.querySelector("[data-inspection-history-workflow]");
+    const historyWorkflowForm = document.querySelector("[data-inspection-workflow-form]");
     const targetStep = document.querySelector("[data-inspection-target-step]");
     const formStep = document.querySelector("[data-inspection-form-step]");
     const documentFields = {
@@ -59,10 +62,20 @@
         itemCount: document.querySelector("[data-inspection-history-item-count]"),
         items: document.querySelector("[data-inspection-history-items]"),
     };
+    const workflowFields = {
+        title: document.querySelector("[data-inspection-workflow-title]"),
+        base: document.querySelector("[data-inspection-workflow-base]"),
+        memoLabel: document.querySelector("[data-inspection-workflow-memo-label]"),
+        message: document.querySelector("[data-inspection-workflow-message]"),
+        submit: document.querySelector("[data-inspection-workflow-submit]"),
+    };
 
     let activeDocumentNo = null;
     let activeFormUnit = null;
     let activeFormUnits = [];
+    let activeHistoryId = null;
+    let activeHistoryMode = null;
+    let nextInspectionHistoryId = 10025;
 
     const inspectionDocuments = {
         "IN-20260529-K8J4P2M9": {
@@ -279,11 +292,35 @@
 
     const numberText = (value) => Number(value || 0).toLocaleString("ko-KR");
     const statusBadgeClass = (status) => status === "완료" ? "badge-active" : "badge-warning";
+    const resultLabels = {
+        PASS: "통과",
+        FAIL: "불합격",
+    };
+    const gradeLabels = {
+        A: "A",
+        B: "B",
+        C: "C",
+        DEFECTIVE: "불량",
+    };
+    const salesLabels = {
+        AVAILABLE: "판매 가능",
+        HOLD: "판매 보류",
+        UNAVAILABLE: "판매 불가",
+    };
 
     const salesBadgeClass = (sales) => {
         if (sales === "가능" || sales === "판매 가능") return "badge-active";
         if (sales === "판매 불가") return "badge-danger";
         return "badge-warning";
+    };
+    const resultBadgeClass = (result) => result === "불합격" ? "badge-danger" : "badge-active";
+    const gradeBadgeClass = (grade) => grade === "불량" ? "badge-danger" : "badge-blue";
+    const resultValueFromLabel = (label) => label === "불합격" ? "FAIL" : "PASS";
+    const gradeValueFromLabel = (label) => label === "불량" ? "DEFECTIVE" : (label || "A");
+    const salesValueFromLabel = (label) => {
+        if (label === "판매 불가") return "UNAVAILABLE";
+        if (label === "판매 보류") return "HOLD";
+        return "AVAILABLE";
     };
 
     const itemGroupText = (group) => group === "BASIC" ? "기본 항목" : "상세 항목";
@@ -454,11 +491,82 @@
     };
 
     const setSelectedHistoryRow = (inspectionId) => {
-        historyRows.forEach((row) => {
+        document.querySelectorAll("[data-mock-inspection-id]").forEach((row) => {
             const selected = row.dataset.mockInspectionId === inspectionId;
             row.classList.toggle("is-selected", selected);
             row.setAttribute("aria-selected", String(selected));
         });
+    };
+
+    const setWorkflowMessage = (message) => {
+        if (!workflowFields.message) return;
+        workflowFields.message.textContent = message || "";
+        workflowFields.message.hidden = !message;
+    };
+
+    const closeHistoryWorkflow = () => {
+        activeHistoryMode = null;
+        if (historyWorkflowPanel) historyWorkflowPanel.hidden = true;
+        historyWorkflowForm?.reset();
+        setWorkflowMessage("");
+    };
+
+    const syncHistoryWorkflowRule = () => {
+        if (!historyWorkflowForm) return;
+        const result = historyWorkflowForm.elements.result;
+        const grade = historyWorkflowForm.elements.grade;
+        const salesStatus = historyWorkflowForm.elements.salesStatus;
+        if (!result || !grade || !salesStatus) return;
+        if (result.value === "FAIL" || grade.value === "DEFECTIVE") {
+            result.value = "FAIL";
+            grade.value = "DEFECTIVE";
+            salesStatus.value = "UNAVAILABLE";
+        }
+    };
+
+    const historyTypeBadgeClass = (type) => {
+        if (type === "재검수") return "badge-blue";
+        if (type === "정정") return "badge-warning";
+        return "badge-active";
+    };
+
+    const createHistoryRow = (inspectionId, detail) => {
+        const row = document.createElement("div");
+        row.className = "data-row management-data-row inspection-history-row is-selectable";
+        row.setAttribute("role", "row");
+        row.setAttribute("tabindex", "0");
+        row.dataset.mockInspectionId = String(inspectionId);
+        row.innerHTML = `
+            <strong role="cell" data-label="검수일">${escapeHtml(detail.date)}</strong>
+            <span class="inspection-stack-cell" role="cell" data-label="부품">
+                <strong>${escapeHtml(detail.unit)}</strong>
+                <small>${escapeHtml(detail.part)}</small>
+            </span>
+            <span role="cell" data-label="전표번호">${escapeHtml(detail.documentNo)}</span>
+            <span role="cell" data-label="유형"><em class="badge ${historyTypeBadgeClass(detail.type)}">${escapeHtml(detail.type)}</em></span>
+            <span role="cell" data-label="등급"><em class="badge ${detail.gradeClass}">${escapeHtml(detail.grade)}</em></span>
+            <span role="cell" data-label="처리자">${escapeHtml(detail.worker)}</span>
+            <span class="row-actions" role="cell" data-label="상세">
+                <button type="button" data-inspection-history-action="${inspectionId}">상세</button>
+            </span>
+        `;
+        row.addEventListener("keydown", (event) => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+            event.preventDefault();
+            renderHistoryDetail(String(inspectionId));
+        });
+        return row;
+    };
+
+    const prependHistoryRow = (inspectionId, detail) => {
+        if (!historyTable) return;
+        const head = historyTable.querySelector(".table-head");
+        const row = createHistoryRow(inspectionId, detail);
+        if (head?.nextSibling) {
+            historyTable.insertBefore(row, head.nextSibling);
+        } else {
+            historyTable.append(row);
+        }
     };
 
     const findUnitContext = (serial) => {
@@ -741,6 +849,8 @@
         const detail = inspectionHistories[inspectionId];
         if (!detail) return;
 
+        activeHistoryId = String(inspectionId);
+        closeHistoryWorkflow();
         if (historyDetailPanel) historyDetailPanel.hidden = false;
         setSelectedHistoryRow(inspectionId);
         if (historyFields.unit) historyFields.unit.textContent = detail.unit;
@@ -765,6 +875,77 @@
         if (historyFields.relation) historyFields.relation.textContent = detail.relation;
         if (historyFields.itemCount) historyFields.itemCount.textContent = `${numberText(detail.items.length)}개 항목`;
         renderHistoryItems(detail.items);
+    };
+
+    const startHistoryWorkflow = (mode) => {
+        const baseDetail = inspectionHistories[activeHistoryId];
+        if (!baseDetail || !historyWorkflowForm || !historyWorkflowPanel) return;
+
+        activeHistoryMode = mode;
+        historyWorkflowPanel.hidden = false;
+        historyWorkflowForm.reset();
+        historyWorkflowForm.elements.result.value = resultValueFromLabel(baseDetail.result);
+        historyWorkflowForm.elements.grade.value = gradeValueFromLabel(baseDetail.grade);
+        historyWorkflowForm.elements.salesStatus.value = salesValueFromLabel(baseDetail.sales);
+
+        const isCorrection = mode === "correction";
+        if (workflowFields.title) workflowFields.title.textContent = isCorrection ? "정정 등록" : "재검수 등록";
+        if (workflowFields.base) workflowFields.base.textContent = `기준 #${activeHistoryId}`;
+        if (workflowFields.memoLabel) workflowFields.memoLabel.textContent = isCorrection ? "정정 사유" : "재검수 메모";
+        if (workflowFields.submit) workflowFields.submit.textContent = isCorrection ? "정정 저장" : "재검수 저장";
+        historyWorkflowForm.elements.memo.placeholder = isCorrection ? "정정 사유를 입력해 주세요" : "재검수 내용을 입력해 주세요";
+        setWorkflowMessage("");
+        requestAnimationFrame(() => {
+            historyWorkflowPanel.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        });
+    };
+
+    const createDerivedHistory = () => {
+        const baseDetail = inspectionHistories[activeHistoryId];
+        if (!baseDetail || !historyWorkflowForm || !activeHistoryMode) return;
+
+        syncHistoryWorkflowRule();
+        const form = historyWorkflowForm.elements;
+        const memo = form.memo.value.trim();
+        if (!memo) {
+            setWorkflowMessage(activeHistoryMode === "correction" ? "정정 사유를 입력해 주세요." : "재검수 메모를 입력해 주세요.");
+            return;
+        }
+
+        const result = resultLabels[form.result.value];
+        const grade = gradeLabels[form.grade.value];
+        const sales = salesLabels[form.salesStatus.value];
+        const type = activeHistoryMode === "correction" ? "정정" : "재검수";
+        const inspectionId = nextInspectionHistoryId++;
+        const newDetail = {
+            unit: baseDetail.unit,
+            documentNo: baseDetail.documentNo,
+            part: baseDetail.part,
+            date: new Date().toISOString().slice(0, 10),
+            type,
+            typeClass: historyTypeBadgeClass(type),
+            grade,
+            gradeClass: gradeBadgeClass(grade),
+            result,
+            resultClass: resultBadgeClass(result),
+            worker: "현재 사용자",
+            sales,
+            memo,
+            relation: `${baseDetail.type} 검수 #${activeHistoryId} 기준 ${type}`,
+            items: [
+                ...(baseDetail.items || []).map((item) => ({ ...item })),
+                {
+                    name: type === "정정" ? "정정 사유" : "재검수 메모",
+                    result,
+                    memo,
+                },
+            ],
+        };
+
+        inspectionHistories[inspectionId] = newDetail;
+        prependHistoryRow(inspectionId, newDetail);
+        renderHistoryDetail(String(inspectionId));
+        window.PcsUi?.toast?.({ message: `${type} 이력을 생성했습니다.`, type: "success" });
     };
 
     document.addEventListener("click", (event) => {
@@ -799,6 +980,27 @@
         const historyButton = event.target.closest("[data-inspection-history-action]");
         if (historyButton) {
             renderHistoryDetail(historyButton.dataset.inspectionHistoryAction);
+            return;
+        }
+
+        if (event.target.closest("[data-inspection-correction-start]")) {
+            startHistoryWorkflow("correction");
+            return;
+        }
+
+        if (event.target.closest("[data-inspection-reinspection-start]")) {
+            startHistoryWorkflow("reinspection");
+            return;
+        }
+
+        if (event.target.closest("[data-inspection-workflow-cancel]")) {
+            closeHistoryWorkflow();
+            return;
+        }
+
+        const historyRow = event.target.closest("[data-mock-inspection-id]");
+        if (historyRow && !event.target.closest("button, input, select, textarea")) {
+            renderHistoryDetail(historyRow.dataset.mockInspectionId);
         }
     });
 
@@ -808,14 +1010,19 @@
             updateLineSelectionState(unitCheck.closest("[data-inspection-line]"));
             return;
         }
-        if (event.target.matches("[name='templateId']")) {
+        if (inspectionForm?.contains(event.target) && event.target.matches("[name='templateId']")) {
             renderTemplateItems(event.target.value);
             return;
         }
-        if (event.target.matches("[name='result'], [name='grade']")) {
+        if (inspectionForm?.contains(event.target) && event.target.matches("[name='result'], [name='grade']")) {
             if (syncInspectionFormRule()) {
                 setFormMessage("불합격 또는 불량은 판매 불가 상태로 자동 반영됩니다.");
             }
+            return;
+        }
+        if (historyWorkflowForm?.contains(event.target)
+                && event.target.matches("[name='result'], [name='grade']")) {
+            syncHistoryWorkflowRule();
         }
     });
 
@@ -883,6 +1090,11 @@
             confirmElements.result.textContent = `${resultText} · ${gradeText} 등급 · ${numberText(itemResults.length)}개 항목`;
             confirmModal.showModal();
         }
+    });
+
+    historyWorkflowForm?.addEventListener("submit", (event) => {
+        event.preventDefault();
+        createDerivedHistory();
     });
 
     clearInspectionForm();
