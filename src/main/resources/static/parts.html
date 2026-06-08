@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="PCS 부품 관리 화면입니다. 부품 마스터를 등록하고 카테고리별로 관리합니다.">
-    <title>PCS | 부품 관리</title>
+    <meta name="description" content="PCS 품목 관리 화면입니다. 품목 종류를 등록하고 품목 분류별로 관리합니다.">
+    <title>PCS | 품목 관리</title>
     <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,8 +27,8 @@
             </button>
             <div>
                 <p class="page-kicker">기준 정보 관리</p>
-                <h1>부품 관리</h1>
-                <p class="page-description">부품 종류와 모델 기준 정보를 관리하고, 현재 재고와 안전 재고를 함께 확인합니다.</p>
+                <h1>품목 관리</h1>
+                <p class="page-description">입고 때 선택할 품목 이름, 제조사 모델명, 현재 재고와 안전 재고를 함께 확인합니다.</p>
             </div>
         </header>
 
@@ -36,8 +36,8 @@
             <div class="content-main">
                 <section class="filter-card management-filter-card" aria-labelledby="filter-title">
                     <div>
-                        <h2 id="filter-title">부품 검색</h2>
-                        <p>부품명, 모델명, 제조사, 부품 코드와 카테고리로 목록을 좁혀 봅니다.</p>
+                        <h2 id="filter-title">품목 검색</h2>
+                        <p>품목 이름, 제조사 모델명, 제조사와 품목 분류로 목록을 좁혀 봅니다.</p>
                     </div>
                     <form class="filter-form management-filter-form part-filter-form" action="#" method="get" autocomplete="off" data-part-filter-form>
                         <label>
@@ -45,7 +45,7 @@
                             <input type="search" name="keyword" placeholder="예: RTX 4060" autocomplete="off">
                         </label>
                         <label>
-                            <span>카테고리</span>
+                            <span>품목 분류</span>
                             <select name="categoryId">
                                 <option value="">전체</option>
                             </select>
@@ -57,10 +57,10 @@
                 <section class="table-card" aria-labelledby="part-list-title">
                     <div class="table-header inline-summary-header">
                         <div>
-                            <h2 id="part-list-title">부품 목록</h2>
-                            <p>입고 전표에서 선택할 부품 마스터와 재고 기준입니다.</p>
+                            <h2 id="part-list-title">품목 목록</h2>
+                            <p>입고 전표에서 선택할 품목 종류와 재고 기준입니다.</p>
                         </div>
-                        <div class="list-summary-box" aria-label="부품 목록 요약">
+                        <div class="list-summary-box" aria-label="품목 목록 요약">
                             <dl class="list-summary summary-compact">
                                 <div>
                                     <dt>조회</dt>
@@ -78,16 +78,16 @@
                         </div>
                     </div>
 
-                    <div class="data-table" role="table" aria-label="부품 목록" data-part-table>
+                    <div class="data-table" role="table" aria-label="품목 목록" data-part-table>
                         <div class="data-row management-data-row part-management-data-row table-head" role="row">
-                            <span role="columnheader">부품명</span>
-                            <span role="columnheader">제조사 / 모델</span>
-                            <span role="columnheader">카테고리</span>
+                            <span role="columnheader">품목 이름</span>
+                            <span role="columnheader">제조사 / 제조사 모델명</span>
+                            <span role="columnheader">품목 분류</span>
                             <span role="columnheader">현재 재고</span>
                             <span role="columnheader">안전 재고</span>
                         </div>
                         <div class="data-row management-data-row part-management-data-row empty-data-row" role="row" data-part-empty>
-                            <span role="cell" data-label="안내">부품 목록을 불러오는 중입니다.</span>
+                            <span role="cell" data-label="안내">품목 목록을 불러오는 중입니다.</span>
                         </div>
                     </div>
                     <div class="pagination-bar" data-part-pagination hidden>
@@ -103,11 +103,11 @@
             <aside class="side-panel" aria-labelledby="part-form-title">
                 <div class="panel-card side-work-panel">
                     <div class="panel-mode is-active" data-part-panel="create">
-                        <h2 id="part-form-title">부품 등록</h2>
-                        <p>입고 전에 선택할 부품 종류와 모델 기준을 등록합니다.</p>
+                        <h2 id="part-form-title">품목 등록</h2>
+                        <p>입고 전에 선택할 품목 종류와 관리 기준을 등록합니다.</p>
                         <form class="category-form" action="#" method="post" autocomplete="off" data-part-create-form>
                             <label>
-                                <span>부품명</span>
+                                <span>품목 이름</span>
                                 <input type="text" name="partName" placeholder="예: GeForce RTX 4060 Ti" autocomplete="off" required>
                             </label>
                             <label>
@@ -115,15 +115,11 @@
                                 <input type="text" name="manufacturer" placeholder="예: MSI" autocomplete="off" required>
                             </label>
                             <label>
-                                <span>모델명</span>
-                                <input type="text" name="modelName" placeholder="예: Ventus 2X 8G" autocomplete="off" required>
+                                <span>제조사 모델명</span>
+                                <input type="text" name="modelName" placeholder="예: RTX 4060 VENTUS 2X 8G OC" autocomplete="off" required>
                             </label>
                             <label>
-                                <span>부품 코드</span>
-                                <input type="text" name="partCode" placeholder="예: GPU-RTX4060TI" autocomplete="off" required>
-                            </label>
-                            <label>
-                                <span>카테고리</span>
+                                <span>품목 분류</span>
                                 <select name="categoryId" required>
                                     <option value="">선택</option>
                                 </select>
@@ -156,10 +152,10 @@
                     <div class="panel-mode" data-part-panel="detail" hidden>
                         <div class="panel-title-bar">
                             <div>
-                                <h2>부품 상세</h2>
-                                <p>선택한 부품 마스터와 재고 기준을 확인합니다.</p>
+                                <h2>품목 상세</h2>
+                                <p>선택한 품목 종류와 재고 기준을 확인합니다.</p>
                             </div>
-                            <button class="panel-link-button" type="button" data-part-create-mode>새 부품 등록</button>
+                            <button class="panel-link-button" type="button" data-part-create-mode>새 품목 등록</button>
                         </div>
 
                         <div class="side-detail-card">
@@ -175,12 +171,8 @@
                                 <dd data-detail-manufacturer>-</dd>
                             </div>
                             <div>
-                                <dt>모델명</dt>
+                                <dt>제조사 모델명</dt>
                                 <dd data-detail-model>-</dd>
-                            </div>
-                            <div>
-                                <dt>부품 코드</dt>
-                                <dd data-detail-code>-</dd>
                             </div>
                             <div>
                                 <dt>현재 재고</dt>
@@ -204,15 +196,15 @@
                     <div class="panel-mode" data-part-panel="edit" hidden>
                         <div class="panel-title-bar">
                             <div>
-                                <h2>부품 수정</h2>
-                                <p>선택한 부품 마스터와 관리 기준을 수정합니다.</p>
+                                <h2>품목 수정</h2>
+                                <p>선택한 품목 종류와 관리 기준을 수정합니다.</p>
                             </div>
-                            <button class="panel-link-button" type="button" data-part-create-mode>새 부품 등록</button>
+                            <button class="panel-link-button" type="button" data-part-create-mode>새 품목 등록</button>
                         </div>
 
                         <form class="category-form" action="#" method="post" autocomplete="off" data-part-edit-form>
                             <label>
-                                <span>부품명</span>
+                                <span>품목 이름</span>
                                 <input type="text" name="partName" autocomplete="off" required>
                             </label>
                             <label>
@@ -220,15 +212,11 @@
                                 <input type="text" name="manufacturer" autocomplete="off" required>
                             </label>
                             <label>
-                                <span>모델명</span>
+                                <span>제조사 모델명</span>
                                 <input type="text" name="modelName" autocomplete="off" required>
                             </label>
                             <label>
-                                <span>부품 코드</span>
-                                <input type="text" name="partCode" autocomplete="off" required>
-                            </label>
-                            <label>
-                                <span>카테고리</span>
+                                <span>품목 분류</span>
                                 <select name="categoryId" required>
                                     <option value="">선택</option>
                                 </select>
@@ -262,9 +250,8 @@
                 <div class="panel-card muted-panel">
                     <h2>운영 메모</h2>
                     <ul>
-                        <li>부품 코드는 회사 안에서 중복 불가</li>
-                        <li>부품 마스터는 제조사와 모델 단위로 관리</li>
-                        <li>개별 부품과 관리번호는 입고 처리 시 생성</li>
+                        <li>품목 목록은 제조사와 제조사 모델명 단위로 관리</li>
+                        <li>실물 품목과 관리번호는 입고 처리 시 생성</li>
                         <li>현재 재고가 안전 재고보다 낮으면 우선 확인</li>
                         <li>삭제는 연결된 이력과 재고가 없는 경우에만 허용</li>
                     </ul>
@@ -277,6 +264,6 @@
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
 <script src="/js/workspace-layout.js?20260527_1"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/parts.js?20260605_parts_design3"></script>
+<script src="/js/parts.js?20260608_terms"></script>
 </body>
 </html>

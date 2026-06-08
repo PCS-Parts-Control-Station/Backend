@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
     const PAGE_SIZE = 10;
     const SPEC_TYPE_LABELS = {
         TEXT: "텍스트",
@@ -202,7 +202,7 @@
         detailSpecList.innerHTML = "";
         if (!specDefinitions.length) {
             const empty = document.createElement("p");
-            empty.textContent = "등록된 스펙 항목이 없습니다.";
+            empty.textContent = "등록된 사양 항목이 없습니다.";
             detailSpecList.append(empty);
             return;
         }
@@ -238,11 +238,11 @@
         detailFields.description.textContent = category.description || "-";
         detailFields.partCount.textContent = `${numberText(category.partCount)}개`;
         detailFields.updatedAt.textContent = formatDate(category.updatedAt);
-        renderSpecDetail(category.specDefinitions || []);
+            renderSpecDetail(category.specDefinitions || []);
 
         if (openDeleteModalButton) {
             openDeleteModalButton.title = Number(category.partCount || 0) > 0
-                ? "연결된 부품이 있어 삭제할 수 없습니다."
+                ? "연결된 부품 종류가 있어 삭제할 수 없습니다."
                 : "";
         }
     };
@@ -346,7 +346,7 @@
             renderDetail(detail);
             setPanelMode("detail");
         } catch (error) {
-            showToast(error?.message || "카테고리 상세 정보를 불러오지 못했습니다.", "error");
+            showToast(error?.message || "분류 상세 정보를 불러오지 못했습니다.", "error");
         }
     };
 
@@ -385,7 +385,7 @@
                 mergeCategory(detail);
                 renderDetail(detail);
             } catch (error) {
-                showToast(error?.message || "카테고리 상세 정보를 불러오지 못했습니다.", "error");
+                showToast(error?.message || "분류 상세 정보를 불러오지 못했습니다.", "error");
                 return;
             }
         }
@@ -399,7 +399,7 @@
             return;
         }
         if (owner === "edit" && !editSpecsEditable) {
-            showToast("연결된 부품이 있는 카테고리는 스펙 항목을 수정할 수 없습니다.", "error");
+            showToast("연결된 부품 종류가 있는 분류는 사양 항목을 수정할 수 없습니다.", "error");
             return;
         }
 
@@ -423,9 +423,9 @@
         }
 
         updateSpecOptionsVisibility();
-        specModalTitle.textContent = spec ? "스펙 항목을 수정합니다." : "스펙 항목을 추가합니다.";
+        specModalTitle.textContent = spec ? "사양 항목을 수정합니다." : "사양 항목을 추가합니다.";
         specModalDescription.textContent = spec
-            ? "선택한 스펙 항목의 이름, 입력 방식, 선택지를 수정합니다."
+            ? "선택한 사양 항목의 이름, 입력 방식, 선택지를 수정합니다."
             : "부품 등록 때 입력받을 항목 기준을 설정합니다.";
         specModalSubmit.textContent = spec ? "수정" : "추가";
         specModalSubmit.dataset.defaultText = specModalSubmit.textContent;
@@ -457,7 +457,7 @@
             : [];
 
         if (!specName) {
-            setSpecModalMessage("항목명을 입력해 주세요.");
+            setSpecModalMessage("사양명을 입력해 주세요.");
             return null;
         }
         if (inputType === "SELECT" && options.length === 0) {
@@ -541,7 +541,7 @@
         currentCategories = items;
 
         if (!items.length) {
-            setEmptyMessage("조회된 카테고리가 없습니다.");
+            setEmptyMessage("조회된 분류가 없습니다.");
             showCreatePanel();
             return;
         }
@@ -554,9 +554,9 @@
             row.dataset.categoryId = String(category.categoryId);
 
             row.append(
-                createTextCell("카테고리명", category.categoryName, "strong"),
+                createTextCell("분류명", category.categoryName, "strong"),
                 createTextCell("설명", category.description),
-                createTextCell("부품 수", `${numberText(category.partCount)}개`),
+                createTextCell("부품 종류 수", `${numberText(category.partCount)}개`),
                 createTextCell("수정일", formatDate(category.updatedAt))
             );
 
@@ -646,7 +646,7 @@
 
         const partCount = Number(category.partCount || 0);
         if (partCount > 0) {
-            showToast("연결된 부품이 있는 카테고리는 삭제할 수 없습니다.", "error");
+            showToast("연결된 부품 종류가 있는 분류는 삭제할 수 없습니다.", "error");
             return;
         }
 
@@ -680,7 +680,7 @@
             currentPage = page;
             setLoading(true);
             if (!preserveScroll) {
-                setEmptyMessage("카테고리 목록을 불러오는 중입니다.");
+                setEmptyMessage("분류 목록을 불러오는 중입니다.");
             }
 
             let pageData = await fetchPage(page);
@@ -702,7 +702,7 @@
             try {
                 await requestPage();
             } catch (error) {
-                setEmptyMessage(error?.message || "카테고리 목록을 불러오지 못했습니다.");
+                setEmptyMessage(error?.message || "분류 목록을 불러오지 못했습니다.");
                 updatePagination({
                     totalElements: 0,
                     totalPages: 0,
@@ -785,7 +785,7 @@
             const index = Number(removeButton.dataset.specIndex);
             if (owner === "edit") {
                 if (!editSpecsEditable) {
-                    showToast("연결된 부품이 있는 카테고리는 스펙 항목을 수정할 수 없습니다.", "error");
+                    showToast("연결된 부품 종류가 있는 분류는 사양 항목을 수정할 수 없습니다.", "error");
                     return;
                 }
                 editSpecs.splice(index, 1);
@@ -842,9 +842,9 @@
             createForm.reset();
             createSpecs = [];
             renderCreateSpecs();
-            showToast("카테고리를 등록했습니다.", "success");
+            showToast("분류를 등록했습니다.", "success");
         } catch (error) {
-            const message = error?.message || "카테고리를 등록하지 못했습니다.";
+            const message = error?.message || "분류를 등록하지 못했습니다.";
             setFormMessage(createMessage, message);
             showToast(message, "error");
         } finally {
@@ -889,9 +889,9 @@
             mergeCategory(data);
             renderDetail(data);
             setPanelMode("detail");
-            showToast("카테고리 정보를 수정했습니다.", "success");
+            showToast("분류 정보를 수정했습니다.", "success");
         } catch (error) {
-            const message = error?.message || "카테고리를 수정하지 못했습니다.";
+            const message = error?.message || "분류를 수정하지 못했습니다.";
             setFormMessage(editMessage, message);
             showToast(message, "error");
         } finally {
@@ -934,9 +934,9 @@
             deleteModal?.close();
             showCreatePanel();
             await loadCategories(currentPage, { preserveScroll: true });
-            showToast("카테고리를 삭제했습니다.", "success");
+            showToast("분류를 삭제했습니다.", "success");
         } catch (error) {
-            const message = error?.message || "카테고리를 삭제하지 못했습니다.";
+            const message = error?.message || "분류를 삭제하지 못했습니다.";
             setDeleteModalMessage(message);
             showToast(message, "error");
         } finally {

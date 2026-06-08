@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
     const PAGE_SIZE = 15;
 
     const filterForm = document.querySelector("[data-history-filter-form]");
@@ -103,7 +103,7 @@
             const gradeType = item.grade === 'DEFECTIVE' ? 'RED' : 'GREEN';
 
             row.append(
-                createTextCell("부품명", item.partName, "strong"),
+                createTextCell("부품 이름", item.partName, "strong"),
                 createTextCell("관리번호", item.unitIdentifier, "code"),
                 createBadgeCell("검수 상태", item.inspectionStatus || "확인 불가", statusType),
                 createBadgeCell("등급", item.grade || "미정", gradeType),

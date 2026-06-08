@@ -13,7 +13,6 @@
     const editForm = document.querySelector("[data-part-edit-form]");
     const detailFields = {
         name: document.querySelector("[data-detail-name]"),
-        code: document.querySelector("[data-detail-code]"),
         category: document.querySelector("[data-detail-category]"),
         manufacturer: document.querySelector("[data-detail-manufacturer]"),
         model: document.querySelector("[data-detail-model]"),
@@ -155,7 +154,6 @@
         }
 
         detailFields.name.textContent = part.partName || "-";
-        detailFields.code.textContent = part.partCode || "-";
         detailFields.category.textContent = getPartCategoryName(part);
         detailFields.manufacturer.textContent = part.manufacturer || "-";
         detailFields.model.textContent = part.modelName || "-";
@@ -171,7 +169,6 @@
         editForm.elements.partName.value = part.partName || "";
         editForm.elements.manufacturer.value = part.manufacturer || "";
         editForm.elements.modelName.value = part.modelName || "";
-        editForm.elements.partCode.value = part.partCode || "";
         editForm.elements.categoryId.value = part.categoryId || "";
         editForm.elements.estimatedPrice.value = part.estimatedPrice ?? 0;
         editForm.elements.safeQuantity.value = part.safeQuantity ?? 0;
@@ -215,7 +212,7 @@
         currentParts = items;
 
         if (!items.length) {
-            setEmptyMessage("조회된 부품이 없습니다.");
+            setEmptyMessage("조회된 품목이 없습니다.");
             showCreatePanel();
             return;
         }
@@ -232,9 +229,9 @@
             row.dataset.partId = String(part.partId);
 
             row.append(
-                createStackedCell("부품명", part.partName, part.partCode, "part-primary-cell"),
-                createStackedCell("제조사 / 모델", part.manufacturer, part.modelName),
-                createTextCell("카테고리", getPartCategoryName(part)),
+                createStackedCell("품목 이름", part.partName, "", "part-primary-cell"),
+                createStackedCell("제조사 / 제조사 모델명", part.manufacturer, part.modelName),
+                createTextCell("품목 분류", getPartCategoryName(part)),
                 createQuantityCell("현재 재고", currentStock, lowStock ? "재고 부족" : ""),
                 createQuantityCell("안전 재고", safeQuantity, "", lowStock)
             );
@@ -325,7 +322,6 @@
         partName: targetForm.elements.partName.value.trim(),
         manufacturer: targetForm.elements.manufacturer.value.trim(),
         modelName: targetForm.elements.modelName.value.trim(),
-        partCode: targetForm.elements.partCode.value.trim(),
         categoryId: targetForm.elements.categoryId.value || null,
         estimatedPrice: readNumberField(targetForm, "estimatedPrice"),
         safeQuantity: readNumberField(targetForm, "safeQuantity")
@@ -362,7 +358,7 @@
             categoryOptions = Array.isArray(data) ? data : data.content || [];
             document.querySelectorAll("select[name='categoryId']").forEach(populateCategorySelect);
         } catch (error) {
-            console.error("카테고리 목록을 불러오지 못했습니다.", error);
+            console.error("품목 분류 목록을 불러오지 못했습니다.", error);
         }
     };
 
@@ -390,7 +386,7 @@
             currentPage = page;
             setLoading(true);
             if (!preserveScroll) {
-                setEmptyMessage("부품 목록을 불러오는 중입니다.");
+                setEmptyMessage("품목 목록을 불러오는 중입니다.");
             }
 
             let pageData = await fetchPage(page);
@@ -412,7 +408,7 @@
             try {
                 await requestPage();
             } catch (error) {
-                setEmptyMessage(error?.message || "부품 목록을 불러오지 못했습니다.");
+                setEmptyMessage(error?.message || "품목 목록을 불러오지 못했습니다.");
                 updatePagination({
                     totalElements: 0,
                     totalPages: 0,
@@ -508,10 +504,10 @@
 
             selectedPartId = data?.partId || null;
             await loadParts(0, { keepSelection: true });
-            showToast("부품을 등록했습니다.", "success");
+            showToast("품목을 등록했습니다.", "success");
             createForm.reset();
         } catch (error) {
-            showToast(error?.message || "부품을 등록하지 못했습니다.", "error");
+            showToast(error?.message || "품목을 등록하지 못했습니다.", "error");
         } finally {
             setFormSaving(createForm, false);
         }
@@ -545,9 +541,9 @@
                 renderDetail(refreshedPart);
                 setPanelMode("detail");
             }
-            showToast("부품 정보를 수정했습니다.", "success");
+            showToast("품목 정보를 수정했습니다.", "success");
         } catch (error) {
-            showToast(error?.message || "부품을 수정하지 못했습니다.", "error");
+            showToast(error?.message || "품목을 수정하지 못했습니다.", "error");
         } finally {
             setFormSaving(editForm, false);
         }
