@@ -56,6 +56,11 @@ public class PageController {
         return "forward:/inspection.html";
     }
 
+    @GetMapping("/w/{companyCode}/inspection/templates")
+    public String inspectionTemplates() {
+        return "forward:/inspection-templates.html";
+    }
+
     @GetMapping("/w/{companyCode}/{*path}")
     public String unknownWorkspacePage() {
         return "forward:/invalid-access.html";
