@@ -37,7 +37,6 @@
         document.querySelectorAll(".sidebar-nav [data-route]").forEach((link) => {
             const route = link.dataset.route;
             const isActive = route === activeRoute || 
-                             activeRoute.startsWith(route + "/") ||
                              (route === "inbound" && currentPath.includes("/inbound/"));
             link.classList.toggle("active", isActive);
             if (isActive) {
