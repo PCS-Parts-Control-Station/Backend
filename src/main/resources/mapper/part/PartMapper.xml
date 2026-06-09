@@ -13,6 +13,25 @@
         )
     </select>
 
+    <sql id="partSearchWhere">
+        WHERE p.company_id = #{companyId}
+        <if test="active != null">
+          AND p.active = #{active}
+        </if>
+        <if test="categoryId != null">
+          AND p.category_id = #{categoryId}
+        </if>
+        <if test="keyword != null and keyword != ''">
+          AND (
+              p.part_name LIKE CONCAT('%', #{keyword}, '%')
+              OR p.model_name LIKE CONCAT('%', #{keyword}, '%')
+              OR p.manufacturer LIKE CONCAT('%', #{keyword}, '%')
+              OR p.part_code LIKE CONCAT('%', #{keyword}, '%')
+              OR c.category_name LIKE CONCAT('%', #{keyword}, '%')
+          )
+        </if>
+    </sql>
+
     <select id="searchParts" resultType="com.pcs.domain.part.dto.response.SearchPartResponse">
         SELECT
             p.part_id,
@@ -33,24 +52,19 @@
         LEFT JOIN tb_part_stock s
             ON s.company_id = p.company_id
            AND s.part_id = p.part_id
-        WHERE p.company_id = #{companyId}
-        <if test="active != null">
-          AND p.active = #{active}
-        </if>
-        <if test="categoryId != null">
-          AND p.category_id = #{categoryId}
-        </if>
-        <if test="keyword != null and keyword != ''">
-          AND (
-              p.part_name LIKE CONCAT('%', #{keyword}, '%')
-              OR p.model_name LIKE CONCAT('%', #{keyword}, '%')
-              OR p.manufacturer LIKE CONCAT('%', #{keyword}, '%')
-              OR p.part_code LIKE CONCAT('%', #{keyword}, '%')
-              OR c.category_name LIKE CONCAT('%', #{keyword}, '%')
-          )
-        </if>
+        <include refid="partSearchWhere" />
         ORDER BY p.part_id DESC
-        LIMIT #{limit}
+        LIMIT #{size}
+        OFFSET #{offset}
+    </select>
+
+    <select id="countParts" resultType="long">
+        SELECT COUNT(*)
+        FROM tb_pc_part p
+        JOIN tb_part_category c
+            ON c.company_id = p.company_id
+           AND c.category_id = p.category_id
+        <include refid="partSearchWhere" />
     </select>
 
     <select id="findById" resultType="com.pcs.domain.part.entity.PcPart">

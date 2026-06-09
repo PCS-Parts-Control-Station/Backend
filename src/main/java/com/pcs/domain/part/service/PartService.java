@@ -11,6 +11,7 @@ import com.pcs.domain.part.dto.response.SearchPartResponse;
 import com.pcs.domain.part.entity.PartSpecValue;
 import com.pcs.domain.part.entity.PcPart;
 import com.pcs.domain.part.mapper.PartMapper;
+import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import java.math.BigDecimal;
@@ -33,8 +34,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class PartService {
 
-    private static final int DEFAULT_LIMIT = 20;
-    private static final int MAX_LIMIT = 50;
+    private static final int DEFAULT_SIZE = 10;
+    private static final int MAX_SIZE = 100;
     private static final int MAX_CODE_ATTEMPT = 999;
 
     private final PartMapper partMapper;
@@ -43,22 +44,36 @@ public class PartService {
         this.partMapper = partMapper;
     }
 
-    public List<SearchPartResponse> searchParts(
+    public PageResultDto<SearchPartResponse, Void> searchParts(
             Long companyId,
             String keyword,
             Long categoryId,
             Boolean active,
+            Integer page,
+            Integer size,
             Integer limit
     ) {
         validateCompanyActive(companyId);
 
-        return partMapper.searchParts(
-                companyId,
-                normalizeOptional(keyword),
-                categoryId,
-                active == null ? Boolean.TRUE : active,
-                normalizeLimit(limit)
-        );
+        String normalizedKeyword = normalizeOptional(keyword);
+        Boolean normalizedActive = active == null ? Boolean.TRUE : active;
+        int normalizedPage = normalizePage(page);
+        int normalizedSize = normalizeSize(size, limit);
+        int offset = normalizedPage * normalizedSize;
+
+        long totalElements = partMapper.countParts(companyId, normalizedKeyword, categoryId, normalizedActive);
+        List<SearchPartResponse> items = totalElements == 0
+                ? List.of()
+                : partMapper.searchParts(
+                        companyId,
+                        normalizedKeyword,
+                        categoryId,
+                        normalizedActive,
+                        normalizedSize,
+                        offset
+                );
+
+        return PageResultDto.of(items, normalizedPage, normalizedSize, totalElements, null);
     }
 
     public PartDetailResponse getPart(Long companyId, Long partId) {
@@ -465,13 +480,18 @@ public class PartService {
         return value;
     }
 
-    private int normalizeLimit(Integer limit) {
-        if (limit == null) {
-            return DEFAULT_LIMIT;
+    private int normalizePage(Integer page) {
+        if (page == null || page < 0) {
+            return 0;
         }
-        if (limit < 1) {
-            return DEFAULT_LIMIT;
+        return page;
+    }
+
+    private int normalizeSize(Integer size, Integer limit) {
+        Integer requestedSize = size == null ? limit : size;
+        if (requestedSize == null || requestedSize < 1) {
+            return DEFAULT_SIZE;
         }
-        return Math.min(limit, MAX_LIMIT);
+        return Math.min(requestedSize, MAX_SIZE);
     }
 }

@@ -20,7 +20,15 @@ public interface PartMapper {
             @Param("keyword") String keyword,
             @Param("categoryId") Long categoryId,
             @Param("active") Boolean active,
-            @Param("limit") int limit
+            @Param("size") int size,
+            @Param("offset") int offset
+    );
+
+    long countParts(
+            @Param("companyId") Long companyId,
+            @Param("keyword") String keyword,
+            @Param("categoryId") Long categoryId,
+            @Param("active") Boolean active
     );
 
     PcPart findById(

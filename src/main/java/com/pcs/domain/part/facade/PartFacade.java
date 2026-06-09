@@ -5,10 +5,10 @@ import com.pcs.domain.part.dto.request.UpdatePartRequest;
 import com.pcs.domain.part.dto.response.PartDetailResponse;
 import com.pcs.domain.part.dto.response.SearchPartResponse;
 import com.pcs.domain.part.service.PartService;
+import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.security.PcsPrincipal;
-import java.util.List;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -20,17 +20,19 @@ public class PartFacade {
         this.partService = partService;
     }
 
-    public List<SearchPartResponse> searchParts(
+    public PageResultDto<SearchPartResponse, Void> searchParts(
             PcsPrincipal principal,
             String pathCompanyCode,
             String keyword,
             Long categoryId,
             Boolean active,
+            Integer page,
+            Integer size,
             Integer limit
     ) {
         validateAuthenticated(principal);
         validateWorkspace(pathCompanyCode, principal.companyCode());
-        return partService.searchParts(principal.companyId(), keyword, categoryId, active, limit);
+        return partService.searchParts(principal.companyId(), keyword, categoryId, active, page, size, limit);
     }
 
     public PartDetailResponse getPart(

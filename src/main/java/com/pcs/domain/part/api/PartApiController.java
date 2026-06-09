@@ -6,9 +6,9 @@ import com.pcs.domain.part.dto.response.PartDetailResponse;
 import com.pcs.domain.part.dto.response.SearchPartResponse;
 import com.pcs.domain.part.facade.PartFacade;
 import com.pcs.global.dto.ApiResultDto;
+import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.security.PcsPrincipal;
 import jakarta.validation.Valid;
-import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -32,20 +32,24 @@ public class PartApiController {
     }
 
     @GetMapping("/workspaces/{companyCode}/parts")
-    public ResponseEntity<ApiResultDto<List<SearchPartResponse>>> searchParts(
+    public ResponseEntity<ApiResultDto<PageResultDto<SearchPartResponse, Void>>> searchParts(
             @PathVariable String companyCode,
             @AuthenticationPrincipal PcsPrincipal principal,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
             @RequestParam(required = false) Integer limit
     ) {
-        List<SearchPartResponse> response = partFacade.searchParts(
+        PageResultDto<SearchPartResponse, Void> response = partFacade.searchParts(
                 principal,
                 companyCode,
                 keyword,
                 categoryId,
                 active,
+                page,
+                size,
                 limit
         );
         return ResponseEntity.ok(ApiResultDto.ok(response));
