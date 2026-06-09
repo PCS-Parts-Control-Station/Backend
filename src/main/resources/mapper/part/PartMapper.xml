@@ -53,4 +53,210 @@
         LIMIT #{limit}
     </select>
 
+    <select id="findById" resultType="com.pcs.domain.part.entity.PcPart">
+        SELECT
+            part_id,
+            company_id,
+            category_id,
+            created_by,
+            part_name,
+            model_name,
+            manufacturer,
+            part_code,
+            estimated_price,
+            safe_quantity,
+            active
+        FROM tb_pc_part
+        WHERE company_id = #{companyId}
+          AND part_id = #{partId}
+    </select>
+
+    <select id="findResponseById" resultType="com.pcs.domain.part.dto.response.SearchPartResponse">
+        SELECT
+            p.part_id,
+            p.category_id,
+            c.category_name,
+            p.part_name,
+            p.model_name,
+            p.manufacturer,
+            p.part_code,
+            p.estimated_price,
+            p.safe_quantity,
+            COALESCE(s.quantity, 0) AS current_stock_quantity,
+            p.active
+        FROM tb_pc_part p
+        JOIN tb_part_category c
+            ON c.company_id = p.company_id
+           AND c.category_id = p.category_id
+        LEFT JOIN tb_part_stock s
+            ON s.company_id = p.company_id
+           AND s.part_id = p.part_id
+        WHERE p.company_id = #{companyId}
+          AND p.part_id = #{partId}
+    </select>
+
+    <select id="findCategoryName" resultType="string">
+        SELECT category_name
+        FROM tb_part_category
+        WHERE company_id = #{companyId}
+          AND category_id = #{categoryId}
+    </select>
+
+    <select id="existsPartCode" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM tb_pc_part
+            WHERE company_id = #{companyId}
+              AND part_code = #{partCode}
+              <if test="excludePartId != null">
+                AND part_id &lt;&gt; #{excludePartId}
+              </if>
+        )
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="partId" parameterType="com.pcs.domain.part.entity.PcPart">
+        INSERT INTO tb_pc_part (
+            company_id,
+            category_id,
+            created_by,
+            part_name,
+            model_name,
+            manufacturer,
+            part_code,
+            estimated_price,
+            safe_quantity,
+            active,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{companyId},
+            #{categoryId},
+            #{createdBy},
+            #{partName},
+            #{modelName},
+            #{manufacturer},
+            #{partCode},
+            #{estimatedPrice},
+            #{safeQuantity},
+            #{active},
+            NOW(6),
+            NOW(6)
+        )
+    </insert>
+
+    <update id="update" parameterType="com.pcs.domain.part.entity.PcPart">
+        UPDATE tb_pc_part
+        SET
+            category_id = #{categoryId},
+            part_name = #{partName},
+            model_name = #{modelName},
+            manufacturer = #{manufacturer},
+            part_code = #{partCode},
+            estimated_price = #{estimatedPrice},
+            safe_quantity = #{safeQuantity},
+            updated_at = NOW(6)
+        WHERE company_id = #{companyId}
+          AND part_id = #{partId}
+    </update>
+
+    <select id="findSpecDefinitionsByCategory" resultType="com.pcs.domain.category.dto.response.CategorySpecDefinitionRow">
+        SELECT
+            spec_definition_id,
+            category_id,
+            spec_key,
+            spec_name,
+            input_type,
+            unit,
+            required,
+            searchable,
+            sort_order,
+            active
+        FROM tb_part_spec_definition
+        WHERE company_id = #{companyId}
+          AND category_id = #{categoryId}
+          AND active = TRUE
+        ORDER BY sort_order ASC, spec_definition_id ASC
+    </select>
+
+    <select id="findSpecOptions" resultType="com.pcs.domain.category.dto.response.CategorySpecOptionResponse">
+        SELECT
+            option_id,
+            spec_definition_id,
+            option_label,
+            option_value,
+            sort_order,
+            active
+        FROM tb_part_spec_option
+        WHERE active = TRUE
+        <choose>
+            <when test="specDefinitionIds != null and specDefinitionIds.size() > 0">
+              AND spec_definition_id IN
+              <foreach collection="specDefinitionIds" item="specDefinitionId" open="(" separator="," close=")">
+                #{specDefinitionId}
+              </foreach>
+            </when>
+            <otherwise>
+              AND 1 = 0
+            </otherwise>
+        </choose>
+        ORDER BY spec_definition_id ASC, sort_order ASC, option_id ASC
+    </select>
+
+    <select id="findSpecValuesByPart" resultType="com.pcs.domain.part.dto.response.PartSpecValueResponse">
+        SELECT
+            v.spec_value_id,
+            v.spec_definition_id,
+            d.spec_key,
+            d.spec_name,
+            d.input_type,
+            d.unit,
+            v.value_number,
+            v.value_text,
+            v.value_boolean,
+            v.selected_option_id,
+            v.selected_option_label_snapshot AS selected_option_label,
+            v.selected_option_value_snapshot AS selected_option_value
+        FROM tb_part_spec_value v
+        JOIN tb_part_spec_definition d
+            ON d.company_id = v.company_id
+           AND d.spec_definition_id = v.spec_definition_id
+        WHERE v.company_id = #{companyId}
+          AND v.part_id = #{partId}
+        ORDER BY d.sort_order ASC, d.spec_definition_id ASC
+    </select>
+
+    <insert id="insertSpecValue" useGeneratedKeys="true" keyProperty="specValueId" parameterType="com.pcs.domain.part.entity.PartSpecValue">
+        INSERT INTO tb_part_spec_value (
+            company_id,
+            part_id,
+            spec_definition_id,
+            value_text,
+            value_number,
+            value_boolean,
+            selected_option_id,
+            selected_option_label_snapshot,
+            selected_option_value_snapshot,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{companyId},
+            #{partId},
+            #{specDefinitionId},
+            #{valueText},
+            #{valueNumber},
+            #{valueBoolean},
+            #{selectedOptionId},
+            #{selectedOptionLabelSnapshot},
+            #{selectedOptionValueSnapshot},
+            NOW(6),
+            NOW(6)
+        )
+    </insert>
+
+    <delete id="deleteSpecValuesByPart">
+        DELETE FROM tb_part_spec_value
+        WHERE company_id = #{companyId}
+          AND part_id = #{partId}
+    </delete>
+
 </mapper>
