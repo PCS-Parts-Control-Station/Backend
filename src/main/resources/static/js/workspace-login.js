@@ -1,4 +1,4 @@
-const workspaceLoginForm = document.querySelector('#workspaceLoginForm');
+﻿const workspaceLoginForm = document.querySelector('#workspaceLoginForm');
 const companyCodeField = document.querySelector('#companyCodeField');
 const companyCodeInput = document.querySelector('#companyCode');
 const loginIdInput = document.querySelector('#loginId');

@@ -1,38 +1,75 @@
 package com.pcs.domain.part.facade;
 
+import com.pcs.domain.part.dto.request.CreatePartRequest;
+import com.pcs.domain.part.dto.request.UpdatePartRequest;
+import com.pcs.domain.part.dto.response.PartDetailResponse;
 import com.pcs.domain.part.dto.response.SearchPartResponse;
 import com.pcs.domain.part.service.PartService;
+import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
-import com.pcs.global.jwt.JwtClaims;
-import com.pcs.global.jwt.JwtTokenProvider;
-import java.util.List;
+import com.pcs.global.security.PcsPrincipal;
 import org.springframework.stereotype.Component;
 
 @Component
 public class PartFacade {
 
-    private static final String TOKEN_TYPE = "Bearer";
-
     private final PartService partService;
-    private final JwtTokenProvider jwtTokenProvider;
 
-    public PartFacade(PartService partService, JwtTokenProvider jwtTokenProvider) {
+    public PartFacade(PartService partService) {
         this.partService = partService;
-        this.jwtTokenProvider = jwtTokenProvider;
     }
 
-    public List<SearchPartResponse> searchParts(
-            String authorizationHeader,
+    public PageResultDto<SearchPartResponse, Void> searchParts(
+            PcsPrincipal principal,
             String pathCompanyCode,
             String keyword,
             Long categoryId,
             Boolean active,
+            Integer page,
+            Integer size,
             Integer limit
     ) {
-        JwtClaims claims = jwtTokenProvider.parseAccessToken(extractBearerToken(authorizationHeader));
-        validateWorkspace(pathCompanyCode, claims.companyCode());
-        return partService.searchParts(claims.companyId(), keyword, categoryId, active, limit);
+        validateAuthenticated(principal);
+        validateWorkspace(pathCompanyCode, principal.companyCode());
+        return partService.searchParts(principal.companyId(), keyword, categoryId, active, page, size, limit);
+    }
+
+    public PartDetailResponse getPart(
+            PcsPrincipal principal,
+            String pathCompanyCode,
+            Long partId
+    ) {
+        validateAuthenticated(principal);
+        validateWorkspace(pathCompanyCode, principal.companyCode());
+        return partService.getPart(principal.companyId(), partId);
+    }
+
+    public PartDetailResponse createPart(
+            PcsPrincipal principal,
+            String pathCompanyCode,
+            CreatePartRequest request
+    ) {
+        validateAuthenticated(principal);
+        validateWorkspace(pathCompanyCode, principal.companyCode());
+        return partService.createPart(principal.companyId(), request, principal.memberId());
+    }
+
+    public PartDetailResponse updatePart(
+            PcsPrincipal principal,
+            String pathCompanyCode,
+            Long partId,
+            UpdatePartRequest request
+    ) {
+        validateAuthenticated(principal);
+        validateWorkspace(pathCompanyCode, principal.companyCode());
+        return partService.updatePart(principal.companyId(), partId, request);
+    }
+
+    private void validateAuthenticated(PcsPrincipal principal) {
+        if (principal == null) {
+            throw new BusinessException(ErrorCode.AUTH_REQUIRED);
+        }
     }
 
     private void validateWorkspace(String pathCompanyCode, String tokenCompanyCode) {
@@ -42,16 +79,5 @@ public class PartFacade {
         if (!tokenCompanyCode.equals(pathCompanyCode.trim().toLowerCase())) {
             throw new BusinessException(ErrorCode.AUTH_WORKSPACE_MISMATCH);
         }
-    }
-
-    private String extractBearerToken(String authorizationHeader) {
-        if (authorizationHeader == null || authorizationHeader.isBlank()) {
-            throw new BusinessException(ErrorCode.AUTH_REQUIRED);
-        }
-        String prefix = TOKEN_TYPE + " ";
-        if (!authorizationHeader.startsWith(prefix)) {
-            throw new BusinessException(ErrorCode.AUTH_TOKEN_INVALID);
-        }
-        return authorizationHeader.substring(prefix.length()).trim();
     }
 }

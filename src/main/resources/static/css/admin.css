@@ -1,4 +1,4 @@
-:root {
+﻿:root {
     --page: #f7faff;
     --surface: #ffffff;
     --surface-soft: #f1f6ff;
@@ -504,6 +504,10 @@ strong {
     grid-template-columns: minmax(280px, 1fr) minmax(122px, 144px) minmax(122px, 144px) minmax(122px, 132px) 76px;
 }
 
+.part-filter-form {
+    grid-template-columns: minmax(280px, 1fr) minmax(140px, 180px) 76px;
+}
+
 .management-filter-form > * {
     min-width: 0;
 }
@@ -520,6 +524,51 @@ strong {
 
 .data-row.simple-management-data-row {
     grid-template-columns: minmax(160px, 0.9fr) minmax(220px, 1.35fr) 88px 92px;
+}
+
+.data-row.part-management-data-row {
+    grid-template-columns: minmax(170px, 1.15fr) minmax(150px, 1fr) minmax(104px, 0.72fr) 92px 92px;
+}
+
+.part-primary-cell,
+.part-meta-cell,
+.quantity-cell {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.part-primary-cell small,
+.part-meta-cell small,
+.quantity-cell small {
+    min-width: 0;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.part-code-text {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+.quantity-cell strong {
+    color: var(--navy);
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.quantity-cell.is-low strong,
+.quantity-cell.is-low small {
+    color: var(--orange);
+}
+
+.field-optional {
+    color: var(--subtle);
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 800;
 }
 
 .data-row.management-data-row.is-selectable {
@@ -584,7 +633,7 @@ strong {
 }
 
 .inline-summary-header .list-summary.summary-compact {
-    grid-template-columns: repeat(3, 58px);
+    grid-template-columns: repeat(3, 72px);
 }
 
 .inline-summary-header .list-summary div + div {
@@ -596,6 +645,7 @@ strong {
     color: var(--muted);
     font-size: 14px;
     font-weight: 400;
+    white-space: nowrap;
 }
 
 .inline-summary-header .list-summary dd {
@@ -646,6 +696,46 @@ select:focus,
 textarea:focus {
     border-color: var(--cyan);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.category-picker-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-height: var(--control-height);
+    padding: 0 14px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+    text-align: left;
+}
+
+.category-picker-button:hover,
+.category-picker-button:focus-visible {
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    outline: none;
+}
+
+.category-picker-button span {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.category-picker-button small {
+    flex: 0 0 auto;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
 }
 
 .table-card {
@@ -941,12 +1031,62 @@ textarea:focus {
     stroke-linecap: round;
 }
 
+.part-modal-fields {
+    display: grid;
+    gap: 14px;
+    min-width: 0;
+    padding: 20px;
+}
+
 .part-modal-actions {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
     padding: 16px 20px 20px;
     border-top: 1px solid var(--line);
+}
+
+.category-picker-list {
+    display: grid;
+    gap: 8px;
+    max-height: 330px;
+    min-height: 120px;
+    overflow: auto;
+    padding-right: 4px;
+}
+
+.category-picker-option {
+    display: grid;
+    gap: 4px;
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+}
+
+.category-picker-option:hover,
+.category-picker-option:focus-visible,
+.category-picker-option.is-selected {
+    border-color: var(--cyan);
+    background: var(--cyan-soft);
+    outline: none;
+}
+
+.category-picker-option strong {
+    color: var(--navy);
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.category-picker-option small {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.5;
 }
 
 .confirm-modal {
@@ -1106,6 +1246,14 @@ textarea:focus {
     font-size: 18px;
     font-weight: 800;
     line-height: 1.3;
+}
+
+.side-detail-card p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.55;
 }
 
 .detail-badge-row {
@@ -1322,6 +1470,42 @@ textarea:focus {
     background: var(--surface);
 }
 
+.trigger-field-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-height: var(--control-height);
+    padding: 0 14px;
+    color: var(--ink);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    text-align: left;
+    cursor: pointer;
+}
+
+.trigger-field-button span {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--cyan);
+    font-size: 16px;
+    line-height: 1;
+}
+
+.trigger-field-button:hover {
+    border-color: rgba(37, 99, 235, 0.36);
+    background: var(--cyan-soft);
+}
+
 .optional-fields summary {
     display: flex;
     align-items: center;
@@ -1381,6 +1565,214 @@ textarea:focus {
 
 .optional-fields:not([open]) .optional-fields-body {
     display: none;
+}
+
+.spec-input-section {
+    display: grid;
+    gap: 12px;
+    padding-top: 4px;
+}
+
+.spec-input-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.spec-input-heading strong {
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.spec-input-heading small {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.spec-input-list {
+    display: grid;
+    gap: 12px;
+}
+
+.spec-switch-row {
+    margin-top: 2px;
+}
+
+.spec-builder-section {
+    display: grid;
+    gap: 10px;
+}
+
+.spec-builder {
+    display: grid;
+    gap: 10px;
+}
+
+.spec-summary-list {
+    display: grid;
+    gap: 8px;
+}
+
+.spec-builder-empty {
+    margin: 0;
+    padding: 12px;
+    border: 1px dashed var(--line-strong);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.spec-summary-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: start;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+}
+
+.spec-summary-card strong {
+    display: block;
+    color: var(--navy);
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.spec-summary-card small {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.spec-summary-actions {
+    display: inline-flex;
+    gap: 6px;
+}
+
+.spec-summary-actions button {
+    min-height: 28px;
+    padding: 0 8px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.spec-summary-actions button:hover {
+    border-color: var(--cyan);
+    background: var(--cyan-soft);
+    color: var(--cyan-dark);
+}
+
+.spec-summary-actions button[data-remove-spec]:hover {
+    border-color: var(--red);
+    background: var(--red-soft);
+    color: var(--red);
+}
+
+.spec-builder-row {
+    display: grid;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+}
+
+.spec-builder-row-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.spec-builder-row-head strong {
+    color: var(--navy);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.spec-remove-button {
+    min-height: 30px;
+    padding: 0 10px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.spec-remove-button:hover {
+    border-color: var(--red);
+    background: var(--red-soft);
+    color: var(--red);
+}
+
+.spec-add-button {
+    justify-self: start;
+}
+
+.spec-detail-block {
+    display: grid;
+    gap: 10px;
+    margin: 16px 0 18px;
+}
+
+.spec-detail-block h3 {
+    margin: 0;
+    color: var(--navy);
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.spec-detail-list {
+    display: grid;
+    gap: 8px;
+}
+
+.spec-detail-list p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.spec-detail-item {
+    display: grid;
+    gap: 5px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+}
+
+.spec-detail-item strong {
+    color: var(--navy);
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.spec-detail-item small {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
 }
 
 .line-preview {
@@ -1563,6 +1955,10 @@ textarea:focus {
         grid-template-columns: minmax(0, 1fr) minmax(122px, 144px) minmax(122px, 144px) 76px;
     }
 
+    .has-collapsible-sidebar .part-filter-form {
+        grid-template-columns: minmax(0, 1fr) minmax(140px, 180px) 76px;
+    }
+
     .has-collapsible-sidebar .management-filter-form label:first-child {
         grid-column: 1 / -1;
     }
@@ -1730,6 +2126,10 @@ textarea:focus {
         grid-template-columns: 1fr;
     }
 
+    .has-collapsible-sidebar .part-filter-form {
+        grid-template-columns: 1fr;
+    }
+
     .has-collapsible-sidebar .management-filter-form label:first-child {
         grid-column: auto;
     }
@@ -1739,6 +2139,10 @@ textarea:focus {
     }
 
     .data-row.simple-management-data-row {
+        grid-template-columns: 1fr;
+    }
+
+    .data-row.part-management-data-row {
         grid-template-columns: 1fr;
     }
 
@@ -1809,6 +2213,7 @@ textarea:focus {
     }
 
     .part-modal-header,
+    .part-modal-fields,
     .part-modal-actions {
         padding-right: 16px;
         padding-left: 16px;

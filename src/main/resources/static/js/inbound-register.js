@@ -1,4 +1,4 @@
-(() => {
+﻿(() => {
     const body = document.body;
     const toggle = document.querySelector("[data-sidebar-toggle]");
     const backdrop = document.querySelector("[data-sidebar-backdrop]");
@@ -156,7 +156,7 @@
         const modelName = part.modelName || "";
         const partCode = part.partCode || "";
         const model = `${manufacturer}${modelName ? ` ${modelName}` : ""}`.trim();
-        return [model, partCode].filter(Boolean).join(" · ");
+        return [model, partCode].filter(Boolean).join(" · ") || "-";
     };
 
     const selectPart = (option) => {
@@ -658,7 +658,7 @@
         event.preventDefault();
         if (partModalMessage) {
             partModalMessage.hidden = false;
-            partModalMessage.textContent = "부품 등록 API 연결 후 사용할 수 있습니다. 지금은 부품관리에서 등록해 주세요.";
+            partModalMessage.textContent = "부품 등록 API 연결 후 사용할 수 있습니다. 지금은 부품 관리에서 등록해 주세요.";
         }
     });
 

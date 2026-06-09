@@ -143,6 +143,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - 집계 SQL 작성
 - 재고 정합성 SQL 작성
 - 페이징 목록 SQL 작성 → `docs/ai/pcs-pagination-rules.md`
+- 품목 저장/수정 SQL 작성 → `docs/features/part.md` + `docs/features/part-db.md`
 - 카테고리 SQL/DB 검증 작성 → `docs/features/category.md` + `docs/features/category-db.md`
 
 SQL 참조 기준:

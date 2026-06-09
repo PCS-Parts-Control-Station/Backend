@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PCS 품목 관리 화면입니다. 품목 종류를 등록하고 분류별로 관리합니다.">
+    <title>PCS | 품목 관리</title>
+    <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/admin.css?20260605_parts_design3">
+    <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
+</head>
+<body class="has-collapsible-sidebar">
+<div class="workspace-layout">
+    <div data-workspace-sidebar data-active-route="parts"></div>
+
+    <main class="workspace-main">
+        <header class="workspace-header">
+            <button class="menu-toggle" type="button" data-sidebar-toggle aria-controls="workspace-sidebar" aria-expanded="false" aria-label="메뉴 열기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M4 7h16" />
+                    <path d="M4 12h16" />
+                    <path d="M4 17h16" />
+                </svg>
+            </button>
+            <div>
+                <p class="page-kicker">기준 정보 관리</p>
+                <h1>품목 관리</h1>
+                <p class="page-description">입고 때 선택할 품목명, 제조사 모델명, 현재 재고와 안전 재고를 함께 확인합니다.</p>
+            </div>
+        </header>
+
+        <section class="content-grid">
+            <div class="content-main">
+                <section class="filter-card management-filter-card" aria-labelledby="filter-title">
+                    <div>
+                        <h2 id="filter-title">품목 검색</h2>
+                        <p>품목명, 제조사 모델명, 제조사와 분류로 목록을 좁혀 봅니다.</p>
+                    </div>
+                    <form class="filter-form management-filter-form part-filter-form" action="#" method="get" autocomplete="off" data-part-filter-form>
+                        <label>
+                            <span>검색어</span>
+                            <input type="search" name="keyword" placeholder="예: RTX 4060" autocomplete="off">
+                        </label>
+                        <label>
+                            <span>분류</span>
+                            <input type="hidden" name="categoryId">
+                            <button class="category-picker-button" type="button" data-open-category-picker="filter">
+                                <span data-filter-category-label>전체</span>
+                                <small>분류 선택</small>
+                            </button>
+                        </label>
+                        <button class="btn btn-primary" type="submit">검색</button>
+                    </form>
+                </section>
+
+                <section class="table-card" aria-labelledby="part-list-title">
+                    <div class="table-header inline-summary-header">
+                        <div>
+                            <h2 id="part-list-title">품목 목록</h2>
+                            <p>입고 전표에서 선택할 품목 종류와 재고 기준입니다.</p>
+                        </div>
+                        <div class="list-summary-box" aria-label="품목 목록 요약">
+                            <dl class="list-summary summary-compact">
+                                <div>
+                                    <dt>조회</dt>
+                                    <dd data-summary-total>0</dd>
+                                </div>
+                                <div>
+                                    <dt>재고</dt>
+                                    <dd data-summary-stock>0</dd>
+                                </div>
+                                <div>
+                                    <dt>재고 부족</dt>
+                                    <dd data-summary-low-stock>0</dd>
+                                </div>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <div class="data-table" role="table" aria-label="품목 목록" data-part-table>
+                        <div class="data-row management-data-row part-management-data-row table-head" role="row">
+                            <span role="columnheader">품목명</span>
+                            <span role="columnheader">제조사 / 제조사 모델명</span>
+                            <span role="columnheader">분류</span>
+                            <span role="columnheader">현재 재고</span>
+                            <span role="columnheader">안전 재고</span>
+                        </div>
+                        <div class="data-row management-data-row part-management-data-row empty-data-row" role="row" data-part-empty>
+                            <span role="cell" data-label="안내">품목 목록을 불러오는 중입니다.</span>
+                        </div>
+                    </div>
+                    <div class="pagination-bar" data-part-pagination hidden>
+                        <p data-page-info>1 / 1 페이지</p>
+                        <div class="pagination-actions">
+                            <button type="button" data-page-prev>이전</button>
+                            <button type="button" data-page-next>다음</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="side-panel" aria-labelledby="part-form-title">
+                <div class="panel-card side-work-panel">
+                    <div class="panel-mode is-active" data-part-panel="create">
+                        <h2 id="part-form-title">품목 등록</h2>
+                        <p>입고 전에 선택할 품목 종류와 상세 기준을 등록합니다.</p>
+                        <form class="category-form" action="#" method="post" autocomplete="off" data-part-create-form>
+                            <label>
+                                <span>분류</span>
+                                <input type="hidden" name="categoryId">
+                                <button class="category-picker-button" type="button" data-open-category-picker="create">
+                                    <span data-create-category-label>선택</span>
+                                    <small>분류 선택</small>
+                                </button>
+                            </label>
+                            <label>
+                                <span>품목명</span>
+                                <input type="text" name="partName" placeholder="예: GeForce RTX 4060 Ti" autocomplete="off" required>
+                            </label>
+                            <label>
+                                <span>제조사</span>
+                                <input type="text" name="manufacturer" placeholder="예: MSI" autocomplete="off" required>
+                            </label>
+                            <label>
+                                <span>제조사 모델명</span>
+                                <input type="text" name="modelName" placeholder="예: RTX 4060 VENTUS 2X 8G OC" autocomplete="off" required>
+                            </label>
+                            <div class="optional-field-group">
+                                <span class="optional-field-label">상세입력</span>
+                                <button class="optional-fields trigger-field-button" type="button" data-open-part-spec-modal="create">
+                                    <small data-create-spec-summary>예상 단가, 안전 재고, 사양 항목</small>
+                                    <span aria-hidden="true">+</span>
+                                </button>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn btn-primary" type="submit">저장</button>
+                                <button class="btn btn-secondary" type="reset">초기화</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="panel-mode" data-part-panel="detail" hidden>
+                        <div class="panel-title-bar">
+                            <div>
+                                <h2>품목 상세</h2>
+                                <p>선택한 품목 종류와 재고 기준을 확인합니다.</p>
+                            </div>
+                            <button class="panel-link-button" type="button" data-part-create-mode>새 품목 등록</button>
+                        </div>
+
+                        <div class="side-detail-card">
+                            <strong data-detail-name>-</strong>
+                            <div class="detail-badge-row">
+                            <span class="badge badge-blue" data-detail-category>-</span>
+                            <span class="badge badge-info" data-detail-code>-</span>
+                            </div>
+                        </div>
+
+                        <dl class="detail-list">
+                            <div>
+                                <dt>제조사</dt>
+                                <dd data-detail-manufacturer>-</dd>
+                            </div>
+                            <div>
+                                <dt>제조사 모델명</dt>
+                                <dd data-detail-model>-</dd>
+                            </div>
+                            <div>
+                                <dt>현재 재고</dt>
+                                <dd data-detail-stock>-</dd>
+                            </div>
+                            <div>
+                                <dt>안전 재고</dt>
+                                <dd data-detail-safe-quantity>-</dd>
+                            </div>
+                            <div>
+                                <dt>예상 단가</dt>
+                                <dd data-detail-estimated-price>-</dd>
+                            </div>
+                            <div>
+                                <dt>상세 사양</dt>
+                                <dd data-detail-specs>-</dd>
+                            </div>
+                        </dl>
+
+                        <div class="form-actions">
+                            <button class="btn btn-primary" type="button" data-part-edit-mode>수정</button>
+                        </div>
+                    </div>
+
+                    <div class="panel-mode" data-part-panel="edit" hidden>
+                        <div class="panel-title-bar">
+                            <div>
+                                <h2>품목 수정</h2>
+                                <p>선택한 품목 종류와 상세 기준을 수정합니다.</p>
+                            </div>
+                            <button class="panel-link-button" type="button" data-part-create-mode>새 품목 등록</button>
+                        </div>
+
+                        <form class="category-form" action="#" method="post" autocomplete="off" data-part-edit-form>
+                            <label>
+                                <span>분류</span>
+                                <input type="hidden" name="categoryId">
+                                <button class="category-picker-button" type="button" data-open-category-picker="edit">
+                                    <span data-edit-category-label>선택</span>
+                                    <small>분류 선택</small>
+                                </button>
+                            </label>
+                            <label>
+                                <span>품목명</span>
+                                <input type="text" name="partName" autocomplete="off" required>
+                            </label>
+                            <label>
+                                <span>제조사</span>
+                                <input type="text" name="manufacturer" autocomplete="off" required>
+                            </label>
+                            <label>
+                                <span>제조사 모델명</span>
+                                <input type="text" name="modelName" autocomplete="off" required>
+                            </label>
+                            <div class="optional-field-group">
+                                <span class="optional-field-label">상세입력</span>
+                                <button class="optional-fields trigger-field-button" type="button" data-open-part-spec-modal="edit">
+                                    <small data-edit-spec-summary>예상 단가, 안전 재고, 사양 항목</small>
+                                    <span aria-hidden="true">+</span>
+                                </button>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn btn-primary" type="submit">저장</button>
+                                <button class="btn btn-secondary" type="button" data-part-detail-mode>취소</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="panel-card muted-panel">
+                    <h2>운영 메모</h2>
+                    <ul>
+                        <li>품목 목록은 제조사와 제조사 모델명 단위로 관리</li>
+                        <li>실물 품목과 관리번호는 입고 처리 시 생성</li>
+                        <li>현재 재고가 안전 재고보다 낮으면 우선 확인</li>
+                        <li>삭제는 연결된 이력과 재고가 없는 경우에만 허용</li>
+                    </ul>
+                </div>
+            </aside>
+        </section>
+    </main>
+</div>
+<dialog class="part-modal" data-part-spec-modal aria-labelledby="part-spec-modal-title">
+    <form class="part-modal-card" method="dialog" data-part-spec-modal-form autocomplete="off">
+        <div class="part-modal-header">
+            <div>
+                <p class="page-kicker">상세입력</p>
+                <h2 id="part-spec-modal-title">품목 상세 기준을 입력합니다.</h2>
+                <p>선택한 분류의 사양 항목과 관리 기준을 입력해 주세요.</p>
+            </div>
+            <button class="modal-close-button" type="button" data-close-part-spec-modal aria-label="닫기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M6 6l12 12" />
+                    <path d="M18 6L6 18" />
+                </svg>
+            </button>
+        </div>
+        <div class="part-modal-fields">
+            <div class="spec-input-section">
+                <div class="spec-input-heading">
+                    <strong>분류 사양 항목</strong>
+                    <small data-spec-modal-category>분류를 먼저 선택해 주세요.</small>
+                </div>
+                <div class="spec-input-list" data-part-spec-fields>
+                    <p class="spec-builder-empty">분류를 선택하면 입력할 사양 항목이 표시됩니다.</p>
+                </div>
+            </div>
+            <label>
+                <span>예상 단가 <em class="field-optional">선택</em></span>
+                <input type="number" name="estimatedPrice" min="0" step="1000" placeholder="예: 180000">
+            </label>
+            <label>
+                <span>안전 재고 <em class="field-optional">선택</em></span>
+                <input type="number" name="safeQuantity" min="0" step="1" placeholder="예: 3">
+            </label>
+        </div>
+        <p class="field-message is-error modal-message" data-part-spec-modal-message role="status" aria-live="polite"></p>
+        <div class="part-modal-actions">
+            <button class="btn btn-secondary" type="button" data-close-part-spec-modal>취소</button>
+            <button class="btn btn-primary" type="submit">적용</button>
+        </div>
+    </form>
+</dialog>
+<dialog class="part-modal category-picker-modal" data-category-picker-modal aria-labelledby="category-picker-title">
+    <div class="part-modal-card">
+        <div class="part-modal-header">
+            <div>
+                <p class="page-kicker">분류 선택</p>
+                <h2 id="category-picker-title">품목 분류를 선택합니다.</h2>
+                <p>검색 후 목록에서 사용할 분류를 선택해 주세요.</p>
+            </div>
+            <button class="modal-close-button" type="button" data-close-category-picker aria-label="닫기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M6 6l12 12" />
+                    <path d="M18 6L6 18" />
+                </svg>
+            </button>
+        </div>
+        <div class="part-modal-fields">
+            <label>
+                <span>분류 검색</span>
+                <input type="search" data-category-picker-search placeholder="예: 그래픽카드" autocomplete="off">
+            </label>
+            <div class="category-picker-list" data-category-picker-list>
+                <p class="spec-builder-empty">분류 목록을 불러오는 중입니다.</p>
+            </div>
+        </div>
+        <p class="field-message is-error modal-message" data-category-picker-message role="status" aria-live="polite"></p>
+        <div class="part-modal-actions">
+            <button class="btn btn-secondary" type="button" data-clear-category-picker hidden>전체로 보기</button>
+            <button class="btn btn-secondary" type="button" data-close-category-picker>닫기</button>
+        </div>
+    </div>
+</dialog>
+<script src="/js/pcs-api.js?20260529_workspace_guard"></script>
+<script src="/js/pcs-pagination.js?20260527_pagination"></script>
+<script src="/js/workspace-layout.js?20260527_1"></script>
+<script src="/js/pcs-ui.js?20260527_1"></script>
+<script src="/js/parts.js?20260609_category_picker"></script>
+</body>
+</html>
