@@ -1,0 +1,469 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pcs.domain.inspection.mapper.InspectionTemplateMapper">
+
+    <select id="isCompanyActive" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM tb_company
+            WHERE company_id = #{companyId}
+              AND active = TRUE
+        )
+    </select>
+
+    <select id="existsCategory" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM tb_part_category
+            WHERE company_id = #{companyId}
+              AND category_id = #{categoryId}
+        )
+    </select>
+
+    <sql id="templateSearchWhere">
+        WHERE t.company_id = #{companyId}
+        <if test="categoryId != null">
+          AND t.category_id = #{categoryId}
+        </if>
+        <if test="active != null">
+          AND t.active = #{active}
+        </if>
+        <if test="keyword != null and keyword != ''">
+          AND (
+              t.template_name LIKE CONCAT('%', #{keyword}, '%')
+              OR c.category_name LIKE CONCAT('%', #{keyword}, '%')
+          )
+        </if>
+    </sql>
+
+    <sql id="templateSummarySelect">
+        SELECT
+            t.template_id,
+            t.category_id,
+            c.category_name,
+            t.template_name,
+            t.version,
+            t.active,
+            COUNT(DISTINCT i.item_id) AS item_count,
+            COUNT(o.option_id) AS option_count,
+            m.name AS created_by_name,
+            t.updated_at
+        FROM tb_inspection_template t
+        INNER JOIN tb_part_category c
+            ON c.company_id = t.company_id
+           AND c.category_id = t.category_id
+        LEFT JOIN tb_member m
+            ON m.company_id = t.company_id
+           AND m.member_id = t.created_by
+        LEFT JOIN tb_inspection_template_item i
+            ON i.template_id = t.template_id
+        LEFT JOIN tb_inspection_template_item_option o
+            ON o.item_id = i.item_id
+    </sql>
+
+    <select id="searchTemplates" resultType="com.pcs.domain.inspection.dto.response.SearchInspectionTemplateResponse">
+        <include refid="templateSummarySelect" />
+        <include refid="templateSearchWhere" />
+        GROUP BY
+            t.template_id,
+            t.category_id,
+            c.category_name,
+            t.template_name,
+            t.version,
+            t.active,
+            m.name,
+            t.updated_at
+        ORDER BY t.updated_at DESC, t.template_id DESC
+        LIMIT #{size}
+        OFFSET #{offset}
+    </select>
+
+    <select id="countTemplates" resultType="long">
+        SELECT COUNT(*)
+        FROM tb_inspection_template t
+        INNER JOIN tb_part_category c
+            ON c.company_id = t.company_id
+           AND c.category_id = t.category_id
+        <include refid="templateSearchWhere" />
+    </select>
+
+    <select id="summarizeTemplates" resultType="com.pcs.domain.inspection.dto.response.SearchInspectionTemplateSummaryResponse">
+        SELECT
+            COUNT(DISTINCT t.template_id) AS total_count,
+            COALESCE(COUNT(DISTINCT CASE WHEN t.active = TRUE THEN t.template_id END), 0) AS active_count,
+            COALESCE(COUNT(DISTINCT i.item_id), 0) AS item_count,
+            COALESCE(COUNT(o.option_id), 0) AS option_count
+        FROM tb_inspection_template t
+        INNER JOIN tb_part_category c
+            ON c.company_id = t.company_id
+           AND c.category_id = t.category_id
+        LEFT JOIN tb_inspection_template_item i
+            ON i.template_id = t.template_id
+        LEFT JOIN tb_inspection_template_item_option o
+            ON o.item_id = i.item_id
+        <include refid="templateSearchWhere" />
+    </select>
+
+    <select id="findTemplateById" resultType="com.pcs.domain.inspection.entity.InspectionTemplate">
+        SELECT
+            template_id,
+            company_id,
+            category_id,
+            template_name,
+            version,
+            active,
+            created_by,
+            created_at,
+            updated_at
+        FROM tb_inspection_template
+        WHERE company_id = #{companyId}
+          AND template_id = #{templateId}
+    </select>
+
+    <select id="findTemplateSummaryById" resultType="com.pcs.domain.inspection.dto.response.SearchInspectionTemplateResponse">
+        <include refid="templateSummarySelect" />
+        WHERE t.company_id = #{companyId}
+          AND t.template_id = #{templateId}
+        GROUP BY
+            t.template_id,
+            t.category_id,
+            c.category_name,
+            t.template_name,
+            t.version,
+            t.active,
+            m.name,
+            t.updated_at
+    </select>
+
+    <select id="findItemsByTemplateId" resultType="com.pcs.domain.inspection.entity.InspectionTemplateItem">
+        SELECT
+            item_id,
+            template_id,
+            item_group,
+            item_name,
+            input_type,
+            required,
+            sort_order,
+            grade_impact,
+            fail_policy,
+            active
+        FROM tb_inspection_template_item
+        WHERE template_id = #{templateId}
+        ORDER BY item_group ASC, sort_order ASC, item_id ASC
+    </select>
+
+    <select id="findOptionsByTemplateId" resultType="com.pcs.domain.inspection.dto.response.InspectionTemplateOptionResponse">
+        SELECT
+            o.option_id,
+            o.item_id,
+            o.option_label,
+            o.option_value,
+            o.sort_order,
+            o.active
+        FROM tb_inspection_template_item_option o
+        INNER JOIN tb_inspection_template_item i
+            ON i.item_id = o.item_id
+        WHERE i.template_id = #{templateId}
+        ORDER BY o.item_id ASC, o.sort_order ASC, o.option_id ASC
+    </select>
+
+    <select id="findItemById" resultType="com.pcs.domain.inspection.entity.InspectionTemplateItem">
+        SELECT
+            i.item_id,
+            i.template_id,
+            i.item_group,
+            i.item_name,
+            i.input_type,
+            i.required,
+            i.sort_order,
+            i.grade_impact,
+            i.fail_policy,
+            i.active
+        FROM tb_inspection_template_item i
+        INNER JOIN tb_inspection_template t
+            ON t.template_id = i.template_id
+        WHERE t.company_id = #{companyId}
+          AND t.template_id = #{templateId}
+          AND i.item_id = #{itemId}
+    </select>
+
+    <select id="findOptionById" resultType="com.pcs.domain.inspection.entity.InspectionTemplateItemOption">
+        SELECT
+            o.option_id,
+            o.item_id,
+            o.option_label,
+            o.option_value,
+            o.sort_order,
+            o.active
+        FROM tb_inspection_template_item_option o
+        INNER JOIN tb_inspection_template_item i
+            ON i.item_id = o.item_id
+        INNER JOIN tb_inspection_template t
+            ON t.template_id = i.template_id
+        WHERE t.company_id = #{companyId}
+          AND t.template_id = #{templateId}
+          AND i.item_id = #{itemId}
+          AND o.option_id = #{optionId}
+    </select>
+
+    <select id="existsTemplateVersion" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM tb_inspection_template
+            WHERE company_id = #{companyId}
+              AND category_id = #{categoryId}
+              AND template_name = #{templateName}
+              AND version = #{version}
+              <if test="excludeTemplateId != null">
+                AND template_id &lt;&gt; #{excludeTemplateId}
+              </if>
+        )
+    </select>
+
+    <select id="existsItemName" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM tb_inspection_template_item
+            WHERE template_id = #{templateId}
+              AND item_name = #{itemName}
+              <if test="excludeItemId != null">
+                AND item_id &lt;&gt; #{excludeItemId}
+              </if>
+        )
+    </select>
+
+    <select id="existsOptionLabel" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM tb_inspection_template_item_option
+            WHERE item_id = #{itemId}
+              AND option_label = #{optionLabel}
+              <if test="excludeOptionId != null">
+                AND option_id &lt;&gt; #{excludeOptionId}
+              </if>
+        )
+    </select>
+
+    <select id="existsOptionValue" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM tb_inspection_template_item_option
+            WHERE item_id = #{itemId}
+              AND option_value = #{optionValue}
+              <if test="excludeOptionId != null">
+                AND option_id &lt;&gt; #{excludeOptionId}
+              </if>
+        )
+    </select>
+
+    <select id="nextItemSortOrder" resultType="int">
+        SELECT COALESCE(MAX(sort_order), -10) + 10
+        FROM tb_inspection_template_item
+        WHERE template_id = #{templateId}
+    </select>
+
+    <select id="nextOptionSortOrder" resultType="int">
+        SELECT COALESCE(MAX(sort_order), -10) + 10
+        FROM tb_inspection_template_item_option
+        WHERE item_id = #{itemId}
+    </select>
+
+    <select id="countItemsByTemplateGroupAndIds" resultType="int">
+        SELECT COUNT(*)
+        FROM tb_inspection_template_item
+        WHERE template_id = #{templateId}
+          AND item_group = #{itemGroup}
+          AND item_id IN
+          <foreach collection="itemIds" item="itemId" open="(" separator="," close=")">
+            #{itemId}
+          </foreach>
+    </select>
+
+    <select id="countItemsByTemplateGroup" resultType="int">
+        SELECT COUNT(*)
+        FROM tb_inspection_template_item
+        WHERE template_id = #{templateId}
+          AND item_group = #{itemGroup}
+    </select>
+
+    <select id="countOptionsByItemIdAndIds" resultType="int">
+        SELECT COUNT(*)
+        FROM tb_inspection_template_item_option
+        WHERE item_id = #{itemId}
+          AND option_id IN
+          <foreach collection="optionIds" item="optionId" open="(" separator="," close=")">
+            #{optionId}
+          </foreach>
+    </select>
+
+    <select id="countOptionsByItemId" resultType="int">
+        SELECT COUNT(*)
+        FROM tb_inspection_template_item_option
+        WHERE item_id = #{itemId}
+    </select>
+
+    <insert id="insertTemplate" useGeneratedKeys="true" keyProperty="templateId" parameterType="com.pcs.domain.inspection.entity.InspectionTemplate">
+        INSERT INTO tb_inspection_template (
+            company_id,
+            category_id,
+            template_name,
+            version,
+            active,
+            created_by,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{companyId},
+            #{categoryId},
+            #{templateName},
+            #{version},
+            #{active},
+            #{createdBy},
+            NOW(6),
+            NOW(6)
+        )
+    </insert>
+
+    <update id="updateTemplate" parameterType="com.pcs.domain.inspection.entity.InspectionTemplate">
+        UPDATE tb_inspection_template
+        SET
+            category_id = #{categoryId},
+            template_name = #{templateName},
+            version = #{version},
+            active = #{active},
+            updated_at = NOW(6)
+        WHERE company_id = #{companyId}
+          AND template_id = #{templateId}
+    </update>
+
+    <update id="updateTemplateActive">
+        UPDATE tb_inspection_template
+        SET
+            active = #{active},
+            updated_at = NOW(6)
+        WHERE company_id = #{companyId}
+          AND template_id = #{templateId}
+    </update>
+
+    <update id="touchTemplate">
+        UPDATE tb_inspection_template
+        SET updated_at = NOW(6)
+        WHERE template_id = #{templateId}
+    </update>
+
+    <insert id="insertItem" useGeneratedKeys="true" keyProperty="itemId" parameterType="com.pcs.domain.inspection.entity.InspectionTemplateItem">
+        INSERT INTO tb_inspection_template_item (
+            template_id,
+            item_group,
+            item_name,
+            input_type,
+            required,
+            sort_order,
+            grade_impact,
+            fail_policy,
+            active
+        ) VALUES (
+            #{templateId},
+            #{itemGroup},
+            #{itemName},
+            #{inputType},
+            #{required},
+            #{sortOrder},
+            #{gradeImpact},
+            #{failPolicy},
+            #{active}
+        )
+    </insert>
+
+    <update id="updateItem" parameterType="com.pcs.domain.inspection.entity.InspectionTemplateItem">
+        UPDATE tb_inspection_template_item
+        SET
+            item_group = #{itemGroup},
+            item_name = #{itemName},
+            input_type = #{inputType},
+            required = #{required},
+            sort_order = #{sortOrder},
+            grade_impact = #{gradeImpact},
+            fail_policy = #{failPolicy}
+        WHERE template_id = #{templateId}
+          AND item_id = #{itemId}
+    </update>
+
+    <update id="updateItemActive">
+        UPDATE tb_inspection_template_item
+        SET active = #{active}
+        WHERE template_id = #{templateId}
+          AND item_id = #{itemId}
+    </update>
+
+    <update id="updateItemSortOrders">
+        UPDATE tb_inspection_template_item
+        SET sort_order = CASE item_id
+          <foreach collection="sortOrders" item="sortOrder">
+            WHEN #{sortOrder.id} THEN #{sortOrder.sortOrder}
+          </foreach>
+        END
+        WHERE template_id = #{templateId}
+          AND item_group = #{itemGroup}
+          AND item_id IN
+          <foreach collection="sortOrders" item="sortOrder" open="(" separator="," close=")">
+            #{sortOrder.id}
+          </foreach>
+    </update>
+
+    <update id="deactivateOptionsByItemId">
+        UPDATE tb_inspection_template_item_option
+        SET active = FALSE
+        WHERE item_id = #{itemId}
+    </update>
+
+    <insert id="insertOption" useGeneratedKeys="true" keyProperty="optionId" parameterType="com.pcs.domain.inspection.entity.InspectionTemplateItemOption">
+        INSERT INTO tb_inspection_template_item_option (
+            item_id,
+            option_label,
+            option_value,
+            sort_order,
+            active
+        ) VALUES (
+            #{itemId},
+            #{optionLabel},
+            #{optionValue},
+            #{sortOrder},
+            #{active}
+        )
+    </insert>
+
+    <update id="updateOption" parameterType="com.pcs.domain.inspection.entity.InspectionTemplateItemOption">
+        UPDATE tb_inspection_template_item_option
+        SET
+            option_label = #{optionLabel},
+            option_value = #{optionValue},
+            sort_order = #{sortOrder}
+        WHERE item_id = #{itemId}
+          AND option_id = #{optionId}
+    </update>
+
+    <update id="updateOptionActive">
+        UPDATE tb_inspection_template_item_option
+        SET active = #{active}
+        WHERE item_id = #{itemId}
+          AND option_id = #{optionId}
+    </update>
+
+    <update id="updateOptionSortOrders">
+        UPDATE tb_inspection_template_item_option
+        SET sort_order = CASE option_id
+          <foreach collection="sortOrders" item="sortOrder">
+            WHEN #{sortOrder.id} THEN #{sortOrder.sortOrder}
+          </foreach>
+        END
+        WHERE item_id = #{itemId}
+          AND option_id IN
+          <foreach collection="sortOrders" item="sortOrder" open="(" separator="," close=")">
+            #{sortOrder.id}
+          </foreach>
+    </update>
+
+</mapper>

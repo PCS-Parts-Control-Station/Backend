@@ -9,8 +9,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/admin.css?20260602_sidebar_resize2">
+    <link rel="stylesheet" href="/css/admin.css?20260610_sidebar_lock">
     <link rel="stylesheet" href="/css/workflow.css?20260522_split">
+    <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
     <link rel="stylesheet" href="/css/inspection.css?20260605_ui_tune2">
 </head>
 <body class="has-collapsible-sidebar inspection-page">
@@ -76,9 +77,6 @@
                             <span>거래처</span>
                             <select name="partnerId">
                                 <option value="">전체</option>
-                                <option value="1">용산전자</option>
-                                <option value="2">강남PC</option>
-                                <option value="3">개인매입</option>
                             </select>
                         </label>
                         <label>
@@ -129,56 +127,15 @@
                             <span role="columnheader">진행률</span>
                             <span role="columnheader">선택</span>
                         </div>
-                        <div class="data-row management-data-row inspection-document-row is-selectable" role="row" tabindex="0" data-mock-inspection-document="IN-20260529-K8J4P2M9">
-                            <strong role="cell" data-label="전표번호">IN-20260529-K8J4P2M9</strong>
-                            <span class="inspection-stack-cell" role="cell" data-label="입고 내용">
-                                <strong>용산전자 / DDR4 16GB 외 3종</strong>
-                                <small>입고일 2026-05-29 · 검수 대기 220개</small>
-                            </span>
-                            <span role="cell" data-label="총수량">300</span>
-                            <span role="cell" data-label="완료">80</span>
-                            <span class="inspection-progress" role="cell" data-label="진행률">
-                                <strong>27%</strong>
-                                <span class="inspection-progress-track" aria-hidden="true"><i style="--progress: 27%"></i></span>
-                            </span>
-                            <span class="row-actions" role="cell" data-label="선택">
-                                <button type="button" data-inspection-document-action="IN-20260529-K8J4P2M9">전표 선택</button>
-                            </span>
-                        </div>
-                        <div class="data-row management-data-row inspection-document-row is-selectable" role="row" tabindex="0" data-mock-inspection-document="IN-20260528-Q2HD7Z1A">
-                            <strong role="cell" data-label="전표번호">IN-20260528-Q2HD7Z1A</strong>
-                            <span class="inspection-stack-cell" role="cell" data-label="입고 내용">
-                                <strong>강남PC / RTX 3060 외 1종</strong>
-                                <small>입고일 2026-05-28 · 검수 대기 28개</small>
-                            </span>
-                            <span role="cell" data-label="총수량">40</span>
-                            <span role="cell" data-label="완료">12</span>
-                            <span class="inspection-progress" role="cell" data-label="진행률">
-                                <strong>30%</strong>
-                                <span class="inspection-progress-track" aria-hidden="true"><i style="--progress: 30%"></i></span>
-                            </span>
-                            <span class="row-actions" role="cell" data-label="선택">
-                                <button type="button" data-inspection-document-action="IN-20260528-Q2HD7Z1A">전표 선택</button>
-                            </span>
-                        </div>
-                        <div class="data-row management-data-row inspection-document-row is-selectable" role="row" tabindex="0" data-mock-inspection-document="IN-20260527-M6F8TN3B">
-                            <strong role="cell" data-label="전표번호">IN-20260527-M6F8TN3B</strong>
-                            <span class="inspection-stack-cell" role="cell" data-label="입고 내용">
-                                <strong>개인매입 / SSD 500GB</strong>
-                                <small>입고일 2026-05-27 · 검수 완료</small>
-                            </span>
-                            <span role="cell" data-label="총수량">8</span>
-                            <span role="cell" data-label="완료">8</span>
-                            <span class="inspection-progress" role="cell" data-label="진행률">
-                                <strong>100%</strong>
-                                <span class="inspection-progress-track" aria-hidden="true"><i style="--progress: 100%"></i></span>
-                            </span>
-                            <span class="row-actions" role="cell" data-label="선택">
-                                <button type="button" data-inspection-document-action="IN-20260527-M6F8TN3B">전표 선택</button>
-                            </span>
-                        </div>
-                        <div class="data-row management-data-row empty-data-row inspection-empty-row" role="row" data-inspection-waiting-empty hidden>
+                        <div class="data-row management-data-row empty-data-row inspection-empty-row" role="row" data-inspection-waiting-empty>
                             <span role="cell" data-label="안내">검수 대상 전표를 불러오는 중입니다.</span>
+                        </div>
+                    </div>
+                    <div class="pagination-bar inspection-pagination-bar" data-inspection-document-pagination hidden>
+                        <p data-inspection-document-page-info>0건</p>
+                        <div class="pagination-actions">
+                            <button type="button" data-inspection-document-page-prev>이전</button>
+                            <button type="button" data-inspection-document-page-next>다음</button>
                         </div>
                     </div>
                 </section>
@@ -287,9 +244,7 @@
                         <label>
                             <span>검수 템플릿</span>
                             <select name="templateId" required disabled>
-                                <option value="basic">기본 부품 검수</option>
-                                <option value="gpu">그래픽카드 검수</option>
-                                <option value="storage">저장장치 검수</option>
+                                <option value="">템플릿을 불러오는 중입니다</option>
                             </select>
                         </label>
 
@@ -362,35 +317,7 @@
                             <span role="columnheader">처리자</span>
                             <span role="columnheader">상세</span>
                         </div>
-                        <div class="data-row management-data-row inspection-history-row is-selectable" role="row" tabindex="0" data-mock-inspection-id="10024">
-                            <strong role="cell" data-label="검수일">2026-06-02</strong>
-                            <span class="inspection-stack-cell" role="cell" data-label="부품">
-                                <strong>PCS-SSD-000128</strong>
-                                <small>Samsung 970 EVO Plus 500GB</small>
-                            </span>
-                            <span role="cell" data-label="전표번호">IN-20260527-M6F8TN3B</span>
-                            <span role="cell" data-label="유형"><em class="badge badge-active">최초</em></span>
-                            <span role="cell" data-label="등급"><em class="badge badge-blue">A</em></span>
-                            <span role="cell" data-label="처리자">김관리</span>
-                            <span class="row-actions" role="cell" data-label="상세">
-                                <button type="button" data-inspection-history-action="10024">상세</button>
-                            </span>
-                        </div>
-                        <div class="data-row management-data-row inspection-history-row is-selectable" role="row" tabindex="0" data-mock-inspection-id="10023">
-                            <strong role="cell" data-label="검수일">2026-06-01</strong>
-                            <span class="inspection-stack-cell" role="cell" data-label="부품">
-                                <strong>PCS-GPU-000172</strong>
-                                <small>RTX 2060 Ventus OC</small>
-                            </span>
-                            <span role="cell" data-label="전표번호">IN-20260528-Q2HD7Z1A</span>
-                            <span role="cell" data-label="유형"><em class="badge badge-warning">정정</em></span>
-                            <span role="cell" data-label="등급"><em class="badge badge-danger">불량</em></span>
-                            <span role="cell" data-label="처리자">박검수</span>
-                            <span class="row-actions" role="cell" data-label="상세">
-                                <button type="button" data-inspection-history-action="10023">상세</button>
-                            </span>
-                        </div>
-                        <div class="data-row management-data-row empty-data-row inspection-empty-row" role="row" data-inspection-history-empty hidden>
+                        <div class="data-row management-data-row empty-data-row inspection-empty-row" role="row" data-inspection-history-empty>
                             <span role="cell" data-label="안내">검수 이력을 불러오는 중입니다.</span>
                         </div>
                     </div>
@@ -608,7 +535,9 @@
 </dialog>
 
 <script src="/js/pcs-api.js?20260526_1"></script>
-<script src="/js/workspace-layout.js?20260602_sidebar_resize2"></script>
+<script src="/js/pcs-ui.js?20260527_1"></script>
+<script src="/js/pcs-pagination.js?20260527_pagination"></script>
+<script src="/js/workspace-layout.js?20260610_sidebar_lock"></script>
 <script src="/js/inspection.js?20260605_ui_tune2"></script>
 </body>
 </html>

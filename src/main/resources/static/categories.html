@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="PCS 부품 분류 관리 화면입니다. 중고 PC 부품의 분류와 사양 항목을 등록하고 관리합니다.">
-    <title>PCS | 부품 분류 관리</title>
+    <meta name="description" content="PCS 품목 분류 화면입니다. 중고 PC 품목의 분류와 사양 항목을 등록하고 관리합니다.">
+    <title>PCS | 품목 분류</title>
     <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/admin.css?20260606_category_spec_modal">
+
+    <link rel="stylesheet" href="/css/admin.css?20260610_sidebar_lock">
     <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
 </head>
 <body class="has-collapsible-sidebar">
@@ -27,11 +28,8 @@
             </button>
             <div>
                 <p class="page-kicker">기준 정보 관리</p>
-                <h1>부품 분류 관리</h1>
-                <p class="page-description">CPU, RAM, GPU, SSD 등 부품 분류 기준과 입력받을 사양 항목을 관리합니다.</p>
-            </div>
-            <div class="header-actions">
-                <button class="btn btn-primary" type="button" data-category-create-mode>분류 추가</button>
+                <h1>품목 분류</h1>
+                <p class="page-description">CPU, RAM, GPU, SSD 등 품목 분류 기준과 입력받을 사양 항목을 관리합니다.</p>
             </div>
         </header>
 
@@ -55,15 +53,15 @@
                     <div class="table-header inline-summary-header">
                         <div>
                             <h2 id="category-list-title">분류 목록</h2>
-                            <p>회사 작업공간에서 사용하는 부품 분류 기준입니다.</p>
+                            <p>회사 작업공간에서 사용하는 품목 분류 기준입니다.</p>
                         </div>
                     </div>
 
-                    <div class="data-table" role="table" aria-label="부품 분류 목록" data-category-table>
+                    <div class="data-table" role="table" aria-label="품목 분류 목록" data-category-table>
                         <div class="data-row simple-management-data-row table-head" role="row">
                             <span role="columnheader">분류명</span>
                             <span role="columnheader">설명</span>
-                            <span role="columnheader">부품 종류 수</span>
+                            <span role="columnheader">품목 수</span>
                             <span role="columnheader">수정일</span>
                         </div>
                         <div class="data-row simple-management-data-row empty-data-row" role="row" data-category-empty>
@@ -291,7 +289,7 @@
 </dialog>
 <script src="/js/pcs-api.js?20260529_workspace_guard"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
-<script src="/js/workspace-layout.js?20260527_1"></script>
+<script src="/js/workspace-layout.js?20260610_sidebar_lock"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
 <script src="/js/pcs-common.js?20260610_common"></script>
 <script src="/js/categories.js?20260608_terms"></script>

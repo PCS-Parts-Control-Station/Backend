@@ -3,6 +3,11 @@
     const companyCode = window.location.pathname.split("/").filter(Boolean)[1] || "workspace";
     const sidebarPlaceholder = document.querySelector("[data-workspace-sidebar]");
     const pageActiveRoute = sidebarPlaceholder?.dataset.activeRoute || "";
+    const isCollapsibleSidebarPage = document.body.classList.contains("has-collapsible-sidebar");
+
+    if (isCollapsibleSidebarPage) {
+        document.body.classList.add("sidebar-collapsed");
+    }
 
     const applyWorkspaceContext = () => {
         document.querySelectorAll("[data-company-code]").forEach((element) => {
@@ -51,8 +56,6 @@
         const body = document.body;
         const toggle = document.querySelector("[data-sidebar-toggle]");
         const backdrop = document.querySelector("[data-sidebar-backdrop]");
-        const desktopQuery = window.matchMedia("(min-width: 1521px)");
-        let breakpointSwitchTimer = null;
         let sidebarAnimationTimer = null;
 
         if (!toggle || !backdrop) {
@@ -60,13 +63,6 @@
         }
 
         const syncToggleState = () => {
-            if (desktopQuery.matches) {
-                const isCollapsed = body.classList.contains("sidebar-collapsed");
-                toggle.setAttribute("aria-expanded", String(!isCollapsed));
-                toggle.setAttribute("aria-label", isCollapsed ? "메뉴 펼치기" : "메뉴 접기");
-                return;
-            }
-
             const isOpen = body.classList.contains("sidebar-open");
             toggle.setAttribute("aria-expanded", String(isOpen));
             toggle.setAttribute("aria-label", isOpen ? "메뉴 닫기" : "메뉴 열기");
@@ -80,40 +76,36 @@
             }, 260);
         };
 
+        const lockPageScroll = () => {
+            const scrollbarWidth = Math.max(0, window.innerWidth - document.documentElement.clientWidth);
+            body.style.setProperty("--sidebar-scrollbar-compensation", `${scrollbarWidth}px`);
+            body.classList.add("sidebar-scroll-locked");
+        };
+
+        const unlockPageScroll = () => {
+            body.classList.remove("sidebar-scroll-locked");
+            body.style.removeProperty("--sidebar-scrollbar-compensation");
+        };
+
         const closeMenu = (animate = true) => {
             if (animate) {
                 animateSidebar();
             }
             body.classList.remove("sidebar-open");
+            body.classList.add("sidebar-collapsed");
+            unlockPageScroll();
             syncToggleState();
         };
 
         const openMenu = () => {
             animateSidebar();
+            lockPageScroll();
+            body.classList.remove("sidebar-collapsed");
             body.classList.add("sidebar-open");
             syncToggleState();
         };
 
-        const toggleDesktopSidebar = () => {
-            animateSidebar();
-            body.classList.toggle("sidebar-collapsed");
-            syncToggleState();
-        };
-
-        const lockBreakpointTransition = () => {
-            body.classList.add("sidebar-breakpoint-switching");
-            window.clearTimeout(breakpointSwitchTimer);
-            breakpointSwitchTimer = window.setTimeout(() => {
-                body.classList.remove("sidebar-breakpoint-switching");
-            }, 260);
-        };
-
         toggle.addEventListener("click", () => {
-            if (desktopQuery.matches) {
-                toggleDesktopSidebar();
-                return;
-            }
-
             if (body.classList.contains("sidebar-open")) {
                 closeMenu();
                 return;
@@ -121,22 +113,15 @@
             openMenu();
         });
 
-        backdrop.addEventListener("click", closeMenu);
+        backdrop.addEventListener("click", () => closeMenu());
 
         document.addEventListener("keydown", (event) => {
-            if (event.key === "Escape") {
+            if (event.key === "Escape" && body.classList.contains("sidebar-open")) {
                 closeMenu();
             }
         });
 
-        desktopQuery.addEventListener("change", (event) => {
-            lockBreakpointTransition();
-            if (event.matches) {
-                closeMenu(false);
-            }
-            syncToggleState();
-        });
-
+        closeMenu(false);
         syncToggleState();
     };
 

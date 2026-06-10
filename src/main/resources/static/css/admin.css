@@ -118,7 +118,7 @@ strong {
     inset: 0;
     z-index: 40;
     border: 0;
-    background: rgba(15, 23, 42, 0.2);
+    background: rgba(15, 23, 42, 0.36);
     opacity: 0;
     cursor: pointer;
     pointer-events: none;
@@ -273,39 +273,54 @@ strong {
     justify-self: end;
 }
 
-@media (min-width: 1521px) {
-    .has-collapsible-sidebar.sidebar-animating .workspace-layout {
-        transition: grid-template-columns 180ms ease;
-    }
+.has-collapsible-sidebar {
+    overflow-x: hidden;
+}
 
-    .has-collapsible-sidebar .workspace-sidebar {
-        overflow: hidden;
-    }
+.has-collapsible-sidebar.sidebar-open {
+    overflow: hidden;
+}
 
-    .has-collapsible-sidebar.sidebar-animating .workspace-sidebar {
-        transition: padding 180ms ease, border-color 180ms ease, opacity 140ms ease;
-    }
+.has-collapsible-sidebar.sidebar-scroll-locked {
+    padding-right: var(--sidebar-scrollbar-compensation, 0);
+}
 
-    .has-collapsible-sidebar.sidebar-collapsed .workspace-layout,
-    .has-collapsible-sidebar.sidebar-collapsed .workspace-sidebar,
-    .has-collapsible-sidebar.sidebar-breakpoint-switching .workspace-layout,
-    .has-collapsible-sidebar.sidebar-breakpoint-switching .workspace-sidebar {
-        transition: none;
-    }
+.has-collapsible-sidebar .workspace-layout {
+    display: block;
+}
 
-    .has-collapsible-sidebar.sidebar-collapsed .workspace-layout {
-        grid-template-columns: 0 minmax(0, 1fr);
-    }
+.has-collapsible-sidebar .workspace-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 50;
+    width: min(280px, calc(100vw - 48px));
+    height: 100dvh;
+    overflow-y: auto;
+    border-right: 1px solid var(--line);
+    border-bottom: 0;
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: 18px 0 40px rgba(15, 23, 42, 0.18);
+    visibility: hidden;
+    transform: translateX(-102%);
+}
 
-    .has-collapsible-sidebar.sidebar-collapsed .workspace-sidebar {
-        width: 0;
-        max-width: 0;
-        padding-right: 0;
-        padding-left: 0;
-        border-right-color: transparent;
-        opacity: 0;
-        pointer-events: none;
-    }
+.has-collapsible-sidebar.sidebar-animating .workspace-sidebar {
+    transition: transform 220ms ease;
+}
+
+.has-collapsible-sidebar.sidebar-open .workspace-sidebar {
+    visibility: visible;
+    transform: translateX(0);
+}
+
+.has-collapsible-sidebar.sidebar-open .sidebar-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.has-collapsible-sidebar .sidebar-backdrop {
+    display: block;
 }
 
 .workspace-header > div {
@@ -1745,6 +1760,9 @@ textarea:focus {
 .spec-detail-list {
     display: grid;
     gap: 8px;
+    max-height: 420px;
+    overflow-y: auto;
+    padding-right: 4px;
 }
 
 .spec-detail-list p {

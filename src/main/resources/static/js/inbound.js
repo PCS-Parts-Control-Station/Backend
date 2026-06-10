@@ -86,11 +86,18 @@
         if (!value) {
             return "-";
         }
+        const text = String(value);
+        if (/^\d{4}-\d{2}-\d{2}/.test(text)) {
+            return text.slice(0, 10);
+        }
         const date = new Date(value);
         if (Number.isNaN(date.getTime())) {
-            return String(value).slice(0, 10) || "-";
+            return text.slice(0, 10) || "-";
         }
-        return date.toISOString().slice(0, 10);
+        const year = String(date.getFullYear());
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
     };
 
     const documentStatusLabel = (status) => {

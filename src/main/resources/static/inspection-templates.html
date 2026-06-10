@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/admin.css?20260604_category_crud">
+    <link rel="stylesheet" href="/css/admin.css?20260610_sidebar_lock">
     <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
     <link rel="stylesheet" href="/css/inspection-templates.css?20260606_1">
 </head>
@@ -48,12 +48,8 @@
                         </label>
                         <label>
                             <span>카테고리</span>
-                            <select name="category">
+                            <select name="categoryId" data-template-category-filter>
                                 <option value="">전체</option>
-                                <option value="COMMON">공통</option>
-                                <option value="GPU">그래픽카드</option>
-                                <option value="MEMORY">메모리</option>
-                                <option value="STORAGE">저장장치</option>
                             </select>
                         </label>
                         <label>
@@ -117,7 +113,7 @@
                             <h2 id="template-builder-title">항목 구성</h2>
                             <p data-template-builder-description>템플릿을 선택하면 항목과 선택지를 편집할 수 있습니다.</p>
                         </div>
-                        <button class="panel-link-button" type="button" data-new-template-button>새 템플릿</button>
+                        <button class="panel-link-button" type="button" data-template-item-reset hidden>새 항목 작성</button>
                     </div>
 
                     <div class="template-builder-empty" data-template-builder-empty>
@@ -130,12 +126,22 @@
                             <section class="template-item-panel" aria-labelledby="template-items-title">
                                 <div class="section-title-row">
                                     <h3 id="template-items-title">항목 목록</h3>
-                                    <span data-template-item-count>항목 0 · 선택지 0</span>
+                                    <div class="template-item-title-actions">
+                                        <span data-template-item-count>항목 0 · 선택지 0</span>
+                                    </div>
                                 </div>
                                 <div class="template-item-list" data-template-item-list></div>
 
-                                <details class="template-editor-toggle">
-                                    <summary>항목 추가</summary>
+                                <div class="template-item-editor" data-template-item-editor>
+                                    <div class="template-item-editor-head">
+                                        <div>
+                                            <strong data-template-item-form-title>항목 추가</strong>
+                                            <span data-template-item-form-description>새 검수 항목을 추가합니다.</span>
+                                        </div>
+                                        <div class="template-item-editor-actions">
+                                            <button class="panel-link-button" type="button" data-template-item-active-toggle hidden>항목 중지</button>
+                                        </div>
+                                    </div>
                                     <!-- API: POST /api/workspaces/{companyCode}/inspection-templates/{templateId}/items -->
                                     <form class="template-inline-form" action="#" method="post" autocomplete="off" data-template-item-form>
                                         <label>
@@ -160,32 +166,38 @@
                                                 </select>
                                             </label>
                                         </div>
-                                        <div class="template-inline-grid">
-                                            <label>
-                                                <span>등급 영향</span>
-                                                <select name="gradeImpact" required>
-                                                    <option value="LOW">낮음</option>
-                                                    <option value="MEDIUM">중간</option>
-                                                    <option value="HIGH">높음</option>
-                                                </select>
-                                            </label>
-                                            <label>
-                                                <span>실패 정책</span>
-                                                <select name="failPolicy" required>
-                                                    <option value="NONE">영향 없음</option>
-                                                    <option value="GRADE_DOWN">등급 하향</option>
-                                                    <option value="MARK_DEFECTIVE">불량 처리</option>
-                                                    <option value="BLOCK_SALE">판매 차단</option>
-                                                </select>
-                                            </label>
-                                        </div>
+                                        <details class="template-advanced-fields" data-template-advanced-fields>
+                                            <summary>
+                                                <span>고급 설정</span>
+                                                <em data-template-advanced-summary>등급 영향 낮음 · 별도 조치 없음</em>
+                                            </summary>
+                                            <div class="template-inline-grid template-advanced-body">
+                                                <label>
+                                                    <span>등급 영향</span>
+                                                    <select name="gradeImpact" required>
+                                                        <option value="LOW">낮음</option>
+                                                        <option value="MEDIUM">중간</option>
+                                                        <option value="HIGH">높음</option>
+                                                    </select>
+                                                </label>
+                                                <label>
+                                                    <span>불합격 시 처리</span>
+                                                    <select name="failPolicy" required>
+                                                        <option value="NONE">별도 조치 없음</option>
+                                                        <option value="GRADE_DOWN">등급 낮춤</option>
+                                                        <option value="MARK_DEFECTIVE">불량 처리</option>
+                                                        <option value="BLOCK_SALE">판매 불가 처리</option>
+                                                    </select>
+                                                </label>
+                                            </div>
+                                        </details>
                                         <label class="switch-row">
                                             <input type="checkbox" name="required">
                                             <span>필수 항목</span>
                                         </label>
-                                        <button class="btn btn-primary" type="submit">항목 추가</button>
+                                        <button class="btn btn-primary" type="submit" data-template-item-submit>항목 추가</button>
                                     </form>
-                                </details>
+                                </div>
                             </section>
 
                             <section class="template-selected-panel" aria-labelledby="template-selected-title">
@@ -215,11 +227,8 @@
                             </label>
                             <label>
                                 <span>카테고리</span>
-                                <select name="category" required>
-                                    <option value="COMMON">공통</option>
-                                    <option value="GPU">그래픽카드</option>
-                                    <option value="MEMORY">메모리</option>
-                                    <option value="STORAGE">저장장치</option>
+                                <select name="categoryId" required data-template-category-create>
+                                    <option value="">카테고리 선택</option>
                                 </select>
                             </label>
                             <label>
@@ -301,11 +310,8 @@
                             </label>
                             <label>
                                 <span>카테고리</span>
-                                <select name="category" required>
-                                    <option value="COMMON">공통</option>
-                                    <option value="GPU">그래픽카드</option>
-                                    <option value="MEMORY">메모리</option>
-                                    <option value="STORAGE">저장장치</option>
+                                <select name="categoryId" required data-template-category-edit>
+                                    <option value="">카테고리 선택</option>
                                 </select>
                             </label>
                             <label>
@@ -337,9 +343,45 @@
         </section>
     </main>
 </div>
+<dialog class="part-modal confirm-modal" data-template-input-type-modal aria-labelledby="template-input-type-modal-title">
+    <form class="part-modal-card" method="dialog">
+        <div class="part-modal-header">
+            <div>
+                <p class="page-kicker">항목 입력 방식 변경</p>
+                <h2 id="template-input-type-modal-title">선택지를 비활성화할까요?</h2>
+                <p>선택형 항목을 다른 입력 방식으로 바꾸면 기존 선택지는 신규 검수 입력에서 제외됩니다.</p>
+            </div>
+            <button class="modal-close-button" type="button" data-close-input-type-modal aria-label="닫기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M6 6l12 12" />
+                    <path d="M18 6L6 18" />
+                </svg>
+            </button>
+        </div>
+        <dl class="confirm-summary">
+            <div>
+                <dt>항목</dt>
+                <dd data-input-type-modal-item>-</dd>
+            </div>
+            <div>
+                <dt>선택지</dt>
+                <dd data-input-type-modal-option-count>-</dd>
+            </div>
+            <div>
+                <dt>변경 후</dt>
+                <dd data-input-type-modal-next-type>-</dd>
+            </div>
+        </dl>
+        <p class="field-message is-error modal-message" data-input-type-modal-message role="status" aria-live="polite" hidden></p>
+        <div class="part-modal-actions">
+            <button class="btn btn-secondary" type="button" data-close-input-type-modal>취소</button>
+            <button class="btn btn-primary" type="button" data-confirm-input-type-change>비활성화 후 저장</button>
+        </div>
+    </form>
+</dialog>
 <script src="/js/pcs-api.js?20260529_workspace_guard"></script>
-<script src="/js/workspace-layout.js?20260606_template_route"></script>
+<script src="/js/workspace-layout.js?20260610_sidebar_lock"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/inspection-templates.js?20260606_1"></script>
+<script src="/js/inspection-templates.js?20260608_api"></script>
 </body>
 </html>
