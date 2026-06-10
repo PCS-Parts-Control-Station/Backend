@@ -6,18 +6,19 @@ import com.pcs.domain.part.dto.response.PartDetailResponse;
 import com.pcs.domain.part.dto.response.SearchPartResponse;
 import com.pcs.domain.part.service.PartService;
 import com.pcs.global.dto.PageResultDto;
-import com.pcs.global.error.ErrorCode;
-import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.security.PcsPrincipal;
+import com.pcs.global.workspace.WorkspaceAccessValidator;
 import org.springframework.stereotype.Component;
 
 @Component
 public class PartFacade {
 
     private final PartService partService;
+    private final WorkspaceAccessValidator workspaceAccessValidator;
 
-    public PartFacade(PartService partService) {
+    public PartFacade(PartService partService, WorkspaceAccessValidator workspaceAccessValidator) {
         this.partService = partService;
+        this.workspaceAccessValidator = workspaceAccessValidator;
     }
 
     public PageResultDto<SearchPartResponse, Void> searchParts(
@@ -30,9 +31,8 @@ public class PartFacade {
             Integer size,
             Integer limit
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        return partService.searchParts(principal.companyId(), keyword, categoryId, active, page, size, limit);
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
+        return partService.searchParts(checkedPrincipal.companyId(), keyword, categoryId, active, page, size, limit);
     }
 
     public PartDetailResponse getPart(
@@ -40,9 +40,8 @@ public class PartFacade {
             String pathCompanyCode,
             Long partId
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        return partService.getPart(principal.companyId(), partId);
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
+        return partService.getPart(checkedPrincipal.companyId(), partId);
     }
 
     public PartDetailResponse createPart(
@@ -50,9 +49,8 @@ public class PartFacade {
             String pathCompanyCode,
             CreatePartRequest request
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        return partService.createPart(principal.companyId(), request, principal.memberId());
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
+        return partService.createPart(checkedPrincipal.companyId(), request, checkedPrincipal.memberId());
     }
 
     public PartDetailResponse updatePart(
@@ -61,23 +59,7 @@ public class PartFacade {
             Long partId,
             UpdatePartRequest request
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        return partService.updatePart(principal.companyId(), partId, request);
-    }
-
-    private void validateAuthenticated(PcsPrincipal principal) {
-        if (principal == null) {
-            throw new BusinessException(ErrorCode.AUTH_REQUIRED);
-        }
-    }
-
-    private void validateWorkspace(String pathCompanyCode, String tokenCompanyCode) {
-        if (pathCompanyCode == null || pathCompanyCode.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "업체 코드가 필요합니다.");
-        }
-        if (!tokenCompanyCode.equals(pathCompanyCode.trim().toLowerCase())) {
-            throw new BusinessException(ErrorCode.AUTH_WORKSPACE_MISMATCH);
-        }
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
+        return partService.updatePart(checkedPrincipal.companyId(), partId, request);
     }
 }

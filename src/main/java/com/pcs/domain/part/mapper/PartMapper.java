@@ -13,8 +13,6 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface PartMapper {
 
-    boolean isCompanyActive(@Param("companyId") Long companyId);
-
     List<SearchPartResponse> searchParts(
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,

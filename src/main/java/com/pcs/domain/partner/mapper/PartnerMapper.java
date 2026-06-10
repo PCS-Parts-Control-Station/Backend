@@ -11,8 +11,6 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface PartnerMapper {
 
-    boolean isCompanyActive(@Param("companyId") Long companyId);
-
     List<SearchPartnerResponse> searchPartners(
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,

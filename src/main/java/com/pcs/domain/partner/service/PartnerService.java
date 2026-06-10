@@ -11,6 +11,9 @@ import com.pcs.domain.partner.type.PartnerType;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
+import com.pcs.global.pagination.PageQuery;
+import com.pcs.global.util.TextNormalizer;
+import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,12 +22,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class PartnerService {
 
     private static final int DEFAULT_SIZE = 20;
-    private static final int MAX_SIZE = 100;
 
     private final PartnerMapper partnerMapper;
+    private final WorkspaceAccessValidator workspaceAccessValidator;
 
-    public PartnerService(PartnerMapper partnerMapper) {
+    public PartnerService(PartnerMapper partnerMapper, WorkspaceAccessValidator workspaceAccessValidator) {
         this.partnerMapper = partnerMapper;
+        this.workspaceAccessValidator = workspaceAccessValidator;
     }
 
     public PageResultDto<SearchPartnerResponse, SearchPartnerSummaryResponse> searchPartners(
@@ -37,14 +41,10 @@ public class PartnerService {
             Integer size,
             Integer limit
     ) {
-        if (!partnerMapper.isCompanyActive(companyId)) {
-            throw new BusinessException(ErrorCode.COMPANY_INACTIVE);
-        }
+        validateCompanyActive(companyId);
 
-        String normalizedKeyword = normalizeOptional(keyword);
-        int normalizedPage = normalizePage(page);
-        int normalizedSize = normalizeSize(size, limit);
-        int offset = normalizedPage * normalizedSize;
+        String normalizedKeyword = TextNormalizer.optional(keyword);
+        PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
         long totalElements = partnerMapper.countPartners(
                 companyId,
                 normalizedKeyword,
@@ -60,8 +60,8 @@ public class PartnerService {
                         partnerType,
                         partnerRole,
                         active,
-                        normalizedSize,
-                        offset
+                        pageQuery.size(),
+                        pageQuery.offset()
                 );
         SearchPartnerSummaryResponse summary = partnerMapper.summarizePartners(
                 companyId,
@@ -70,49 +70,26 @@ public class PartnerService {
                 partnerRole,
                 active
         );
-        return PageResultDto.of(items, normalizedPage, normalizedSize, totalElements, summary);
-    }
-
-    private String normalizeOptional(String value) {
-        if (value == null || value.trim().isEmpty()) {
-            return null;
-        }
-        return value.trim();
-    }
-
-    private int normalizePage(Integer page) {
-        if (page == null || page < 0) {
-            return 0;
-        }
-        return page;
-    }
-
-    private int normalizeSize(Integer size, Integer limit) {
-        Integer requestedSize = size == null ? limit : size;
-        if (requestedSize == null || requestedSize < 1) {
-            return DEFAULT_SIZE;
-        }
-        return Math.min(requestedSize, MAX_SIZE);
+        return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, summary);
     }
 
     @Transactional
     public SearchPartnerResponse createPartner(Long companyId, CreatePartnerRequest request, Long memberId) {
-        if (!partnerMapper.isCompanyActive(companyId)) {
-            throw new BusinessException(ErrorCode.COMPANY_INACTIVE);
-        }
-        if (partnerMapper.existsByName(companyId, request.partnerName().trim(), null)) {
+        validateCompanyActive(companyId);
+        String partnerName = TextNormalizer.required(request.partnerName());
+        if (partnerMapper.existsByName(companyId, partnerName, null)) {
             throw new BusinessException(ErrorCode.PARTNER_NAME_DUPLICATED);
         }
 
         Partner partner = new Partner(
                 companyId,
-                request.partnerName().trim(),
+                partnerName,
                 request.partnerType(),
                 request.partnerRole(),
-                request.phone(),
-                request.email(),
-                request.address(),
-                request.memo(),
+                TextNormalizer.optional(request.phone()),
+                TextNormalizer.optional(request.email()),
+                TextNormalizer.optional(request.address()),
+                TextNormalizer.optional(request.memo()),
                 memberId
         );
         partner.setActive(request.active() == null || request.active());
@@ -122,9 +99,7 @@ public class PartnerService {
     }
 
     public SearchPartnerResponse getPartner(Long companyId, Long partnerId) {
-        if (!partnerMapper.isCompanyActive(companyId)) {
-            throw new BusinessException(ErrorCode.COMPANY_INACTIVE);
-        }
+        validateCompanyActive(companyId);
         SearchPartnerResponse response = partnerMapper.findResponseById(companyId, partnerId);
         if (response == null) {
             throw new BusinessException(ErrorCode.PARTNER_NOT_FOUND);
@@ -134,26 +109,28 @@ public class PartnerService {
 
     @Transactional
     public SearchPartnerResponse updatePartner(Long companyId, Long partnerId, UpdatePartnerRequest request) {
-        if (!partnerMapper.isCompanyActive(companyId)) {
-            throw new BusinessException(ErrorCode.COMPANY_INACTIVE);
-        }
+        validateCompanyActive(companyId);
 
         Partner partner = partnerMapper.findById(companyId, partnerId);
         if (partner == null) {
             throw new BusinessException(ErrorCode.PARTNER_NOT_FOUND);
         }
 
-        if (partnerMapper.existsByName(companyId, request.partnerName().trim(), partnerId)) {
+        String partnerName = TextNormalizer.required(request.partnerName());
+        if (partnerMapper.existsByName(companyId, partnerName, partnerId)) {
             throw new BusinessException(ErrorCode.PARTNER_NAME_DUPLICATED);
         }
 
-        partner.setPartnerName(request.partnerName().trim());
+        partner.setPartnerName(partnerName);
         partner.setPartnerType(request.partnerType());
         partner.setPartnerRole(request.partnerRole());
-        partner.setPhone(request.phone());
-        partner.setEmail(request.email());
-        partner.setAddress(request.address());
-        partner.setMemo(request.memo());
+        partner.setPhone(TextNormalizer.optional(request.phone()));
+        partner.setEmail(TextNormalizer.optional(request.email()));
+        partner.setAddress(TextNormalizer.optional(request.address()));
+        partner.setMemo(TextNormalizer.optional(request.memo()));
+        if (request.active() != null) {
+            partner.setActive(request.active());
+        }
 
         partnerMapper.update(partner);
 
@@ -162,9 +139,7 @@ public class PartnerService {
 
     @Transactional
     public void updatePartnerActive(Long companyId, Long partnerId, boolean active) {
-        if (!partnerMapper.isCompanyActive(companyId)) {
-            throw new BusinessException(ErrorCode.COMPANY_INACTIVE);
-        }
+        validateCompanyActive(companyId);
 
         Partner partner = partnerMapper.findById(companyId, partnerId);
         if (partner == null) {
@@ -172,5 +147,9 @@ public class PartnerService {
         }
 
         partnerMapper.updateActive(companyId, partnerId, active);
+    }
+
+    private void validateCompanyActive(Long companyId) {
+        workspaceAccessValidator.validateCompanyActive(companyId);
     }
 }

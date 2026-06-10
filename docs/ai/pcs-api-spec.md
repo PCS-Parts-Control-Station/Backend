@@ -23,7 +23,7 @@
 - 업체 업무 API는 `/api/workspaces/{companyCode}/**` 아래에 둔다.
 - 업체 업무 API의 회사 범위 검증은 `docs/features/auth.md` 기준을 따른다.
 - 마스터 데이터는 `PATCH`로 수정하고, 삭제 대신 `docs/ai/pcs-status-lifecycle-rules.md` 기준의 `active`를 변경한다.
-- 카테고리는 예외적으로 `active`를 두지 않는다.
+- 품목 분류는 예외적으로 `active`를 두지 않는다.
 - 입출고와 검수는 이력성 데이터이므로 원본 수정/삭제를 하지 않는다.
 - 입출고 오류는 취소 이력으로 남긴다.
 - 검수 오류는 정정 이력 또는 재검수 이력으로 남긴다.
@@ -171,8 +171,8 @@ Owner 회원가입 + 회사 생성 요청 예시:
 | GET | `/api/workspaces/{companyCode}/partners` | 거래처 목록. `keyword`, `partnerType`, `partnerRole`, `active`, `page`, `size`, `limit` 지원 |
 | POST | `/api/workspaces/{companyCode}/partners` | 거래처 생성 |
 | GET | `/api/workspaces/{companyCode}/partners/{partnerId}` | 거래처 상세 |
-| PATCH | `/api/workspaces/{companyCode}/partners/{partnerId}` | 거래처 수정 |
-| PATCH | `/api/workspaces/{companyCode}/partners/{partnerId}/active` | 거래처 거래 가능 여부 변경 |
+| PATCH | `/api/workspaces/{companyCode}/partners/{partnerId}` | 거래처 수정. `active` 포함 시 거래 가능 여부도 함께 수정 |
+| PATCH | `/api/workspaces/{companyCode}/partners/{partnerId}/active` | 거래 가능 여부만 단독 변경 |
 
 거래처는 회사 하위 데이터지만 역할이 커서 `company`에 넣기보다 `partner` 도메인으로 분리한다.
 
@@ -211,17 +211,17 @@ Owner 회원가입 + 회사 생성 요청 예시:
 }
 ```
 
-### 3.5 카테고리 `category`
+### 3.5 품목 분류 `category`
 
 | Method | API | 설명 |
 |---|---|---|
-| GET | `/api/workspaces/{companyCode}/categories` | 카테고리 목록. `keyword`, `page`, `size`, `limit` 지원 |
-| POST | `/api/workspaces/{companyCode}/categories` | 카테고리 생성. 스펙 항목 동시 등록 가능 |
-| GET | `/api/workspaces/{companyCode}/categories/{categoryId}` | 카테고리 상세. 스펙 항목 포함 |
-| PATCH | `/api/workspaces/{companyCode}/categories/{categoryId}` | 카테고리명/설명 수정. 연결 부품이 없으면 스펙 항목 교체 가능 |
-| DELETE | `/api/workspaces/{companyCode}/categories/{categoryId}` | 카테고리 삭제 |
+| GET | `/api/workspaces/{companyCode}/categories` | 품목 분류 목록. `keyword`, `page`, `size`, `limit` 지원 |
+| POST | `/api/workspaces/{companyCode}/categories` | 품목 분류 생성. 사양 항목 동시 등록 가능 |
+| GET | `/api/workspaces/{companyCode}/categories/{categoryId}` | 품목 분류 상세. 사양 항목 포함 |
+| PATCH | `/api/workspaces/{companyCode}/categories/{categoryId}` | 분류명/설명 수정. 연결 품목이 없으면 사양 항목 교체 가능 |
+| DELETE | `/api/workspaces/{companyCode}/categories/{categoryId}` | 품목 분류 삭제 |
 
-카테고리 생성 요청 예시:
+품목 분류 생성 요청 예시:
 
 ```json
 {
@@ -256,9 +256,9 @@ Owner 회원가입 + 회사 생성 요청 예시:
 }
 ```
 
-카테고리 목록 응답은 `docs/ai/pcs-pagination-rules.md`의 공통 페이징 구조를 따른다. 각 항목은 해당 카테고리에 연결된 부품 마스터 수 `partCount`를 포함한다. 카테고리 상세 응답은 `specDefinitions`를 함께 내려준다. 삭제는 `partCount = 0`인 카테고리만 허용하며, 연결된 부품이 있으면 `CATEGORY_IN_USE`로 실패한다.
+품목 분류 목록 응답은 `docs/ai/pcs-pagination-rules.md`의 공통 페이징 구조를 따른다. 각 항목은 해당 분류에 연결된 품목 마스터 수 `partCount`를 포함한다. 품목 분류 상세 응답은 `specDefinitions`를 함께 내려준다. 삭제는 `partCount = 0`인 분류만 허용하며, 연결된 품목이 있으면 `CATEGORY_IN_USE`로 실패한다.
 
-카테고리 수정 요청에서 `specDefinitions`를 생략하면 카테고리명/설명만 수정한다. 연결된 부품 마스터가 없는 카테고리는 `specDefinitions`를 보내 스펙 항목 전체를 교체할 수 있다. 연결된 부품 마스터가 있는 카테고리에 `specDefinitions`가 포함되면 `INVALID_INPUT_VALUE`로 실패한다.
+품목 분류 수정 요청에서 `specDefinitions`를 생략하면 분류명/설명만 수정한다. 연결된 품목 마스터가 없는 분류는 `specDefinitions`를 보내 사양 항목 전체를 교체할 수 있다. 연결된 품목 마스터가 있는 분류에 `specDefinitions`가 포함되면 `INVALID_INPUT_VALUE`로 실패한다.
 
 ```json
 {
@@ -281,31 +281,27 @@ Owner 회원가입 + 회사 생성 요청 예시:
 }
 ```
 
-### 3.6 부품 / 개별 부품 / 기준 `part`
+### 3.6 품목 / 개별 부품 / 기준 `part`
 
 | Method | API | 설명 |
 |---|---|---|
-| GET | `/api/workspaces/{companyCode}/parts` | 부품/재고 목록 검색 |
-| POST | `/api/workspaces/{companyCode}/parts` | 부품 마스터 등록 |
-| GET | `/api/workspaces/{companyCode}/parts/{partId}` | 부품 상세 |
-| PATCH | `/api/workspaces/{companyCode}/parts/{partId}` | 부품 마스터 수정 |
-| PATCH | `/api/workspaces/{companyCode}/parts/{partId}/active` | 부품 활성 여부 변경 |
+| GET | `/api/workspaces/{companyCode}/parts` | 품목/재고 목록 검색 |
+| POST | `/api/workspaces/{companyCode}/parts` | 품목 마스터 등록 |
+| GET | `/api/workspaces/{companyCode}/parts/{partId}` | 품목 상세 |
+| PATCH | `/api/workspaces/{companyCode}/parts/{partId}` | 품목 마스터 수정 |
 | GET | `/api/workspaces/{companyCode}/parts/{partId}/units` | 개별 부품 목록 |
 | GET | `/api/workspaces/{companyCode}/parts/{partId}/units/{unitId}` | 개별 부품 상세 |
 | PATCH | `/api/workspaces/{companyCode}/parts/{partId}/units/{unitId}/sales-status` | 개별 부품 판매 상태 변경 |
 | PATCH | `/api/workspaces/{companyCode}/parts/{partId}/units/{unitId}/active` | 개별 부품 활성 여부 변경 |
-| GET | `/api/workspaces/{companyCode}/standards` | 부품 기준 조회 |
-| GET | `/api/workspaces/{companyCode}/standards/part-code/check` | 부품 코드 중복 확인 |
+품목 기준 입력은 현재 별도 `/standards` API가 아니라 품목 분류의 `specDefinitions`와 품목의 `specValues`를 통해 처리한다.
 
-`standards`는 별도 폴더로 만들기보다 초기에는 `part` 도메인에 포함한다.
-
-부품 검색 요청:
+품목 검색 요청:
 
 ```text
-GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&limit=20
+GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&page=0&size=10
 ```
 
-부품 검색 응답 항목:
+품목 검색 응답 항목:
 
 ```json
 {
@@ -323,7 +319,7 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&lim
 }
 ```
 
-부품 등록 요청 예시:
+품목 등록 요청 예시:
 
 ```json
 {
@@ -331,9 +327,9 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&lim
   "partName": "RTX 3060 Twin Edge",
   "modelName": "RTX 3060 Twin Edge",
   "manufacturer": "ZOTAC",
-  "partCode": "GPU-ZT-3060-12G",
   "estimatedPrice": 180000,
-  "safeQuantity": 3
+  "safeQuantity": 3,
+  "specValues": []
 }
 ```
 
@@ -384,7 +380,7 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&lim
 | 이름 | 설명 |
 |---|---|
 | `documentType` | `INBOUND`, `OUTBOUND` |
-| `keyword` | 전표번호, 거래처명, 부품명, 모델명, 부품코드 검색 |
+| `keyword` | 전표번호, 거래처명, 품목명, 모델명, 품목코드 검색 |
 | `partnerId` | 거래처 필터 |
 | `documentStatus` | `COMPLETED`, `CANCELED` |
 | `page` | 0부터 시작 |
@@ -622,8 +618,8 @@ com.pcs.domain.auth        인증 / 세션
 com.pcs.domain.company     회사 / Owner 가입
 com.pcs.domain.member      사용자 / 마이페이지
 com.pcs.domain.partner     거래처
-com.pcs.domain.category    카테고리
-com.pcs.domain.part        부품 / 개별 부품 / 기준
+com.pcs.domain.category    품목 분류
+com.pcs.domain.part        품목 / 개별 부품 / 기준
 com.pcs.domain.stock       입고 / 출고 / 재고 변화
 com.pcs.domain.inspection  검수 / 검수 템플릿
 com.pcs.domain.history     이력
@@ -660,7 +656,7 @@ API별 특별 제한이 있으면 각 feature 문서에만 추가한다.
 ### 6.4 상태 변경 / 이력
 
 - 마스터 데이터는 물리 삭제하지 않고 `docs/ai/pcs-status-lifecycle-rules.md` 기준의 `active` 상태로 사용 여부를 관리한다.
-- 카테고리는 이 기준의 예외이며, `active` 없이 이름/설명 수정으로 관리한다.
+- 품목 분류는 이 기준의 예외이며, `active` 없이 이름/설명 수정으로 관리한다.
 - 입출고 원본은 수정/삭제하지 않는다.
 - 입출고 오류는 취소 전표와 취소 movement로 남긴다.
 - 검수 오류는 정정 이력 또는 재검수 이력으로 남긴다.
@@ -687,8 +683,8 @@ API별 특별 제한이 있으면 각 feature 문서에만 추가한다.
 2. 업체 로그인 / 세션 조회 / 토큰 재발급
 3. 사용자 / 마이페이지
 4. 거래처
-5. 카테고리
-6. 부품 마스터 / 개별 부품 조회
+5. 품목 분류
+6. 품목 마스터 / 개별 부품 조회
 7. 입고 전표 등록
 8. 검수 템플릿 / 검수 등록
 9. 출고 전표 등록

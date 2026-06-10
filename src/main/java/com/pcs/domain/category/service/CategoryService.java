@@ -13,9 +13,13 @@ import com.pcs.domain.category.entity.PartCategory;
 import com.pcs.domain.category.entity.PartSpecDefinition;
 import com.pcs.domain.category.entity.PartSpecOption;
 import com.pcs.domain.category.mapper.CategoryMapper;
+import com.pcs.domain.category.type.PartSpecInputTypes;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
+import com.pcs.global.pagination.PageQuery;
+import com.pcs.global.util.TextNormalizer;
+import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -29,16 +33,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class CategoryService {
 
-    private static final int DEFAULT_SIZE = 10;
-    private static final int MAX_SIZE = 100;
     private static final int MAX_SPEC_COUNT = 20;
     private static final int MAX_SPEC_OPTION_COUNT = 30;
-    private static final Set<String> SPEC_INPUT_TYPES = Set.of("TEXT", "NUMBER", "SELECT", "BOOLEAN");
 
     private final CategoryMapper categoryMapper;
+    private final WorkspaceAccessValidator workspaceAccessValidator;
 
-    public CategoryService(CategoryMapper categoryMapper) {
+    public CategoryService(CategoryMapper categoryMapper, WorkspaceAccessValidator workspaceAccessValidator) {
         this.categoryMapper = categoryMapper;
+        this.workspaceAccessValidator = workspaceAccessValidator;
     }
 
     public PageResultDto<SearchCategoryResponse, Void> searchCategories(
@@ -50,23 +53,21 @@ public class CategoryService {
     ) {
         validateCompanyActive(companyId);
 
-        String normalizedKeyword = normalizeOptional(keyword);
-        int normalizedPage = normalizePage(page);
-        int normalizedSize = normalizeSize(size, limit);
-        int offset = normalizedPage * normalizedSize;
+        String normalizedKeyword = TextNormalizer.optional(keyword);
+        PageQuery pageQuery = PageQuery.of(page, size, limit);
 
         long totalElements = categoryMapper.countCategories(companyId, normalizedKeyword);
         List<SearchCategoryResponse> items = totalElements == 0
                 ? List.of()
-                : categoryMapper.searchCategories(companyId, normalizedKeyword, normalizedSize, offset);
+                : categoryMapper.searchCategories(companyId, normalizedKeyword, pageQuery.size(), pageQuery.offset());
 
-        return PageResultDto.of(items, normalizedPage, normalizedSize, totalElements, null);
+        return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, null);
     }
 
     @Transactional
     public CategoryDetailResponse createCategory(Long companyId, CreateCategoryRequest request, Long memberId) {
         validateCompanyActive(companyId);
-        String categoryName = normalizeRequired(request.categoryName());
+        String categoryName = TextNormalizer.required(request.categoryName());
         if (categoryMapper.existsByName(companyId, categoryName, null)) {
             throw new BusinessException(ErrorCode.CATEGORY_NAME_DUPLICATED);
         }
@@ -74,7 +75,7 @@ public class CategoryService {
         PartCategory category = new PartCategory(
                 companyId,
                 categoryName,
-                normalizeOptional(request.description()),
+                TextNormalizer.optional(request.description()),
                 memberId
         );
         categoryMapper.insert(category);
@@ -112,13 +113,13 @@ public class CategoryService {
             );
         }
 
-        String categoryName = normalizeRequired(request.categoryName());
+        String categoryName = TextNormalizer.required(request.categoryName());
         if (categoryMapper.existsByName(companyId, categoryName, categoryId)) {
             throw new BusinessException(ErrorCode.CATEGORY_NAME_DUPLICATED);
         }
 
         category.setCategoryName(categoryName);
-        category.setDescription(normalizeOptional(request.description()));
+        category.setDescription(TextNormalizer.optional(request.description()));
         categoryMapper.update(category);
 
         if (request.specDefinitions() != null) {
@@ -171,7 +172,7 @@ public class CategoryService {
         Set<String> specNames = new HashSet<>();
         for (int index = 0; index < specRequests.size(); index++) {
             CategorySpecDefinitionRequest request = specRequests.get(index);
-            String specName = normalizeRequired(request.specName());
+            String specName = TextNormalizer.required(request.specName());
             String specNameKey = specName.toLowerCase(Locale.ROOT);
             if (!specNames.add(specNameKey)) {
                 throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "중복된 스펙 항목명이 있습니다.");
@@ -182,7 +183,7 @@ public class CategoryService {
                 throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "중복된 스펙 키가 있습니다.");
             }
 
-            String inputType = normalizeInputType(request.inputType());
+            String inputType = PartSpecInputTypes.normalizeOrDefault(request.inputType());
             int sortOrder = normalizeSortOrder(request.sortOrder(), index);
             PartSpecDefinition specDefinition = new PartSpecDefinition(
                     companyId,
@@ -190,7 +191,7 @@ public class CategoryService {
                     specKey,
                     specName,
                     inputType,
-                    normalizeOptional(request.unit()),
+                    TextNormalizer.optional(request.unit()),
                     Boolean.TRUE.equals(request.required()),
                     Boolean.TRUE.equals(request.searchable()),
                     sortOrder,
@@ -198,7 +199,7 @@ public class CategoryService {
             );
             categoryMapper.insertSpecDefinition(specDefinition);
 
-            if ("SELECT".equals(inputType)) {
+            if (PartSpecInputTypes.isSelect(inputType)) {
                 createSpecOptions(specDefinition.getSpecDefinitionId(), request.options(), specName);
             }
         }
@@ -220,8 +221,8 @@ public class CategoryService {
         Set<String> optionValues = new HashSet<>();
         for (int index = 0; index < optionRequests.size(); index++) {
             CategorySpecOptionRequest request = optionRequests.get(index);
-            String optionLabel = normalizeRequired(request.optionLabel());
-            String optionValue = normalizeOptional(request.optionValue());
+            String optionLabel = TextNormalizer.required(request.optionLabel());
+            String optionValue = TextNormalizer.optional(request.optionValue());
             if (optionValue == null) {
                 optionValue = optionLabel;
             }
@@ -264,39 +265,11 @@ public class CategoryService {
     }
 
     private void validateCompanyActive(Long companyId) {
-        if (!categoryMapper.isCompanyActive(companyId)) {
-            throw new BusinessException(ErrorCode.COMPANY_INACTIVE);
-        }
-    }
-
-    private String normalizeRequired(String value) {
-        if (value == null || value.trim().isEmpty()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-        return value.trim();
-    }
-
-    private String normalizeOptional(String value) {
-        if (value == null || value.trim().isEmpty()) {
-            return null;
-        }
-        return value.trim();
-    }
-
-    private String normalizeInputType(String value) {
-        String inputType = normalizeOptional(value);
-        if (inputType == null) {
-            return "TEXT";
-        }
-        inputType = inputType.toUpperCase(Locale.ROOT);
-        if (!SPEC_INPUT_TYPES.contains(inputType)) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "스펙 입력 방식이 올바르지 않습니다.");
-        }
-        return inputType;
+        workspaceAccessValidator.validateCompanyActive(companyId);
     }
 
     private String normalizeSpecKey(String value, int index) {
-        String specKey = normalizeOptional(value);
+        String specKey = TextNormalizer.optional(value);
         if (specKey == null) {
             return "spec_" + (index + 1);
         }
@@ -321,18 +294,4 @@ public class CategoryService {
         return sortOrder;
     }
 
-    private int normalizePage(Integer page) {
-        if (page == null || page < 0) {
-            return 0;
-        }
-        return page;
-    }
-
-    private int normalizeSize(Integer size, Integer limit) {
-        Integer requestedSize = size == null ? limit : size;
-        if (requestedSize == null || requestedSize < 1) {
-            return DEFAULT_SIZE;
-        }
-        return Math.min(requestedSize, MAX_SIZE);
-    }
 }

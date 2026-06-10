@@ -33,7 +33,7 @@ Query:
 | 이름 | 설명 |
 |---|---|
 | `documentType` | `INBOUND`, `OUTBOUND` |
-| `keyword` | 전표번호, 거래처명, 부품명, 모델명, 부품코드 검색 |
+| `keyword` | 전표번호, 거래처명, 품목명, 모델명, 품목코드 검색 |
 | `partnerId` | 거래처 필터 |
 | `documentStatus` | `COMPLETED`, `CANCELED` |
 | `page` | 0부터 시작 |

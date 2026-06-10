@@ -4,10 +4,10 @@
 - Feature: none
 - RunDb: False
 - DbFeature: none
-- GeneratedAt: 2026-06-08 16:17:40
+- GeneratedAt: 2026-06-10 15:06:03
 - FAIL: 0
 - WARN: 0
-- INFO: 5
+- INFO: 4
 
 ## FAIL
 
@@ -23,5 +23,4 @@
 2. [JAVA_17_REQUIRED] Java 17 or later is available.
 3. [JAVA_HOME_17_REQUIRED] JAVA_HOME points to Java 17 or later.
 4. [JS_SYNTAX] JS syntax check passed.
-5. [COMPILE_JAVA] compileJava passed.
 

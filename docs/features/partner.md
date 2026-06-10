@@ -17,8 +17,8 @@ com.pcs.domain.partner
 | GET | `/api/workspaces/{companyCode}/partners` | 거래처 목록. `keyword`, `partnerType`, `partnerRole`, `active`, `page`, `size`, `limit` 필터를 지원한다. |
 | POST | `/api/workspaces/{companyCode}/partners` | 거래처 생성 |
 | GET | `/api/workspaces/{companyCode}/partners/{partnerId}` | 거래처 상세 |
-| PATCH | `/api/workspaces/{companyCode}/partners/{partnerId}` | 거래처 수정 |
-| PATCH | `/api/workspaces/{companyCode}/partners/{partnerId}/active` | 거래처 거래 가능 여부 변경 |
+| PATCH | `/api/workspaces/{companyCode}/partners/{partnerId}` | 거래처 수정. `active`를 포함하면 거래 가능 여부도 함께 수정 |
+| PATCH | `/api/workspaces/{companyCode}/partners/{partnerId}/active` | 거래 가능 여부만 단독 변경 |
 
 ## 주요 규칙
 
@@ -28,6 +28,7 @@ com.pcs.domain.partner
 - 입고 전표의 거래처는 `SUPPLIER` 또는 `BOTH`여야 한다.
 - 출고 전표의 거래처는 `CUSTOMER` 또는 `BOTH`여야 한다.
 - 거래처 생성 요청의 `active`는 선택값이며, 보내지 않으면 거래 가능 상태로 저장한다.
+- 거래처 수정 요청의 `active`는 선택값이며, 보내면 같은 수정 트랜잭션에서 거래 가능 여부도 함께 저장한다.
 - 거래처 `active` 의미는 `docs/ai/pcs-status-lifecycle-rules.md`의 `tb_trade_partner.active` 기준을 따른다.
 - 거래처 삭제 API는 초기 범위에서 만들지 않는다. 거래처를 업무에서 제외할 때는 `active = false`로 처리한다.
 - 거래처 목록의 페이징 기본 규칙은 `docs/ai/pcs-pagination-rules.md`를 따른다.
@@ -47,6 +48,7 @@ com.pcs.domain.partner
 - 거래처 등록/수정 성공과 실패 안내는 브라우저 `alert`가 아니라 공통 토스트를 사용한다.
 - 저장 중에는 해당 폼 입력과 버튼을 비활성화해 중복 제출을 막는다.
 - 등록/수정 성공 후에는 현재 화면에서 목록, 선택 행, 상세 패널을 즉시 갱신한다.
+- 거래처 수정 화면에서는 기본 정보와 거래 가능 여부를 한 번의 `PATCH /partners/{partnerId}` 요청으로 저장한다.
 - 거래처 목록 페이징 이동 시 스크롤 위치를 보존한다.
 
 ## 하네스 포인트

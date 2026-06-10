@@ -60,25 +60,9 @@
     let specOwner = "create";
     let editingSpecIndex = null;
 
-    const getCompanyCode = () => {
-        const match = window.location.pathname.match(/^\/w\/([^/]+)/);
-        return match ? decodeURIComponent(match[1]) : "";
-    };
-
-    const formatDate = (value) => {
-        if (!value) {
-            return "-";
-        }
-        if (Array.isArray(value)) {
-            const [year, month, day] = value;
-            if (year && month && day) {
-                return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-            }
-        }
-        return String(value).slice(0, 10);
-    };
-
-    const numberText = (value) => Number(value || 0).toLocaleString("ko-KR");
+    const getCompanyCode = window.PcsWorkspace.getCompanyCode;
+    const formatDate = window.PcsFormat.date;
+    const numberText = window.PcsFormat.number;
 
     const cloneSpecs = (items = []) => items.map((spec, index) => ({
         specKey: spec.specKey || null,
@@ -97,12 +81,7 @@
             : []
     }));
 
-    const showToast = (message, type = "info") => {
-        window.PcsUi?.toast({
-            message,
-            type
-        });
-    };
+    const showToast = window.PcsFeedback.toast;
 
     const setPanelMode = (mode) => {
         panelViews.forEach((panel) => {
@@ -127,34 +106,12 @@
         specModalMessage.hidden = !message;
     };
 
-    const clearRows = () => {
-        table?.querySelectorAll(".data-row:not(.table-head)").forEach((row) => row.remove());
-    };
-
-    const setEmptyMessage = (message) => {
-        clearRows();
-        const row = document.createElement("div");
-        row.className = "data-row simple-management-data-row empty-data-row";
-        row.setAttribute("role", "row");
-
-        const cell = document.createElement("span");
-        cell.setAttribute("role", "cell");
-        cell.setAttribute("data-label", "안내");
-        cell.textContent = message;
-
-        row.append(cell);
-        table.append(row);
-    };
-
-    const createTextCell = (label, text, tagName = "span") => {
-        const cell = document.createElement(tagName);
-        cell.setAttribute("role", "cell");
-        if (label) {
-            cell.setAttribute("data-label", label);
-        }
-        cell.textContent = text || "-";
-        return cell;
-    };
+    const clearRows = () => window.PcsTable.clearRows(table);
+    const setEmptyMessage = (message) => window.PcsTable.emptyRow(table, {
+        rowClassName: "data-row simple-management-data-row empty-data-row",
+        message
+    });
+    const createTextCell = window.PcsTable.textCell;
 
     const getSelectedCategory = () => (
         currentCategories.find((category) => String(category.categoryId) === String(selectedCategoryId)) || null
@@ -513,27 +470,10 @@
     };
 
     const setFormSaving = (form, isSaving, text = "저장 중") => {
-        if (!form) {
-            return;
-        }
-
-        form.dataset.saving = String(isSaving);
-        form.querySelectorAll("button, input, textarea, select").forEach((element) => {
-            element.disabled = isSaving;
-        });
-
+        window.PcsForm.setSaving(form, isSaving, text);
         if (!isSaving && form === editForm) {
             renderEditSpecs();
         }
-
-        const submitButton = form.querySelector("button[type='submit']");
-        if (!submitButton) {
-            return;
-        }
-        if (!submitButton.dataset.defaultText) {
-            submitButton.dataset.defaultText = submitButton.textContent;
-        }
-        submitButton.textContent = isSaving ? text : submitButton.dataset.defaultText;
     };
 
     const renderRows = (items) => {

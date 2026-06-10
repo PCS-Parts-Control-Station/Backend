@@ -13,8 +13,6 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface CategoryMapper {
 
-    boolean isCompanyActive(@Param("companyId") Long companyId);
-
     List<SearchCategoryResponse> searchCategories(
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,

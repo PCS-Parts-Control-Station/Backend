@@ -17,6 +17,8 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
     - 하네스 검사 기준, 금지 규칙, 완료 기준 확인
 - `docs/ai/pcs-backend-common-rules.md`
     - 공통 응답, 예외, ErrorCode, Controller 처리 기준 확인
+- `docs/ai/pcs-terminology-rules.md`
+    - 화면 용어와 API/DB/패키지 기술 용어가 다를 때 기준 확인
 - `docs/ai/pcs-permission-rules.md`
     - 권한/role 분기 기준 확인
 - `docs/ai/pcs-status-lifecycle-rules.md`
@@ -24,12 +26,20 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 
 ## 문서 선택 규칙
 
+작업 시작 기준:
+
+- 사용자가 "관련 MD 참고", "규칙 보고", "문서 기준으로", "하네스 기준으로"라고 말하면 먼저 이 `AI_INDEX.md`에서 작업 유형을 고른다.
+- 대화 기억만으로 문서를 추정하지 않는다.
+- 아래 작업 유형 중 하나를 고른 뒤, 해당 유형의 필수 문서와 조건부 문서만 읽는다.
+- 새 공통 규칙이 필요하면 먼저 기존 문서 중 가장 책임이 맞는 문서를 찾고, 새 문서는 마지막 선택으로 둔다.
+
 ### 1. 화면 디자인 / HTML / CSS 작업
 
 읽을 문서:
 
 - `docs/ai/pcs-design-system.md`
 - `docs/ai/design/design-md-rules.md`
+- 화면 문구가 바뀌면 `docs/ai/pcs-terminology-rules.md`
 - 화면 유형에 맞는 `docs/ai/design/*.md` 문서 1~3개
 
 화면 유형별 추가 문서:
@@ -71,6 +81,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - `docs/ai/pcs-agent-context.md`
 - `docs/ai/pcs-project-structure-reference.md`
 - `docs/ai/pcs-frontend-js-rules.md`
+- 화면 문구 또는 필드명이 바뀌면 `docs/ai/pcs-terminology-rules.md`
 - 필요한 경우 `docs/ai/pcs-api-spec.md`
 - 페이징 목록이면 `docs/ai/pcs-pagination-rules.md`
 - 등록/수정 완료 피드백이나 토스트를 다루면 `docs/ai/design/modal-dialog.md`
@@ -79,10 +90,10 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 
 예시:
 
-- 부품 목록 JS 작성 → `docs/features/part.md`
+- 품목 목록 JS 작성 → `docs/features/part.md`
 - 검수 등록 JS 작성 → `docs/features/inspection.md`
 - 로그인 JS 작성 → `docs/features/auth.md` + `docs/ai/pcs-auth-client-rules.md`
-- 대시보드/거래처/부품 등 업무 화면 API 연동 → 해당 기능 문서 + `docs/ai/pcs-auth-client-rules.md`
+- 대시보드/거래처/품목 등 업무 화면 API 연동 → 해당 기능 문서 + `docs/ai/pcs-auth-client-rules.md`
 
 ---
 
@@ -93,6 +104,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - `docs/ai/pcs-agent-context.md`
 - `docs/ai/pcs-project-structure-reference.md`
 - `docs/ai/pcs-harness-rules.md`
+- 도메인명과 화면 용어가 다르면 `docs/ai/pcs-terminology-rules.md`
 - 해당 기능 문서 1개
 
 예시:
@@ -111,6 +123,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - `docs/ai/pcs-project-structure-reference.md`
 - `docs/ai/pcs-backend-common-rules.md`
 - `docs/ai/pcs-api-spec.md`
+- 요청/응답 필드와 화면 용어가 다르면 `docs/ai/pcs-terminology-rules.md`
 - 목록 API 또는 페이징 API면 `docs/ai/pcs-pagination-rules.md`
 - 권한/role 분기가 있으면 `docs/ai/pcs-permission-rules.md`
 - `active`, 사용 중지, 상태 보존을 다루면 `docs/ai/pcs-status-lifecycle-rules.md`
@@ -122,7 +135,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - Owner 회원가입 구현 → `docs/features/company.md`
 - 업체 로그인 구현 → `docs/features/auth.md`
 - 입고 전표 등록 구현 → `docs/features/stock.md`
-- 거래처/부품/입출고/검수 API 구현 → 해당 기능 문서 + `docs/ai/pcs-auth-client-rules.md`
+- 거래처/품목/입출고/검수 API 구현 → 해당 기능 문서 + `docs/ai/pcs-auth-client-rules.md`
 
 ---
 
@@ -132,6 +145,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 
 - `docs/ai/pcs-project-structure-reference.md`
 - `docs/sql/pcs-schema-ddl.sql`
+- 화면 용어와 DB 컬럼명이 다르면 `docs/ai/pcs-terminology-rules.md`
 - 해당 기능 문서 1개
 - DB 검증 기준이 있으면 `docs/features/{feature}-db.md`
 - `active` 의미나 상태 보존 기준을 판단해야 하면 `docs/ai/pcs-status-lifecycle-rules.md`
@@ -144,7 +158,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - 재고 정합성 SQL 작성
 - 페이징 목록 SQL 작성 → `docs/ai/pcs-pagination-rules.md`
 - 품목 저장/수정 SQL 작성 → `docs/features/part.md` + `docs/features/part-db.md`
-- 카테고리 SQL/DB 검증 작성 → `docs/features/category.md` + `docs/features/category-db.md`
+- 품목 분류 SQL/DB 검증 작성 → `docs/features/category.md` + `docs/features/category-db.md`
 
 SQL 참조 기준:
 
@@ -185,6 +199,31 @@ SQL 참조 기준:
 - 새 DB 문서가 생기면 DB / SQL / Mapper XML 작업 기준에 포함한다.
 - 특정 기능에서만 읽어야 하는 문서는 전체 필수 문서로 올리지 않고, 해당 작업 유형이나 예시에 연결한다.
 - 문서가 생겼는데 `AI_INDEX.md`에서 찾을 수 없으면 팀원 에이전트가 참고하지 못하는 문서로 본다.
+
+## 공통 구현 참조 규칙
+
+기능 구현 중 이미 있는 공통 구현을 따라야 할 때는 아래 파일을 먼저 확인한다.
+
+백엔드:
+
+- 업체 코드/JWT 회사 범위 검증: `src/main/java/com/pcs/global/workspace/WorkspaceAccessValidator.java`
+- 회사 활성 여부 조회: `src/main/java/com/pcs/global/workspace/WorkspaceMapper.java`
+- 페이지/size/offset 정규화: `src/main/java/com/pcs/global/pagination/PageQuery.java`
+- 문자열 trim/null/required 처리: `src/main/java/com/pcs/global/util/TextNormalizer.java`
+- API 응답/예외: `docs/ai/pcs-backend-common-rules.md`
+
+프론트:
+
+- 인증 API 호출, access token 재발급: `src/main/resources/static/js/pcs-api.js`
+- 페이징 query, 응답 정규화, 스크롤 보존: `src/main/resources/static/js/pcs-pagination.js`
+- 토스트/공통 UI 피드백: `src/main/resources/static/js/pcs-ui.js`
+- 회사 코드 추출, 링크 갱신, 포맷, 공통 폼/테이블 유틸: `src/main/resources/static/js/pcs-common.js`
+
+사양 항목:
+
+- 사양 입력 타입 기준: `src/main/java/com/pcs/domain/category/type/PartSpecInputTypes.java`
+
+새 기능에서 위와 같은 기능을 다시 만들지 않는다. 먼저 공통 구현을 사용할 수 있는지 확인하고, 부족하면 공통 구현을 확장한다.
 
 ## 토큰 절약 규칙
 

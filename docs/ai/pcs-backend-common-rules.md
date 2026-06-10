@@ -135,3 +135,47 @@ public ApiResultDto<CreatePartnerResponse> create(
     return ApiResultDto.success(partnerFacade.create(companyCode, principal, request));
 }
 ```
+
+## 공통 검증 / 정규화 유틸
+
+도메인마다 같은 검증과 정규화 코드를 반복하지 않는다.
+
+업체 작업공간 검증:
+
+```java
+PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(
+        principal,
+        companyCode
+);
+```
+
+기준:
+
+- `/api/workspaces/{companyCode}/**` API는 URL의 `companyCode`와 인증 사용자의 `companyCode`를 비교해야 한다.
+- 이 검증은 `com.pcs.global.workspace.WorkspaceAccessValidator`를 우선 사용한다.
+- 회사 활성 여부도 같은 validator의 `validateCompanyActive(companyId)`를 사용한다.
+- 도메인별 Mapper XML에 `isCompanyActive` SQL을 반복해서 만들지 않는다.
+
+페이징:
+
+```java
+PageQuery pageQuery = PageQuery.of(page, size, limit);
+```
+
+기준:
+
+- `page`, `size`, `limit`, `offset` 계산은 `com.pcs.global.pagination.PageQuery`를 사용한다.
+- 기능별 기본 size가 다르면 `PageQuery.of(page, size, limit, defaultSize)`를 사용한다.
+- Service마다 `normalizePage`, `normalizeSize`를 다시 만들지 않는다.
+
+문자열 정규화:
+
+```java
+String name = TextNormalizer.required(request.name());
+String memo = TextNormalizer.optional(request.memo());
+```
+
+기준:
+
+- required/optional trim 처리는 `com.pcs.global.util.TextNormalizer`를 사용한다.
+- Service마다 `normalizeRequired`, `normalizeOptional`을 다시 만들지 않는다.

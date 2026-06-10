@@ -4,15 +4,6 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.pcs.domain.category.mapper.CategoryMapper">
 
-    <select id="isCompanyActive" resultType="boolean">
-        SELECT EXISTS (
-            SELECT 1
-            FROM tb_company
-            WHERE company_id = #{companyId}
-              AND active = TRUE
-        )
-    </select>
-
     <sql id="categorySearchWhere">
         WHERE c.company_id = #{companyId}
         <if test="keyword != null and keyword != ''">

@@ -29,6 +29,8 @@ public record UpdatePartnerRequest(
         String address,
 
         @Size(max = 1000, message = "메모는 1000자 이하로 입력해 주세요.")
-        String memo
+        String memo,
+
+        Boolean active
 ) {
 }

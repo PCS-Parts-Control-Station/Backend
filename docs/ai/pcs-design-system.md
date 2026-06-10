@@ -4,6 +4,8 @@
 
 세부 화면 패턴은 `docs/ai/design/*.md`에 나누어 둔다. 새 화면을 만들거나 기존 화면을 수정할 때는 이 문서와 해당 화면 유형의 하위 문서를 함께 확인한다.
 
+화면 용어는 `docs/ai/pcs-terminology-rules.md`를 따른다. 기술 도메인명이 `part`, `category`여도 사용자 화면에서는 `품목`, `품목 분류`를 우선한다.
+
 ## 적용 대상
 
 모든 PCS 화면에 적용한다.
@@ -149,7 +151,7 @@ font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospa
 - 큰 제목은 굵고 명확하게 사용한다.
 - 업무 화면 내부 제목은 짧게 쓴다.
 - 설명문은 기능 설명보다 실제 운영 상황이 떠오르게 쓴다.
-- `Dashboard`, `Parts`, `Inbound` 같은 영어 라벨보다 `운영 현황`, `부품 관리`, `입고 관리` 같은 한국어 업무 용어를 우선한다.
+- `Dashboard`, `Parts`, `Inbound` 같은 영어 라벨보다 `운영 현황`, `품목 관리`, `입고 관리` 같은 한국어 업무 용어를 우선한다.
 
 ## 버튼
 

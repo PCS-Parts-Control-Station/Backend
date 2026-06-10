@@ -17,6 +17,8 @@
 ```html
 <script src="/js/pcs-api.js"></script>
 <script src="/js/pcs-pagination.js"></script>
+<script src="/js/pcs-ui.js"></script>
+<script src="/js/pcs-common.js"></script>
 <script src="/js/partners.js"></script>
 ```
 
@@ -32,7 +34,33 @@
 - `pcs-api.js`가 먼저 로드되어야 `window.PcsApi`를 사용할 수 있다.
 - `pcs-pagination.js`가 먼저 로드되어야 `window.PcsPagination`을 사용할 수 있다.
 - `pcs-ui.js`가 먼저 로드되어야 `window.PcsUi.toast()`를 사용할 수 있다.
+- `pcs-common.js`는 `pcs-ui.js` 뒤, 화면별 JS 앞에 둔다.
 - 화면별 JS는 항상 공통 JS 뒤에 둔다.
+
+## 공통 JS 사용
+
+화면별 JS에서 아래 기능을 다시 만들지 않는다.
+
+```js
+window.PcsWorkspace.getCompanyCode()
+window.PcsWorkspace.updateWorkspaceLinks(companyCode)
+window.PcsFormat.date(value)
+window.PcsFormat.number(value)
+window.PcsFormat.money(value)
+window.PcsFeedback.toast(message, type)
+window.PcsForm.setSaving(form, isSaving)
+window.PcsTable.clearRows(table)
+window.PcsTable.textCell(label, text, tagName)
+window.PcsTable.emptyRow(table, options)
+```
+
+기준:
+
+- 업체 코드 추출 정규식은 화면별 JS에 반복 작성하지 않는다.
+- 날짜/숫자/금액 포맷은 `PcsFormat`을 사용한다.
+- 저장 중 폼 비활성화는 `PcsForm.setSaving()`을 사용한다.
+- 빈 목록/로딩/오류 행은 `PcsTable.emptyRow()`를 우선 사용한다.
+- 화면별 JS는 도메인별 렌더링, 이벤트 연결, API URL 조립에 집중한다.
 
 ## API 호출
 
