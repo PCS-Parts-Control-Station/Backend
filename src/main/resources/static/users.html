@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PCS 사용자 관리 화면입니다. 작업 공간의 사용자 계정과 권한을 관리합니다.">
+    <title>PCS | 사용자 관리</title>
+    <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/admin.css?20260604_users">
+    <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
+</head>
+<body class="has-collapsible-sidebar">
+<div class="workspace-layout">
+    <div data-workspace-sidebar data-active-route="users"></div>
+
+    <main class="workspace-main">
+        <header class="workspace-header">
+            <button class="menu-toggle" type="button" data-sidebar-toggle aria-controls="workspace-sidebar" aria-expanded="false" aria-label="메뉴 열기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M4 7h16" />
+                    <path d="M4 12h16" />
+                    <path d="M4 17h16" />
+                </svg>
+            </button>
+            <div>
+                <p class="page-kicker">기준 정보 관리</p>
+                <h1>사용자 관리</h1>
+                <p class="page-description">작업 공간을 함께 사용할 계정을 등록하고 권한을 관리합니다.</p>
+            </div>
+        </header>
+
+        <section class="content-grid">
+            <div class="content-main">
+                <section class="filter-card management-filter-card" aria-labelledby="filter-title">
+                    <div>
+                        <h2 id="filter-title">사용자 검색</h2>
+                        <p>이름, 로그인 아이디, 권한, 상태로 목록을 좁혀 봅니다.</p>
+                    </div>
+                    <!-- API: GET /api/workspaces/{companyCode}/users?keyword=&role=&active=&page=&size= -->
+                    <form class="filter-form management-filter-form" action="#" method="get" autocomplete="off" data-user-filter-form>
+                        <label>
+                            <span>검색어</span>
+                            <input type="search" name="keyword" placeholder="이름 또는 아이디" autocomplete="off">
+                        </label>
+                        <label>
+                            <span>권한</span>
+                            <select name="role">
+                                <option value="">전체</option>
+                                <option value="ADMIN">관리자 (ADMIN)</option>
+                                <option value="STAFF">작업자 (STAFF)</option>
+                            </select>
+                        </label>
+                        <button class="btn btn-primary" type="submit">검색</button>
+                    </form>
+                </section>
+
+                <section class="table-card" aria-labelledby="user-list-title">
+                    <div class="table-header inline-summary-header">
+                        <div>
+                            <h2 id="user-list-title">사용자 목록</h2>
+                            <p>작업 공간에 등록된 전체 사용자 계정입니다.</p>
+                        </div>
+                        <div class="list-summary-box summary-compact" aria-label="사용자 목록 요약">
+                            <dl class="list-summary">
+                                <div>
+                                    <dt>전체</dt>
+                                    <dd data-summary-total>0</dd>
+                                </div>
+                                <div>
+                                    <dt>관리자</dt>
+                                    <dd data-summary-admin>0</dd>
+                                </div>
+                                <div>
+                                    <dt>작업자</dt>
+                                    <dd data-summary-staff>0</dd>
+                                </div>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <div class="data-table" role="table" aria-label="사용자 목록" data-user-table>
+                        <div class="data-row management-data-row table-head" role="row">
+                            <span role="columnheader">이름</span>
+                            <span role="columnheader">로그인 아이디</span>
+                            <span role="columnheader">권한</span>
+                            <span role="columnheader">수정일</span>
+                        </div>
+                        <div class="data-row management-data-row empty-data-row" role="row" data-user-empty>
+                            <span role="cell" data-label="안내">사용자 목록을 불러오는 중입니다.</span>
+                        </div>
+                    </div>
+                    <div class="pagination-bar" data-user-pagination hidden>
+                        <p data-page-info>1 / 1 페이지</p>
+                        <div class="pagination-actions">
+                            <button type="button" data-page-prev>이전</button>
+                            <button type="button" data-page-next>다음</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="side-panel" aria-labelledby="user-form-title">
+                <div class="panel-card side-work-panel">
+                    <div class="panel-mode is-active" data-user-panel="create">
+                        <h2 id="user-form-title">사용자 등록</h2>
+                        <p>새 사용자를 등록합니다. 초기 비밀번호는 아이디와 동일하게 설정됩니다.</p>
+                        <!-- API: POST /api/workspaces/{companyCode}/users -->
+                        <form class="category-form" action="#" method="post" autocomplete="off" data-user-create-form>
+                            <label>
+                                <span>이름</span>
+                                <input type="text" name="memberName" placeholder="예: 홍길동" autocomplete="off" required>
+                            </label>
+                            <label>
+                                <span>로그인 아이디</span>
+                                <input type="text" name="loginId" placeholder="예: user123" autocomplete="off" required>
+                            </label>
+                            <label>
+                                <span>권한</span>
+                                <select name="role" required>
+                                    <option value="">선택</option>
+                                    <option value="ADMIN">관리자 (모든 관리 가능)</option>
+                                    <option value="STAFF">작업자 (입출고/검수 처리)</option>
+                                </select>
+                            </label>
+                            <div class="form-actions">
+                                <button class="btn btn-primary" type="submit">저장</button>
+                                <button class="btn btn-secondary" type="reset">초기화</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="panel-mode" data-user-panel="detail" hidden>
+                        <div class="panel-title-bar">
+                            <div>
+                                <h2>사용자 상세</h2>
+                                <p>선택한 사용자 정보를 확인합니다.</p>
+                            </div>
+                            <button class="panel-link-button" type="button" data-user-create-mode>새 사용자 등록</button>
+                        </div>
+
+                        <div class="side-detail-card">
+                            <strong data-detail-name>-</strong>
+                            <div class="detail-badge-row" data-detail-badges>
+                                <i class="badge" data-detail-role-badge>-</i>
+                            </div>
+                        </div>
+
+                        <dl class="detail-list">
+                            <div>
+                                <dt>로그인 아이디</dt>
+                                <dd data-detail-login-id>-</dd>
+                            </div>
+                            <div>
+                                <dt>수정일</dt>
+                                <dd data-detail-updated-at>-</dd>
+                            </div>
+                        </dl>
+
+                        <div class="form-actions">
+                            <button class="btn btn-primary" type="button" data-user-edit-mode>수정</button>
+                            <button class="btn btn-secondary" type="button" data-open-reset-password-modal>비밀번호 초기화</button>
+                        </div>
+                    </div>
+
+                    <div class="panel-mode" data-user-panel="edit" hidden>
+                        <div class="panel-title-bar">
+                            <div>
+                                <h2>사용자 수정</h2>
+                                <p>선택한 사용자 정보를 수정합니다.</p>
+                            </div>
+                            <button class="panel-link-button" type="button" data-user-create-mode>새 사용자 등록</button>
+                        </div>
+
+                        <!-- API: PATCH /api/workspaces/{companyCode}/users/{memberId} -->
+                        <form class="category-form" action="#" method="post" autocomplete="off" data-user-edit-form>
+                            <label>
+                                <span>이름</span>
+                                <input type="text" name="memberName" autocomplete="off" required>
+                            </label>
+                            <label>
+                                <span>로그인 아이디 (수정 불가)</span>
+                                <input type="text" name="loginId" readonly disabled>
+                            </label>
+                            <label>
+                                <span>권한</span>
+                                <select name="role" required>
+                                    <option value="ADMIN">관리자</option>
+                                    <option value="STAFF">작업자</option>
+                                </select>
+                            </label>
+                            <div class="form-actions">
+                                <button class="btn btn-primary" type="submit">저장</button>
+                                <button class="btn btn-secondary" type="button" data-user-detail-mode>취소</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="panel-card muted-panel">
+                    <h2>운영 메모</h2>
+                    <ul>
+                        <li>로그인 아이디는 한 번 등록하면 변경 불가</li>
+                        <li>초기 비밀번호는 아이디와 동일</li>
+                        <li>비밀번호 초기화 시 임시 비밀번호 팝업 표시</li>
+                        <li>OWNER 계정은 권한 변경 및 삭제 불가</li>
+                    </ul>
+                </div>
+            </aside>
+        </section>
+    </main>
+</div>
+
+<dialog class="part-modal confirm-modal" data-reset-password-modal aria-labelledby="reset-password-modal-title">
+    <form class="part-modal-card" method="dialog">
+        <div class="part-modal-header">
+            <div>
+                <p class="page-kicker">보안 관리</p>
+                <h2 id="reset-password-modal-title">비밀번호를 초기화할까요?</h2>
+                <p>기존 비밀번호는 즉시 파기되고 임시 비밀번호가 발급됩니다.</p>
+            </div>
+            <button class="modal-close-button" type="button" data-close-reset-password-modal aria-label="닫기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M6 6l12 12" />
+                    <path d="M18 6L6 18" />
+                </svg>
+            </button>
+        </div>
+
+        <dl class="confirm-summary">
+            <div>
+                <dt>대상자</dt>
+                <dd data-reset-password-target-name>-</dd>
+            </div>
+            <div data-temp-password-container hidden>
+                <dt>임시 비밀번호</dt>
+                <dd style="color: var(--blue); font-size: 16px; font-family: ui-monospace, monospace;" data-temp-password-value>-</dd>
+            </div>
+        </dl>
+
+        <p class="field-message is-error modal-message" data-reset-password-message role="status" aria-live="polite" hidden></p>
+        <div class="part-modal-actions">
+            <button class="btn btn-secondary" type="button" data-close-reset-password-modal>닫기</button>
+            <button class="btn btn-danger" type="button" data-confirm-reset-password>초기화 실행</button>
+        </div>
+    </form>
+</dialog>
+
+<script src="/js/pcs-api.js?20260529_workspace_guard"></script>
+<script src="/js/pcs-pagination.js?20260527_pagination"></script>
+<script src="/js/workspace-layout.js?20260527_1"></script>
+<script src="/js/pcs-ui.js?20260527_1"></script>
+<script src="/js/users.js?20260604_users"></script>
+</body>
+</html>

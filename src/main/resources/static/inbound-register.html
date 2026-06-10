@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/admin.css?20260602_sidebar_resize2">
+    <link rel="stylesheet" href="/css/admin.css?20260610_sidebar_lock">
     <link rel="stylesheet" href="/css/workflow.css?20260522_split">
     <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
     <link rel="stylesheet" href="/css/inbound.css?20260527_ui">
@@ -86,7 +86,7 @@
                                     <span class="section-step" aria-hidden="true">2</span>
                                     <span>부품 검색</span>
                                 </h2>
-                                <p>부품관리의 마스터 정보를 검색한 뒤 수량과 라인 사유를 입력해 전표에 추가합니다.</p>
+                                <p>부품 관리에 등록된 부품 종류를 검색한 뒤 수량과 라인 사유를 입력해 전표에 추가합니다.</p>
                             </div>
                             <button class="btn btn-secondary btn-compact" type="button" data-open-part-modal disabled title="부품 등록 API 연결 후 사용할 수 있습니다.">새 부품 등록</button>
                         </div>
@@ -95,12 +95,12 @@
                             <div class="part-search-form" aria-label="부품 검색 조건">
                                 <label>
                                     <span>검색어</span>
-                                    <input type="search" data-part-keyword placeholder="부품명, 모델명, 부품 코드">
+                                    <input type="search" data-part-keyword placeholder="부품 이름, 제조사 모델명, 내부 부품코드">
                                 </label>
                                 <label>
-                                    <span>카테고리</span>
+                                    <span>부품 분류</span>
                                     <select data-part-category>
-                                        <option value="">전체 카테고리</option>
+                                        <option value="">전체 분류</option>
                                     </select>
                                 </label>
                                 <button class="btn btn-primary" type="button" data-part-search>검색</button>
@@ -108,9 +108,9 @@
 
                             <div class="part-search-results" aria-label="부품 검색 결과">
                                 <div class="part-result-head" aria-hidden="true">
-                                    <span>부품명</span>
-                                    <span>모델 / 코드</span>
-                                    <span>카테고리</span>
+                                    <span>부품 이름</span>
+                                    <span>제조사 모델 / 내부코드</span>
+                                    <span>부품 분류</span>
                                     <span>선택</span>
                                 </div>
                                 <p class="part-search-message" data-part-search-message role="status" aria-live="polite" hidden></p>
@@ -246,9 +246,9 @@
     <form class="part-modal-card" method="dialog" data-part-modal-form>
         <div class="part-modal-header">
             <div>
-                <p class="page-kicker">부품 마스터 빠른 등록</p>
+                <p class="page-kicker">부품 종류 빠른 등록</p>
                 <h2 id="part-modal-title">새 부품 등록</h2>
-                <p>입고 중 필요한 부품만 빠르게 등록합니다. 상세 정보는 부품관리에서 보강할 수 있습니다.</p>
+                <p>입고 중 필요한 부품 종류만 빠르게 등록합니다. 상세 정보는 부품 관리에서 보강할 수 있습니다.</p>
             </div>
             <button class="modal-close-button" type="button" data-close-part-modal aria-label="닫기">
                 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -261,9 +261,9 @@
         <!-- API: POST /api/workspaces/{companyCode}/parts -->
         <div class="part-modal-fields">
             <label>
-                <span>카테고리</span>
+                <span>부품 분류</span>
                 <select data-new-part-category required>
-                    <option value="">카테고리 선택</option>
+                    <option value="">분류 선택</option>
                 </select>
             </label>
             <label>
@@ -271,16 +271,16 @@
                 <input type="text" data-new-part-manufacturer placeholder="제조사명" required>
             </label>
             <label>
-                <span>부품명</span>
-                <input type="text" data-new-part-name placeholder="부품명" required>
+                <span>부품 이름</span>
+                <input type="text" data-new-part-name placeholder="예: GeForce RTX 4060 Ti" required>
             </label>
             <label>
-                <span>모델명</span>
-                <input type="text" data-new-part-model placeholder="모델명">
+                <span>내부 부품코드</span>
+                <input type="text" data-new-part-code placeholder="예: GPU-MSI-RTX4060TI" required>
             </label>
             <label>
-                <span>부품코드</span>
-                <input type="text" data-new-part-code placeholder="부품코드" required>
+                <span>제조사 모델명</span>
+                <input type="text" data-new-part-model placeholder="예: RTX 4060 VENTUS 2X 8G OC">
             </label>
             <label>
                 <span>안전 재고</span>
@@ -297,8 +297,9 @@
 </dialog>
 
 <script src="/js/pcs-api.js?20260526_1"></script>
-<script src="/js/workspace-layout.js?20260602_sidebar_resize2"></script>
+<script src="/js/workspace-layout.js?20260610_sidebar_lock"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/inbound-register.js?20260527_3"></script>
+<script src="/js/inbound-register.js?20260610_sidebar_overlay"></script>
+
 </body>
 </html>
