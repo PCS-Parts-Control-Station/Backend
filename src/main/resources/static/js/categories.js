@@ -1,5 +1,11 @@
-(function () {
+﻿(function () {
     const PAGE_SIZE = 10;
+    const SPEC_TYPE_LABELS = {
+        TEXT: "텍스트",
+        NUMBER: "숫자",
+        SELECT: "선택",
+        BOOLEAN: "체크"
+    };
 
     const filterForm = document.querySelector("[data-category-filter-form]");
     const table = document.querySelector("[data-category-table]");
@@ -11,10 +17,28 @@
     const panelViews = document.querySelectorAll("[data-category-panel]");
     const createForm = document.querySelector("[data-category-create-form]");
     const editForm = document.querySelector("[data-category-edit-form]");
+    const createMessage = document.querySelector("[data-category-create-message]");
+    const editMessage = document.querySelector("[data-category-edit-message]");
+    const createSpecList = document.querySelector("[data-create-spec-list]");
+    const createSpecEmpty = document.querySelector("[data-create-spec-empty]");
+    const editSpecList = document.querySelector("[data-edit-spec-list]");
+    const editSpecEmpty = document.querySelector("[data-edit-spec-empty]");
+    const editSpecLockedMessage = document.querySelector("[data-spec-edit-locked]");
+    const editSpecAddButton = document.querySelector("[data-open-spec-modal][data-spec-owner='edit']");
     const deleteModal = document.querySelector("[data-category-delete-modal]");
     const openDeleteModalButton = document.querySelector("[data-open-category-delete-modal]");
     const closeDeleteModalButtons = document.querySelectorAll("[data-close-category-delete-modal]");
     const confirmDeleteButton = document.querySelector("[data-confirm-category-delete]");
+    const specModal = document.querySelector("[data-spec-modal]");
+    const specModalForm = document.querySelector("[data-spec-modal-form]");
+    const specModalTitle = document.querySelector("[data-spec-modal-title]");
+    const specModalDescription = document.querySelector("[data-spec-modal-description]");
+    const specModalSubmit = document.querySelector("[data-spec-modal-submit]");
+    const specModalMessage = document.querySelector("[data-spec-modal-message]");
+    const specInputType = specModalForm?.elements.inputType;
+    const specOptionsWrap = document.querySelector("[data-spec-options-wrap]");
+    const closeSpecModalButtons = document.querySelectorAll("[data-close-spec-modal]");
+    const detailSpecList = document.querySelector("[data-detail-spec-list]");
     const detailFields = {
         name: document.querySelector("[data-detail-name]"),
         description: document.querySelector("[data-detail-description]"),
@@ -30,6 +54,11 @@
     let currentPage = 0;
     let currentCategories = [];
     let selectedCategoryId = null;
+    let createSpecs = [];
+    let editSpecs = [];
+    let editSpecsEditable = true;
+    let specOwner = "create";
+    let editingSpecIndex = null;
 
     const getCompanyCode = () => {
         const match = window.location.pathname.match(/^\/w\/([^/]+)/);
@@ -50,6 +79,53 @@
     };
 
     const numberText = (value) => Number(value || 0).toLocaleString("ko-KR");
+
+    const cloneSpecs = (items = []) => items.map((spec, index) => ({
+        specKey: spec.specKey || null,
+        specName: spec.specName || "",
+        inputType: spec.inputType || "TEXT",
+        unit: spec.unit || null,
+        required: spec.required === true,
+        searchable: spec.searchable === true,
+        sortOrder: Number.isInteger(spec.sortOrder) ? spec.sortOrder : index,
+        options: Array.isArray(spec.options)
+            ? spec.options.map((option, optionIndex) => ({
+                optionLabel: option.optionLabel || option.optionValue || "",
+                optionValue: option.optionValue || option.optionLabel || "",
+                sortOrder: Number.isInteger(option.sortOrder) ? option.sortOrder : optionIndex
+            }))
+            : []
+    }));
+
+    const showToast = (message, type = "info") => {
+        window.PcsUi?.toast({
+            message,
+            type
+        });
+    };
+
+    const setPanelMode = (mode) => {
+        panelViews.forEach((panel) => {
+            const isActive = panel.dataset.categoryPanel === mode;
+            panel.hidden = !isActive;
+            panel.classList.toggle("is-active", isActive);
+        });
+    };
+
+    const setFormMessage = (element, message = "") => {
+        if (!element) {
+            return;
+        }
+        element.textContent = message;
+    };
+
+    const setSpecModalMessage = (message = "") => {
+        if (!specModalMessage) {
+            return;
+        }
+        specModalMessage.textContent = message;
+        specModalMessage.hidden = !message;
+    };
 
     const clearRows = () => {
         table?.querySelectorAll(".data-row:not(.table-head)").forEach((row) => row.remove());
@@ -80,23 +156,76 @@
         return cell;
     };
 
-    const setPanelMode = (mode) => {
-        panelViews.forEach((panel) => {
-            const isActive = panel.dataset.categoryPanel === mode;
-            panel.hidden = !isActive;
-            panel.classList.toggle("is-active", isActive);
-        });
-    };
-
-    const getSelectedCategory = () => {
-        return currentCategories.find((category) => String(category.categoryId) === String(selectedCategoryId)) || null;
-    };
+    const getSelectedCategory = () => (
+        currentCategories.find((category) => String(category.categoryId) === String(selectedCategoryId)) || null
+    );
 
     const updateSelectedRow = () => {
         table?.querySelectorAll("[data-category-id]").forEach((row) => {
             const isSelected = String(row.dataset.categoryId) === String(selectedCategoryId);
             row.classList.toggle("is-selected", isSelected);
             row.setAttribute("aria-selected", String(isSelected));
+        });
+    };
+
+    const mergeCategory = (category) => {
+        const exists = currentCategories.some((item) => String(item.categoryId) === String(category.categoryId));
+        if (!exists) {
+            return;
+        }
+        currentCategories = currentCategories.map((item) => (
+            String(item.categoryId) === String(category.categoryId) ? { ...item, ...category } : item
+        ));
+    };
+
+    const updateSpecOptionsVisibility = () => {
+        if (specOptionsWrap && specInputType) {
+            specOptionsWrap.hidden = specInputType.value !== "SELECT";
+        }
+    };
+
+    const specMetaText = (spec) => {
+        const metaParts = [
+            SPEC_TYPE_LABELS[spec.inputType] || spec.inputType || "텍스트",
+            spec.required ? "필수" : "선택",
+            spec.searchable ? "검색 기준" : "",
+            spec.unit ? `단위: ${spec.unit}` : ""
+        ].filter(Boolean);
+        return metaParts.join(" · ");
+    };
+
+    const renderSpecDetail = (specDefinitions = []) => {
+        if (!detailSpecList) {
+            return;
+        }
+
+        detailSpecList.innerHTML = "";
+        if (!specDefinitions.length) {
+            const empty = document.createElement("p");
+            empty.textContent = "등록된 사양 항목이 없습니다.";
+            detailSpecList.append(empty);
+            return;
+        }
+
+        specDefinitions.forEach((spec) => {
+            const item = document.createElement("article");
+            item.className = "spec-detail-item";
+
+            const title = document.createElement("strong");
+            title.textContent = spec.specName || "-";
+
+            const meta = document.createElement("small");
+            meta.textContent = specMetaText(spec);
+
+            item.append(title, meta);
+
+            if (Array.isArray(spec.options) && spec.options.length > 0) {
+                const options = document.createElement("small");
+                options.textContent = `선택지: ${spec.options.map((option) => option.optionLabel).join(", ")}`;
+                item.append(options);
+            }
+
+            detailSpecList.append(item);
         });
     };
 
@@ -109,12 +238,126 @@
         detailFields.description.textContent = category.description || "-";
         detailFields.partCount.textContent = `${numberText(category.partCount)}개`;
         detailFields.updatedAt.textContent = formatDate(category.updatedAt);
+            renderSpecDetail(category.specDefinitions || []);
 
         if (openDeleteModalButton) {
             openDeleteModalButton.title = Number(category.partCount || 0) > 0
-                ? "연결된 부품이 있어 삭제할 수 없습니다."
+                ? "연결된 부품 종류가 있어 삭제할 수 없습니다."
                 : "";
         }
+    };
+
+    const renderSpecSummary = (container, emptyElement, specs, owner, editable) => {
+        if (!container) {
+            return;
+        }
+
+        container.querySelectorAll("[data-spec-summary-item]").forEach((item) => item.remove());
+        if (emptyElement) {
+            emptyElement.hidden = specs.length > 0;
+        }
+
+        specs.forEach((spec, index) => {
+            const item = document.createElement("article");
+            item.className = "spec-summary-card";
+            item.dataset.specSummaryItem = "";
+            item.dataset.specIndex = String(index);
+            item.dataset.specOwner = owner;
+
+            const body = document.createElement("div");
+            const title = document.createElement("strong");
+            title.textContent = spec.specName || "-";
+            const meta = document.createElement("small");
+            meta.textContent = specMetaText(spec);
+            body.append(title, meta);
+
+            if (Array.isArray(spec.options) && spec.options.length > 0) {
+                const options = document.createElement("small");
+                options.textContent = `선택지: ${spec.options.map((option) => option.optionLabel).join(", ")}`;
+                body.append(options);
+            }
+
+            item.append(body);
+
+            if (editable) {
+                const actions = document.createElement("div");
+                actions.className = "spec-summary-actions";
+
+                const editButton = document.createElement("button");
+                editButton.type = "button";
+                editButton.textContent = "수정";
+                editButton.dataset.editSpec = "";
+                editButton.dataset.specOwner = owner;
+                editButton.dataset.specIndex = String(index);
+
+                const removeButton = document.createElement("button");
+                removeButton.type = "button";
+                removeButton.textContent = "삭제";
+                removeButton.dataset.removeSpec = "";
+                removeButton.dataset.specOwner = owner;
+                removeButton.dataset.specIndex = String(index);
+
+                actions.append(editButton, removeButton);
+                item.append(actions);
+            }
+
+            container.append(item);
+        });
+    };
+
+    const renderCreateSpecs = () => {
+        renderSpecSummary(createSpecList, createSpecEmpty, createSpecs, "create", true);
+    };
+
+    const renderEditSpecs = () => {
+        renderSpecSummary(editSpecList, editSpecEmpty, editSpecs, "edit", editSpecsEditable);
+        if (editSpecAddButton) {
+            editSpecAddButton.hidden = !editSpecsEditable;
+            editSpecAddButton.disabled = !editSpecsEditable;
+        }
+        if (editSpecLockedMessage) {
+            editSpecLockedMessage.hidden = editSpecsEditable;
+        }
+    };
+
+    const fetchCategoryDetail = async (categoryId) => {
+        const companyCode = getCompanyCode();
+        return window.PcsApi.getData(
+            `/api/workspaces/${encodeURIComponent(companyCode)}/categories/${categoryId}`,
+            {
+                authRedirect: true,
+                loginCompanyCode: companyCode
+            }
+        );
+    };
+
+    const selectCategory = async (categoryId) => {
+        selectedCategoryId = categoryId;
+        const category = getSelectedCategory();
+        updateSelectedRow();
+        if (category) {
+            renderDetail(category);
+            setPanelMode("detail");
+        }
+
+        try {
+            const detail = await fetchCategoryDetail(categoryId);
+            mergeCategory(detail);
+            renderDetail(detail);
+            setPanelMode("detail");
+        } catch (error) {
+            showToast(error?.message || "분류 상세 정보를 불러오지 못했습니다.", "error");
+        }
+    };
+
+    const showCreatePanel = () => {
+        selectedCategoryId = null;
+        updateSelectedRow();
+        createForm?.reset();
+        createSpecs = [];
+        renderCreateSpecs();
+        setFormMessage(createMessage);
+        setPanelMode("create");
     };
 
     const fillEditForm = (category) => {
@@ -123,24 +366,174 @@
         }
         editForm.elements.categoryName.value = category.categoryName || "";
         editForm.elements.description.value = category.description || "";
+        editSpecs = cloneSpecs(category.specDefinitions || []);
+        editSpecsEditable = Number(category.partCount || 0) === 0;
+        renderEditSpecs();
+        setFormMessage(editMessage);
     };
 
-    const selectCategory = (categoryId) => {
-        selectedCategoryId = categoryId;
+    const showEditPanel = async () => {
         const category = getSelectedCategory();
-        updateSelectedRow();
         if (!category) {
             return;
         }
-        renderDetail(category);
-        setPanelMode("detail");
+
+        let detail = category;
+        if (!Array.isArray(category.specDefinitions)) {
+            try {
+                detail = await fetchCategoryDetail(category.categoryId);
+                mergeCategory(detail);
+                renderDetail(detail);
+            } catch (error) {
+                showToast(error?.message || "분류 상세 정보를 불러오지 못했습니다.", "error");
+                return;
+            }
+        }
+
+        fillEditForm(detail);
+        setPanelMode("edit");
     };
 
-    const showCreatePanel = () => {
-        selectedCategoryId = null;
-        updateSelectedRow();
-        createForm?.reset();
-        setPanelMode("create");
+    const openSpecModal = (owner, index = null) => {
+        if (!specModal || !specModalForm) {
+            return;
+        }
+        if (owner === "edit" && !editSpecsEditable) {
+            showToast("연결된 부품 종류가 있는 분류는 사양 항목을 수정할 수 없습니다.", "error");
+            return;
+        }
+
+        const specs = owner === "edit" ? editSpecs : createSpecs;
+        const spec = index === null ? null : specs[index];
+        specOwner = owner;
+        editingSpecIndex = index;
+
+        specModalForm.reset();
+        setSpecModalMessage();
+
+        if (spec) {
+            specModalForm.elements.specName.value = spec.specName || "";
+            specModalForm.elements.inputType.value = spec.inputType || "TEXT";
+            specModalForm.elements.unit.value = spec.unit || "";
+            specModalForm.elements.options.value = Array.isArray(spec.options)
+                ? spec.options.map((option) => option.optionLabel || option.optionValue).filter(Boolean).join(", ")
+                : "";
+            specModalForm.elements.required.checked = spec.required === true;
+            specModalForm.elements.searchable.checked = spec.searchable === true;
+        }
+
+        updateSpecOptionsVisibility();
+        specModalTitle.textContent = spec ? "사양 항목을 수정합니다." : "사양 항목을 추가합니다.";
+        specModalDescription.textContent = spec
+            ? "선택한 사양 항목의 이름, 입력 방식, 선택지를 수정합니다."
+            : "부품 등록 때 입력받을 항목 기준을 설정합니다.";
+        specModalSubmit.textContent = spec ? "수정" : "추가";
+        specModalSubmit.dataset.defaultText = specModalSubmit.textContent;
+        specModal.showModal();
+        specModalForm.elements.specName.focus();
+    };
+
+    const closeSpecModal = () => {
+        if (!specModal) {
+            return;
+        }
+        setSpecModalMessage();
+        specModal.close();
+    };
+
+    const readSpecModal = () => {
+        const specName = specModalForm.elements.specName.value.trim();
+        const inputType = specModalForm.elements.inputType.value || "TEXT";
+        const optionText = specModalForm.elements.options.value || "";
+        const options = inputType === "SELECT"
+            ? optionText.split(",")
+                .map((value) => value.trim())
+                .filter(Boolean)
+                .map((value, index) => ({
+                    optionLabel: value,
+                    optionValue: value,
+                    sortOrder: index
+                }))
+            : [];
+
+        if (!specName) {
+            setSpecModalMessage("사양명을 입력해 주세요.");
+            return null;
+        }
+        if (inputType === "SELECT" && options.length === 0) {
+            setSpecModalMessage("선택 방식은 선택지를 1개 이상 입력해야 합니다.");
+            return null;
+        }
+
+        return {
+            specName,
+            inputType,
+            unit: specModalForm.elements.unit.value.trim() || null,
+            required: specModalForm.elements.required.checked === true,
+            searchable: specModalForm.elements.searchable.checked === true,
+            sortOrder: 0,
+            options
+        };
+    };
+
+    const saveSpecFromModal = () => {
+        const spec = readSpecModal();
+        if (!spec) {
+            return;
+        }
+
+        const targetSpecs = specOwner === "edit" ? editSpecs : createSpecs;
+        if (editingSpecIndex === null) {
+            targetSpecs.push(spec);
+        } else {
+            targetSpecs[editingSpecIndex] = spec;
+        }
+
+        targetSpecs.forEach((item, index) => {
+            item.sortOrder = index;
+        });
+
+        if (specOwner === "edit") {
+            renderEditSpecs();
+        } else {
+            renderCreateSpecs();
+        }
+        closeSpecModal();
+    };
+
+    const readCategoryForm = (form, specs, includeSpecs) => {
+        const body = {
+            categoryName: form.elements.categoryName.value.trim(),
+            description: form.elements.description.value.trim() || null
+        };
+        if (includeSpecs) {
+            body.specDefinitions = cloneSpecs(specs);
+        }
+        return body;
+    };
+
+    const setFormSaving = (form, isSaving, text = "저장 중") => {
+        if (!form) {
+            return;
+        }
+
+        form.dataset.saving = String(isSaving);
+        form.querySelectorAll("button, input, textarea, select").forEach((element) => {
+            element.disabled = isSaving;
+        });
+
+        if (!isSaving && form === editForm) {
+            renderEditSpecs();
+        }
+
+        const submitButton = form.querySelector("button[type='submit']");
+        if (!submitButton) {
+            return;
+        }
+        if (!submitButton.dataset.defaultText) {
+            submitButton.dataset.defaultText = submitButton.textContent;
+        }
+        submitButton.textContent = isSaving ? text : submitButton.dataset.defaultText;
     };
 
     const renderRows = (items) => {
@@ -148,7 +541,7 @@
         currentCategories = items;
 
         if (!items.length) {
-            setEmptyMessage("조회된 카테고리가 없습니다.");
+            setEmptyMessage("조회된 분류가 없습니다.");
             showCreatePanel();
             return;
         }
@@ -161,9 +554,9 @@
             row.dataset.categoryId = String(category.categoryId);
 
             row.append(
-                createTextCell("카테고리명", category.categoryName, "strong"),
+                createTextCell("분류명", category.categoryName, "strong"),
                 createTextCell("설명", category.description),
-                createTextCell("부품 수", `${numberText(category.partCount)}개`),
+                createTextCell("부품 종류 수", `${numberText(category.partCount)}개`),
                 createTextCell("수정일", formatDate(category.updatedAt))
             );
 
@@ -182,7 +575,7 @@
             renderDetail(getSelectedCategory());
             updateSelectedRow();
         } else {
-            showCreatePanel();
+            updateSelectedRow();
         }
     };
 
@@ -210,34 +603,6 @@
         }
         searchButton.disabled = isLoading;
         searchButton.textContent = isLoading ? "조회 중" : "검색";
-    };
-
-    const showToast = (message, type = "info") => {
-        window.PcsUi?.toast({
-            message,
-            type
-        });
-    };
-
-    const setFormSaving = (targetForm, isSaving, savingText = "저장 중") => {
-        if (!targetForm) {
-            return;
-        }
-
-        targetForm.dataset.saving = String(isSaving);
-        targetForm.querySelectorAll("button, input, textarea").forEach((element) => {
-            element.disabled = isSaving;
-        });
-
-        const submitButton = targetForm.querySelector("button[type='submit']");
-        if (!submitButton) {
-            return;
-        }
-
-        if (!submitButton.dataset.defaultText) {
-            submitButton.dataset.defaultText = submitButton.textContent;
-        }
-        submitButton.textContent = isSaving ? savingText : submitButton.dataset.defaultText;
     };
 
     const setDeleteModalMessage = (message = "") => {
@@ -281,7 +646,7 @@
 
         const partCount = Number(category.partCount || 0);
         if (partCount > 0) {
-            showToast("연결된 부품이 있는 카테고리는 삭제할 수 없습니다.", "error");
+            showToast("연결된 부품 종류가 있는 분류는 삭제할 수 없습니다.", "error");
             return;
         }
 
@@ -290,11 +655,6 @@
         setDeleteModalMessage();
         deleteModal.showModal();
     };
-
-    const readCategoryForm = (targetForm) => ({
-        categoryName: targetForm.elements.categoryName.value.trim(),
-        description: targetForm.elements.description.value.trim() || null
-    });
 
     const loadCategories = async (page = 0, options = {}) => {
         const companyCode = getCompanyCode();
@@ -320,7 +680,7 @@
             currentPage = page;
             setLoading(true);
             if (!preserveScroll) {
-                setEmptyMessage("카테고리 목록을 불러오는 중입니다.");
+                setEmptyMessage("분류 목록을 불러오는 중입니다.");
             }
 
             let pageData = await fetchPage(page);
@@ -331,6 +691,7 @@
 
             if (options.keepSelection !== true) {
                 selectedCategoryId = null;
+                showCreatePanel();
             }
 
             renderRows(pageData.content);
@@ -341,7 +702,7 @@
             try {
                 await requestPage();
             } catch (error) {
-                setEmptyMessage(error?.message || "카테고리 목록을 불러오지 못했습니다.");
+                setEmptyMessage(error?.message || "분류 목록을 불러오지 못했습니다.");
                 updatePagination({
                     totalElements: 0,
                     totalPages: 0,
@@ -349,6 +710,7 @@
                     hasPrevious: false,
                     hasNext: false
                 });
+                selectedCategoryId = null;
                 showCreatePanel();
             } finally {
                 setLoading(false);
@@ -377,9 +739,11 @@
                     return;
                 }
             }
+            showCreatePanel();
             await loadCategories(0);
         } catch (error) {
             setEmptyMessage(error?.message || "업체 주소를 확인할 수 없습니다.");
+            showCreatePanel();
         }
     };
 
@@ -392,23 +756,62 @@
         button.addEventListener("click", showCreatePanel);
     });
 
-    document.querySelector("[data-category-edit-mode]")?.addEventListener("click", () => {
-        const category = getSelectedCategory();
-        if (!category) {
-            return;
-        }
-        fillEditForm(category);
-        setPanelMode("edit");
-    });
+    document.querySelector("[data-category-edit-mode]")?.addEventListener("click", showEditPanel);
 
     document.querySelector("[data-category-detail-mode]")?.addEventListener("click", () => {
         const category = getSelectedCategory();
-        if (!category) {
-            showCreatePanel();
+        if (category) {
+            renderDetail(category);
+            setPanelMode("detail");
+        }
+    });
+
+    document.addEventListener("click", (event) => {
+        const openButton = event.target.closest("[data-open-spec-modal]");
+        if (openButton) {
+            openSpecModal(openButton.dataset.specOwner || "create");
             return;
         }
-        renderDetail(category);
-        setPanelMode("detail");
+
+        const editButton = event.target.closest("[data-edit-spec]");
+        if (editButton) {
+            openSpecModal(editButton.dataset.specOwner || "create", Number(editButton.dataset.specIndex));
+            return;
+        }
+
+        const removeButton = event.target.closest("[data-remove-spec]");
+        if (removeButton) {
+            const owner = removeButton.dataset.specOwner || "create";
+            const index = Number(removeButton.dataset.specIndex);
+            if (owner === "edit") {
+                if (!editSpecsEditable) {
+                    showToast("연결된 부품 종류가 있는 분류는 사양 항목을 수정할 수 없습니다.", "error");
+                    return;
+                }
+                editSpecs.splice(index, 1);
+                renderEditSpecs();
+            } else {
+                createSpecs.splice(index, 1);
+                renderCreateSpecs();
+            }
+        }
+    });
+
+    closeSpecModalButtons.forEach((button) => {
+        button.addEventListener("click", closeSpecModal);
+    });
+
+    specModal?.addEventListener("click", (event) => {
+        if (event.target === specModal) {
+            closeSpecModal();
+        }
+    });
+
+    specInputType?.addEventListener("change", updateSpecOptionsVisibility);
+
+    specModalForm?.addEventListener("submit", (event) => {
+        event.preventDefault();
+        saveSpecFromModal();
     });
 
     createForm?.addEventListener("submit", async (event) => {
@@ -420,11 +823,12 @@
 
         try {
             setFormSaving(createForm, true);
+            setFormMessage(createMessage);
             const data = await window.PcsApi.getData(
                 `/api/workspaces/${encodeURIComponent(companyCode)}/categories`,
                 {
                     method: "POST",
-                    body: readCategoryForm(createForm),
+                    body: readCategoryForm(createForm, createSpecs, true),
                     authRedirect: true,
                     loginCompanyCode: companyCode
                 }
@@ -432,13 +836,28 @@
 
             selectedCategoryId = data.categoryId;
             await loadCategories(0, { keepSelection: true });
-            showToast("카테고리를 등록했습니다.", "success");
+            mergeCategory(data);
+            renderDetail(data);
+            setPanelMode("detail");
             createForm.reset();
+            createSpecs = [];
+            renderCreateSpecs();
+            showToast("분류를 등록했습니다.", "success");
         } catch (error) {
-            showToast(error?.message || "카테고리를 등록하지 못했습니다.", "error");
+            const message = error?.message || "분류를 등록하지 못했습니다.";
+            setFormMessage(createMessage, message);
+            showToast(message, "error");
         } finally {
             setFormSaving(createForm, false);
         }
+    });
+
+    createForm?.addEventListener("reset", () => {
+        window.setTimeout(() => {
+            createSpecs = [];
+            renderCreateSpecs();
+            setFormMessage(createMessage);
+        }, 0);
     });
 
     editForm?.addEventListener("submit", async (event) => {
@@ -451,26 +870,30 @@
 
         try {
             setFormSaving(editForm, true);
+            setFormMessage(editMessage);
             const data = await window.PcsApi.getData(
                 `/api/workspaces/${encodeURIComponent(companyCode)}/categories/${category.categoryId}`,
                 {
                     method: "PATCH",
-                    body: readCategoryForm(editForm),
+                    body: readCategoryForm(editForm, editSpecs, editSpecsEditable),
                     authRedirect: true,
                     loginCompanyCode: companyCode
                 }
             );
 
             selectedCategoryId = data.categoryId;
-            await loadCategories(currentPage, { keepSelection: true, preserveScroll: true });
-            const refreshedCategory = getSelectedCategory();
-            if (refreshedCategory) {
-                renderDetail(refreshedCategory);
-                setPanelMode("detail");
-            }
-            showToast("카테고리 정보를 수정했습니다.", "success");
+            await loadCategories(currentPage, {
+                keepSelection: true,
+                preserveScroll: true
+            });
+            mergeCategory(data);
+            renderDetail(data);
+            setPanelMode("detail");
+            showToast("분류 정보를 수정했습니다.", "success");
         } catch (error) {
-            showToast(error?.message || "카테고리를 수정하지 못했습니다.", "error");
+            const message = error?.message || "분류를 수정하지 못했습니다.";
+            setFormMessage(editMessage, message);
+            showToast(message, "error");
         } finally {
             setFormSaving(editForm, false);
         }
@@ -509,10 +932,11 @@
             selectedCategoryId = null;
             setDeleteModalMessage();
             deleteModal?.close();
+            showCreatePanel();
             await loadCategories(currentPage, { preserveScroll: true });
-            showToast("카테고리를 삭제했습니다.", "success");
+            showToast("분류를 삭제했습니다.", "success");
         } catch (error) {
-            const message = error?.message || "카테고리를 삭제하지 못했습니다.";
+            const message = error?.message || "분류를 삭제하지 못했습니다.";
             setDeleteModalMessage(message);
             showToast(message, "error");
         } finally {

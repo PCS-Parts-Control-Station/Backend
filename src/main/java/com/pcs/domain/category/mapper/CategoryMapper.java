@@ -1,7 +1,11 @@
 package com.pcs.domain.category.mapper;
 
+import com.pcs.domain.category.dto.response.CategorySpecDefinitionRow;
+import com.pcs.domain.category.dto.response.CategorySpecOptionResponse;
 import com.pcs.domain.category.dto.response.SearchCategoryResponse;
 import com.pcs.domain.category.entity.PartCategory;
+import com.pcs.domain.category.entity.PartSpecDefinition;
+import com.pcs.domain.category.entity.PartSpecOption;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -37,7 +41,35 @@ public interface CategoryMapper {
 
     void update(PartCategory category);
 
+    void insertSpecDefinition(PartSpecDefinition specDefinition);
+
+    void insertSpecOption(PartSpecOption option);
+
+    List<CategorySpecDefinitionRow> findSpecDefinitions(
+            @Param("companyId") Long companyId,
+            @Param("categoryId") Long categoryId
+    );
+
+    List<CategorySpecOptionResponse> findSpecOptions(
+            @Param("specDefinitionIds") List<Long> specDefinitionIds
+    );
+
     long countPartsByCategory(
+            @Param("companyId") Long companyId,
+            @Param("categoryId") Long categoryId
+    );
+
+    int deleteSpecValuesByCategory(
+            @Param("companyId") Long companyId,
+            @Param("categoryId") Long categoryId
+    );
+
+    int deleteSpecOptionsByCategory(
+            @Param("companyId") Long companyId,
+            @Param("categoryId") Long categoryId
+    );
+
+    int deleteSpecDefinitionsByCategory(
             @Param("companyId") Long companyId,
             @Param("categoryId") Long categoryId
     );
