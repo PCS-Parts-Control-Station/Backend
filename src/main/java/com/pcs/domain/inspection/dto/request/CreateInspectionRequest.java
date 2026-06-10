@@ -6,8 +6,10 @@ import com.pcs.domain.inspection.validation.NotNoneGrade;
 import com.pcs.domain.inspection.validation.ValidInspectionDecision;
 import com.pcs.domain.part.type.PartGrade;
 import com.pcs.domain.part.type.SalesStatus;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.util.List;
 
 @ValidInspectionDecision
 public record CreateInspectionRequest(
@@ -27,6 +29,9 @@ public record CreateInspectionRequest(
         SalesStatus salesStatus,
 
         @Size(max = 1000, message = "memo는 최대 1000자까지 입력할 수 있습니다.")
-        String memo
+        String memo,
+
+        @Valid
+        List<CreateInspectionItemResultRequest> itemResults
 ) implements InspectionDecisionValidatable {
 }

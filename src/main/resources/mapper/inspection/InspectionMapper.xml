@@ -1,0 +1,689 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pcs.domain.inspection.mapper.InspectionMapper">
+
+    <select id="isCompanyActive" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM tb_company
+            WHERE company_id = #{companyId}
+              AND active = TRUE
+        )
+    </select>
+
+    <sql id="waitingDocumentInnerWhere">
+        WHERE d.company_id = #{companyId}
+          AND d.document_type = 'INBOUND'
+          AND d.document_status = 'COMPLETED'
+          AND m.movement_type = 'INBOUND'
+          AND m.movement_status = 'COMPLETED'
+          AND m.canceled_movement_id IS NULL
+          AND u.active = TRUE
+          AND u.unit_status = 'IN_STOCK'
+        <if test="partnerId != null">
+          AND d.partner_id = #{partnerId}
+        </if>
+        <if test="dateFrom != null">
+          AND d.created_at &gt;= #{dateFrom}
+        </if>
+        <if test="dateTo != null">
+          AND d.created_at &lt; #{dateTo}
+        </if>
+        <if test="keyword != null and keyword != ''">
+          AND (
+              d.document_no LIKE CONCAT('%', #{keyword}, '%')
+              OR tp.partner_name LIKE CONCAT('%', #{keyword}, '%')
+              OR p.part_name LIKE CONCAT('%', #{keyword}, '%')
+              OR p.model_name LIKE CONCAT('%', #{keyword}, '%')
+              OR p.part_code LIKE CONCAT('%', #{keyword}, '%')
+              OR u.internal_serial_no LIKE CONCAT('%', #{keyword}, '%')
+          )
+        </if>
+    </sql>
+
+    <sql id="waitingDocumentOuterWhere">
+        <where>
+            <if test="inspectionStatus != null and inspectionStatus != ''">
+                <choose>
+                    <when test="inspectionStatus == 'WAITING'">
+                      filtered.waiting_count &gt; 0
+                      AND filtered.completed_count = 0
+                    </when>
+                    <when test="inspectionStatus == 'IN_PROGRESS'">
+                      filtered.waiting_count &gt; 0
+                      AND filtered.completed_count &gt; 0
+                    </when>
+                    <when test="inspectionStatus == 'COMPLETED'">
+                      filtered.waiting_count = 0
+                      AND filtered.total_unit_count &gt; 0
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </sql>
+
+    <sql id="waitingDocumentBase">
+        SELECT
+            d.document_id,
+            d.document_no,
+            d.partner_id,
+            COALESCE(tp.partner_name, '-') AS partner_name,
+            COALESCE(
+                CONCAT(
+                    SUBSTRING_INDEX(GROUP_CONCAT(DISTINCT p.part_name ORDER BY m.movement_id SEPARATOR ','), ',', 1),
+                    CASE
+                        WHEN COUNT(DISTINCT m.movement_id) &gt; 1
+                        THEN CONCAT(' 외 ', COUNT(DISTINCT m.movement_id) - 1, '종')
+                        ELSE ''
+                    END
+                ),
+                '-'
+            ) AS summary,
+            COUNT(DISTINCT m.movement_id) AS line_count,
+            COUNT(DISTINCT u.unit_id) AS total_unit_count,
+            COALESCE(SUM(CASE WHEN u.inspection_status = 'COMPLETED' THEN 1 ELSE 0 END), 0) AS completed_count,
+            COALESCE(SUM(CASE WHEN u.inspection_status = 'WAITING' THEN 1 ELSE 0 END), 0) AS waiting_count,
+            COALESCE(SUM(CASE WHEN u.grade = 'DEFECTIVE' THEN 1 ELSE 0 END), 0) AS defective_count,
+            CASE
+                WHEN COUNT(DISTINCT u.unit_id) = 0 THEN 0
+                ELSE FLOOR(
+                    COALESCE(SUM(CASE WHEN u.inspection_status = 'COMPLETED' THEN 1 ELSE 0 END), 0)
+                    * 100 / COUNT(DISTINCT u.unit_id)
+                )
+            END AS progress_rate,
+            CASE
+                WHEN COALESCE(SUM(CASE WHEN u.inspection_status = 'WAITING' THEN 1 ELSE 0 END), 0) = 0 THEN 'COMPLETED'
+                WHEN COALESCE(SUM(CASE WHEN u.inspection_status = 'COMPLETED' THEN 1 ELSE 0 END), 0) = 0 THEN 'WAITING'
+                ELSE 'IN_PROGRESS'
+            END AS inspection_status,
+            d.created_at
+        FROM tb_stock_document d
+        INNER JOIN tb_stock_movement m
+            ON m.company_id = d.company_id
+           AND m.document_id = d.document_id
+        INNER JOIN tb_stock_movement_unit mu
+            ON mu.movement_id = m.movement_id
+        INNER JOIN tb_pc_part_unit u
+            ON u.company_id = m.company_id
+           AND u.unit_id = mu.unit_id
+        INNER JOIN tb_pc_part p
+            ON p.company_id = m.company_id
+           AND p.part_id = m.part_id
+        LEFT JOIN tb_trade_partner tp
+            ON tp.company_id = d.company_id
+           AND tp.partner_id = d.partner_id
+        <include refid="waitingDocumentInnerWhere" />
+        GROUP BY
+            d.document_id,
+            d.document_no,
+            d.partner_id,
+            tp.partner_name,
+            d.created_at
+    </sql>
+
+    <select id="searchWaitingDocuments" resultType="com.pcs.domain.inspection.dto.response.SearchWaitingInspectionDocumentResponse">
+        SELECT filtered.*
+        FROM (
+            <include refid="waitingDocumentBase" />
+        ) filtered
+        <include refid="waitingDocumentOuterWhere" />
+        ORDER BY filtered.created_at DESC, filtered.document_id DESC
+        LIMIT #{size}
+        OFFSET #{offset}
+    </select>
+
+    <select id="countWaitingDocuments" resultType="long">
+        SELECT COUNT(*)
+        FROM (
+            <include refid="waitingDocumentBase" />
+        ) filtered
+        <include refid="waitingDocumentOuterWhere" />
+    </select>
+
+    <select id="summarizeWaitingDocuments" resultType="com.pcs.domain.inspection.dto.response.SearchWaitingInspectionDocumentSummaryResponse">
+        SELECT
+            COUNT(*) AS document_count,
+            COALESCE(SUM(filtered.total_unit_count), 0) AS total_unit_count,
+            COALESCE(SUM(filtered.completed_count), 0) AS completed_count,
+            COALESCE(SUM(filtered.waiting_count), 0) AS waiting_count,
+            COALESCE(SUM(filtered.defective_count), 0) AS defective_count
+        FROM (
+            <include refid="waitingDocumentBase" />
+        ) filtered
+        <include refid="waitingDocumentOuterWhere" />
+    </select>
+
+    <select id="findWaitingDocument" resultType="com.pcs.domain.inspection.dto.response.SearchWaitingInspectionDocumentResponse">
+        SELECT
+            d.document_id,
+            d.document_no,
+            d.partner_id,
+            COALESCE(tp.partner_name, '-') AS partner_name,
+            COALESCE(
+                CONCAT(
+                    SUBSTRING_INDEX(GROUP_CONCAT(DISTINCT p.part_name ORDER BY m.movement_id SEPARATOR ','), ',', 1),
+                    CASE
+                        WHEN COUNT(DISTINCT m.movement_id) &gt; 1
+                        THEN CONCAT(' 외 ', COUNT(DISTINCT m.movement_id) - 1, '종')
+                        ELSE ''
+                    END
+                ),
+                '-'
+            ) AS summary,
+            COUNT(DISTINCT m.movement_id) AS line_count,
+            COUNT(DISTINCT u.unit_id) AS total_unit_count,
+            COALESCE(SUM(CASE WHEN u.inspection_status = 'COMPLETED' THEN 1 ELSE 0 END), 0) AS completed_count,
+            COALESCE(SUM(CASE WHEN u.inspection_status = 'WAITING' THEN 1 ELSE 0 END), 0) AS waiting_count,
+            COALESCE(SUM(CASE WHEN u.grade = 'DEFECTIVE' THEN 1 ELSE 0 END), 0) AS defective_count,
+            CASE
+                WHEN COUNT(DISTINCT u.unit_id) = 0 THEN 0
+                ELSE FLOOR(
+                    COALESCE(SUM(CASE WHEN u.inspection_status = 'COMPLETED' THEN 1 ELSE 0 END), 0)
+                    * 100 / COUNT(DISTINCT u.unit_id)
+                )
+            END AS progress_rate,
+            CASE
+                WHEN COALESCE(SUM(CASE WHEN u.inspection_status = 'WAITING' THEN 1 ELSE 0 END), 0) = 0 THEN 'COMPLETED'
+                WHEN COALESCE(SUM(CASE WHEN u.inspection_status = 'COMPLETED' THEN 1 ELSE 0 END), 0) = 0 THEN 'WAITING'
+                ELSE 'IN_PROGRESS'
+            END AS inspection_status,
+            d.created_at
+        FROM tb_stock_document d
+        INNER JOIN tb_stock_movement m
+            ON m.company_id = d.company_id
+           AND m.document_id = d.document_id
+        INNER JOIN tb_stock_movement_unit mu
+            ON mu.movement_id = m.movement_id
+        INNER JOIN tb_pc_part_unit u
+            ON u.company_id = m.company_id
+           AND u.unit_id = mu.unit_id
+        INNER JOIN tb_pc_part p
+            ON p.company_id = m.company_id
+           AND p.part_id = m.part_id
+        LEFT JOIN tb_trade_partner tp
+            ON tp.company_id = d.company_id
+           AND tp.partner_id = d.partner_id
+        WHERE d.company_id = #{companyId}
+          AND d.document_id = #{documentId}
+          AND d.document_type = 'INBOUND'
+          AND d.document_status = 'COMPLETED'
+          AND m.movement_type = 'INBOUND'
+          AND m.movement_status = 'COMPLETED'
+          AND m.canceled_movement_id IS NULL
+          AND u.active = TRUE
+          AND u.unit_status = 'IN_STOCK'
+        GROUP BY
+            d.document_id,
+            d.document_no,
+            d.partner_id,
+            tp.partner_name,
+            d.created_at
+    </select>
+
+    <select id="findWaitingDocumentLines" resultType="com.pcs.domain.inspection.dto.response.InspectionDocumentLineRow">
+        SELECT
+            m.movement_id,
+            m.part_id,
+            p.category_id,
+            c.category_name,
+            p.part_name,
+            p.model_name,
+            p.part_code,
+            COUNT(DISTINCT u.unit_id) AS quantity,
+            COALESCE(SUM(CASE WHEN u.inspection_status = 'COMPLETED' THEN 1 ELSE 0 END), 0) AS completed_count,
+            COALESCE(SUM(CASE WHEN u.inspection_status = 'WAITING' THEN 1 ELSE 0 END), 0) AS waiting_count,
+            COALESCE(SUM(CASE WHEN u.grade = 'DEFECTIVE' THEN 1 ELSE 0 END), 0) AS defective_count
+        FROM tb_stock_movement m
+        INNER JOIN tb_stock_movement_unit mu
+            ON mu.movement_id = m.movement_id
+        INNER JOIN tb_pc_part_unit u
+            ON u.company_id = m.company_id
+           AND u.unit_id = mu.unit_id
+        INNER JOIN tb_pc_part p
+            ON p.company_id = m.company_id
+           AND p.part_id = m.part_id
+        INNER JOIN tb_part_category c
+            ON c.company_id = p.company_id
+           AND c.category_id = p.category_id
+        WHERE m.company_id = #{companyId}
+          AND m.document_id = #{documentId}
+          AND m.movement_type = 'INBOUND'
+          AND m.movement_status = 'COMPLETED'
+          AND m.canceled_movement_id IS NULL
+          AND u.active = TRUE
+          AND u.unit_status = 'IN_STOCK'
+        GROUP BY
+            m.movement_id,
+            m.part_id,
+            p.category_id,
+            c.category_name,
+            p.part_name,
+            p.model_name,
+            p.part_code
+        ORDER BY m.movement_id ASC
+    </select>
+
+    <select id="findWaitingDocumentUnits" resultType="com.pcs.domain.inspection.dto.response.InspectionDocumentUnitResponse">
+        SELECT
+            m.movement_id,
+            m.part_id,
+            u.unit_id,
+            u.internal_serial_no,
+            u.manufacturer_serial_no,
+            u.unit_status,
+            u.inspection_status,
+            u.grade,
+            u.sales_status,
+            li.inspection_id AS latest_inspection_id,
+            li.inspection_type AS latest_inspection_type,
+            li.result AS latest_inspection_result,
+            li.inspected_at AS latest_inspected_at
+        FROM tb_stock_movement m
+        INNER JOIN tb_stock_movement_unit mu
+            ON mu.movement_id = m.movement_id
+        INNER JOIN tb_pc_part_unit u
+            ON u.company_id = m.company_id
+           AND u.unit_id = mu.unit_id
+        LEFT JOIN tb_inspection li
+            ON li.company_id = u.company_id
+           AND li.unit_id = u.unit_id
+           AND li.inspection_id = (
+                SELECT i2.inspection_id
+                FROM tb_inspection i2
+                WHERE i2.company_id = u.company_id
+                  AND i2.unit_id = u.unit_id
+                ORDER BY i2.inspected_at DESC, i2.inspection_id DESC
+                LIMIT 1
+           )
+        WHERE m.company_id = #{companyId}
+          AND m.document_id = #{documentId}
+          AND m.movement_type = 'INBOUND'
+          AND m.movement_status = 'COMPLETED'
+          AND m.canceled_movement_id IS NULL
+          AND u.active = TRUE
+          AND u.unit_status = 'IN_STOCK'
+        ORDER BY m.movement_id ASC, u.unit_id ASC
+    </select>
+
+    <sql id="historyWhere">
+        WHERE i.company_id = #{companyId}
+        <if test="documentId != null">
+          AND EXISTS (
+              SELECT 1
+              FROM tb_stock_movement_unit mu2
+              INNER JOIN tb_stock_movement m2
+                  ON m2.movement_id = mu2.movement_id
+              WHERE mu2.unit_id = i.unit_id
+                AND m2.company_id = i.company_id
+                AND m2.document_id = #{documentId}
+                AND m2.movement_type = 'INBOUND'
+                AND m2.canceled_movement_id IS NULL
+          )
+        </if>
+        <if test="unitId != null">
+          AND i.unit_id = #{unitId}
+        </if>
+        <if test="partId != null">
+          AND u.part_id = #{partId}
+        </if>
+        <if test="inspectionType != null">
+          AND i.inspection_type = #{inspectionType}
+        </if>
+        <if test="result != null">
+          AND i.result = #{result}
+        </if>
+        <if test="grade != null">
+          AND i.grade = #{grade}
+        </if>
+        <if test="dateFrom != null">
+          AND i.inspected_at &gt;= #{dateFrom}
+        </if>
+        <if test="dateTo != null">
+          AND i.inspected_at &lt; #{dateTo}
+        </if>
+        <if test="keyword != null and keyword != ''">
+          AND (
+              u.internal_serial_no LIKE CONCAT('%', #{keyword}, '%')
+              OR p.part_name LIKE CONCAT('%', #{keyword}, '%')
+              OR p.model_name LIKE CONCAT('%', #{keyword}, '%')
+              OR p.part_code LIKE CONCAT('%', #{keyword}, '%')
+              OR EXISTS (
+                  SELECT 1
+                  FROM tb_stock_movement_unit muk
+                  INNER JOIN tb_stock_movement mk
+                      ON mk.movement_id = muk.movement_id
+                  INNER JOIN tb_stock_document dk
+                      ON dk.company_id = mk.company_id
+                     AND dk.document_id = mk.document_id
+                  WHERE muk.unit_id = i.unit_id
+                    AND mk.company_id = i.company_id
+                    AND mk.movement_type = 'INBOUND'
+                    AND mk.canceled_movement_id IS NULL
+                    AND dk.document_no LIKE CONCAT('%', #{keyword}, '%')
+              )
+          )
+        </if>
+    </sql>
+
+    <sql id="historySelect">
+        SELECT
+            i.inspection_id,
+            i.inspection_type,
+            i.original_inspection_id,
+            (
+                SELECT d.document_id
+                FROM tb_stock_movement_unit mu
+                INNER JOIN tb_stock_movement m
+                    ON m.movement_id = mu.movement_id
+                INNER JOIN tb_stock_document d
+                    ON d.company_id = m.company_id
+                   AND d.document_id = m.document_id
+                WHERE mu.unit_id = i.unit_id
+                  AND m.company_id = i.company_id
+                  AND m.movement_type = 'INBOUND'
+                  AND m.canceled_movement_id IS NULL
+                ORDER BY d.created_at DESC, d.document_id DESC
+                LIMIT 1
+            ) AS document_id,
+            (
+                SELECT d.document_no
+                FROM tb_stock_movement_unit mu
+                INNER JOIN tb_stock_movement m
+                    ON m.movement_id = mu.movement_id
+                INNER JOIN tb_stock_document d
+                    ON d.company_id = m.company_id
+                   AND d.document_id = m.document_id
+                WHERE mu.unit_id = i.unit_id
+                  AND m.company_id = i.company_id
+                  AND m.movement_type = 'INBOUND'
+                  AND m.canceled_movement_id IS NULL
+                ORDER BY d.created_at DESC, d.document_id DESC
+                LIMIT 1
+            ) AS document_no,
+            i.unit_id,
+            u.internal_serial_no,
+            p.part_id,
+            p.part_name,
+            p.model_name,
+            i.template_id,
+            t.template_name,
+            i.result,
+            i.grade,
+            i.sales_status,
+            i.memo,
+            COALESCE(mb.name, '-') AS inspected_by_name,
+            i.inspected_at
+        FROM tb_inspection i
+        INNER JOIN tb_pc_part_unit u
+            ON u.company_id = i.company_id
+           AND u.unit_id = i.unit_id
+        INNER JOIN tb_pc_part p
+            ON p.company_id = u.company_id
+           AND p.part_id = u.part_id
+        LEFT JOIN tb_inspection_template t
+            ON t.company_id = i.company_id
+           AND t.template_id = i.template_id
+        LEFT JOIN tb_member mb
+            ON mb.company_id = i.company_id
+           AND mb.member_id = i.inspected_by
+    </sql>
+
+    <select id="searchHistories" resultType="com.pcs.domain.inspection.dto.response.SearchInspectionHistoryResponse">
+        <include refid="historySelect" />
+        <include refid="historyWhere" />
+        ORDER BY i.inspected_at DESC, i.inspection_id DESC
+        LIMIT #{size}
+        OFFSET #{offset}
+    </select>
+
+    <select id="countHistories" resultType="long">
+        SELECT COUNT(*)
+        FROM tb_inspection i
+        INNER JOIN tb_pc_part_unit u
+            ON u.company_id = i.company_id
+           AND u.unit_id = i.unit_id
+        INNER JOIN tb_pc_part p
+            ON p.company_id = u.company_id
+           AND p.part_id = u.part_id
+        <include refid="historyWhere" />
+    </select>
+
+    <select id="summarizeHistories" resultType="com.pcs.domain.inspection.dto.response.SearchInspectionHistorySummaryResponse">
+        SELECT
+            COUNT(*) AS total_count,
+            COALESCE(SUM(CASE WHEN i.inspection_type = 'INITIAL' THEN 1 ELSE 0 END), 0) AS initial_count,
+            COALESCE(SUM(CASE WHEN i.inspection_type = 'CORRECTION' THEN 1 ELSE 0 END), 0) AS correction_count,
+            COALESCE(SUM(CASE WHEN i.inspection_type = 'REINSPECTION' THEN 1 ELSE 0 END), 0) AS reinspection_count,
+            COALESCE(SUM(CASE WHEN i.result = 'FAIL' THEN 1 ELSE 0 END), 0) AS fail_count,
+            COALESCE(SUM(CASE WHEN i.grade = 'DEFECTIVE' THEN 1 ELSE 0 END), 0) AS defective_count
+        FROM tb_inspection i
+        INNER JOIN tb_pc_part_unit u
+            ON u.company_id = i.company_id
+           AND u.unit_id = i.unit_id
+        INNER JOIN tb_pc_part p
+            ON p.company_id = u.company_id
+           AND p.part_id = u.part_id
+        <include refid="historyWhere" />
+    </select>
+
+    <select id="findHistoryDetail" resultType="com.pcs.domain.inspection.dto.response.InspectionHistoryDetailRow">
+        <include refid="historySelect" />
+        WHERE i.company_id = #{companyId}
+          AND i.inspection_id = #{inspectionId}
+        LIMIT 1
+    </select>
+
+    <select id="findItemResults" resultType="com.pcs.domain.inspection.dto.response.InspectionItemResultResponse">
+        SELECT
+            item_result_id,
+            inspection_id,
+            item_id,
+            item_name_snapshot,
+            result,
+            value_text,
+            value_number,
+            selected_option_id,
+            selected_option_label_snapshot,
+            selected_option_value_snapshot,
+            memo
+        FROM tb_inspection_item_result
+        WHERE inspection_id = #{inspectionId}
+        ORDER BY item_result_id ASC
+    </select>
+
+    <select id="findInspection" resultType="com.pcs.domain.inspection.entity.Inspection">
+        SELECT
+            inspection_id,
+            company_id,
+            unit_id,
+            template_id,
+            inspected_by,
+            inspection_type,
+            original_inspection_id,
+            sales_status,
+            result,
+            grade,
+            memo,
+            inspected_at
+        FROM tb_inspection
+        WHERE company_id = #{companyId}
+          AND inspection_id = #{inspectionId}
+        LIMIT 1
+    </select>
+
+    <select id="findPartUnitForUpdate" resultType="com.pcs.domain.inspection.dto.response.InspectionPartUnitRow">
+        SELECT
+            u.unit_id,
+            u.company_id,
+            u.part_id,
+            p.category_id,
+            u.internal_serial_no,
+            u.unit_status,
+            u.grade,
+            u.inspection_status,
+            u.sales_status,
+            u.active
+        FROM tb_pc_part_unit u
+        INNER JOIN tb_pc_part p
+            ON p.company_id = u.company_id
+           AND p.part_id = u.part_id
+        WHERE u.company_id = #{companyId}
+          AND u.unit_id = #{unitId}
+        FOR UPDATE
+    </select>
+
+    <select id="findActiveTemplate" resultType="com.pcs.domain.inspection.entity.InspectionTemplate">
+        SELECT
+            template_id,
+            company_id,
+            category_id,
+            template_name,
+            version,
+            active,
+            created_by,
+            created_at,
+            updated_at
+        FROM tb_inspection_template
+        WHERE company_id = #{companyId}
+          AND template_id = #{templateId}
+          AND active = TRUE
+        LIMIT 1
+    </select>
+
+    <select id="findActiveTemplateItems" resultType="com.pcs.domain.inspection.entity.InspectionTemplateItem">
+        SELECT
+            item_id,
+            template_id,
+            item_group,
+            item_name,
+            input_type,
+            required,
+            sort_order,
+            grade_impact,
+            fail_policy,
+            active
+        FROM tb_inspection_template_item
+        WHERE template_id = #{templateId}
+          AND active = TRUE
+        ORDER BY item_group ASC, sort_order ASC, item_id ASC
+    </select>
+
+    <select id="findActiveTemplateOptions" resultType="com.pcs.domain.inspection.dto.response.InspectionTemplateOptionRow">
+        SELECT
+            option_id,
+            item_id,
+            option_label,
+            option_value,
+            active
+        FROM tb_inspection_template_item_option
+        WHERE item_id IN (
+            SELECT item_id
+            FROM tb_inspection_template_item
+            WHERE template_id = #{templateId}
+              AND active = TRUE
+        )
+          AND active = TRUE
+        ORDER BY item_id ASC, sort_order ASC, option_id ASC
+    </select>
+
+    <insert id="insertInspection"
+            parameterType="com.pcs.domain.inspection.entity.Inspection"
+            useGeneratedKeys="true"
+            keyProperty="inspectionId">
+        INSERT INTO tb_inspection (
+            company_id,
+            unit_id,
+            template_id,
+            inspected_by,
+            inspection_type,
+            original_inspection_id,
+            sales_status,
+            result,
+            grade,
+            memo,
+            inspected_at
+        ) VALUES (
+            #{companyId},
+            #{unitId},
+            #{templateId},
+            #{inspectedBy},
+            #{inspectionType},
+            #{originalInspectionId},
+            #{salesStatus},
+            #{result},
+            #{grade},
+            #{memo},
+            #{inspectedAt}
+        )
+    </insert>
+
+    <insert id="insertItemResult"
+            parameterType="com.pcs.domain.inspection.entity.InspectionItemResult"
+            useGeneratedKeys="true"
+            keyProperty="itemResultId">
+        INSERT INTO tb_inspection_item_result (
+            inspection_id,
+            item_id,
+            item_name_snapshot,
+            result,
+            value_text,
+            value_number,
+            selected_option_id,
+            selected_option_label_snapshot,
+            selected_option_value_snapshot,
+            memo
+        ) VALUES (
+            #{inspectionId},
+            #{itemId},
+            #{itemNameSnapshot},
+            #{result},
+            #{valueText},
+            #{valueNumber},
+            #{selectedOptionId},
+            #{selectedOptionLabelSnapshot},
+            #{selectedOptionValueSnapshot},
+            #{memo}
+        )
+    </insert>
+
+    <update id="updatePartUnitInspectionStatus">
+        UPDATE tb_pc_part_unit
+        SET inspection_status = #{inspectionStatus},
+            grade = #{grade},
+            sales_status = #{salesStatus}
+        WHERE company_id = #{companyId}
+          AND unit_id = #{unitId}
+    </update>
+
+    <insert id="insertPartStatusHistory"
+            parameterType="com.pcs.domain.inspection.entity.PartStatusHistory"
+            useGeneratedKeys="true"
+            keyProperty="historyId">
+        INSERT INTO tb_part_status_history (
+            company_id,
+            unit_id,
+            changed_by,
+            from_inspection_status,
+            to_inspection_status,
+            from_grade,
+            to_grade,
+            from_sales_status,
+            to_sales_status,
+            reason
+        ) VALUES (
+            #{companyId},
+            #{unitId},
+            #{changedBy},
+            #{fromInspectionStatus},
+            #{toInspectionStatus},
+            #{fromGrade},
+            #{toGrade},
+            #{fromSalesStatus},
+            #{toSalesStatus},
+            #{reason}
+        )
+    </insert>
+
+</mapper>

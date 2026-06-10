@@ -81,6 +81,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 
 - 부품 목록 JS 작성 → `docs/features/part.md`
 - 검수 등록 JS 작성 → `docs/features/inspection.md`
+- 검수 템플릿 관리 JS 작성 → `docs/features/inspection-template.md`
 - 로그인 JS 작성 → `docs/features/auth.md` + `docs/ai/pcs-auth-client-rules.md`
 - 대시보드/거래처/부품 등 업무 화면 API 연동 → 해당 기능 문서 + `docs/ai/pcs-auth-client-rules.md`
 
@@ -123,6 +124,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - 업체 로그인 구현 → `docs/features/auth.md`
 - 입고 전표 등록 구현 → `docs/features/stock.md`
 - 거래처/부품/입출고/검수 API 구현 → 해당 기능 문서 + `docs/ai/pcs-auth-client-rules.md`
+- 검수 템플릿 API 구현 → `docs/features/inspection-template.md` + `docs/ai/pcs-auth-client-rules.md`
 
 ---
 
@@ -145,6 +147,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - 페이징 목록 SQL 작성 → `docs/ai/pcs-pagination-rules.md`
 - 품목 저장/수정 SQL 작성 → `docs/features/part.md` + `docs/features/part-db.md`
 - 카테고리 SQL/DB 검증 작성 → `docs/features/category.md` + `docs/features/category-db.md`
+- 검수/검수 템플릿 SQL/DB 검증 작성 → `docs/features/inspection.md` + `docs/features/inspection-template.md` + `docs/features/inspection-db.md`
 
 SQL 참조 기준:
 
