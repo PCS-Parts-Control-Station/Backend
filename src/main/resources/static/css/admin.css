@@ -1760,6 +1760,9 @@ textarea:focus {
 .spec-detail-list {
     display: grid;
     gap: 8px;
+    max-height: 420px;
+    overflow-y: auto;
+    padding-right: 4px;
 }
 
 .spec-detail-list p {
