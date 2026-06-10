@@ -58,7 +58,10 @@ public enum ErrorCode {
     INSPECTION_TEMPLATE_NOT_FOUND(HttpStatus.NOT_FOUND, "INSPECTION-002", "검수 템플릿을 찾을 수 없습니다."),
     INSPECTION_TEMPLATE_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "INSPECTION-003", "검수 항목을 찾을 수 없습니다."),
     INSPECTION_TEMPLATE_OPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "INSPECTION-004", "검수 선택지를 찾을 수 없습니다."),
-    INSPECTION_ALREADY_COMPLETED(HttpStatus.CONFLICT, "INSPECTION-005", "이미 검수 완료된 개별 부품입니다.");
+    INSPECTION_ALREADY_COMPLETED(HttpStatus.CONFLICT, "INSPECTION-005", "이미 검수 완료된 개별 부품입니다."),
+    INSPECTION_TEMPLATE_DUPLICATED(HttpStatus.CONFLICT, "INSPECTION-006", "이미 등록된 검수 템플릿입니다."),
+    INSPECTION_TEMPLATE_ITEM_DUPLICATED(HttpStatus.CONFLICT, "INSPECTION-007", "이미 등록된 검수 항목입니다."),
+    INSPECTION_TEMPLATE_OPTION_DUPLICATED(HttpStatus.CONFLICT, "INSPECTION-008", "이미 등록된 검수 선택지입니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
