@@ -12,10 +12,7 @@ import jakarta.validation.constraints.Size;
 import java.util.List;
 
 @ValidInspectionDecision
-public record CreateInspectionRequest(
-        @NotNull(message = "unitId는 필수입니다.")
-        Long unitId,
-
+public record CreateInspectionRevisionRequest(
         Long templateId,
 
         @NotNull(message = "result는 필수입니다.")

@@ -7,14 +7,16 @@ import com.pcs.domain.inspection.validation.ValidInspectionDecision;
 import com.pcs.domain.part.type.PartGrade;
 import com.pcs.domain.part.type.SalesStatus;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 
 @ValidInspectionDecision
-public record CreateInspectionRequest(
-        @NotNull(message = "unitId는 필수입니다.")
-        Long unitId,
+public record CreateBulkInspectionRequest(
+        @NotEmpty(message = "unitIds는 1개 이상 필요합니다.")
+        @Size(max = 100, message = "한 번에 최대 100개까지 검수할 수 있습니다.")
+        List<@NotNull Long> unitIds,
 
         Long templateId,
 
