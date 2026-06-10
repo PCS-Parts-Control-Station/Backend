@@ -2,6 +2,7 @@ package com.pcs.domain.category.api;
 
 import com.pcs.domain.category.dto.request.CreateCategoryRequest;
 import com.pcs.domain.category.dto.request.UpdateCategoryRequest;
+import com.pcs.domain.category.dto.response.CategoryDetailResponse;
 import com.pcs.domain.category.dto.response.SearchCategoryResponse;
 import com.pcs.domain.category.facade.CategoryFacade;
 import com.pcs.global.dto.ApiResultDto;
@@ -52,35 +53,35 @@ public class CategoryApiController {
     }
 
     @PostMapping("/workspaces/{companyCode}/categories")
-    public ResponseEntity<ApiResultDto<SearchCategoryResponse>> createCategory(
+    public ResponseEntity<ApiResultDto<CategoryDetailResponse>> createCategory(
             @PathVariable String companyCode,
             @AuthenticationPrincipal PcsPrincipal principal,
             @Valid @RequestBody CreateCategoryRequest request
     ) {
-        SearchCategoryResponse response = categoryFacade.createCategory(principal, companyCode, request);
+        CategoryDetailResponse response = categoryFacade.createCategory(principal, companyCode, request);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResultDto.ok("카테고리 등록이 완료되었습니다.", response));
     }
 
     @GetMapping("/workspaces/{companyCode}/categories/{categoryId}")
-    public ResponseEntity<ApiResultDto<SearchCategoryResponse>> getCategory(
+    public ResponseEntity<ApiResultDto<CategoryDetailResponse>> getCategory(
             @PathVariable String companyCode,
             @PathVariable Long categoryId,
             @AuthenticationPrincipal PcsPrincipal principal
     ) {
-        SearchCategoryResponse response = categoryFacade.getCategory(principal, companyCode, categoryId);
+        CategoryDetailResponse response = categoryFacade.getCategory(principal, companyCode, categoryId);
         return ResponseEntity.ok(ApiResultDto.ok(response));
     }
 
     @PatchMapping("/workspaces/{companyCode}/categories/{categoryId}")
-    public ResponseEntity<ApiResultDto<SearchCategoryResponse>> updateCategory(
+    public ResponseEntity<ApiResultDto<CategoryDetailResponse>> updateCategory(
             @PathVariable String companyCode,
             @PathVariable Long categoryId,
             @AuthenticationPrincipal PcsPrincipal principal,
             @Valid @RequestBody UpdateCategoryRequest request
     ) {
-        SearchCategoryResponse response = categoryFacade.updateCategory(principal, companyCode, categoryId, request);
+        CategoryDetailResponse response = categoryFacade.updateCategory(principal, companyCode, categoryId, request);
         return ResponseEntity.ok(ApiResultDto.ok("카테고리 수정이 완료되었습니다.", response));
     }
 
