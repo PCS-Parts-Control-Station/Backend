@@ -1,0 +1,88 @@
+# Inspection Template Feature
+
+## 목적
+
+검수 등록 화면에서 사용할 동적 입력 양식, 검수 항목, 선택지를 관리한다.
+
+검수 템플릿은 검수 도메인 전용 관리 기능이다. 범용 템플릿 도메인으로 분리하지 않는다.
+
+## 패키지
+
+```text
+com.pcs.domain.inspection
+```
+
+## API
+
+| Method | API | 설명 |
+|---|---|---|
+| GET | `/api/workspaces/{companyCode}/inspection-templates` | 검수 템플릿 목록. `keyword`, `categoryId`, `active`, `page`, `size`, `limit` 지원 |
+| POST | `/api/workspaces/{companyCode}/inspection-templates` | 검수 템플릿 생성 |
+| GET | `/api/workspaces/{companyCode}/inspection-templates/{templateId}` | 검수 템플릿 상세 |
+| PATCH | `/api/workspaces/{companyCode}/inspection-templates/{templateId}` | 검수 템플릿 수정 |
+| PATCH | `/api/workspaces/{companyCode}/inspection-templates/{templateId}/active` | 검수 템플릿 사용 여부 변경 |
+| POST | `/api/workspaces/{companyCode}/inspection-templates/{templateId}/items` | 검수 항목 추가 |
+| PATCH | `/api/workspaces/{companyCode}/inspection-templates/{templateId}/items/{itemId}` | 검수 항목 수정 |
+| PATCH | `/api/workspaces/{companyCode}/inspection-templates/{templateId}/items/{itemId}/active` | 검수 항목 사용 여부 변경 |
+| PATCH | `/api/workspaces/{companyCode}/inspection-templates/{templateId}/items/sort-order` | 검수 항목 순서 일괄 저장 |
+| POST | `/api/workspaces/{companyCode}/inspection-templates/{templateId}/items/{itemId}/options` | 선택지 추가 |
+| PATCH | `/api/workspaces/{companyCode}/inspection-templates/{templateId}/items/{itemId}/options/{optionId}` | 선택지 수정 |
+| PATCH | `/api/workspaces/{companyCode}/inspection-templates/{templateId}/items/{itemId}/options/{optionId}/active` | 선택지 사용 여부 변경 |
+| PATCH | `/api/workspaces/{companyCode}/inspection-templates/{templateId}/items/{itemId}/options/sort-order` | 선택지 순서 일괄 저장 |
+
+## 화면
+
+```text
+src/main/resources/static/inspection-templates.html
+src/main/resources/static/css/inspection-templates.css
+src/main/resources/static/js/inspection-templates.js
+```
+
+화면은 서버 Model을 받지 않고 JS가 `/api/workspaces/{companyCode}/**` API를 호출한다.
+
+카테고리 선택지는 하드코딩하지 않는다. `GET /api/workspaces/{companyCode}/categories?size=100` 응답의 `categoryId`, `categoryName`을 사용한다.
+
+화면 구성:
+
+1. 템플릿 검색과 목록
+2. 템플릿 등록/수정/사용 여부 변경
+3. 항목 목록과 항목 추가/수정/사용 여부 변경
+4. `SELECT` 항목의 선택지 추가/수정/사용 여부 변경
+5. 항목과 선택지 드래그 정렬. 드롭 시 정렬 전용 일괄 API를 1회 호출한다.
+
+## 주요 규칙
+
+- 템플릿은 회사와 카테고리 범위 안에서 관리한다.
+- 템플릿명, 카테고리, 버전 조합은 같은 회사 안에서 중복될 수 없다.
+- 템플릿 목록은 공통 `PageResultDto` 구조로 응답한다.
+- 템플릿 목록 summary에는 전체, 사용 중, 항목 수, 선택지 수를 포함한다.
+- `active = false`인 템플릿은 신규 검수 등록에서 제외한다.
+- 항목은 `BASIC`, `DETAIL` 그룹으로 나눈다.
+- 항목 입력 방식은 `CHECK`, `NUMBER`, `TEXT`, `SELECT` 중 하나다.
+- `SELECT` 항목만 선택지를 가질 수 있다.
+- 선택지의 `optionValue`가 없으면 서버가 `optionLabel`을 저장 코드로 사용한다.
+- 항목/선택지 정렬은 클라이언트가 ID 순서만 보내고 서버가 `sortOrder`를 10 단위로 재계산한다.
+- 항목 정렬 요청은 해당 템플릿과 항목 그룹에 속한 ID만 허용한다.
+- 선택지 정렬 요청은 `SELECT` 항목과 해당 항목에 속한 선택지 ID만 허용한다.
+- 템플릿, 항목, 선택지는 하드 삭제하지 않고 `active`로 사용 여부를 바꾼다.
+- 과거 검수 결과는 템플릿 수정의 영향을 받지 않도록 snapshot으로 유지한다.
+
+## 항목 필드
+
+| 필드 | 설명 |
+|---|---|
+| `itemName` | 검수 항목명 |
+| `itemGroup` | `BASIC`, `DETAIL` |
+| `inputType` | `CHECK`, `NUMBER`, `TEXT`, `SELECT` |
+| `required` | 필수 입력 여부 |
+| `sortOrder` | 표시 순서 |
+| `gradeImpact` | `HIGH`, `MEDIUM`, `LOW` |
+| `failPolicy` | 화면 라벨은 `불합격 시 처리`. 값은 `NONE`, `GRADE_DOWN`, `MARK_DEFECTIVE`, `BLOCK_SALE` |
+
+## 하네스 포인트
+
+- 모든 조회/수정은 `companyId` 범위를 검증해야 한다.
+- 템플릿 생성/수정 시 카테고리가 같은 회사 소속인지 확인해야 한다.
+- `inputType = SELECT`인 항목만 선택지를 추가/수정할 수 있다.
+- `active` 변경은 하드 삭제가 아니며 과거 검수 이력을 변경하지 않아야 한다.
+- 검수 템플릿 DB 구조와 제약은 `docs/features/inspection-db.md` 기준으로 검증한다.
