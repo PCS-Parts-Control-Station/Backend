@@ -62,6 +62,48 @@ window.PcsTable.emptyRow(table, options)
 - 빈 목록/로딩/오류 행은 `PcsTable.emptyRow()`를 우선 사용한다.
 - 화면별 JS는 도메인별 렌더링, 이벤트 연결, API URL 조립에 집중한다.
 
+## 관리형 페이지 JS 기준
+
+품목 관리, 품목 분류, 거래처 관리, 사용자 관리처럼 검색/목록/등록/수정 패널을 함께 쓰는 화면은 같은 JS 흐름을 따른다.
+
+기준:
+
+- 업체 코드 추출은 `window.PcsWorkspace.getCompanyCode()`를 사용한다.
+- 날짜/숫자 포맷은 `window.PcsFormat`을 사용한다.
+- 토스트는 `window.PcsFeedback.toast()`를 사용한다.
+- 저장 중 폼 상태는 `window.PcsForm.setSaving()`을 사용한다.
+- 빈 목록, 로딩, 오류 행은 `window.PcsTable.emptyRow()`를 사용한다.
+- 텍스트 셀 생성은 `window.PcsTable.textCell()`을 우선 사용한다.
+- 화면별 JS에는 해당 화면의 API URL, 폼 값 읽기, 행 렌더링, 이벤트 연결만 남긴다.
+
+금지:
+
+```js
+const getCompanyCode = () => { ... };
+const showToast = (message, type) => { window.PcsUi.toast(...); };
+const setFormSaving = (form, isSaving) => { form.querySelectorAll(...); };
+```
+
+허용:
+
+```js
+const getCompanyCode = window.PcsWorkspace.getCompanyCode;
+const showToast = window.PcsFeedback.toast;
+const setFormSaving = window.PcsForm.setSaving;
+const setEmptyMessage = (message) => window.PcsTable.emptyRow(table, { message });
+```
+
+공통 함수 사용 후 특정 화면만 후처리가 필요하면 얇은 래퍼만 둔다.
+
+```js
+const setFormSaving = (form, isSaving, text = "저장 중") => {
+    window.PcsForm.setSaving(form, isSaving, text);
+    if (!isSaving && form === editForm) {
+        renderEditSpecs();
+    }
+};
+```
+
 ## API 호출
 
 인증이 필요한 API 호출의 상세 기준은 `docs/ai/pcs-auth-client-rules.md`를 따른다.

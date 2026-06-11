@@ -294,6 +294,49 @@ function Test-JavaScriptSyntax {
     Add-Result "INFO" "JS_SYNTAX" "JS syntax check passed."
 }
 
+function Test-FrontendCommonUtilityReuse {
+    $jsRoot = Join-Path $ProjectRoot "src/main/resources/static/js"
+    $managementPages = @(
+        "partners.js",
+        "categories.js",
+        "parts.js",
+        "users.js"
+    )
+
+    foreach ($fileName in $managementPages) {
+        $filePath = Join-Path $jsRoot $fileName
+        if (-not (Test-Path $filePath)) {
+            continue
+        }
+
+        $content = Get-Content -Raw -Encoding UTF8 -Path $filePath
+        $duplicated = New-Object System.Collections.Generic.List[string]
+
+        if ($content -match 'const\s+getCompanyCode\s*=\s*\(\)\s*=>') {
+            $duplicated.Add("companyCode extraction") | Out-Null
+        }
+        if ($content -match 'const\s+formatDate\s*=\s*\([^)]*\)\s*=>') {
+            $duplicated.Add("date formatting") | Out-Null
+        }
+        if ($content -match 'const\s+numberText\s*=\s*\([^)]*\)\s*=>') {
+            $duplicated.Add("number formatting") | Out-Null
+        }
+        if ($content -match 'window\.PcsUi\??\.toast') {
+            $duplicated.Add("toast feedback") | Out-Null
+        }
+        if ($content -match 'querySelectorAll\("button, input') {
+            $duplicated.Add("form saving state") | Out-Null
+        }
+        if ($content -match 'const\s+setEmptyMessage\s*=\s*\([^)]*\)\s*=>\s*\{') {
+            $duplicated.Add("empty table row rendering") | Out-Null
+        }
+
+        if ($duplicated.Count -gt 0) {
+            Add-Result "WARN" "FRONTEND_COMMON_UTILITY_REUSE" "$fileName appears to reimplement common frontend utilities: $($duplicated -join ', ')." "Use pcs-common.js helpers described in docs/ai/pcs-frontend-js-rules.md."
+        }
+    }
+}
+
 function Test-FullModeStructure {
     $requiredDomains = @(
         "auth",
@@ -1912,6 +1955,7 @@ Test-ProjectSettings
 Test-ForbiddenAlways
 Test-NoFeatureCodeBeforeSpec
 Test-JavaScriptSyntax
+Test-FrontendCommonUtilityReuse
 
 if ($CheckPort) {
     Test-PortAvailable

@@ -246,17 +246,20 @@
 
     const createStackedCell = (label, primary, secondary, className = "part-meta-cell") => {
         const cell = document.createElement("span");
+        const primaryText = primary || "-";
+        const secondaryText = secondary || "";
         cell.className = className;
         cell.setAttribute("role", "cell");
         cell.setAttribute("data-label", label);
+        cell.title = secondaryText ? `${primaryText} / ${secondaryText}` : primaryText;
 
         const primaryElement = document.createElement("strong");
-        primaryElement.textContent = primary || "-";
+        primaryElement.textContent = primaryText;
         cell.append(primaryElement);
 
-        if (secondary) {
+        if (secondaryText) {
             const secondaryElement = document.createElement("small");
-            secondaryElement.textContent = secondary;
+            secondaryElement.textContent = secondaryText;
             cell.append(secondaryElement);
         }
 

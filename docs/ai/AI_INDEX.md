@@ -95,6 +95,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - 검수 템플릿 관리 JS 작성 → `docs/features/inspection-template.md`
 - 로그인 JS 작성 → `docs/features/auth.md` + `docs/ai/pcs-auth-client-rules.md`
 - 대시보드/거래처/품목 등 업무 화면 API 연동 → 해당 기능 문서 + `docs/ai/pcs-auth-client-rules.md`
+- 품목 관리/품목 분류/거래처 관리/사용자 관리 같은 관리형 페이지 JS 수정 → `docs/ai/pcs-frontend-js-rules.md`의 "관리형 페이지 JS 기준" + `src/main/resources/static/js/pcs-common.js` + `src/main/resources/static/js/pcs-pagination.js`
 
 ---
 
@@ -221,6 +222,7 @@ SQL 참조 기준:
 - 페이징 query, 응답 정규화, 스크롤 보존: `src/main/resources/static/js/pcs-pagination.js`
 - 토스트/공통 UI 피드백: `src/main/resources/static/js/pcs-ui.js`
 - 회사 코드 추출, 링크 갱신, 포맷, 공통 폼/테이블 유틸: `src/main/resources/static/js/pcs-common.js`
+- 관리형 페이지의 검색/목록/등록/수정 JS 기준: `docs/ai/pcs-frontend-js-rules.md`
 
 사양 항목:
 

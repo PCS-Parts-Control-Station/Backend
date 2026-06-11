@@ -83,7 +83,9 @@
         if (label) {
             cell.setAttribute("data-label", label);
         }
-        cell.textContent = text || "-";
+        const value = text || "-";
+        cell.textContent = value;
+        cell.title = value;
         return cell;
     };
 
