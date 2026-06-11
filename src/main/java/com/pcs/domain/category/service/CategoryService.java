@@ -13,6 +13,7 @@ import com.pcs.domain.category.entity.PartCategory;
 import com.pcs.domain.category.entity.PartSpecDefinition;
 import com.pcs.domain.category.entity.PartSpecOption;
 import com.pcs.domain.category.mapper.CategoryMapper;
+import com.pcs.domain.category.mapper.PartSpecMapper;
 import com.pcs.domain.category.type.PartSpecInputTypes;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
@@ -37,10 +38,16 @@ public class CategoryService {
     private static final int MAX_SPEC_OPTION_COUNT = 30;
 
     private final CategoryMapper categoryMapper;
+    private final PartSpecMapper partSpecMapper;
     private final WorkspaceAccessValidator workspaceAccessValidator;
 
-    public CategoryService(CategoryMapper categoryMapper, WorkspaceAccessValidator workspaceAccessValidator) {
+    public CategoryService(
+            CategoryMapper categoryMapper,
+            PartSpecMapper partSpecMapper,
+            WorkspaceAccessValidator workspaceAccessValidator
+    ) {
         this.categoryMapper = categoryMapper;
+        this.partSpecMapper = partSpecMapper;
         this.workspaceAccessValidator = workspaceAccessValidator;
     }
 
@@ -109,7 +116,7 @@ public class CategoryService {
         if (request.specDefinitions() != null && partCount > 0) {
             throw new BusinessException(
                     ErrorCode.INVALID_INPUT_VALUE,
-                    "연결된 부품이 있는 카테고리는 스펙 항목을 수정할 수 없습니다."
+                    "연결된 품목이 있는 분류는 사양 항목을 수정할 수 없습니다."
             );
         }
 
@@ -165,7 +172,7 @@ public class CategoryService {
     ) {
         List<CategorySpecDefinitionRequest> specRequests = requests == null ? List.of() : requests;
         if (specRequests.size() > MAX_SPEC_COUNT) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "스펙 항목은 20개 이하로 입력해 주세요.");
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "사양 항목은 20개 이하로 입력해 주세요.");
         }
 
         Set<String> specKeys = new HashSet<>();
@@ -175,12 +182,12 @@ public class CategoryService {
             String specName = TextNormalizer.required(request.specName());
             String specNameKey = specName.toLowerCase(Locale.ROOT);
             if (!specNames.add(specNameKey)) {
-                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "중복된 스펙 항목명이 있습니다.");
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "중복된 사양 항목명이 있습니다.");
             }
 
             String specKey = normalizeSpecKey(request.specKey(), index);
             if (!specKeys.add(specKey)) {
-                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "중복된 스펙 키가 있습니다.");
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "중복된 사양 항목 키가 있습니다.");
             }
 
             String inputType = PartSpecInputTypes.normalizeOrDefault(request.inputType());
@@ -215,7 +222,7 @@ public class CategoryService {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, specName + " 선택지를 1개 이상 입력해 주세요.");
         }
         if (optionRequests.size() > MAX_SPEC_OPTION_COUNT) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "스펙 선택지는 30개 이하로 입력해 주세요.");
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "사양 선택지는 30개 이하로 입력해 주세요.");
         }
 
         Set<String> optionValues = new HashSet<>();
@@ -228,7 +235,7 @@ public class CategoryService {
             }
             String optionValueKey = optionValue.toLowerCase(Locale.ROOT);
             if (!optionValues.add(optionValueKey)) {
-                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "중복된 스펙 선택지가 있습니다.");
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "중복된 사양 선택지가 있습니다.");
             }
 
             PartSpecOption option = new PartSpecOption(
@@ -242,7 +249,7 @@ public class CategoryService {
     }
 
     private List<CategorySpecDefinitionResponse> findSpecDefinitions(Long companyId, Long categoryId) {
-        List<CategorySpecDefinitionRow> rows = categoryMapper.findSpecDefinitions(companyId, categoryId);
+        List<CategorySpecDefinitionRow> rows = partSpecMapper.findDefinitionsByCategory(companyId, categoryId);
         if (rows.isEmpty()) {
             return List.of();
         }
@@ -250,7 +257,7 @@ public class CategoryService {
         List<Long> specDefinitionIds = rows.stream()
                 .map(CategorySpecDefinitionRow::specDefinitionId)
                 .toList();
-        Map<Long, List<CategorySpecOptionResponse>> optionsByDefinitionId = categoryMapper.findSpecOptions(specDefinitionIds)
+        Map<Long, List<CategorySpecOptionResponse>> optionsByDefinitionId = partSpecMapper.findOptionsByDefinitionIds(specDefinitionIds)
                 .stream()
                 .collect(Collectors.groupingBy(CategorySpecOptionResponse::specDefinitionId));
 

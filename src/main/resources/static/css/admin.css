@@ -305,6 +305,15 @@ strong {
     transform: translateX(-102%);
 }
 
+.has-collapsible-sidebar .workspace-sidebar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.has-collapsible-sidebar .workspace-sidebar::-webkit-scrollbar {
+    display: none;
+}
+
 .has-collapsible-sidebar.sidebar-animating .workspace-sidebar {
     transition: transform 220ms ease;
 }

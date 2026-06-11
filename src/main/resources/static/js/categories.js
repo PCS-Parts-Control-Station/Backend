@@ -199,7 +199,7 @@
 
         if (openDeleteModalButton) {
             openDeleteModalButton.title = Number(category.partCount || 0) > 0
-                ? "연결된 부품 종류가 있어 삭제할 수 없습니다."
+                ? "연결된 품목이 있어 삭제할 수 없습니다."
                 : "";
         }
     };
@@ -356,7 +356,7 @@
             return;
         }
         if (owner === "edit" && !editSpecsEditable) {
-            showToast("연결된 부품 종류가 있는 분류는 사양 항목을 수정할 수 없습니다.", "error");
+            showToast("연결된 품목이 있는 분류는 사양 항목을 수정할 수 없습니다.", "error");
             return;
         }
 
@@ -383,7 +383,7 @@
         specModalTitle.textContent = spec ? "사양 항목을 수정합니다." : "사양 항목을 추가합니다.";
         specModalDescription.textContent = spec
             ? "선택한 사양 항목의 이름, 입력 방식, 선택지를 수정합니다."
-            : "부품 등록 때 입력받을 항목 기준을 설정합니다.";
+            : "품목 등록 때 입력받을 항목 기준을 설정합니다.";
         specModalSubmit.textContent = spec ? "수정" : "추가";
         specModalSubmit.dataset.defaultText = specModalSubmit.textContent;
         specModal.showModal();
@@ -496,7 +496,7 @@
             row.append(
                 createTextCell("분류명", category.categoryName, "strong"),
                 createTextCell("설명", category.description),
-                createTextCell("부품 종류 수", `${numberText(category.partCount)}개`),
+                createTextCell("품목 수", `${numberText(category.partCount)}개`),
                 createTextCell("수정일", formatDate(category.updatedAt))
             );
 
@@ -586,7 +586,7 @@
 
         const partCount = Number(category.partCount || 0);
         if (partCount > 0) {
-            showToast("연결된 부품 종류가 있는 분류는 삭제할 수 없습니다.", "error");
+            showToast("연결된 품목이 있는 분류는 삭제할 수 없습니다.", "error");
             return;
         }
 
@@ -725,7 +725,7 @@
             const index = Number(removeButton.dataset.specIndex);
             if (owner === "edit") {
                 if (!editSpecsEditable) {
-                    showToast("연결된 부품 종류가 있는 분류는 사양 항목을 수정할 수 없습니다.", "error");
+                    showToast("연결된 품목이 있는 분류는 사양 항목을 수정할 수 없습니다.", "error");
                     return;
                 }
                 editSpecs.splice(index, 1);

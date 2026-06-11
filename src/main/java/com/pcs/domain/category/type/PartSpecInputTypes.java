@@ -26,7 +26,7 @@ public final class PartSpecInputTypes {
 
         inputType = inputType.toUpperCase(Locale.ROOT);
         if (!VALUES.contains(inputType)) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "스펙 입력 방식이 올바르지 않습니다.");
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "사양 입력 방식이 올바르지 않습니다.");
         }
         return inputType;
     }

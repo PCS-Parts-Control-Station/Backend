@@ -2,6 +2,7 @@ package com.pcs.domain.part.service;
 
 import com.pcs.domain.category.dto.response.CategorySpecDefinitionRow;
 import com.pcs.domain.category.dto.response.CategorySpecOptionResponse;
+import com.pcs.domain.category.mapper.PartSpecMapper;
 import com.pcs.domain.category.type.PartSpecInputTypes;
 import com.pcs.domain.part.dto.request.CreatePartRequest;
 import com.pcs.domain.part.dto.request.PartSpecValueRequest;
@@ -41,10 +42,16 @@ public class PartService {
     private static final int MAX_CODE_ATTEMPT = 999;
 
     private final PartMapper partMapper;
+    private final PartSpecMapper partSpecMapper;
     private final WorkspaceAccessValidator workspaceAccessValidator;
 
-    public PartService(PartMapper partMapper, WorkspaceAccessValidator workspaceAccessValidator) {
+    public PartService(
+            PartMapper partMapper,
+            PartSpecMapper partSpecMapper,
+            WorkspaceAccessValidator workspaceAccessValidator
+    ) {
         this.partMapper = partMapper;
+        this.partSpecMapper = partSpecMapper;
         this.workspaceAccessValidator = workspaceAccessValidator;
     }
 
@@ -87,7 +94,7 @@ public class PartService {
     public PartDetailResponse createPart(Long companyId, CreatePartRequest request, Long memberId) {
         validateCompanyActive(companyId);
         String categoryName = validateCategory(companyId, request.categoryId());
-        List<CategorySpecDefinitionRow> definitions = partMapper.findSpecDefinitionsByCategory(
+        List<CategorySpecDefinitionRow> definitions = partSpecMapper.findDefinitionsByCategory(
                 companyId,
                 request.categoryId()
         );
@@ -132,7 +139,7 @@ public class PartService {
         }
 
         String categoryName = validateCategory(companyId, request.categoryId());
-        List<CategorySpecDefinitionRow> definitions = partMapper.findSpecDefinitionsByCategory(
+        List<CategorySpecDefinitionRow> definitions = partSpecMapper.findDefinitionsByCategory(
                 companyId,
                 request.categoryId()
         );
@@ -199,7 +206,7 @@ public class PartService {
         List<Long> definitionIds = definitions.stream()
                 .map(CategorySpecDefinitionRow::specDefinitionId)
                 .toList();
-        Map<Long, List<CategorySpecOptionResponse>> optionsByDefinition = partMapper.findSpecOptions(definitionIds)
+        Map<Long, List<CategorySpecOptionResponse>> optionsByDefinition = partSpecMapper.findOptionsByDefinitionIds(definitionIds)
                 .stream()
                 .collect(Collectors.groupingBy(CategorySpecOptionResponse::specDefinitionId));
 

@@ -751,7 +751,9 @@ function Test-CategoryFeature {
     Test-PathRequired "src/main/java/com/pcs/domain/category/facade/CategoryFacade.java" "CATEGORY_FACADE" "Keep category company-scope validation in category/facade."
     Test-PathRequired "src/main/java/com/pcs/domain/category/service/CategoryService.java" "CATEGORY_SERVICE" "Keep category business rules in category/service."
     Test-PathRequired "src/main/java/com/pcs/domain/category/mapper/CategoryMapper.java" "CATEGORY_MAPPER" "Keep MyBatis mapper interface for category persistence."
+    Test-PathRequired "src/main/java/com/pcs/domain/category/mapper/PartSpecMapper.java" "CATEGORY_PART_SPEC_MAPPER" "Keep shared part spec read mapper in category/mapper."
     Test-PathRequired "src/main/resources/mapper/category/CategoryMapper.xml" "CATEGORY_MAPPER_XML" "Keep MyBatis mapper XML for category persistence."
+    Test-PathRequired "src/main/resources/mapper/category/PartSpecMapper.xml" "CATEGORY_PART_SPEC_MAPPER_XML" "Keep shared part spec read mapper XML in mapper/category."
 
     $controller = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/category/api/CategoryApiController.java"
     if (Test-Path $controller) {
@@ -766,7 +768,7 @@ function Test-CategoryFeature {
     $service = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/category/service/CategoryService.java"
     if (Test-Path $service) {
         $serviceContent = Get-Content -Raw $service
-        foreach ($pattern in @("DEFAULT_SIZE", "MAX_SIZE", "countCategories", "searchCategories", "existsByName", "createSpecDefinitions", "replaceSpecDefinitions", "insertSpecDefinition", "insertSpecOption", "findSpecDefinitions", "countPartsByCategory", "deleteSpecValuesByCategory", "deleteById", "CATEGORY_IN_USE", "COMPANY_INACTIVE")) {
+        foreach ($pattern in @("PageQuery", "TextNormalizer", "validateCompanyActive", "countCategories", "searchCategories", "existsByName", "createSpecDefinitions", "replaceSpecDefinitions", "insertSpecDefinition", "insertSpecOption", "partSpecMapper.findDefinitionsByCategory", "partSpecMapper.findOptionsByDefinitionIds", "countPartsByCategory", "deleteSpecValuesByCategory", "deleteById", "CATEGORY_IN_USE")) {
             if ($serviceContent -notmatch $pattern) {
                 Add-Result "FAIL" "CATEGORY_SERVICE_PATTERN" "CategoryService is missing required rule pattern: $pattern" "Keep category paging, duplicate-name, delete guard, and inactive-company checks."
             }
@@ -782,6 +784,19 @@ function Test-CategoryFeature {
         foreach ($pattern in @("tb_part_category", "tb_part_spec_definition", "tb_part_spec_option", "tb_part_spec_value", "tb_pc_part", "part_count", "LIMIT", "OFFSET", "COUNT(*)", "updated_at DESC", "category_id DESC", "DELETE FROM tb_part_spec_value", "DELETE FROM tb_part_category")) {
             if ($mapperXmlContent -notmatch [regex]::Escape($pattern)) {
                 Add-Result "FAIL" "CATEGORY_MAPPER_PATTERN" "CategoryMapper.xml is missing required SQL pattern: $pattern" "Keep category search, partCount, and delete SQL aligned with docs/features/category.md."
+            }
+        }
+    }
+
+    $specMapperXml = Join-Path $ProjectRoot "src/main/resources/mapper/category/PartSpecMapper.xml"
+    if (Test-Path $specMapperXml) {
+        $specMapperXmlContent = Get-Content -Raw $specMapperXml
+        if ($specMapperXmlContent -notmatch 'namespace="com\.pcs\.domain\.category\.mapper\.PartSpecMapper"') {
+            Add-Result "FAIL" "CATEGORY_PART_SPEC_MAPPER_NAMESPACE" "PartSpecMapper.xml namespace does not match PartSpecMapper FQCN." "Match XML namespace to mapper interface."
+        }
+        foreach ($pattern in @("tb_part_spec_definition", "tb_part_spec_option", "findDefinitionsByCategory", "findOptionsByDefinitionIds", "active = TRUE", "ORDER BY sort_order ASC")) {
+            if ($specMapperXmlContent -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "CATEGORY_PART_SPEC_MAPPER_PATTERN" "PartSpecMapper.xml is missing required SQL pattern: $pattern" "Keep shared spec definition/option read SQL in PartSpecMapper.xml."
             }
         }
     }

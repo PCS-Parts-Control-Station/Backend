@@ -227,6 +227,7 @@ SQL 참조 기준:
 사양 항목:
 
 - 사양 입력 타입 기준: `src/main/java/com/pcs/domain/category/type/PartSpecInputTypes.java`
+- 분류별 사양 항목/선택지 공통 조회: `src/main/java/com/pcs/domain/category/mapper/PartSpecMapper.java`, `src/main/resources/mapper/category/PartSpecMapper.xml`
 
 새 기능에서 위와 같은 기능을 다시 만들지 않는다. 먼저 공통 구현을 사용할 수 있는지 확인하고, 부족하면 공통 구현을 확장한다.
 
