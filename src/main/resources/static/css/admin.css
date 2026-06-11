@@ -230,7 +230,9 @@ strong {
 
 .sidebar-footer {
     display: grid;
-    gap: 4px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
     margin-top: auto;
     padding: 14px;
     border: 1px solid var(--line);
@@ -238,16 +240,66 @@ strong {
     background: var(--surface-soft);
 }
 
-.sidebar-footer span {
+.sidebar-session {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+}
+
+.sidebar-session span {
     color: var(--muted);
     font-size: 12px;
     font-weight: 800;
 }
 
-.sidebar-footer strong {
+.sidebar-session strong {
     color: var(--ink);
     font-size: 14px;
     font-weight: 800;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sidebar-account-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sidebar-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 1px solid var(--line-strong);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.76);
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.sidebar-icon-button:hover {
+    border-color: var(--cyan);
+    background: var(--cyan-soft);
+    color: var(--cyan-dark);
+}
+
+.sidebar-icon-button:disabled {
+    cursor: wait;
+    opacity: 0.64;
+}
+
+.sidebar-icon-button svg {
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .workspace-main {

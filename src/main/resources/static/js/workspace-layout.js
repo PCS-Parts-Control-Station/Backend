@@ -9,6 +9,20 @@
         document.body.classList.add("sidebar-collapsed");
     }
 
+    const normalizeRole = (role) => String(role || "").trim().toUpperCase();
+
+    const getAllowedRoles = (element) => {
+        return String(element.dataset.allowedRoles || "")
+            .split(",")
+            .map((role) => normalizeRole(role))
+            .filter(Boolean);
+    };
+
+    const isAllowedForRole = (element, role) => {
+        const allowedRoles = getAllowedRoles(element);
+        return allowedRoles.length === 0 || allowedRoles.includes(normalizeRole(role));
+    };
+
     const applyWorkspaceContext = () => {
         document.querySelectorAll("[data-company-code]").forEach((element) => {
             element.textContent = companyCode;
@@ -50,6 +64,32 @@
                 link.removeAttribute("aria-current");
             }
         });
+    };
+
+    const applyRoleVisibility = (role) => {
+        const normalizedRole = normalizeRole(role);
+        const activeRoute = getActiveRoute();
+        let activeRouteBlocked = false;
+
+        document.querySelectorAll("[data-allowed-roles]").forEach((element) => {
+            const allowed = isAllowedForRole(element, normalizedRole);
+            element.hidden = !allowed;
+
+            const route = element.dataset.route;
+            if (!allowed && route && (route === activeRoute || activeRoute.startsWith(`${route}/`))) {
+                activeRouteBlocked = true;
+            }
+        });
+
+        document.querySelectorAll(".sidebar-group").forEach((group) => {
+            const hasVisibleLink = Array.from(group.querySelectorAll("a[data-route]"))
+                .some((link) => !link.hidden);
+            group.hidden = !hasVisibleLink;
+        });
+
+        if (activeRouteBlocked && window.PcsApi?.redirectToInvalidAccess) {
+            window.PcsApi.redirectToInvalidAccess({ code: "AUTH-006" }, companyCode);
+        }
     };
 
     const bindSidebarToggle = () => {
@@ -125,6 +165,47 @@
         syncToggleState();
     };
 
+    const bindAccountActions = () => {
+        const settingsButton = document.querySelector("[data-sidebar-settings]");
+        const logoutButton = document.querySelector("[data-sidebar-logout]");
+
+        if (settingsButton) {
+            settingsButton.addEventListener("click", () => {
+                window.location.href = `/w/${encodeURIComponent(companyCode)}/users`;
+            });
+        }
+
+        if (!logoutButton) {
+            return;
+        }
+
+        logoutButton.addEventListener("click", async () => {
+            if (logoutButton.dataset.busy === "true") {
+                return;
+            }
+
+            logoutButton.dataset.busy = "true";
+            logoutButton.disabled = true;
+
+            try {
+                if (window.PcsApi?.logout) {
+                    await window.PcsApi.logout();
+                } else {
+                    await fetch("/api/auth/logout", {
+                        method: "POST",
+                        credentials: "same-origin",
+                        headers: {
+                            "Accept": "application/json"
+                        }
+                    });
+                    window.localStorage.removeItem("pcsAccessToken");
+                }
+            } finally {
+                window.location.href = `/w/${encodeURIComponent(companyCode)}`;
+            }
+        });
+    };
+
     const loadSession = async () => {
         const sessionName = document.querySelector("[data-session-name]");
         if (!sessionName || !window.PcsApi || !companyCode) {
@@ -140,8 +221,10 @@
             if (me?.name) {
                 sessionName.textContent = `${me.name} (${me.role})`;
             }
+            applyRoleVisibility(me?.role);
         } catch (error) {
             sessionName.textContent = "로그인 필요";
+            applyRoleVisibility("");
         }
     };
 
@@ -151,6 +234,7 @@
             applyWorkspaceContext();
             applyActiveRoute();
             bindSidebarToggle();
+            bindAccountActions();
             await loadSession();
             return;
         }
@@ -173,6 +257,7 @@
         applyWorkspaceContext();
         applyActiveRoute();
         bindSidebarToggle();
+        bindAccountActions();
         await loadSession();
     };
 

@@ -1,13 +1,13 @@
 ﻿# PCS Harness Report
 
 - Mode: bootstrap
-- Feature: none
+- Feature: auth
 - RunDb: False
 - DbFeature: none
-- GeneratedAt: 2026-06-11 14:34:28
+- GeneratedAt: 2026-06-11 15:51:24
 - FAIL: 0
 - WARN: 0
-- INFO: 4
+- INFO: 6
 
 ## FAIL
 
@@ -23,4 +23,6 @@
 2. [JAVA_17_REQUIRED] Java 17 or later is available.
 3. [JAVA_HOME_17_REQUIRED] JAVA_HOME points to Java 17 or later.
 4. [JS_SYNTAX] JS syntax check passed.
+5. [AUTH_FEATURE] Auth feature checks completed.
+6. [COMPILE_JAVA] compileJava passed.
 
