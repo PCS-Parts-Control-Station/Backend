@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/admin.css?20260604_users">
+    <link rel="stylesheet" href="/css/admin.css?20260611_users_layout">
     <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
 </head>
 <body class="has-collapsible-sidebar">
@@ -37,10 +37,9 @@
                 <section class="filter-card management-filter-card" aria-labelledby="filter-title">
                     <div>
                         <h2 id="filter-title">사용자 검색</h2>
-                        <p>이름, 로그인 아이디, 권한, 상태로 목록을 좁혀 봅니다.</p>
+                        <p>이름, 로그인 아이디, 권한으로 목록을 좁혀 봅니다.</p>
                     </div>
-                    <!-- API: GET /api/workspaces/{companyCode}/users?keyword=&role=&active=&page=&size= -->
-                    <form class="filter-form management-filter-form" action="#" method="get" autocomplete="off" data-user-filter-form>
+                    <form class="filter-form management-filter-form user-filter-form" action="#" method="get" autocomplete="off" data-user-filter-form>
                         <label>
                             <span>검색어</span>
                             <input type="search" name="keyword" placeholder="이름 또는 아이디" autocomplete="off">
@@ -58,7 +57,7 @@
                 </section>
 
                 <section class="table-card" aria-labelledby="user-list-title">
-                    <div class="table-header inline-summary-header">
+                    <div class="table-header inline-summary-header user-list-header">
                         <div>
                             <h2 id="user-list-title">사용자 목록</h2>
                             <p>작업 공간에 등록된 전체 사용자 계정입니다.</p>
@@ -82,13 +81,13 @@
                     </div>
 
                     <div class="data-table" role="table" aria-label="사용자 목록" data-user-table>
-                        <div class="data-row management-data-row table-head" role="row">
+                        <div class="data-row management-data-row user-management-data-row table-head" role="row">
                             <span role="columnheader">이름</span>
                             <span role="columnheader">로그인 아이디</span>
                             <span role="columnheader">권한</span>
                             <span role="columnheader">수정일</span>
                         </div>
-                        <div class="data-row management-data-row empty-data-row" role="row" data-user-empty>
+                        <div class="data-row management-data-row user-management-data-row empty-data-row" role="row" data-user-empty>
                             <span role="cell" data-label="안내">사용자 목록을 불러오는 중입니다.</span>
                         </div>
                     </div>
@@ -106,9 +105,8 @@
                 <div class="panel-card side-work-panel">
                     <div class="panel-mode is-active" data-user-panel="create">
                         <h2 id="user-form-title">사용자 등록</h2>
-                        <p>새 사용자를 등록합니다. 초기 비밀번호는 아이디와 동일하게 설정됩니다.</p>
-                        <!-- API: POST /api/workspaces/{companyCode}/users -->
-                        <form class="category-form" action="#" method="post" autocomplete="off" data-user-create-form>
+                        <p>새 사용자를 등록하고 권한을 지정합니다.</p>
+                        <form class="management-form" action="#" method="post" autocomplete="off" data-user-create-form>
                             <label>
                                 <span>이름</span>
                                 <input type="text" name="memberName" placeholder="예: 홍길동" autocomplete="off" required>
@@ -174,8 +172,7 @@
                             <button class="panel-link-button" type="button" data-user-create-mode>새 사용자 등록</button>
                         </div>
 
-                        <!-- API: PATCH /api/workspaces/{companyCode}/users/{memberId} -->
-                        <form class="category-form" action="#" method="post" autocomplete="off" data-user-edit-form>
+                        <form class="management-form" action="#" method="post" autocomplete="off" data-user-edit-form>
                             <label>
                                 <span>이름</span>
                                 <input type="text" name="memberName" autocomplete="off" required>
@@ -236,7 +233,7 @@
             </div>
             <div data-temp-password-container hidden>
                 <dt>임시 비밀번호</dt>
-                <dd style="color: var(--blue); font-size: 16px; font-family: ui-monospace, monospace;" data-temp-password-value>-</dd>
+                <dd class="mono-value" data-temp-password-value>-</dd>
             </div>
         </dl>
 
