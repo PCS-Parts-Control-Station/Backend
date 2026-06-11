@@ -1,7 +1,7 @@
 # PCS 프로젝트 구조 기준
 
 기능 구현 시 따라야 할 구조 기준이다.  
-현재 PCS는 기본 프로젝트와 하네스 위에 회사 등록, 인증, 거래처, 카테고리 등 일부 기능이 붙기 시작한 단계다.  
+현재 PCS는 기본 프로젝트와 하네스 위에 회사 등록, 인증, 거래처, 품목 분류 등 일부 기능이 붙기 시작한 단계다.  
 새 기능을 추가할 때는 아래 구조를 기준으로 확장하고, 이미 구현된 기능도 같은 기준에서 벗어나면 정리한다.
 
 ## 기본 방향
@@ -128,11 +128,13 @@ CSS와 JS 작성 기준은 화면 유형별 문서를 따른다.
 pcs-api.js
 pcs-pagination.js
 pcs-ui.js
+pcs-common.js
 ```
 
 - 공통 JS 사용 기준은 `docs/ai/pcs-frontend-js-rules.md`를 따른다.
 - 인증 API 호출 방식은 `docs/ai/pcs-auth-client-rules.md`를 따른다.
 - 페이징 목록 화면은 `docs/ai/pcs-pagination-rules.md`를 따른다.
+- 회사 코드 추출, workspace 링크 갱신, 날짜/숫자/금액 포맷, 토스트 래핑, 폼 저장중 처리, 공통 테이블 빈 행 처리는 `pcs-common.js`를 우선 사용한다.
 
 입고 화면 JS:
 
@@ -142,7 +144,7 @@ inbound-register.js
 ```
 
 - `inbound.js`는 입고 전표 목록, 검색, 페이지네이션, 우측 상세 패널, 전표 취소 모달을 담당한다.
-- `inbound-register.js`는 입고 전표 등록, 부품 검색, 부품 라인 편집, 저장 확인 모달을 담당한다.
+- `inbound-register.js`는 입고 전표 등록, 품목 검색, 품목 라인 편집, 저장 확인 모달을 담당한다.
 - 입고 목록은 `pcs-api.js`, `pcs-pagination.js`, `pcs-ui.js`를 함께 사용한다.
 - 입고 등록은 `pcs-api.js`, `pcs-ui.js`를 함께 사용한다.
 
@@ -199,7 +201,7 @@ public StockOutboundResult outbound(...) {
 - Company: 업체 작업 공간, 회사 코드, 회사 활성 상태
 - Member: Owner, Admin, Staff 작업자 계정
 - TradePartner: 입고/출고 거래처
-- PartCategory: 부품 카테고리
+- PartCategory: 품목 분류
 - PcPart: 부품 종류/모델 마스터
 - PcPartUnit: 개별 중고 부품, 관리번호 단위
 - PartStock: 현재 재고 집계
@@ -207,20 +209,40 @@ public StockOutboundResult outbound(...) {
 - StockMovement: 전표 안의 부품별 재고 변화 라인
 - StockMovementUnit: 재고 변화 라인에 포함된 개별 부품 매핑
 - Inspection: 검수, 정정, 재검수 이력
-- InspectionTemplate: 카테고리별 검수 양식
+- InspectionTemplate: 품목 분류별 검수 양식
 - InspectionTemplateItem: 검수 항목
 - InspectionTemplateItemOption: SELECT 항목 선택지
 - InspectionItemResult: 실제 검수 항목별 결과
 - PartStatusHistory: 개별 부품 상태 변경 이력
 - Dashboard: 운영 요약, 우선 처리 목록, 통계 조회
 
+## 공통 구현 위치
+
+새 도메인 구현 전에 같은 기능을 이미 공통으로 제공하는지 먼저 확인한다.
+
+```text
+global/workspace/WorkspaceAccessValidator.java
+global/workspace/WorkspaceMapper.java
+global/pagination/PageQuery.java
+global/util/TextNormalizer.java
+domain/category/type/PartSpecInputTypes.java
+```
+
+기준:
+
+- `/api/workspaces/{companyCode}/**` API의 업체 코드/JWT 회사 범위 검증은 `WorkspaceAccessValidator`를 사용한다.
+- 회사 활성 여부 확인 SQL은 도메인별 Mapper에 반복하지 않고 `WorkspaceMapper`를 사용한다.
+- 목록 API의 page/size/offset 계산은 `PageQuery`를 사용한다.
+- request 문자열의 required/optional trim 처리는 `TextNormalizer`를 사용한다.
+- 품목 분류 사양 입력 타입은 `PartSpecInputTypes` 기준을 사용한다.
+
 ## SQL 중심 기능
 
-- 부품 검색/필터
+- 품목 검색/필터
 - 입출고 이력 조회
 - 검수 이력 조회
 - 상태 변경 이력 조회
-- 카테고리별 재고 수량/가치
+- 품목 분류별 재고 수량/가치
 - 제조사별 재고 수량
 - 등급별 재고 수량
 - 기간별 입고/출고 합계

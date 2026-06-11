@@ -60,25 +60,9 @@
     let specOwner = "create";
     let editingSpecIndex = null;
 
-    const getCompanyCode = () => {
-        const match = window.location.pathname.match(/^\/w\/([^/]+)/);
-        return match ? decodeURIComponent(match[1]) : "";
-    };
-
-    const formatDate = (value) => {
-        if (!value) {
-            return "-";
-        }
-        if (Array.isArray(value)) {
-            const [year, month, day] = value;
-            if (year && month && day) {
-                return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-            }
-        }
-        return String(value).slice(0, 10);
-    };
-
-    const numberText = (value) => Number(value || 0).toLocaleString("ko-KR");
+    const getCompanyCode = window.PcsWorkspace.getCompanyCode;
+    const formatDate = window.PcsFormat.date;
+    const numberText = window.PcsFormat.number;
 
     const cloneSpecs = (items = []) => items.map((spec, index) => ({
         specKey: spec.specKey || null,
@@ -97,12 +81,7 @@
             : []
     }));
 
-    const showToast = (message, type = "info") => {
-        window.PcsUi?.toast({
-            message,
-            type
-        });
-    };
+    const showToast = window.PcsFeedback.toast;
 
     const setPanelMode = (mode) => {
         panelViews.forEach((panel) => {
@@ -127,34 +106,12 @@
         specModalMessage.hidden = !message;
     };
 
-    const clearRows = () => {
-        table?.querySelectorAll(".data-row:not(.table-head)").forEach((row) => row.remove());
-    };
-
-    const setEmptyMessage = (message) => {
-        clearRows();
-        const row = document.createElement("div");
-        row.className = "data-row simple-management-data-row empty-data-row";
-        row.setAttribute("role", "row");
-
-        const cell = document.createElement("span");
-        cell.setAttribute("role", "cell");
-        cell.setAttribute("data-label", "안내");
-        cell.textContent = message;
-
-        row.append(cell);
-        table.append(row);
-    };
-
-    const createTextCell = (label, text, tagName = "span") => {
-        const cell = document.createElement(tagName);
-        cell.setAttribute("role", "cell");
-        if (label) {
-            cell.setAttribute("data-label", label);
-        }
-        cell.textContent = text || "-";
-        return cell;
-    };
+    const clearRows = () => window.PcsTable.clearRows(table);
+    const setEmptyMessage = (message) => window.PcsTable.emptyRow(table, {
+        rowClassName: "data-row simple-management-data-row empty-data-row",
+        message
+    });
+    const createTextCell = window.PcsTable.textCell;
 
     const getSelectedCategory = () => (
         currentCategories.find((category) => String(category.categoryId) === String(selectedCategoryId)) || null
@@ -242,7 +199,7 @@
 
         if (openDeleteModalButton) {
             openDeleteModalButton.title = Number(category.partCount || 0) > 0
-                ? "연결된 부품 종류가 있어 삭제할 수 없습니다."
+                ? "연결된 품목이 있어 삭제할 수 없습니다."
                 : "";
         }
     };
@@ -399,7 +356,7 @@
             return;
         }
         if (owner === "edit" && !editSpecsEditable) {
-            showToast("연결된 부품 종류가 있는 분류는 사양 항목을 수정할 수 없습니다.", "error");
+            showToast("연결된 품목이 있는 분류는 사양 항목을 수정할 수 없습니다.", "error");
             return;
         }
 
@@ -426,7 +383,7 @@
         specModalTitle.textContent = spec ? "사양 항목을 수정합니다." : "사양 항목을 추가합니다.";
         specModalDescription.textContent = spec
             ? "선택한 사양 항목의 이름, 입력 방식, 선택지를 수정합니다."
-            : "부품 등록 때 입력받을 항목 기준을 설정합니다.";
+            : "품목 등록 때 입력받을 항목 기준을 설정합니다.";
         specModalSubmit.textContent = spec ? "수정" : "추가";
         specModalSubmit.dataset.defaultText = specModalSubmit.textContent;
         specModal.showModal();
@@ -513,27 +470,10 @@
     };
 
     const setFormSaving = (form, isSaving, text = "저장 중") => {
-        if (!form) {
-            return;
-        }
-
-        form.dataset.saving = String(isSaving);
-        form.querySelectorAll("button, input, textarea, select").forEach((element) => {
-            element.disabled = isSaving;
-        });
-
+        window.PcsForm.setSaving(form, isSaving, text);
         if (!isSaving && form === editForm) {
             renderEditSpecs();
         }
-
-        const submitButton = form.querySelector("button[type='submit']");
-        if (!submitButton) {
-            return;
-        }
-        if (!submitButton.dataset.defaultText) {
-            submitButton.dataset.defaultText = submitButton.textContent;
-        }
-        submitButton.textContent = isSaving ? text : submitButton.dataset.defaultText;
     };
 
     const renderRows = (items) => {
@@ -556,7 +496,7 @@
             row.append(
                 createTextCell("분류명", category.categoryName, "strong"),
                 createTextCell("설명", category.description),
-                createTextCell("부품 종류 수", `${numberText(category.partCount)}개`),
+                createTextCell("품목 수", `${numberText(category.partCount)}개`),
                 createTextCell("수정일", formatDate(category.updatedAt))
             );
 
@@ -646,7 +586,7 @@
 
         const partCount = Number(category.partCount || 0);
         if (partCount > 0) {
-            showToast("연결된 부품 종류가 있는 분류는 삭제할 수 없습니다.", "error");
+            showToast("연결된 품목이 있는 분류는 삭제할 수 없습니다.", "error");
             return;
         }
 
@@ -785,7 +725,7 @@
             const index = Number(removeButton.dataset.specIndex);
             if (owner === "edit") {
                 if (!editSpecsEditable) {
-                    showToast("연결된 부품 종류가 있는 분류는 사양 항목을 수정할 수 없습니다.", "error");
+                    showToast("연결된 품목이 있는 분류는 사양 항목을 수정할 수 없습니다.", "error");
                     return;
                 }
                 editSpecs.splice(index, 1);

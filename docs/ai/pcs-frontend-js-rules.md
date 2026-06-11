@@ -17,6 +17,8 @@
 ```html
 <script src="/js/pcs-api.js"></script>
 <script src="/js/pcs-pagination.js"></script>
+<script src="/js/pcs-ui.js"></script>
+<script src="/js/pcs-common.js"></script>
 <script src="/js/partners.js"></script>
 ```
 
@@ -32,7 +34,75 @@
 - `pcs-api.js`가 먼저 로드되어야 `window.PcsApi`를 사용할 수 있다.
 - `pcs-pagination.js`가 먼저 로드되어야 `window.PcsPagination`을 사용할 수 있다.
 - `pcs-ui.js`가 먼저 로드되어야 `window.PcsUi.toast()`를 사용할 수 있다.
+- `pcs-common.js`는 `pcs-ui.js` 뒤, 화면별 JS 앞에 둔다.
 - 화면별 JS는 항상 공통 JS 뒤에 둔다.
+
+## 공통 JS 사용
+
+화면별 JS에서 아래 기능을 다시 만들지 않는다.
+
+```js
+window.PcsWorkspace.getCompanyCode()
+window.PcsWorkspace.updateWorkspaceLinks(companyCode)
+window.PcsFormat.date(value)
+window.PcsFormat.number(value)
+window.PcsFormat.money(value)
+window.PcsFeedback.toast(message, type)
+window.PcsForm.setSaving(form, isSaving)
+window.PcsTable.clearRows(table)
+window.PcsTable.textCell(label, text, tagName)
+window.PcsTable.emptyRow(table, options)
+```
+
+기준:
+
+- 업체 코드 추출 정규식은 화면별 JS에 반복 작성하지 않는다.
+- 날짜/숫자/금액 포맷은 `PcsFormat`을 사용한다.
+- 저장 중 폼 비활성화는 `PcsForm.setSaving()`을 사용한다.
+- 빈 목록/로딩/오류 행은 `PcsTable.emptyRow()`를 우선 사용한다.
+- 화면별 JS는 도메인별 렌더링, 이벤트 연결, API URL 조립에 집중한다.
+
+## 관리형 페이지 JS 기준
+
+품목 관리, 품목 분류, 거래처 관리, 사용자 관리처럼 검색/목록/등록/수정 패널을 함께 쓰는 화면은 같은 JS 흐름을 따른다.
+
+기준:
+
+- 업체 코드 추출은 `window.PcsWorkspace.getCompanyCode()`를 사용한다.
+- 날짜/숫자 포맷은 `window.PcsFormat`을 사용한다.
+- 토스트는 `window.PcsFeedback.toast()`를 사용한다.
+- 저장 중 폼 상태는 `window.PcsForm.setSaving()`을 사용한다.
+- 빈 목록, 로딩, 오류 행은 `window.PcsTable.emptyRow()`를 사용한다.
+- 텍스트 셀 생성은 `window.PcsTable.textCell()`을 우선 사용한다.
+- 화면별 JS에는 해당 화면의 API URL, 폼 값 읽기, 행 렌더링, 이벤트 연결만 남긴다.
+
+금지:
+
+```js
+const getCompanyCode = () => { ... };
+const showToast = (message, type) => { window.PcsUi.toast(...); };
+const setFormSaving = (form, isSaving) => { form.querySelectorAll(...); };
+```
+
+허용:
+
+```js
+const getCompanyCode = window.PcsWorkspace.getCompanyCode;
+const showToast = window.PcsFeedback.toast;
+const setFormSaving = window.PcsForm.setSaving;
+const setEmptyMessage = (message) => window.PcsTable.emptyRow(table, { message });
+```
+
+공통 함수 사용 후 특정 화면만 후처리가 필요하면 얇은 래퍼만 둔다.
+
+```js
+const setFormSaving = (form, isSaving, text = "저장 중") => {
+    window.PcsForm.setSaving(form, isSaving, text);
+    if (!isSaving && form === editForm) {
+        renderEditSpecs();
+    }
+};
+```
 
 ## API 호출
 

@@ -9,18 +9,19 @@ import com.pcs.domain.partner.service.PartnerService;
 import com.pcs.domain.partner.type.PartnerRole;
 import com.pcs.domain.partner.type.PartnerType;
 import com.pcs.global.dto.PageResultDto;
-import com.pcs.global.error.ErrorCode;
-import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.security.PcsPrincipal;
+import com.pcs.global.workspace.WorkspaceAccessValidator;
 import org.springframework.stereotype.Component;
 
 @Component
 public class PartnerFacade {
 
     private final PartnerService partnerService;
+    private final WorkspaceAccessValidator workspaceAccessValidator;
 
-    public PartnerFacade(PartnerService partnerService) {
+    public PartnerFacade(PartnerService partnerService, WorkspaceAccessValidator workspaceAccessValidator) {
         this.partnerService = partnerService;
+        this.workspaceAccessValidator = workspaceAccessValidator;
     }
 
     public PageResultDto<SearchPartnerResponse, SearchPartnerSummaryResponse> searchPartners(
@@ -34,10 +35,9 @@ public class PartnerFacade {
             Integer size,
             Integer limit
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
         return partnerService.searchPartners(
-                principal.companyId(),
+                checkedPrincipal.companyId(),
                 keyword,
                 partnerType,
                 partnerRole,
@@ -48,29 +48,13 @@ public class PartnerFacade {
         );
     }
 
-    private void validateAuthenticated(PcsPrincipal principal) {
-        if (principal == null) {
-            throw new BusinessException(ErrorCode.AUTH_REQUIRED);
-        }
-    }
-
-    private void validateWorkspace(String pathCompanyCode, String tokenCompanyCode) {
-        if (pathCompanyCode == null || pathCompanyCode.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "업체 코드가 필요합니다.");
-        }
-        if (!tokenCompanyCode.equals(pathCompanyCode.trim().toLowerCase())) {
-            throw new BusinessException(ErrorCode.AUTH_WORKSPACE_MISMATCH);
-        }
-    }
-
     public SearchPartnerResponse createPartner(
             PcsPrincipal principal,
             String pathCompanyCode,
             CreatePartnerRequest request
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        return partnerService.createPartner(principal.companyId(), request, principal.memberId());
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
+        return partnerService.createPartner(checkedPrincipal.companyId(), request, checkedPrincipal.memberId());
     }
 
     public SearchPartnerResponse getPartner(
@@ -78,9 +62,8 @@ public class PartnerFacade {
             String pathCompanyCode,
             Long partnerId
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        return partnerService.getPartner(principal.companyId(), partnerId);
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
+        return partnerService.getPartner(checkedPrincipal.companyId(), partnerId);
     }
 
     public SearchPartnerResponse updatePartner(
@@ -89,9 +72,8 @@ public class PartnerFacade {
             Long partnerId,
             UpdatePartnerRequest request
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        return partnerService.updatePartner(principal.companyId(), partnerId, request);
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
+        return partnerService.updatePartner(checkedPrincipal.companyId(), partnerId, request);
     }
 
     public void updatePartnerActive(
@@ -100,8 +82,7 @@ public class PartnerFacade {
             Long partnerId,
             UpdatePartnerActiveRequest request
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        partnerService.updatePartnerActive(principal.companyId(), partnerId, request.active());
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
+        partnerService.updatePartnerActive(checkedPrincipal.companyId(), partnerId, request.active());
     }
 }

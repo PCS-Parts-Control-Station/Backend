@@ -28,7 +28,8 @@
 기준:
 
 - `page`는 0부터 시작한다.
-- `size` 기본값은 20이다.
+- 화면 JS는 목록마다 명시적인 `PAGE_SIZE`를 정하고 API에 `size`를 보낸다.
+- 서버 fallback 기본값은 기능별로 다를 수 있으나, 별도 기준이 없으면 10을 사용한다.
 - `size` 최대값은 100이다.
 - 실제 목록 배열 필드명은 `content`를 사용한다.
 - 목록 화면에 요약 숫자가 필요하면 `summary`에 넣는다.
@@ -51,14 +52,16 @@ HTML:
 JS:
 
 ```js
+const PAGE_SIZE = 10;
+
 const params = PcsPagination.buildParams({
     page,
-    size: 20,
+    size: PAGE_SIZE,
     form: filterForm
 });
 
 const data = await PcsApi.getData(`/api/workspaces/${companyCode}/parts?${params.toString()}`);
-const pageData = PcsPagination.normalizePageData(data, 20);
+const pageData = PcsPagination.normalizePageData(data, PAGE_SIZE);
 
 PcsPagination.updateControls({
     pageData,
@@ -75,6 +78,7 @@ PcsPagination.updateControls({
 - 직접 `page + 1 / totalPages` 문구를 반복 작성하지 않는다.
 - 이전/다음 버튼 disabled 처리는 `PcsPagination.updateControls()`를 사용한다.
 - 페이지 이동으로 목록 높이가 바뀌어도 사용자가 보던 위치를 유지해야 하면 `PcsPagination.withPreservedScroll()`을 사용한다.
+- 화면별 JS에는 `const PAGE_SIZE = N`을 명시하고, `buildParams`와 `normalizePageData`에 같은 값을 넘긴다.
 - 검색 버튼으로 새 조건을 조회할 때는 `page = 0`부터 다시 조회한다.
 - 다음 페이지는 `currentPage + 1`, 이전 페이지는 `currentPage - 1`로 이동하되 `currentPage > 0`일 때만 이전 이동한다.
 

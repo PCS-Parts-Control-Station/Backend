@@ -4,15 +4,6 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.pcs.domain.partner.mapper.PartnerMapper">
 
-    <select id="isCompanyActive" resultType="boolean">
-        SELECT EXISTS (
-            SELECT 1
-            FROM tb_company
-            WHERE company_id = #{companyId}
-              AND active = TRUE
-        )
-    </select>
-
     <sql id="partnerSearchWhere">
         WHERE company_id = #{companyId}
         <if test="active != null">
@@ -148,6 +139,7 @@
             email = #{email},
             address = #{address},
             memo = #{memo},
+            active = #{active},
             updated_at = NOW(6)
         WHERE company_id = #{companyId}
           AND partner_id = #{partnerId}

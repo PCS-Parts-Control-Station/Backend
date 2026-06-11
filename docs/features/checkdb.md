@@ -83,7 +83,7 @@ tb_inspection_template_item.active
 tb_inspection_template_item_option.active
 ```
 
-카테고리는 `active` 상태를 두지 않는다.
+품목 분류는 `active` 상태를 두지 않는다.
 
 인증 공통 컬럼은 로그인/토큰 검증에 필요하다.
 

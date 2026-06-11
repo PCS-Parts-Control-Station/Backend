@@ -61,7 +61,7 @@ public class CategoryApiController {
         CategoryDetailResponse response = categoryFacade.createCategory(principal, companyCode, request);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(ApiResultDto.ok("카테고리 등록이 완료되었습니다.", response));
+                .body(ApiResultDto.ok("분류 등록이 완료되었습니다.", response));
     }
 
     @GetMapping("/workspaces/{companyCode}/categories/{categoryId}")
@@ -82,7 +82,7 @@ public class CategoryApiController {
             @Valid @RequestBody UpdateCategoryRequest request
     ) {
         CategoryDetailResponse response = categoryFacade.updateCategory(principal, companyCode, categoryId, request);
-        return ResponseEntity.ok(ApiResultDto.ok("카테고리 수정이 완료되었습니다.", response));
+        return ResponseEntity.ok(ApiResultDto.ok("분류 수정이 완료되었습니다.", response));
     }
 
     @DeleteMapping("/workspaces/{companyCode}/categories/{categoryId}")
@@ -92,6 +92,6 @@ public class CategoryApiController {
             @AuthenticationPrincipal PcsPrincipal principal
     ) {
         categoryFacade.deleteCategory(principal, companyCode, categoryId);
-        return ResponseEntity.ok(ApiResultDto.ok("카테고리를 삭제했습니다.", null));
+        return ResponseEntity.ok(ApiResultDto.ok("분류를 삭제했습니다.", null));
     }
 }

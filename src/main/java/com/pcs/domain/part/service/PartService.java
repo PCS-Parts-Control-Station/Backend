@@ -2,6 +2,8 @@ package com.pcs.domain.part.service;
 
 import com.pcs.domain.category.dto.response.CategorySpecDefinitionRow;
 import com.pcs.domain.category.dto.response.CategorySpecOptionResponse;
+import com.pcs.domain.category.mapper.PartSpecMapper;
+import com.pcs.domain.category.type.PartSpecInputTypes;
 import com.pcs.domain.part.dto.request.CreatePartRequest;
 import com.pcs.domain.part.dto.request.PartSpecValueRequest;
 import com.pcs.domain.part.dto.request.UpdatePartRequest;
@@ -14,6 +16,9 @@ import com.pcs.domain.part.mapper.PartMapper;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
+import com.pcs.global.pagination.PageQuery;
+import com.pcs.global.util.TextNormalizer;
+import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -34,14 +39,20 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class PartService {
 
-    private static final int DEFAULT_SIZE = 10;
-    private static final int MAX_SIZE = 100;
     private static final int MAX_CODE_ATTEMPT = 999;
 
     private final PartMapper partMapper;
+    private final PartSpecMapper partSpecMapper;
+    private final WorkspaceAccessValidator workspaceAccessValidator;
 
-    public PartService(PartMapper partMapper) {
+    public PartService(
+            PartMapper partMapper,
+            PartSpecMapper partSpecMapper,
+            WorkspaceAccessValidator workspaceAccessValidator
+    ) {
         this.partMapper = partMapper;
+        this.partSpecMapper = partSpecMapper;
+        this.workspaceAccessValidator = workspaceAccessValidator;
     }
 
     public PageResultDto<SearchPartResponse, Void> searchParts(
@@ -55,11 +66,9 @@ public class PartService {
     ) {
         validateCompanyActive(companyId);
 
-        String normalizedKeyword = normalizeOptional(keyword);
+        String normalizedKeyword = TextNormalizer.optional(keyword);
         Boolean normalizedActive = active == null ? Boolean.TRUE : active;
-        int normalizedPage = normalizePage(page);
-        int normalizedSize = normalizeSize(size, limit);
-        int offset = normalizedPage * normalizedSize;
+        PageQuery pageQuery = PageQuery.of(page, size, limit);
 
         long totalElements = partMapper.countParts(companyId, normalizedKeyword, categoryId, normalizedActive);
         List<SearchPartResponse> items = totalElements == 0
@@ -69,11 +78,11 @@ public class PartService {
                         normalizedKeyword,
                         categoryId,
                         normalizedActive,
-                        normalizedSize,
-                        offset
+                        pageQuery.size(),
+                        pageQuery.offset()
                 );
 
-        return PageResultDto.of(items, normalizedPage, normalizedSize, totalElements, null);
+        return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, null);
     }
 
     public PartDetailResponse getPart(Long companyId, Long partId) {
@@ -85,7 +94,7 @@ public class PartService {
     public PartDetailResponse createPart(Long companyId, CreatePartRequest request, Long memberId) {
         validateCompanyActive(companyId);
         String categoryName = validateCategory(companyId, request.categoryId());
-        List<CategorySpecDefinitionRow> definitions = partMapper.findSpecDefinitionsByCategory(
+        List<CategorySpecDefinitionRow> definitions = partSpecMapper.findDefinitionsByCategory(
                 companyId,
                 request.categoryId()
         );
@@ -109,9 +118,9 @@ public class PartService {
                 companyId,
                 request.categoryId(),
                 memberId,
-                normalizeRequired(request.partName()),
-                normalizeRequired(request.modelName()),
-                normalizeRequired(request.manufacturer()),
+                TextNormalizer.required(request.partName()),
+                TextNormalizer.required(request.modelName()),
+                TextNormalizer.required(request.manufacturer()),
                 partCode,
                 normalizePrice(request.estimatedPrice()),
                 normalizeQuantity(request.safeQuantity())
@@ -130,7 +139,7 @@ public class PartService {
         }
 
         String categoryName = validateCategory(companyId, request.categoryId());
-        List<CategorySpecDefinitionRow> definitions = partMapper.findSpecDefinitionsByCategory(
+        List<CategorySpecDefinitionRow> definitions = partSpecMapper.findDefinitionsByCategory(
                 companyId,
                 request.categoryId()
         );
@@ -142,9 +151,9 @@ public class PartService {
         );
 
         part.setCategoryId(request.categoryId());
-        part.setPartName(normalizeRequired(request.partName()));
-        part.setModelName(normalizeRequired(request.modelName()));
-        part.setManufacturer(normalizeRequired(request.manufacturer()));
+        part.setPartName(TextNormalizer.required(request.partName()));
+        part.setModelName(TextNormalizer.required(request.modelName()));
+        part.setManufacturer(TextNormalizer.required(request.manufacturer()));
         part.setEstimatedPrice(normalizePrice(request.estimatedPrice()));
         part.setSafeQuantity(normalizeQuantity(request.safeQuantity()));
         part.setPartCode(generatePartCode(
@@ -197,7 +206,7 @@ public class PartService {
         List<Long> definitionIds = definitions.stream()
                 .map(CategorySpecDefinitionRow::specDefinitionId)
                 .toList();
-        Map<Long, List<CategorySpecOptionResponse>> optionsByDefinition = partMapper.findSpecOptions(definitionIds)
+        Map<Long, List<CategorySpecOptionResponse>> optionsByDefinition = partSpecMapper.findOptionsByDefinitionIds(definitionIds)
                 .stream()
                 .collect(Collectors.groupingBy(CategorySpecOptionResponse::specDefinitionId));
 
@@ -240,10 +249,10 @@ public class PartService {
             PartSpecValueRequest request
     ) {
         if (request == null) {
-            if (Boolean.TRUE.equals(definition.required()) && !"BOOLEAN".equals(definition.inputType())) {
+            if (Boolean.TRUE.equals(definition.required()) && !PartSpecInputTypes.isBoolean(definition.inputType())) {
                 throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, definition.specName() + " 값을 입력해 주세요.");
             }
-            if ("BOOLEAN".equals(definition.inputType())) {
+            if (PartSpecInputTypes.isBoolean(definition.inputType())) {
                 return new PartSpecValue(
                         companyId,
                         partId,
@@ -259,7 +268,7 @@ public class PartService {
             return null;
         }
 
-        if ("SELECT".equals(definition.inputType())) {
+        if (PartSpecInputTypes.isSelect(definition.inputType())) {
             CategorySpecOptionResponse option = findOption(definition, options, request.selectedOptionId());
             return new PartSpecValue(
                     companyId,
@@ -274,7 +283,7 @@ public class PartService {
             );
         }
 
-        if ("NUMBER".equals(definition.inputType())) {
+        if (PartSpecInputTypes.isNumber(definition.inputType())) {
             BigDecimal valueNumber = request.valueNumber();
             if (valueNumber == null) {
                 if (Boolean.TRUE.equals(definition.required())) {
@@ -295,7 +304,7 @@ public class PartService {
             );
         }
 
-        if ("BOOLEAN".equals(definition.inputType())) {
+        if (PartSpecInputTypes.isBoolean(definition.inputType())) {
             return new PartSpecValue(
                     companyId,
                     partId,
@@ -309,7 +318,7 @@ public class PartService {
             );
         }
 
-        String valueText = normalizeOptional(request.valueText());
+        String valueText = TextNormalizer.optional(request.valueText());
         if (valueText == null) {
             if (Boolean.TRUE.equals(definition.required())) {
                 throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, definition.specName() + " 값을 입력해 주세요.");
@@ -371,8 +380,8 @@ public class PartService {
         String seed = String.join(
                 "-",
                 categoryName,
-                normalizeRequired(manufacturer),
-                normalizeRequired(modelName),
+                TextNormalizer.required(manufacturer),
+                TextNormalizer.required(modelName),
                 specSeed
         );
         String baseCode = String.join(
@@ -411,7 +420,7 @@ public class PartService {
     }
 
     private String codeSegment(String value, String fallback, int maxLength) {
-        String normalized = normalizeOptional(value);
+        String normalized = TextNormalizer.optional(value);
         String segment = normalized == null
                 ? ""
                 : normalized.toUpperCase(Locale.ROOT)
@@ -441,23 +450,7 @@ public class PartService {
     }
 
     private void validateCompanyActive(Long companyId) {
-        if (!partMapper.isCompanyActive(companyId)) {
-            throw new BusinessException(ErrorCode.COMPANY_INACTIVE);
-        }
-    }
-
-    private String normalizeRequired(String value) {
-        if (value == null || value.trim().isEmpty()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-        return value.trim();
-    }
-
-    private String normalizeOptional(String value) {
-        if (value == null || value.trim().isEmpty()) {
-            return null;
-        }
-        return value.trim();
+        workspaceAccessValidator.validateCompanyActive(companyId);
     }
 
     private BigDecimal normalizePrice(BigDecimal value) {
@@ -480,18 +473,4 @@ public class PartService {
         return value;
     }
 
-    private int normalizePage(Integer page) {
-        if (page == null || page < 0) {
-            return 0;
-        }
-        return page;
-    }
-
-    private int normalizeSize(Integer size, Integer limit) {
-        Integer requestedSize = size == null ? limit : size;
-        if (requestedSize == null || requestedSize < 1) {
-            return DEFAULT_SIZE;
-        }
-        return Math.min(requestedSize, MAX_SIZE);
-    }
 }
