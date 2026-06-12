@@ -1,6 +1,7 @@
 package com.pcs.domain.inspection.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -9,11 +10,17 @@ import static org.mockito.Mockito.when;
 
 import com.pcs.domain.inspection.dto.request.CreateInspectionItemResultRequest;
 import com.pcs.domain.inspection.dto.request.CreateInspectionRequest;
+import com.pcs.domain.inspection.dto.request.CreateInspectionRevisionRequest;
+import com.pcs.domain.inspection.dto.response.InspectionHistoryDetailRow;
+import com.pcs.domain.inspection.dto.response.InspectionItemResultResponse;
 import com.pcs.domain.inspection.dto.response.InspectionPartUnitRow;
 import com.pcs.domain.inspection.dto.response.InspectionTemplateOptionRow;
+import com.pcs.domain.inspection.dto.response.SearchInspectionHistoryResponse;
+import com.pcs.domain.inspection.dto.response.SearchInspectionHistorySummaryResponse;
 import com.pcs.domain.inspection.entity.Inspection;
 import com.pcs.domain.inspection.entity.InspectionTemplate;
 import com.pcs.domain.inspection.entity.InspectionTemplateItem;
+import com.pcs.domain.inspection.entity.PartStatusHistory;
 import com.pcs.domain.inspection.mapper.InspectionMapper;
 import com.pcs.domain.inspection.type.GradeImpact;
 import com.pcs.domain.inspection.type.InspectionFailPolicy;
@@ -28,10 +35,13 @@ import com.pcs.domain.part.type.SalesStatus;
 import com.pcs.domain.part.type.UnitStatus;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -175,6 +185,251 @@ class InspectionServiceTest {
         assertEquals(ErrorCode.INSPECTION_TEMPLATE_OPTION_NOT_FOUND, exception.getErrorCode());
     }
 
+    @Test
+    void createCorrection_savesRevisionFromOriginalInspection() {
+        Long companyId = 1L;
+        Long memberId = 10L;
+        Long baseInspectionId = 500L;
+        Long unitId = 100L;
+        Long templateId = 200L;
+        Inspection baseInspection = inspection(
+                baseInspectionId,
+                companyId,
+                unitId,
+                templateId,
+                InspectionType.INITIAL,
+                null
+        );
+        CreateInspectionRevisionRequest request = new CreateInspectionRevisionRequest(
+                null,
+                InspectionResult.FAIL,
+                PartGrade.DEFECTIVE,
+                SalesStatus.UNAVAILABLE,
+                " 정정 사유 ",
+                List.of()
+        );
+
+        when(inspectionMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(inspectionMapper.findInspection(companyId, baseInspectionId)).thenReturn(baseInspection);
+        when(inspectionMapper.findPartUnitForUpdate(companyId, unitId)).thenReturn(completedUnit(companyId, unitId));
+        when(inspectionMapper.findTemplate(companyId, templateId)).thenReturn(template(companyId, templateId));
+        when(inspectionMapper.findTemplateItems(templateId)).thenReturn(List.of());
+        when(inspectionMapper.findTemplateOptions(templateId)).thenReturn(List.of());
+        doAnswer(invocation -> {
+            Inspection inspection = invocation.getArgument(0);
+            inspection.setInspectionId(900L);
+            return null;
+        }).when(inspectionMapper).insertInspection(any(Inspection.class));
+
+        var response = inspectionService.createCorrection(companyId, memberId, baseInspectionId, request);
+
+        ArgumentCaptor<Inspection> inspectionCaptor = ArgumentCaptor.forClass(Inspection.class);
+        ArgumentCaptor<PartStatusHistory> historyCaptor = ArgumentCaptor.forClass(PartStatusHistory.class);
+        verify(inspectionMapper).insertInspection(inspectionCaptor.capture());
+        verify(inspectionMapper).insertPartStatusHistory(historyCaptor.capture());
+
+        Inspection savedInspection = inspectionCaptor.getValue();
+        assertEquals(List.of(900L), response.inspectionIds());
+        assertEquals(InspectionType.CORRECTION, response.inspectionType());
+        assertEquals(InspectionType.CORRECTION, savedInspection.getInspectionType());
+        assertEquals(baseInspectionId, savedInspection.getOriginalInspectionId());
+        assertEquals(unitId, savedInspection.getUnitId());
+        assertEquals(templateId, savedInspection.getTemplateId());
+        assertEquals("정정 사유", savedInspection.getMemo());
+        assertEquals("CORRECTION", historyCaptor.getValue().getReason());
+    }
+
+    @Test
+    void createReinspection_preservesOriginalInspectionIdWhenBaseIsRevision() {
+        Long companyId = 1L;
+        Long memberId = 10L;
+        Long originalInspectionId = 500L;
+        Long baseInspectionId = 700L;
+        Long unitId = 100L;
+        Long baseTemplateId = 200L;
+        Long revisionTemplateId = 201L;
+        Inspection baseInspection = inspection(
+                baseInspectionId,
+                companyId,
+                unitId,
+                baseTemplateId,
+                InspectionType.CORRECTION,
+                originalInspectionId
+        );
+        CreateInspectionRevisionRequest request = new CreateInspectionRevisionRequest(
+                revisionTemplateId,
+                InspectionResult.PASS,
+                PartGrade.B,
+                SalesStatus.AVAILABLE,
+                "재검수 완료",
+                List.of()
+        );
+
+        when(inspectionMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(inspectionMapper.findInspection(companyId, baseInspectionId)).thenReturn(baseInspection);
+        when(inspectionMapper.findPartUnitForUpdate(companyId, unitId)).thenReturn(completedUnit(companyId, unitId));
+        when(inspectionMapper.findTemplate(companyId, revisionTemplateId)).thenReturn(template(companyId, revisionTemplateId));
+        when(inspectionMapper.findTemplateItems(revisionTemplateId)).thenReturn(List.of());
+        when(inspectionMapper.findTemplateOptions(revisionTemplateId)).thenReturn(List.of());
+        doAnswer(invocation -> {
+            Inspection inspection = invocation.getArgument(0);
+            inspection.setInspectionId(901L);
+            return null;
+        }).when(inspectionMapper).insertInspection(any(Inspection.class));
+
+        var response = inspectionService.createReinspection(companyId, memberId, baseInspectionId, request);
+
+        ArgumentCaptor<Inspection> inspectionCaptor = ArgumentCaptor.forClass(Inspection.class);
+        verify(inspectionMapper).insertInspection(inspectionCaptor.capture());
+
+        Inspection savedInspection = inspectionCaptor.getValue();
+        assertEquals(List.of(901L), response.inspectionIds());
+        assertEquals(InspectionType.REINSPECTION, response.inspectionType());
+        assertEquals(InspectionType.REINSPECTION, savedInspection.getInspectionType());
+        assertEquals(originalInspectionId, savedInspection.getOriginalInspectionId());
+        assertEquals(revisionTemplateId, savedInspection.getTemplateId());
+    }
+
+    @Test
+    void searchHistories_normalizesFiltersAndPaging() {
+        Long companyId = 1L;
+        LocalDate dateFrom = LocalDate.of(2026, 6, 1);
+        LocalDate dateTo = LocalDate.of(2026, 6, 8);
+        SearchInspectionHistorySummaryResponse summary = new SearchInspectionHistorySummaryResponse(1, 1, 0, 0, 0, 0);
+        SearchInspectionHistoryResponse row = new SearchInspectionHistoryResponse(
+                500L,
+                InspectionType.INITIAL,
+                null,
+                20L,
+                "IN-20260608-001",
+                100L,
+                "PCS-RAM-20260608-0001",
+                11L,
+                "DDR4 8GB",
+                "MTA8ATF1G64AZ",
+                200L,
+                "기본 검수",
+                InspectionResult.PASS,
+                PartGrade.A,
+                SalesStatus.AVAILABLE,
+                null,
+                "홍길동",
+                LocalDateTime.of(2026, 6, 8, 10, 0)
+        );
+
+        when(inspectionMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(inspectionMapper.countHistories(
+                companyId,
+                "RTX",
+                20L,
+                100L,
+                11L,
+                InspectionType.INITIAL,
+                InspectionResult.PASS,
+                PartGrade.A,
+                dateFrom.atStartOfDay(),
+                dateTo.plusDays(1).atStartOfDay()
+        )).thenReturn(1L);
+        when(inspectionMapper.searchHistories(
+                companyId,
+                "RTX",
+                20L,
+                100L,
+                11L,
+                InspectionType.INITIAL,
+                InspectionResult.PASS,
+                PartGrade.A,
+                dateFrom.atStartOfDay(),
+                dateTo.plusDays(1).atStartOfDay(),
+                100,
+                200
+        )).thenReturn(List.of(row));
+        when(inspectionMapper.summarizeHistories(
+                companyId,
+                "RTX",
+                20L,
+                100L,
+                11L,
+                InspectionType.INITIAL,
+                InspectionResult.PASS,
+                PartGrade.A,
+                dateFrom.atStartOfDay(),
+                dateTo.plusDays(1).atStartOfDay()
+        )).thenReturn(summary);
+
+        var result = inspectionService.searchHistories(
+                companyId,
+                " RTX ",
+                20L,
+                100L,
+                11L,
+                InspectionType.INITIAL,
+                InspectionResult.PASS,
+                PartGrade.A,
+                dateFrom,
+                dateTo,
+                2,
+                150,
+                null
+        );
+
+        assertEquals(2, result.page());
+        assertEquals(100, result.size());
+        assertEquals(1, result.totalElements());
+        assertEquals(List.of(row), result.content());
+        assertEquals(summary, result.summary());
+        assertFalse(result.hasNext());
+    }
+
+    @Test
+    void getHistoryDetail_returnsDetailWithItemResults() {
+        Long companyId = 1L;
+        Long inspectionId = 500L;
+        InspectionHistoryDetailRow row = new InspectionHistoryDetailRow(
+                inspectionId,
+                InspectionType.INITIAL,
+                null,
+                20L,
+                "IN-20260608-001",
+                100L,
+                "PCS-RAM-20260608-0001",
+                11L,
+                "DDR4 8GB",
+                "MTA8ATF1G64AZ",
+                200L,
+                "기본 검수",
+                InspectionResult.PASS,
+                PartGrade.A,
+                SalesStatus.AVAILABLE,
+                "정상",
+                "홍길동",
+                LocalDateTime.of(2026, 6, 8, 10, 0)
+        );
+        InspectionItemResultResponse itemResult = new InspectionItemResultResponse(
+                1L,
+                inspectionId,
+                300L,
+                "외관 상태",
+                InspectionItemResultStatus.PASS,
+                null,
+                null,
+                400L,
+                "정상",
+                "NORMAL",
+                null
+        );
+
+        when(inspectionMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(inspectionMapper.findHistoryDetail(companyId, inspectionId)).thenReturn(row);
+        when(inspectionMapper.findItemResults(inspectionId)).thenReturn(List.of(itemResult));
+
+        var response = inspectionService.getHistoryDetail(companyId, inspectionId);
+
+        assertEquals(inspectionId, response.inspectionId());
+        assertEquals("PCS-RAM-20260608-0001", response.internalSerialNo());
+        assertEquals(List.of(itemResult), response.itemResults());
+    }
+
     private InspectionPartUnitRow waitingUnit(Long companyId, Long unitId) {
         return new InspectionPartUnitRow(
                 unitId,
@@ -188,6 +443,46 @@ class InspectionServiceTest {
                 SalesStatus.HOLD,
                 true
         );
+    }
+
+    private InspectionPartUnitRow completedUnit(Long companyId, Long unitId) {
+        return new InspectionPartUnitRow(
+                unitId,
+                companyId,
+                11L,
+                12L,
+                "PCS-RAM-20260609-0001",
+                UnitStatus.IN_STOCK,
+                PartGrade.B,
+                InspectionStatus.COMPLETED,
+                SalesStatus.HOLD,
+                true
+        );
+    }
+
+    private Inspection inspection(
+            Long inspectionId,
+            Long companyId,
+            Long unitId,
+            Long templateId,
+            InspectionType inspectionType,
+            Long originalInspectionId
+    ) {
+        Inspection inspection = new Inspection(
+                companyId,
+                unitId,
+                templateId,
+                10L,
+                inspectionType,
+                originalInspectionId,
+                SalesStatus.AVAILABLE,
+                InspectionResult.PASS,
+                PartGrade.A,
+                "기존 검수",
+                LocalDateTime.of(2026, 6, 8, 10, 0)
+        );
+        inspection.setInspectionId(inspectionId);
+        return inspection;
     }
 
     private InspectionTemplate template(Long companyId, Long templateId) {

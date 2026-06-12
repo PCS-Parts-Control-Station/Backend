@@ -139,11 +139,24 @@ public interface InspectionMapper {
             @Param("templateId") Long templateId
     );
 
+    InspectionTemplate findTemplate(
+            @Param("companyId") Long companyId,
+            @Param("templateId") Long templateId
+    );
+
     List<InspectionTemplateItem> findActiveTemplateItems(
             @Param("templateId") Long templateId
     );
 
+    List<InspectionTemplateItem> findTemplateItems(
+            @Param("templateId") Long templateId
+    );
+
     List<InspectionTemplateOptionRow> findActiveTemplateOptions(
+            @Param("templateId") Long templateId
+    );
+
+    List<InspectionTemplateOptionRow> findTemplateOptions(
             @Param("templateId") Long templateId
     );
 

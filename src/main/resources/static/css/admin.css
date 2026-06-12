@@ -528,7 +528,7 @@ strong {
 
 .content-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 336px;
+    grid-template-columns: minmax(0, 1fr) 400px;
     gap: 18px;
     align-items: start;
 }
@@ -2299,7 +2299,7 @@ textarea:focus {
     }
 
     .has-collapsible-sidebar .content-grid {
-        grid-template-columns: minmax(0, 1fr) 336px;
+        grid-template-columns: minmax(0, 1fr) 400px;
     }
 
     .has-collapsible-sidebar .table-header {

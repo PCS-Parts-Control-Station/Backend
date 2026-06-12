@@ -178,6 +178,8 @@ public class InspectionService {
                 request.memo(),
                 request.itemResults(),
                 inspectedAt,
+                true,
+                true,
                 true
         );
         return new CreateInspectionResponse(
@@ -214,6 +216,8 @@ public class InspectionService {
                     request.memo(),
                     request.itemResults(),
                     inspectedAt,
+                    true,
+                    true,
                     true
             );
             inspectionIds.add(inspection.getInspectionId());
@@ -359,12 +363,15 @@ public class InspectionService {
         Long originalInspectionId = baseInspection.getOriginalInspectionId() == null
                 ? baseInspection.getInspectionId()
                 : baseInspection.getOriginalInspectionId();
+        Long templateId = request.templateId() == null
+                ? baseInspection.getTemplateId()
+                : request.templateId();
         LocalDateTime inspectedAt = LocalDateTime.now();
         Inspection inspection = saveInspection(
                 companyId,
                 memberId,
                 baseInspection.getUnitId(),
-                request.templateId(),
+                templateId,
                 inspectionType,
                 originalInspectionId,
                 request.result(),
@@ -373,6 +380,8 @@ public class InspectionService {
                 request.memo(),
                 request.itemResults(),
                 inspectedAt,
+                false,
+                false,
                 false
         );
         return new CreateInspectionResponse(
@@ -399,14 +408,18 @@ public class InspectionService {
             String memo,
             List<CreateInspectionItemResultRequest> itemResultRequests,
             LocalDateTime inspectedAt,
-            boolean requireWaitingUnit
+            boolean requireWaitingUnit,
+            boolean activeTemplateOnly,
+            boolean enforceRequiredItems
     ) {
         InspectionPartUnitRow unit = validateAndFindUnit(companyId, unitId, requireWaitingUnit);
         TemplateSnapshot templateSnapshot = validateTemplateAndBuildSnapshot(
                 companyId,
                 unit.categoryId(),
                 templateId,
-                itemResultRequests
+                itemResultRequests,
+                activeTemplateOnly,
+                enforceRequiredItems
         );
 
         Inspection inspection = new Inspection(
@@ -471,7 +484,9 @@ public class InspectionService {
             Long companyId,
             Long unitCategoryId,
             Long templateId,
-            List<CreateInspectionItemResultRequest> itemResultRequests
+            List<CreateInspectionItemResultRequest> itemResultRequests,
+            boolean activeTemplateOnly,
+            boolean enforceRequiredItems
     ) {
         List<CreateInspectionItemResultRequest> requests = normalizeItemResults(itemResultRequests);
         if (templateId == null) {
@@ -481,7 +496,9 @@ public class InspectionService {
             return TemplateSnapshot.empty();
         }
 
-        InspectionTemplate template = inspectionMapper.findActiveTemplate(companyId, templateId);
+        InspectionTemplate template = activeTemplateOnly
+                ? inspectionMapper.findActiveTemplate(companyId, templateId)
+                : inspectionMapper.findTemplate(companyId, templateId);
         if (template == null) {
             throw new BusinessException(ErrorCode.INSPECTION_TEMPLATE_NOT_FOUND);
         }
@@ -489,10 +506,14 @@ public class InspectionService {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "부품 카테고리와 템플릿 카테고리가 일치하지 않습니다.");
         }
 
-        List<InspectionTemplateItem> items = inspectionMapper.findActiveTemplateItems(templateId);
-        List<InspectionTemplateOptionRow> options = inspectionMapper.findActiveTemplateOptions(templateId);
+        List<InspectionTemplateItem> items = activeTemplateOnly
+                ? inspectionMapper.findActiveTemplateItems(templateId)
+                : inspectionMapper.findTemplateItems(templateId);
+        List<InspectionTemplateOptionRow> options = activeTemplateOnly
+                ? inspectionMapper.findActiveTemplateOptions(templateId)
+                : inspectionMapper.findTemplateOptions(templateId);
         TemplateSnapshot snapshot = new TemplateSnapshot(items, options);
-        snapshot.validateRequests(requests);
+        snapshot.validateRequests(requests, enforceRequiredItems);
         return snapshot;
     }
 
@@ -594,7 +615,7 @@ public class InspectionService {
             );
         }
 
-        void validateRequests(List<CreateInspectionItemResultRequest> requests) {
+        void validateRequests(List<CreateInspectionItemResultRequest> requests, boolean enforceRequiredItems) {
             Map<Long, CreateInspectionItemResultRequest> requestsByItemId = new LinkedHashMap<>();
             for (CreateInspectionItemResultRequest request : requests) {
                 if (requestsByItemId.put(request.itemId(), request) != null) {
@@ -607,12 +628,14 @@ public class InspectionService {
                 validateRequestByInputType(item, request);
             }
 
-            for (InspectionTemplateItem item : itemsById.values()) {
-                if (item.isRequired() && !requestsByItemId.containsKey(item.getItemId())) {
-                    throw new BusinessException(
-                            ErrorCode.INVALID_INPUT_VALUE,
-                            "필수 검수 항목 결과가 누락되었습니다. itemId=" + item.getItemId()
-                    );
+            if (enforceRequiredItems) {
+                for (InspectionTemplateItem item : itemsById.values()) {
+                    if (item.isRequired() && !requestsByItemId.containsKey(item.getItemId())) {
+                        throw new BusinessException(
+                                ErrorCode.INVALID_INPUT_VALUE,
+                                "필수 검수 항목 결과가 누락되었습니다. itemId=" + item.getItemId()
+                        );
+                    }
                 }
             }
         }

@@ -527,14 +527,12 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&pag
 |---|---|---|
 | GET | `/api/workspaces/{companyCode}/inspections/waiting-documents` | 검수 대상 입고 전표 목록 |
 | GET | `/api/workspaces/{companyCode}/inspections/waiting-documents/{documentId}/units` | 전표별 검수 대상 관리번호 목록 |
-| GET | `/api/workspaces/{companyCode}/inspections/waiting-units` | 검수 대기 개별 부품 조회 |
 | POST | `/api/workspaces/{companyCode}/inspections` | 최초 검수 등록 |
 | POST | `/api/workspaces/{companyCode}/inspections/bulk` | 여러 관리번호 일괄 최초 검수 등록 |
 | POST | `/api/workspaces/{companyCode}/inspections/{inspectionId}/corrections` | 검수 정정 이력 생성 |
 | POST | `/api/workspaces/{companyCode}/inspections/{inspectionId}/reinspections` | 재검수 이력 생성 |
 | GET | `/api/workspaces/{companyCode}/inspections` | 검수 이력 목록 |
 | GET | `/api/workspaces/{companyCode}/inspections/{inspectionId}` | 검수 이력 상세 |
-| GET | `/api/workspaces/{companyCode}/parts/{partId}/units/{unitId}/inspections` | 개별 부품 검수 이력 |
 | GET | `/api/workspaces/{companyCode}/inspection-templates` | 검수 템플릿 목록 |
 | POST | `/api/workspaces/{companyCode}/inspection-templates` | 검수 템플릿 생성 |
 | GET | `/api/workspaces/{companyCode}/inspection-templates/{templateId}` | 검수 템플릿 상세 |
@@ -548,6 +546,10 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&pag
 | PATCH | `/api/workspaces/{companyCode}/inspection-templates/{templateId}/items/{itemId}/options/{optionId}` | 선택지 수정 |
 | PATCH | `/api/workspaces/{companyCode}/inspection-templates/{templateId}/items/{itemId}/options/{optionId}/active` | 선택지 사용 여부 변경 |
 | PATCH | `/api/workspaces/{companyCode}/inspection-templates/{templateId}/items/{itemId}/options/sort-order` | 선택지 순서 일괄 저장 |
+
+검수 대상 조회는 입고 전표를 기준으로 한다. 전표 목록은 `waiting-documents`, 전표별 관리번호는 `waiting-documents/{documentId}/units`를 사용한다.
+
+개별 부품 기준 검수 이력은 별도 URL을 두지 않고 `GET /api/workspaces/{companyCode}/inspections?unitId={unitId}`로 조회한다. 검수 이력 목록은 `keyword`, `documentId`, `unitId`, `partId`, `inspectionType`, `result`, `grade`, `dateFrom`, `dateTo`, `page`, `size`, `limit`을 지원한다.
 
 검수 등록 요청 예시:
 
@@ -577,6 +579,14 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&pag
 - 요청 body에는 `inspectedAt`을 받지 않는다.
 - 서버가 검수 저장 시점의 현재 시각을 `inspectedAt`으로 저장한다.
 - DB 컬럼은 `tb_inspection.inspected_at`에 저장한다.
+
+검수 정정/재검수 규칙:
+
+- 정정과 재검수는 기존 검수 row를 수정하지 않고 새 `tb_inspection` row로 저장한다.
+- 최초 검수는 `inspectionType = INITIAL`, `originalInspectionId = null`이다.
+- 정정은 `inspectionType = CORRECTION`, 재검수는 `inspectionType = REINSPECTION`이다.
+- 기준 이력이 최초 검수이면 새 이력의 `originalInspectionId`는 기준 검수 ID다.
+- 기준 이력이 정정 또는 재검수이면 새 이력의 `originalInspectionId`는 기준 이력의 `originalInspectionId`를 유지한다.
 
 검수 템플릿 목록 요청 예시:
 

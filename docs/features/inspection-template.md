@@ -50,6 +50,8 @@ src/main/resources/static/js/inspection-templates.js
 4. `SELECT` 항목의 선택지 추가/수정/사용 여부 변경
 5. 항목과 선택지 드래그 정렬. 드롭 시 정렬 전용 일괄 API를 1회 호출한다.
 
+항목 추가/수정 영역은 템플릿 항목 목록 쪽에 둔다. 항목을 선택하면 기존 값이 입력 영역에 채워지고, 새 항목 작성 버튼을 누르면 입력 영역이 새 항목 작성 상태로 전환된다. 오른쪽 패널은 선택한 항목의 선택지 설정에 집중한다.
+
 ## 주요 규칙
 
 - 템플릿은 회사와 카테고리 범위 안에서 관리한다.
@@ -61,11 +63,14 @@ src/main/resources/static/js/inspection-templates.js
 - 항목 입력 방식은 `CHECK`, `NUMBER`, `TEXT`, `SELECT` 중 하나다.
 - `SELECT` 항목만 선택지를 가질 수 있다.
 - 선택지의 `optionValue`가 없으면 서버가 `optionLabel`을 저장 코드로 사용한다.
+- 선택지를 사용 중지할 때는 UI에서 비활성화 확인 안내를 거친다.
 - 항목/선택지 정렬은 클라이언트가 ID 순서만 보내고 서버가 `sortOrder`를 10 단위로 재계산한다.
 - 항목 정렬 요청은 해당 템플릿과 항목 그룹에 속한 ID만 허용한다.
 - 선택지 정렬 요청은 `SELECT` 항목과 해당 항목에 속한 선택지 ID만 허용한다.
 - 템플릿, 항목, 선택지는 하드 삭제하지 않고 `active`로 사용 여부를 바꾼다.
 - 과거 검수 결과는 템플릿 수정의 영향을 받지 않도록 snapshot으로 유지한다.
+- 항목 생성/수정 시 `gradeImpact` 기본값은 `LOW`, `failPolicy` 기본값은 `NONE`이다.
+- 화면에서는 `gradeImpact`, `failPolicy`를 고급 설정으로 분리한다.
 
 ## 항목 필드
 
@@ -86,3 +91,18 @@ src/main/resources/static/js/inspection-templates.js
 - `inputType = SELECT`인 항목만 선택지를 추가/수정할 수 있다.
 - `active` 변경은 하드 삭제가 아니며 과거 검수 이력을 변경하지 않아야 한다.
 - 검수 템플릿 DB 구조와 제약은 `docs/features/inspection-db.md` 기준으로 검증한다.
+
+## 테스트 기준
+
+서비스 단위 테스트는 `src/test/java/com/pcs/domain/inspection/service/InspectionTemplateServiceTest.java`에서 관리한다.
+
+현재 JUnit 검증 범위:
+
+- 템플릿 생성 시 회사/카테고리 범위와 템플릿명/버전 중복을 검증한다.
+- 템플릿 목록은 필터와 페이징 값을 정규화해 조회한다.
+- 항목 생성 시 고급 설정 기본값을 적용하고 템플릿 `updatedAt` 갱신을 호출한다.
+- 항목 수정 시 `SELECT`가 아닌 입력 방식으로 변경되면 기존 선택지를 비활성화한다.
+- 템플릿, 항목, 선택지 사용 여부 변경은 대상 소속 검증 후 `active`만 변경한다.
+- 항목 정렬은 해당 그룹 전체 항목 ID를 포함해야 하며 중복 ID를 허용하지 않는다.
+- 선택지 정렬은 해당 항목 전체 선택지 ID를 포함해야 한다.
+- 선택지 수정 시 `optionValue`가 없으면 `optionLabel`을 저장 코드로 사용한다.
