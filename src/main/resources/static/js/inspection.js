@@ -1,5 +1,6 @@
 (function () {
-    const PAGE_SIZE = 20;
+    const DOCUMENT_PAGE_SIZE = 10;
+    const HISTORY_PAGE_SIZE = 20;
 
     const filterForm = document.querySelector(".inspection-filter-form");
     const partnerFilter = filterForm?.elements.partnerId;
@@ -9,10 +10,16 @@
     const documentPrevButton = document.querySelector("[data-inspection-document-page-prev]");
     const documentNextButton = document.querySelector("[data-inspection-document-page-next]");
     const historyTable = document.querySelector("[data-inspection-history-table]");
+    const historyScope = document.querySelector("[data-inspection-history-scope]");
+    const historyPagination = document.querySelector("[data-inspection-history-pagination]");
+    const historyPageInfo = document.querySelector("[data-inspection-history-page-info]");
+    const historyPrevButton = document.querySelector("[data-inspection-history-page-prev]");
+    const historyNextButton = document.querySelector("[data-inspection-history-page-next]");
     const inspectionForm = document.querySelector("[data-inspection-form]");
     const clearFormButton = document.querySelector("[data-inspection-form-clear]");
     const documentSummaryCard = document.querySelector("[data-inspection-document-summary-card]");
     const historyDetailPanel = document.querySelector("[data-inspection-history-detail]");
+    const historyActionsPanel = document.querySelector("[data-inspection-history-actions]");
     const historyWorkflowPanel = document.querySelector("[data-inspection-history-workflow]");
     const historyWorkflowForm = document.querySelector("[data-inspection-workflow-form]");
     const targetStep = document.querySelector("[data-inspection-target-step]");
@@ -83,22 +90,31 @@
         base: document.querySelector("[data-inspection-workflow-base]"),
         memoLabel: document.querySelector("[data-inspection-workflow-memo-label]"),
         message: document.querySelector("[data-inspection-workflow-message]"),
-        submit: document.querySelector("[data-inspection-workflow-submit]")
+        submit: document.querySelector("[data-inspection-workflow-submit]"),
+        itemCount: document.querySelector("[data-inspection-workflow-item-count]"),
+        items: document.querySelector("[data-inspection-workflow-template-items]")
     };
 
     let waitingDocuments = [];
     let currentDocumentPage = 0;
     let currentDocumentPageData = null;
+    let currentHistoryPage = 0;
+    let currentHistoryPageData = null;
     let currentDocumentDetail = null;
     let selectedDocumentId = null;
     let selectedUnits = [];
     let templatesByCategory = new Map();
     let templateDetailsById = new Map();
     let selectedTemplateDetail = null;
+    let selectedWorkflowTemplateDetail = null;
     let selectedHistoryId = null;
     let selectedHistoryDetail = null;
     let activeHistoryMode = null;
     let pendingSavePayload = null;
+    let historyWorkflowSaving = false;
+    let documentDetailRequestId = 0;
+    let historyRequestId = 0;
+    let historyDetailRequestId = 0;
 
     const LABELS = {
         inspectionStatus: {
@@ -407,6 +423,83 @@
         });
     };
 
+    const updateHistoryPagination = (pageData) => {
+        currentHistoryPageData = pageData;
+        if (!window.PcsPagination) {
+            if (historyPagination) {
+                historyPagination.hidden = true;
+            }
+            return;
+        }
+        window.PcsPagination.updateControls({
+            pageData,
+            container: historyPagination,
+            info: historyPageInfo,
+            prevButton: historyPrevButton,
+            nextButton: historyNextButton
+        });
+    };
+
+    const getHistoryScope = () => {
+        if (selectedUnits.length === 1) {
+            const context = selectedUnits[0];
+            return {
+                params: { unitId: context.unit.unitId },
+                description: `${context.unit.internalSerialNo} 관리번호의 검수 이력입니다.`,
+                emptyMessage: "이 관리번호의 검수 이력이 없습니다."
+            };
+        }
+        if (selectedDocumentId) {
+            return {
+                params: { documentId: selectedDocumentId },
+                description: `${currentDocumentDetail?.documentNo || "선택한 전표"} 기준 검수 이력입니다.`,
+                emptyMessage: "이 전표의 검수 이력이 없습니다."
+            };
+        }
+        return null;
+    };
+
+    const resetHistoryDetail = () => {
+        selectedHistoryId = null;
+        selectedHistoryDetail = null;
+        selectedWorkflowTemplateDetail = null;
+        activeHistoryMode = null;
+        updateSelectedHistoryRow();
+        if (historyDetailPanel?.open) {
+            historyDetailPanel.close();
+        }
+        if (historyDetailPanel) {
+            historyDetailPanel.hidden = true;
+        }
+        if (historyWorkflowPanel) historyWorkflowPanel.hidden = true;
+        historyWorkflowForm?.reset();
+        setWorkflowMessage("");
+        if (historyFields.items) {
+            historyFields.items.innerHTML = '<p class="detail-empty-text">검수 이력을 선택해 주세요.</p>';
+        }
+        if (workflowFields.items) {
+            workflowFields.items.innerHTML = '<p class="detail-empty-text">이력 상세의 검수 항목을 불러오는 중입니다.</p>';
+        }
+        if (workflowFields.itemCount) {
+            workflowFields.itemCount.textContent = "항목 없음";
+        }
+    };
+
+    const resetHistorySection = (message = "전표를 선택하면 해당 전표 또는 관리번호 기준 이력이 표시됩니다.") => {
+        historyRequestId += 1;
+        historyDetailRequestId += 1;
+        currentHistoryPage = 0;
+        currentHistoryPageData = null;
+        resetHistoryDetail();
+        setTableMessage(historyTable, message);
+        if (historyPagination) {
+            historyPagination.hidden = true;
+        }
+        if (historyScope) {
+            historyScope.textContent = message;
+        }
+    };
+
     const loadWaitingDocuments = async (page = currentDocumentPage, options = {}) => {
         if (!window.PcsApi || !getCompanyCode()) {
             setTableMessage(waitingTable, "검수 대상 전표를 불러올 수 없습니다.");
@@ -415,7 +508,7 @@
 
         setTableMessage(waitingTable, "검수 대상 전표를 불러오는 중입니다.");
         const normalizedPage = Math.max(0, Number(page) || 0);
-        const params = new URLSearchParams({ page: String(normalizedPage), size: String(PAGE_SIZE) });
+        const params = new URLSearchParams({ page: String(normalizedPage), size: String(DOCUMENT_PAGE_SIZE) });
         const keyword = filterForm?.elements.keyword?.value?.trim();
         const inspectionStatus = filterForm?.elements.inspectionStatus?.value;
         const partnerId = filterForm?.elements.partnerId?.value;
@@ -427,11 +520,11 @@
         try {
             const data = await window.PcsApi.getData(`${apiBase()}/inspections/waiting-documents?${params.toString()}`, apiOptions());
             const pageData = window.PcsPagination
-                    ? window.PcsPagination.normalizePageData(data, PAGE_SIZE)
+                    ? window.PcsPagination.normalizePageData(data, DOCUMENT_PAGE_SIZE)
                     : {
                         content: Array.isArray(data?.content) ? data.content : [],
                         page: normalizedPage,
-                        size: PAGE_SIZE,
+                        size: DOCUMENT_PAGE_SIZE,
                         totalElements: data?.totalElements || 0,
                         totalPages: data?.totalPages || 0,
                         hasPrevious: data?.hasPrevious === true,
@@ -504,7 +597,7 @@
                             </span>
                         </span>
                         <button class="inspection-unit-action-button" type="button"
-                            ${completed && unit.latestInspectionId ? `data-inspection-history-action="${unit.latestInspectionId}"` : `data-inspection-unit-action="${unit.unitId}"`}
+                            ${completed && unit.latestInspectionId ? `data-inspection-history-action="${unit.latestInspectionId}" data-inspection-history-unit-id="${unit.unitId}"` : `data-inspection-unit-action="${unit.unitId}"`}
                             ${completed && !unit.latestInspectionId ? " disabled" : ""}>
                             ${completed ? "이력 보기" : "검수 등록"}
                         </button>
@@ -541,13 +634,25 @@
         if (!window.PcsApi || !documentId) {
             return;
         }
+        const requestId = ++documentDetailRequestId;
+        const isDifferentDocument = String(selectedDocumentId || "") !== String(documentId);
         clearInspectionForm();
+        if (isDifferentDocument) {
+            selectedDocumentId = null;
+            currentDocumentDetail = null;
+            resetHistorySection();
+        } else {
+            resetHistoryDetail();
+        }
         if (documentFields.lines) {
             documentFields.lines.innerHTML = '<p class="detail-empty-text">전표 정보를 불러오는 중입니다.</p>';
         }
 
         try {
             const detail = await window.PcsApi.getData(`${apiBase()}/inspections/waiting-documents/${documentId}/units`, apiOptions());
+            if (requestId !== documentDetailRequestId) {
+                return;
+            }
             currentDocumentDetail = detail;
             selectedDocumentId = detail.documentId;
             updateSelectedDocumentRow();
@@ -570,10 +675,15 @@
             if (documentFields.lineCount) documentFields.lineCount.textContent = `${numberText(detail.lines?.length)}개 묶음`;
             renderDocumentLines(detail.lines || []);
             targetStep?.classList.add("is-active");
+            await loadHistories(0);
         } catch (error) {
+            if (requestId !== documentDetailRequestId) {
+                return;
+            }
             if (documentFields.lines) {
                 documentFields.lines.innerHTML = `<p class="detail-empty-text">${escapeHtml(error.message || "전표 정보를 불러오지 못했습니다.")}</p>`;
             }
+            resetHistorySection("전표 정보를 불러오지 못해 검수 이력을 표시할 수 없습니다.");
         }
     };
 
@@ -611,18 +721,25 @@
         return templates;
     };
 
+    const getTemplateDetail = async (templateId) => {
+        if (!templateId) {
+            return null;
+        }
+        const key = String(templateId);
+        if (templateDetailsById.has(key)) {
+            return templateDetailsById.get(key);
+        }
+        const detail = await window.PcsApi.getData(`${apiBase()}/inspection-templates/${encodeURIComponent(templateId)}`, apiOptions());
+        templateDetailsById.set(key, detail);
+        return detail;
+    };
+
     const loadTemplateDetail = async (templateId) => {
         if (!templateId) {
             selectedTemplateDetail = null;
             return null;
         }
-        const key = String(templateId);
-        if (templateDetailsById.has(key)) {
-            selectedTemplateDetail = templateDetailsById.get(key);
-            return selectedTemplateDetail;
-        }
-        const detail = await window.PcsApi.getData(`${apiBase()}/inspection-templates/${encodeURIComponent(templateId)}`, apiOptions());
-        templateDetailsById.set(key, detail);
+        const detail = await getTemplateDetail(templateId);
         selectedTemplateDetail = detail;
         return detail;
     };
@@ -797,6 +914,7 @@
         formStep?.classList.add("is-active");
         setFormMessage("");
         await renderTemplateOptions(first.line.categoryId);
+        await loadHistories(0);
         requestAnimationFrame(() => formStep?.scrollIntoView({ block: "start", behavior: "smooth" }));
     };
 
@@ -917,13 +1035,13 @@
         }
     };
 
-    const renderHistories = (histories) => {
+    const renderHistories = (histories, emptyMessage = "조회된 검수 이력이 없습니다.") => {
         if (!historyTable) {
             return;
         }
         clearRows(historyTable);
         if (!histories.length) {
-            setTableMessage(historyTable, "조회된 검수 이력이 없습니다.");
+            setTableMessage(historyTable, emptyMessage);
             return;
         }
 
@@ -961,18 +1079,66 @@
         updateSelectedHistoryRow();
     };
 
-    const loadHistories = async () => {
+    const loadHistories = async (page = currentHistoryPage, options = {}) => {
         if (!window.PcsApi || !getCompanyCode()) {
             setTableMessage(historyTable, "검수 이력을 불러올 수 없습니다.");
             return;
         }
-        setTableMessage(historyTable, "검수 이력을 불러오는 중입니다.");
+        const scope = getHistoryScope();
+        if (!scope) {
+            resetHistorySection();
+            return;
+        }
+        const requestId = ++historyRequestId;
+        currentHistoryPage = Math.max(0, page);
+        resetHistoryDetail();
+        if (historyScope) {
+            historyScope.textContent = scope.description;
+        }
+        clearRows(historyTable);
+        if (historyPagination) {
+            historyPagination.hidden = true;
+        }
         try {
-            const params = new URLSearchParams({ page: "0", size: String(PAGE_SIZE) });
+            const params = window.PcsPagination
+                    ? window.PcsPagination.buildParams({
+                        page: currentHistoryPage,
+                        size: HISTORY_PAGE_SIZE,
+                        extraParams: scope.params
+                    })
+                    : new URLSearchParams({
+                        page: String(currentHistoryPage),
+                        size: String(HISTORY_PAGE_SIZE),
+                        ...Object.fromEntries(Object.entries(scope.params).map(([key, value]) => [key, String(value)]))
+                    });
             const data = await window.PcsApi.getData(`${apiBase()}/inspections?${params.toString()}`, apiOptions());
-            renderHistories(Array.isArray(data?.content) ? data.content : []);
+            if (requestId !== historyRequestId) {
+                return;
+            }
+            const pageData = window.PcsPagination
+                    ? window.PcsPagination.normalizePageData(data, HISTORY_PAGE_SIZE)
+                    : {
+                        content: Array.isArray(data?.content) ? data.content : [],
+                        page: currentHistoryPage,
+                        totalPages: 0,
+                        totalElements: 0,
+                        hasPrevious: false,
+                        hasNext: false
+                    };
+            currentHistoryPage = pageData.page;
+            renderHistories(pageData.content, scope.emptyMessage);
+            updateHistoryPagination(pageData);
+            if (options.preserveScroll && window.PcsPagination) {
+                window.PcsPagination.restoreScrollPosition(options.preserveScroll);
+            }
         } catch (error) {
+            if (requestId !== historyRequestId) {
+                return;
+            }
             setTableMessage(historyTable, error.message || "검수 이력을 불러오지 못했습니다.");
+            if (historyPagination) {
+                historyPagination.hidden = true;
+            }
         }
     };
 
@@ -999,24 +1165,172 @@
         }).join("");
     };
 
+    const renderWorkflowResultOptions = (selected = "PASS") => {
+        return ["PASS", "WARN", "FAIL", "NA"].map((value) => `
+            <option value="${value}"${value === selected ? " selected" : ""}>${LABELS.result[value] || value}</option>
+        `).join("");
+    };
+
+    const renderWorkflowTemplateItemControl = (item, previous) => {
+        const baseName = `workflow_item_${item.itemId}`;
+        const previousResult = previous?.result || "PASS";
+        if (item.inputType === "NUMBER") {
+            const value = previous?.valueNumber ?? "";
+            return `
+                <div class="inspection-template-control-grid">
+                    <input type="number" name="${baseName}_valueNumber" data-inspection-workflow-template-value value="${escapeHtml(value)}" placeholder="값">
+                    <select name="${baseName}_result" data-inspection-workflow-template-result>
+                        ${renderWorkflowResultOptions(previousResult)}
+                    </select>
+                </div>
+            `;
+        }
+        if (item.inputType === "TEXT") {
+            return `
+                <div class="inspection-template-control-grid">
+                    <textarea name="${baseName}_valueText" data-inspection-workflow-template-value rows="2" placeholder="확인 내용을 입력해 주세요">${escapeHtml(previous?.valueText || "")}</textarea>
+                    <select name="${baseName}_result" data-inspection-workflow-template-result>
+                        ${renderWorkflowResultOptions(previousResult)}
+                    </select>
+                </div>
+            `;
+        }
+        if (item.inputType === "SELECT") {
+            const selectedOptionId = previous?.selectedOptionId ? String(previous.selectedOptionId) : "";
+            const options = (item.options || [])
+                    .filter((option) => option.active !== false || String(option.optionId) === selectedOptionId)
+                    .map((option) => `
+                        <option value="${option.optionId}"${String(option.optionId) === selectedOptionId ? " selected" : ""}>${escapeHtml(option.optionLabel)}</option>
+                    `).join("");
+            return `
+                <div class="inspection-template-control-grid">
+                    <select name="${baseName}_selectedOptionId" data-inspection-workflow-template-value>
+                        <option value="">선택</option>
+                        ${options}
+                    </select>
+                    <select name="${baseName}_result" data-inspection-workflow-template-result>
+                        ${renderWorkflowResultOptions(previousResult)}
+                    </select>
+                </div>
+            `;
+        }
+        return `
+            <select name="${baseName}_result" data-inspection-workflow-template-result>
+                ${renderWorkflowResultOptions(previousResult)}
+            </select>
+        `;
+    };
+
+    const renderWorkflowTemplateItems = (template, priorItems = []) => {
+        if (!workflowFields.items) {
+            return;
+        }
+        const priorByItemId = new Map((priorItems || []).map((item) => [String(item.itemId), item]));
+        const items = (template?.items || []).filter((item) => item.active !== false || priorByItemId.has(String(item.itemId)));
+        selectedWorkflowTemplateDetail = template ? { ...template, items } : null;
+
+        if (!items.length) {
+            workflowFields.items.innerHTML = '<p class="detail-empty-text">저장할 검수 항목이 없습니다.</p>';
+            if (workflowFields.itemCount) workflowFields.itemCount.textContent = "항목 없음";
+            return;
+        }
+
+        const groups = ["BASIC", "DETAIL"].map((group) => ({
+            group,
+            items: items.filter((item) => item.itemGroup === group)
+        })).filter((entry) => entry.items.length);
+
+        workflowFields.items.innerHTML = groups.map((entry) => `
+            <section class="inspection-template-group" data-inspection-workflow-template-group="${entry.group}">
+                <header>
+                    <strong>${LABELS.itemGroup[entry.group] || entry.group}</strong>
+                    <span>${numberText(entry.items.length)}개 항목</span>
+                </header>
+                <div class="inspection-template-items">
+                    ${entry.items.map((item) => {
+                        const previous = priorByItemId.get(String(item.itemId));
+                        return `
+                            <label class="inspection-check-item inspection-template-item" data-workflow-template-item-id="${item.itemId}" data-workflow-template-input-type="${item.inputType}" data-workflow-template-required="${item.required}">
+                                <span>
+                                    <strong>${escapeHtml(item.itemName)}${item.required ? '<em class="inspection-required-mark">*필수</em>' : ""}</strong>
+                                    <small>${LABELS.inputType[item.inputType] || item.inputType}</small>
+                                </span>
+                                ${renderWorkflowTemplateItemControl(item, previous)}
+                            </label>
+                        `;
+                    }).join("")}
+                </div>
+            </section>
+        `).join("");
+        if (workflowFields.itemCount) workflowFields.itemCount.textContent = `${numberText(items.length)}개 항목`;
+    };
+
+    const collectWorkflowItemResults = () => {
+        const items = (selectedWorkflowTemplateDetail?.items || []).filter((item) => item.active !== false);
+        const missingItems = [];
+        const itemResults = [];
+        items.forEach((item) => {
+            const element = workflowFields.items?.querySelector(`[data-workflow-template-item-id="${item.itemId}"]`);
+            const resultField = element?.querySelector("[data-inspection-workflow-template-result]");
+            const valueField = element?.querySelector("[data-inspection-workflow-template-value]");
+            const value = valueField?.value?.trim() || "";
+            const result = resultField?.value || "PASS";
+
+            if (item.required && (item.inputType === "SELECT" || item.inputType === "TEXT" || item.inputType === "NUMBER") && !value) {
+                missingItems.push(item.itemName);
+            }
+
+            if (!item.required && item.inputType !== "CHECK" && !value) {
+                return;
+            }
+
+            itemResults.push({
+                itemId: item.itemId,
+                result,
+                valueText: item.inputType === "TEXT" ? value || null : null,
+                valueNumber: item.inputType === "NUMBER" && value ? Number(value) : null,
+                selectedOptionId: item.inputType === "SELECT" && value ? Number(value) : null,
+                memo: null
+            });
+        });
+        return { itemResults, missingItems };
+    };
+
     const closeHistoryWorkflow = () => {
         activeHistoryMode = null;
+        selectedWorkflowTemplateDetail = null;
         if (historyWorkflowPanel) historyWorkflowPanel.hidden = true;
+        if (historyActionsPanel) historyActionsPanel.hidden = false;
         historyWorkflowForm?.reset();
         setWorkflowMessage("");
+        if (workflowFields.items) {
+            workflowFields.items.innerHTML = '<p class="detail-empty-text">이력 상세의 검수 항목을 불러오는 중입니다.</p>';
+        }
+        if (workflowFields.itemCount) {
+            workflowFields.itemCount.textContent = "항목 없음";
+        }
     };
 
     const loadHistoryDetail = async (inspectionId) => {
         if (!inspectionId) {
             return;
         }
+        const requestId = ++historyDetailRequestId;
         closeHistoryWorkflow();
         try {
             const detail = await window.PcsApi.getData(`${apiBase()}/inspections/${inspectionId}`, apiOptions());
+            if (requestId !== historyDetailRequestId) {
+                return;
+            }
             selectedHistoryId = detail.inspectionId;
             selectedHistoryDetail = detail;
             updateSelectedHistoryRow();
-            if (historyDetailPanel) historyDetailPanel.hidden = false;
+            if (historyDetailPanel) {
+                historyDetailPanel.hidden = false;
+                if (typeof historyDetailPanel.showModal === "function" && !historyDetailPanel.open) {
+                    historyDetailPanel.showModal();
+                }
+            }
             if (historyFields.unit) historyFields.unit.textContent = detail.internalSerialNo || "-";
             setBadge(historyFields.type, LABELS.inspectionType[detail.inspectionType] || detail.inspectionType, typeBadgeClass(detail.inspectionType));
             setBadge(historyFields.grade, LABELS.grade[detail.grade] || detail.grade, gradeBadgeClass(detail.grade));
@@ -1035,8 +1349,21 @@
             if (historyFields.itemCount) historyFields.itemCount.textContent = `${numberText(detail.itemResults?.length)}개 항목`;
             renderHistoryItems(detail.itemResults || []);
         } catch (error) {
+            if (requestId !== historyDetailRequestId) {
+                return;
+            }
             showToast(error.message || "검수 이력 상세를 불러오지 못했습니다.", "error");
         }
+    };
+
+    const openUnitHistoryDetail = async (unitId, inspectionId) => {
+        const context = findLineByUnitId(unitId);
+        if (context) {
+            clearInspectionForm();
+            selectedUnits = [context];
+            await loadHistories(0);
+        }
+        await loadHistoryDetail(inspectionId);
     };
 
     const syncHistoryWorkflowRule = () => {
@@ -1053,12 +1380,13 @@
         }
     };
 
-    const startHistoryWorkflow = (mode) => {
+    const startHistoryWorkflow = async (mode) => {
         if (!selectedHistoryDetail || !historyWorkflowForm || !historyWorkflowPanel) {
             return;
         }
         activeHistoryMode = mode;
         historyWorkflowPanel.hidden = false;
+        if (historyActionsPanel) historyActionsPanel.hidden = true;
         historyWorkflowForm.reset();
         historyWorkflowForm.elements.result.value = selectedHistoryDetail.result || "PASS";
         historyWorkflowForm.elements.grade.value = selectedHistoryDetail.grade || "A";
@@ -1071,11 +1399,33 @@
         if (workflowFields.submit) workflowFields.submit.textContent = isCorrection ? "정정 저장" : "재검수 저장";
         historyWorkflowForm.elements.memo.placeholder = isCorrection ? "정정 사유를 입력해 주세요" : "재검수 내용을 입력해 주세요";
         setWorkflowMessage("");
+
+        if (workflowFields.items) {
+            workflowFields.items.innerHTML = '<p class="detail-empty-text">검수 항목을 불러오는 중입니다.</p>';
+        }
+        if (workflowFields.itemCount) {
+            workflowFields.itemCount.textContent = "확인 중";
+        }
+        selectedWorkflowTemplateDetail = null;
+        if (selectedHistoryDetail.templateId) {
+            try {
+                const template = await getTemplateDetail(selectedHistoryDetail.templateId);
+                renderWorkflowTemplateItems(template, selectedHistoryDetail.itemResults || []);
+            } catch (error) {
+                renderWorkflowTemplateItems(null, []);
+                setWorkflowMessage(error.message || "검수 항목을 불러오지 못했습니다.", true);
+            }
+        } else {
+            renderWorkflowTemplateItems(null, []);
+        }
         requestAnimationFrame(() => historyWorkflowPanel.scrollIntoView({ block: "nearest", behavior: "smooth" }));
     };
 
     const saveHistoryWorkflow = async () => {
         if (!activeHistoryMode || !selectedHistoryDetail || !historyWorkflowForm) {
+            return;
+        }
+        if (historyWorkflowSaving) {
             return;
         }
         syncHistoryWorkflowRule();
@@ -1085,25 +1435,45 @@
             setWorkflowMessage(activeHistoryMode === "correction" ? "정정 사유를 입력해 주세요." : "재검수 메모를 입력해 주세요.", true);
             return;
         }
+        if (selectedHistoryDetail.templateId && !selectedWorkflowTemplateDetail) {
+            setWorkflowMessage("검수 항목을 불러온 뒤 저장해 주세요.", true);
+            return;
+        }
+        const { itemResults, missingItems } = collectWorkflowItemResults();
+        if (missingItems.length) {
+            setWorkflowMessage(`필수 검수 항목을 입력해 주세요: ${missingItems.join(", ")}`, true);
+            return;
+        }
         const path = activeHistoryMode === "correction" ? "corrections" : "reinspections";
         try {
+            historyWorkflowSaving = true;
+            if (workflowFields.submit) {
+                workflowFields.submit.disabled = true;
+            }
             const result = await window.PcsApi.request(`${apiBase()}/inspections/${selectedHistoryDetail.inspectionId}/${path}`, apiOptions({
                 method: "POST",
                 body: {
+                    templateId: selectedHistoryDetail.templateId,
                     result: form.result.value,
                     grade: form.grade.value,
                     salesStatus: form.salesStatus.value,
                     memo,
-                    itemResults: []
+                    itemResults
                 }
             }));
             const newInspectionId = result?.data?.inspectionIds?.[0];
+            const fallbackInspectionId = selectedHistoryDetail.inspectionId;
             showToast(activeHistoryMode === "correction" ? "검수 정정을 저장했습니다." : "재검수를 저장했습니다.", "success");
             closeHistoryWorkflow();
-            await loadHistories();
-            await loadHistoryDetail(newInspectionId || selectedHistoryDetail.inspectionId);
+            await loadHistories(0);
+            await loadHistoryDetail(newInspectionId || fallbackInspectionId);
         } catch (error) {
             setWorkflowMessage(error.message || "저장하지 못했습니다.", true);
+        } finally {
+            historyWorkflowSaving = false;
+            if (workflowFields.submit) {
+                workflowFields.submit.disabled = false;
+            }
         }
     };
 
@@ -1141,17 +1511,27 @@
 
         const historyButton = event.target.closest("[data-inspection-history-action]");
         if (historyButton) {
-            loadHistoryDetail(historyButton.dataset.inspectionHistoryAction);
+            const unitId = historyButton.dataset.inspectionHistoryUnitId;
+            if (unitId) {
+                void openUnitHistoryDetail(unitId, historyButton.dataset.inspectionHistoryAction);
+            } else {
+                void loadHistoryDetail(historyButton.dataset.inspectionHistoryAction);
+            }
+            return;
+        }
+
+        if (event.target.closest("[data-inspection-history-close]") || event.target === historyDetailPanel) {
+            resetHistoryDetail();
             return;
         }
 
         if (event.target.closest("[data-inspection-correction-start]")) {
-            startHistoryWorkflow("correction");
+            void startHistoryWorkflow("correction");
             return;
         }
 
         if (event.target.closest("[data-inspection-reinspection-start]")) {
-            startHistoryWorkflow("reinspection");
+            void startHistoryWorkflow("reinspection");
             return;
         }
 
@@ -1188,6 +1568,7 @@
         selectedDocumentId = null;
         currentDocumentDetail = null;
         clearInspectionForm();
+        resetHistorySection();
         if (documentSummaryCard) documentSummaryCard.hidden = true;
         if (documentFields.subtitle) {
             documentFields.subtitle.hidden = false;
@@ -1214,7 +1595,31 @@
         loadWaitingDocuments(currentDocumentPage + 1, { preserveScroll: scrollPosition });
     });
 
-    clearFormButton?.addEventListener("click", clearInspectionForm);
+    historyPrevButton?.addEventListener("click", () => {
+        if (!currentHistoryPageData?.hasPrevious) {
+            return;
+        }
+        const scrollPosition = window.PcsPagination?.captureScroll?.();
+        loadHistories(currentHistoryPage - 1, { preserveScroll: scrollPosition });
+    });
+
+    historyNextButton?.addEventListener("click", () => {
+        if (!currentHistoryPageData?.hasNext) {
+            return;
+        }
+        const scrollPosition = window.PcsPagination?.captureScroll?.();
+        loadHistories(currentHistoryPage + 1, { preserveScroll: scrollPosition });
+    });
+
+    clearFormButton?.addEventListener("click", () => {
+        clearInspectionForm();
+        loadHistories(0);
+    });
+
+    historyDetailPanel?.addEventListener("cancel", (event) => {
+        event.preventDefault();
+        resetHistoryDetail();
+    });
 
     confirmElements.closeButtons.forEach((button) => {
         button.addEventListener("click", () => {

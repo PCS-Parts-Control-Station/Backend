@@ -552,6 +552,23 @@
         LIMIT 1
     </select>
 
+    <select id="findTemplate" resultType="com.pcs.domain.inspection.entity.InspectionTemplate">
+        SELECT
+            template_id,
+            company_id,
+            category_id,
+            template_name,
+            version,
+            active,
+            created_by,
+            created_at,
+            updated_at
+        FROM tb_inspection_template
+        WHERE company_id = #{companyId}
+          AND template_id = #{templateId}
+        LIMIT 1
+    </select>
+
     <select id="findActiveTemplateItems" resultType="com.pcs.domain.inspection.entity.InspectionTemplateItem">
         SELECT
             item_id,
@@ -570,6 +587,23 @@
         ORDER BY item_group ASC, sort_order ASC, item_id ASC
     </select>
 
+    <select id="findTemplateItems" resultType="com.pcs.domain.inspection.entity.InspectionTemplateItem">
+        SELECT
+            item_id,
+            template_id,
+            item_group,
+            item_name,
+            input_type,
+            required,
+            sort_order,
+            grade_impact,
+            fail_policy,
+            active
+        FROM tb_inspection_template_item
+        WHERE template_id = #{templateId}
+        ORDER BY item_group ASC, sort_order ASC, item_id ASC
+    </select>
+
     <select id="findActiveTemplateOptions" resultType="com.pcs.domain.inspection.dto.response.InspectionTemplateOptionRow">
         SELECT
             option_id,
@@ -585,6 +619,22 @@
               AND active = TRUE
         )
           AND active = TRUE
+        ORDER BY item_id ASC, sort_order ASC, option_id ASC
+    </select>
+
+    <select id="findTemplateOptions" resultType="com.pcs.domain.inspection.dto.response.InspectionTemplateOptionRow">
+        SELECT
+            option_id,
+            item_id,
+            option_label,
+            option_value,
+            active
+        FROM tb_inspection_template_item_option
+        WHERE item_id IN (
+            SELECT item_id
+            FROM tb_inspection_template_item
+            WHERE template_id = #{templateId}
+        )
         ORDER BY item_id ASC, sort_order ASC, option_id ASC
     </select>
 
