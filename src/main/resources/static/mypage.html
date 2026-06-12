@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PCS 마이페이지입니다. 접속 계정 정보와 역할별 설정을 확인합니다.">
+    <title>PCS | 마이페이지</title>
+    <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/admin.css?20260612_mypage">
+    <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
+</head>
+<body class="has-collapsible-sidebar">
+<div class="workspace-layout">
+    <div data-workspace-sidebar data-active-route="mypage"></div>
+
+    <main class="workspace-main">
+        <header class="workspace-header">
+            <button class="menu-toggle" type="button" data-sidebar-toggle aria-controls="workspace-sidebar" aria-expanded="false" aria-label="메뉴 열기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M4 7h16" />
+                    <path d="M4 12h16" />
+                    <path d="M4 17h16" />
+                </svg>
+            </button>
+            <div>
+                <p class="page-kicker">계정 설정</p>
+                <h1>마이페이지</h1>
+                <p class="page-description">접속 계정 정보와 역할에 따라 필요한 설정을 확인합니다.</p>
+            </div>
+        </header>
+
+        <section class="content-grid mypage-grid">
+            <div class="content-main">
+                <section class="table-card mypage-profile-card" aria-labelledby="mypage-profile-title">
+                    <div class="mypage-profile-head">
+                        <div>
+                            <p class="page-kicker">접속 계정</p>
+                            <h2 id="mypage-profile-title" data-mypage-name>확인 중</h2>
+                            <p data-mypage-description>현재 로그인한 계정 정보를 불러오고 있습니다.</p>
+                        </div>
+                        <i class="badge badge-blue" data-mypage-role-badge>ROLE</i>
+                    </div>
+
+                    <dl class="mypage-info-grid">
+                        <div>
+                            <dt>업체 코드</dt>
+                            <dd data-mypage-company-code>-</dd>
+                        </div>
+                        <div>
+                            <dt>로그인 아이디</dt>
+                            <dd data-mypage-login-id>-</dd>
+                        </div>
+                        <div>
+                            <dt>권한</dt>
+                            <dd data-mypage-role>-</dd>
+                        </div>
+                        <div>
+                            <dt>비밀번호 상태</dt>
+                            <dd data-mypage-password-status>-</dd>
+                        </div>
+                    </dl>
+                </section>
+
+                <section class="table-card mypage-role-card" data-role-section="OWNER" hidden aria-labelledby="owner-section-title">
+                    <div class="table-header">
+                        <div>
+                            <h2 id="owner-section-title">회사 정보</h2>
+                            <p>OWNER는 업체 작업공간의 기준 정보를 관리합니다.</p>
+                        </div>
+                    </div>
+                    <form class="management-form mypage-form" action="#" method="post" autocomplete="off">
+                        <label>
+                            <span>업체 코드</span>
+                            <input type="text" name="companyCode" data-owner-company-code readonly>
+                        </label>
+                        <label>
+                            <span>회사명</span>
+                            <input type="text" name="companyName" placeholder="회사명을 입력하세요">
+                        </label>
+                        <label>
+                            <span>대표 이메일</span>
+                            <input type="email" name="companyEmail" placeholder="company@example.com">
+                        </label>
+                        <label>
+                            <span>대표 연락처</span>
+                            <input type="text" name="companyPhone" placeholder="02-0000-0000">
+                        </label>
+                        <div class="form-actions">
+                            <button class="btn btn-primary" type="button" data-ui-only-action>회사 정보 저장</button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="table-card mypage-role-card" data-role-section="ADMIN" hidden aria-labelledby="admin-section-title">
+                    <div class="table-header">
+                        <div>
+                            <h2 id="admin-section-title">관리자 설정</h2>
+                            <p>ADMIN은 STAFF 계정과 STAFF 공통 업무 권한을 관리합니다.</p>
+                        </div>
+                    </div>
+                    <div class="mypage-action-panel">
+                        <div>
+                            <strong>사용자 관리</strong>
+                            <span>작업자 계정 생성, 임시 비밀번호 발급, STAFF 권한 설정을 처리합니다.</span>
+                        </div>
+                        <a class="btn btn-primary" data-users-link href="#">사용자 관리로 이동</a>
+                    </div>
+                </section>
+
+                <section class="table-card mypage-role-card" data-role-section="STAFF" hidden aria-labelledby="staff-section-title">
+                    <div class="table-header">
+                        <div>
+                            <h2 id="staff-section-title">내 업무 권한</h2>
+                            <p>현재 계정으로 사용할 수 있는 업무 메뉴입니다.</p>
+                        </div>
+                    </div>
+                    <div class="permission-chip-list" data-staff-permission-list>
+                        <span class="badge badge-blue">권한 확인 중</span>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="side-panel" aria-labelledby="password-panel-title">
+                <div class="panel-card side-work-panel">
+                    <h2 id="password-panel-title">비밀번호 변경</h2>
+                    <p>보안을 위해 현재 비밀번호 확인 후 새 비밀번호를 설정합니다.</p>
+                    <form class="management-form mypage-form" action="#" method="post" autocomplete="off">
+                        <label>
+                            <span>현재 비밀번호</span>
+                            <input type="password" name="currentPassword" placeholder="현재 비밀번호">
+                        </label>
+                        <label>
+                            <span>새 비밀번호</span>
+                            <input type="password" name="newPassword" placeholder="새 비밀번호">
+                        </label>
+                        <label>
+                            <span>새 비밀번호 확인</span>
+                            <input type="password" name="newPasswordConfirm" placeholder="새 비밀번호 확인">
+                        </label>
+                        <div class="form-actions">
+                            <button class="btn btn-primary" type="button" data-ui-only-action>비밀번호 변경</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="panel-card muted-panel">
+                    <h2>계정 기준</h2>
+                    <ul>
+                        <li>톱니 아이콘은 모든 권한에서 마이페이지로 이동합니다.</li>
+                        <li>회사 정보 변경은 OWNER 화면에서만 다룹니다.</li>
+                        <li>사용자 관리는 OWNER와 ADMIN에게만 노출됩니다.</li>
+                        <li>STAFF는 본인이 사용할 수 있는 업무 권한을 확인합니다.</li>
+                    </ul>
+                </div>
+            </aside>
+        </section>
+    </main>
+</div>
+
+<script src="/js/pcs-api.js?20260529_workspace_guard"></script>
+<script src="/js/workspace-layout.js?20260612_mypage"></script>
+<script src="/js/pcs-ui.js?20260527_1"></script>
+<script src="/js/pcs-common.js?20260611_common"></script>
+<script src="/js/mypage.js?20260612_1"></script>
+</body>
+</html>

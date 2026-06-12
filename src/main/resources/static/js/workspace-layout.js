@@ -209,7 +209,7 @@
 
         if (settingsButton) {
             settingsButton.addEventListener("click", () => {
-                window.location.href = `/w/${encodeURIComponent(companyCode)}/users`;
+                window.location.href = `/w/${encodeURIComponent(companyCode)}/mypage`;
             });
         }
 

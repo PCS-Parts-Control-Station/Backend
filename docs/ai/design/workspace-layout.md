@@ -13,6 +13,7 @@
 - `/w/{companyCode}/history`
 - `/w/{companyCode}/users`
 - `/w/{companyCode}/partners`
+- `/w/{companyCode}/mypage`
 
 ## 적용 제외
 
@@ -83,7 +84,10 @@ workspace-layout
 - 권한별 메뉴 노출은 `docs/ai/pcs-permission-rules.md`를 따른다.
 - `사용자 관리`는 `OWNER / ADMIN`에게만 노출한다.
 - 나머지 업무 메뉴는 인증된 `OWNER / ADMIN / STAFF`가 모두 사용할 수 있는 메뉴로 본다.
-- 계정 박스에는 접속 계정명, 사용자 관리 이동 아이콘, 로그아웃 아이콘을 둔다.
+- 계정 박스에는 접속 계정명, 마이페이지 이동 톱니 아이콘, 로그아웃 아이콘을 둔다.
+- 마이페이지 이동 톱니 아이콘은 `OWNER / ADMIN / STAFF` 모두에게 항상 노출한다.
+- 톱니 아이콘은 `/w/{companyCode}/mypage`로 이동하며 사용자 관리 화면으로 직접 연결하지 않는다.
+- 마이페이지 내부에서 역할별 내용을 분리한다. `OWNER`는 회사 정보 영역, `ADMIN`은 사용자 관리 안내, `STAFF`는 본인 업무 권한 확인 영역을 보여준다.
 - 로그아웃 아이콘은 `/api/auth/logout` 처리 후 `/w/{companyCode}` 로그인 화면으로 이동한다.
 
 현재 업무 메뉴 기준:
