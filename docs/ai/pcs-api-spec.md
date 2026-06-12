@@ -149,6 +149,8 @@ Owner 회원가입 + 회사 생성 요청 예시:
 | PATCH | `/api/workspaces/{companyCode}/users/{memberId}` | 사용자 수정 |
 | PATCH | `/api/workspaces/{companyCode}/users/{memberId}/active` | 사용자 활성 여부 변경 |
 | POST | `/api/workspaces/{companyCode}/users/{memberId}/temporary-password` | 임시 비밀번호 발급 |
+| GET | `/api/workspaces/{companyCode}/users/staff-permissions` | STAFF 공통 업무 권한 조회 |
+| PATCH | `/api/workspaces/{companyCode}/users/staff-permissions` | STAFF 공통 업무 권한 저장 |
 | GET | `/api/workspaces/{companyCode}/mypage` | 내 정보 조회 |
 | PATCH | `/api/workspaces/{companyCode}/mypage` | 내 정보 수정 |
 | PATCH | `/api/workspaces/{companyCode}/mypage/password` | 비밀번호 변경 |

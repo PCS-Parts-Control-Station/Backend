@@ -10,6 +10,17 @@
     }
 
     const normalizeRole = (role) => String(role || "").trim().toUpperCase();
+    const normalizePermission = (permission) => String(permission || "").trim().toUpperCase();
+
+    const STAFF_ROUTE_PERMISSIONS = {
+        inbound: "STAFF_INBOUND",
+        inspection: "STAFF_INSPECTION",
+        outbound: "STAFF_OUTBOUND",
+        parts: "STAFF_PART_CREATE",
+        categories: "STAFF_CATEGORY_MANAGE",
+        "inspection/templates": "STAFF_INSPECTION",
+        partners: "STAFF_PARTNER_MANAGE"
+    };
 
     const getAllowedRoles = (element) => {
         return String(element.dataset.allowedRoles || "")
@@ -21,6 +32,22 @@
     const isAllowedForRole = (element, role) => {
         const allowedRoles = getAllowedRoles(element);
         return allowedRoles.length === 0 || allowedRoles.includes(normalizeRole(role));
+    };
+
+    const getStaffPermissions = (session) => {
+        return new Set((session?.staffPermissions || []).map((permission) => normalizePermission(permission)));
+    };
+
+    const isStaffPermissionAllowed = (element, role, staffPermissions) => {
+        if (normalizeRole(role) !== "STAFF") {
+            return true;
+        }
+        const requiredPermission = normalizePermission(element.dataset.staffPermission);
+        return !requiredPermission || staffPermissions.has(requiredPermission);
+    };
+
+    const getRouteStaffPermission = (route) => {
+        return STAFF_ROUTE_PERMISSIONS[route] || "";
     };
 
     const applyWorkspaceContext = () => {
@@ -66,13 +93,15 @@
         });
     };
 
-    const applyRoleVisibility = (role) => {
-        const normalizedRole = normalizeRole(role);
+    const applyWorkspaceVisibility = (session) => {
+        const normalizedRole = normalizeRole(session?.role);
+        const staffPermissions = getStaffPermissions(session);
         const activeRoute = getActiveRoute();
         let activeRouteBlocked = false;
 
-        document.querySelectorAll("[data-allowed-roles]").forEach((element) => {
-            const allowed = isAllowedForRole(element, normalizedRole);
+        document.querySelectorAll("[data-allowed-roles], [data-staff-permission]").forEach((element) => {
+            const allowed = isAllowedForRole(element, normalizedRole)
+                    && isStaffPermissionAllowed(element, normalizedRole, staffPermissions);
             element.hidden = !allowed;
 
             const route = element.dataset.route;
@@ -81,6 +110,15 @@
             }
         });
 
+        const activeRoutePermission = getRouteStaffPermission(activeRoute);
+        if (
+            normalizedRole === "STAFF" &&
+            activeRoutePermission &&
+            !staffPermissions.has(activeRoutePermission)
+        ) {
+            activeRouteBlocked = true;
+        }
+
         document.querySelectorAll(".sidebar-group").forEach((group) => {
             const hasVisibleLink = Array.from(group.querySelectorAll("a[data-route]"))
                 .some((link) => !link.hidden);
@@ -88,7 +126,7 @@
         });
 
         if (activeRouteBlocked && window.PcsApi?.redirectToInvalidAccess) {
-            window.PcsApi.redirectToInvalidAccess({ code: "AUTH-006" }, companyCode);
+            window.PcsApi.redirectToInvalidAccess({ code: "AUTH-005" }, companyCode);
         }
     };
 
@@ -221,10 +259,10 @@
             if (me?.name) {
                 sessionName.textContent = `${me.name} (${me.role})`;
             }
-            applyRoleVisibility(me?.role);
+            applyWorkspaceVisibility(me);
         } catch (error) {
             sessionName.textContent = "로그인 필요";
-            applyRoleVisibility("");
+            applyWorkspaceVisibility(null);
         }
     };
 

@@ -20,6 +20,8 @@ com.pcs.domain.member
 | PATCH | `/api/workspaces/{companyCode}/users/{memberId}` | 사용자 수정 |
 | PATCH | `/api/workspaces/{companyCode}/users/{memberId}/active` | 사용자 활성 여부 변경 |
 | POST | `/api/workspaces/{companyCode}/users/{memberId}/temporary-password` | 임시 비밀번호 발급 |
+| GET | `/api/workspaces/{companyCode}/users/staff-permissions` | STAFF 공통 업무 권한 조회 |
+| PATCH | `/api/workspaces/{companyCode}/users/staff-permissions` | STAFF 공통 업무 권한 저장 |
 | GET | `/api/workspaces/{companyCode}/mypage` | 내 정보 조회 |
 | PATCH | `/api/workspaces/{companyCode}/mypage` | 내 정보 수정 |
 | PATCH | `/api/workspaces/{companyCode}/mypage/password` | 비밀번호 변경 |
@@ -35,6 +37,8 @@ com.pcs.domain.member
 - OWNER는 ADMIN/STAFF를 조회, 검색, 생성, 수정, 임시 비밀번호 발급할 수 있다.
 - ADMIN은 STAFF만 조회, 검색, 생성, 수정, 임시 비밀번호 발급할 수 있다.
 - STAFF는 사용자 관리 기능에 접근하지 않는다.
+- STAFF 업무 권한 설정은 개인별 권한이 아니라 업체 단위 공통 정책이며 `docs/ai/pcs-permission-rules.md` 기준을 따른다.
+- STAFF 업무 권한은 꺼진 권한만 DB에 저장한다. 저장 row가 없으면 전체 허용이다.
 - 사용자 생성 시 초기 비밀번호는 로그인 아이디와 동일하게 발급하고 `TEMPORARY` 상태로 저장한다.
 - 임시 비밀번호 재발급 시 원문 비밀번호는 응답에서 한 번만 보여주고 DB에는 해시만 저장한다.
 
@@ -43,6 +47,12 @@ com.pcs.domain.member
 - 사용자 목록은 `PageResultDto` 구조를 사용한다.
 - `summary.totalCount`, `summary.adminCount`, `summary.staffCount`는 현재 검색 조건과 관리 가능 역할 범위 기준으로 계산한다.
 - 프론트는 현재 페이지 행을 직접 세서 요약을 만들지 않고 서버 summary를 사용한다.
+
+## STAFF 권한 설정 응답
+
+- `permissions[].code`는 `StaffPermission` enum 값을 사용한다.
+- `permissions[].enabled`가 `false`이면 해당 업체의 모든 STAFF에게 메뉴와 업무 API를 열지 않는다.
+- `/api/workspaces/{companyCode}/me` 응답의 `staffPermissions`는 현재 세션이 사용할 수 있는 STAFF 업무 권한 목록이다.
 
 ## 하네스 포인트
 

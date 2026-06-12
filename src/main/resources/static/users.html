@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/admin.css?20260611_member_api">
+    <link rel="stylesheet" href="/css/admin.css?20260612_user_permission_ui">
     <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
 </head>
 <body class="has-collapsible-sidebar">
@@ -62,7 +62,7 @@
                             <h2 id="user-list-title">사용자 목록</h2>
                             <p>작업 공간에 등록된 전체 사용자 계정입니다.</p>
                         </div>
-                        <div class="list-summary-box summary-compact" aria-label="사용자 목록 요약">
+                        <div class="list-summary-box summary-compact user-summary-strip" aria-label="사용자 목록 요약">
                             <dl class="list-summary">
                                 <div>
                                     <dt>전체</dt>
@@ -196,6 +196,74 @@
                     </div>
                 </div>
 
+                <div class="panel-card staff-permission-panel" aria-labelledby="staff-permission-title">
+                    <div class="panel-title-bar">
+                        <div>
+                            <h2 id="staff-permission-title">직원 권한 설정</h2>
+                            <p>작업자에게 공통 적용할 업무 범위입니다.</p>
+                        </div>
+                        <i class="badge badge-blue">STAFF</i>
+                    </div>
+
+                    <form class="staff-permission-form" action="#" method="post" data-staff-permission-form>
+                        <div class="permission-switch-list">
+                            <label class="permission-switch">
+                                <input type="checkbox" name="staffPermission" value="STAFF_INBOUND" data-staff-permission-input checked>
+                                <span class="permission-switch-body">
+                                    <strong>입고</strong>
+                                    <small>입고 전표와 입고 대상 등록</small>
+                                </span>
+                                <span class="permission-switch-control" aria-hidden="true"></span>
+                            </label>
+                            <label class="permission-switch">
+                                <input type="checkbox" name="staffPermission" value="STAFF_INSPECTION" data-staff-permission-input checked>
+                                <span class="permission-switch-body">
+                                    <strong>검수</strong>
+                                    <small>검수 등록, 정정, 재검수 처리</small>
+                                </span>
+                                <span class="permission-switch-control" aria-hidden="true"></span>
+                            </label>
+                            <label class="permission-switch">
+                                <input type="checkbox" name="staffPermission" value="STAFF_OUTBOUND" data-staff-permission-input checked>
+                                <span class="permission-switch-body">
+                                    <strong>출고</strong>
+                                    <small>출고 전표와 출고 대상 등록</small>
+                                </span>
+                                <span class="permission-switch-control" aria-hidden="true"></span>
+                            </label>
+                            <label class="permission-switch">
+                                <input type="checkbox" name="staffPermission" value="STAFF_PART_CREATE" data-staff-permission-input checked>
+                                <span class="permission-switch-body">
+                                    <strong>품목 관리</strong>
+                                    <small>품목 등록, 수정, 사양 입력</small>
+                                </span>
+                                <span class="permission-switch-control" aria-hidden="true"></span>
+                            </label>
+                            <label class="permission-switch">
+                                <input type="checkbox" name="staffPermission" value="STAFF_CATEGORY_MANAGE" data-staff-permission-input checked>
+                                <span class="permission-switch-body">
+                                    <strong>품목 분류</strong>
+                                    <small>분류와 사양 항목 관리</small>
+                                </span>
+                                <span class="permission-switch-control" aria-hidden="true"></span>
+                            </label>
+                            <label class="permission-switch">
+                                <input type="checkbox" name="staffPermission" value="STAFF_PARTNER_MANAGE" data-staff-permission-input checked>
+                                <span class="permission-switch-body">
+                                    <strong>거래처 관리</strong>
+                                    <small>거래처 등록, 수정, 거래 상태 관리</small>
+                                </span>
+                                <span class="permission-switch-control" aria-hidden="true"></span>
+                            </label>
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn btn-primary" type="submit">저장</button>
+                            <button class="btn btn-secondary" type="reset">전체 허용</button>
+                        </div>
+                    </form>
+                </div>
+
                 <div class="panel-card muted-panel">
                     <h2>운영 메모</h2>
                     <ul>
@@ -247,9 +315,9 @@
 
 <script src="/js/pcs-api.js?20260529_workspace_guard"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
-<script src="/js/workspace-layout.js?20260611_sidebar_role"></script>
+    <script src="/js/workspace-layout.js?20260612_staff_permission"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
 <script src="/js/pcs-common.js?20260611_common"></script>
-<script src="/js/users.js?20260611_member_api"></script>
+<script src="/js/users.js?20260612_staff_permission"></script>
 </body>
 </html>

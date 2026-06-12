@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pcs.domain.member.mapper.StaffPermissionMapper">
+
+    <select id="findDisabledPermissions" resultType="com.pcs.domain.member.type.StaffPermission">
+        SELECT permission_code
+        FROM tb_company_staff_permission_disabled
+        WHERE company_id = #{companyId}
+    </select>
+
+    <select id="existsDisabledPermission" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM tb_company_staff_permission_disabled
+            WHERE company_id = #{companyId}
+              AND permission_code = #{permission}
+        )
+    </select>
+
+    <delete id="deleteDisabledPermissions">
+        DELETE FROM tb_company_staff_permission_disabled
+        WHERE company_id = #{companyId}
+    </delete>
+
+    <insert id="insertDisabledPermissions">
+        INSERT INTO tb_company_staff_permission_disabled (
+            company_id,
+            permission_code,
+            disabled_by
+        ) VALUES
+        <foreach collection="disabledPermissions" item="permission" separator=",">
+            (
+                #{companyId},
+                #{permission},
+                #{disabledBy}
+            )
+        </foreach>
+    </insert>
+
+</mapper>

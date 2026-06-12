@@ -1,11 +1,14 @@
 package com.pcs.domain.member.facade;
 
 import com.pcs.domain.member.dto.request.CreateMemberRequest;
+import com.pcs.domain.member.dto.request.UpdateStaffPermissionRequest;
 import com.pcs.domain.member.dto.request.UpdateMemberRequest;
 import com.pcs.domain.member.dto.response.SearchMemberResponse;
 import com.pcs.domain.member.dto.response.SearchMemberSummaryResponse;
+import com.pcs.domain.member.dto.response.StaffPermissionSettingsResponse;
 import com.pcs.domain.member.dto.response.TemporaryPasswordResponse;
 import com.pcs.domain.member.service.MemberService;
+import com.pcs.domain.member.service.StaffPermissionService;
 import com.pcs.domain.member.type.MemberRole;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.security.PcsPrincipal;
@@ -16,10 +19,16 @@ import org.springframework.stereotype.Component;
 public class MemberFacade {
 
     private final MemberService memberService;
+    private final StaffPermissionService staffPermissionService;
     private final WorkspaceAccessValidator workspaceAccessValidator;
 
-    public MemberFacade(MemberService memberService, WorkspaceAccessValidator workspaceAccessValidator) {
+    public MemberFacade(
+            MemberService memberService,
+            StaffPermissionService staffPermissionService,
+            WorkspaceAccessValidator workspaceAccessValidator
+    ) {
         this.memberService = memberService;
+        this.staffPermissionService = staffPermissionService;
         this.workspaceAccessValidator = workspaceAccessValidator;
     }
 
@@ -84,5 +93,24 @@ public class MemberFacade {
     ) {
         PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
         return memberService.issueTemporaryPassword(checkedPrincipal.companyId(), checkedPrincipal.role(), memberId);
+    }
+
+    public StaffPermissionSettingsResponse getStaffPermissions(PcsPrincipal principal, String pathCompanyCode) {
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
+        return staffPermissionService.getSettings(checkedPrincipal.companyId(), checkedPrincipal.role());
+    }
+
+    public StaffPermissionSettingsResponse updateStaffPermissions(
+            PcsPrincipal principal,
+            String pathCompanyCode,
+            UpdateStaffPermissionRequest request
+    ) {
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
+        return staffPermissionService.updateSettings(
+                checkedPrincipal.companyId(),
+                checkedPrincipal.memberId(),
+                checkedPrincipal.role(),
+                request
+        );
     }
 }

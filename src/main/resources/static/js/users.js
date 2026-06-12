@@ -19,6 +19,8 @@
     const panelViews = document.querySelectorAll("[data-user-panel]");
     const createForm = document.querySelector("[data-user-create-form]");
     const editForm = document.querySelector("[data-user-edit-form]");
+    const staffPermissionForm = document.querySelector("[data-staff-permission-form]");
+    const staffPermissionInputs = document.querySelectorAll("[data-staff-permission-input]");
     const detailFields = {
         name: document.querySelector("[data-detail-name]"),
         loginId: document.querySelector("[data-detail-login-id]"),
@@ -331,6 +333,46 @@
         return true;
     };
 
+    const applyStaffPermissionSettings = (settings) => {
+        const enabledPermissions = new Set(
+                (settings?.permissions || [])
+                        .filter((permission) => permission.enabled)
+                        .map((permission) => permission.code)
+        );
+
+        staffPermissionInputs.forEach((input) => {
+            input.checked = enabledPermissions.has(input.value);
+        });
+    };
+
+    const loadStaffPermissionSettings = async (companyCode) => {
+        if (!staffPermissionForm) {
+            return;
+        }
+
+        try {
+            setFormSaving(staffPermissionForm, true, "조회 중");
+            const settings = await window.PcsApi.getData(
+                    `/api/workspaces/${encodeURIComponent(companyCode)}/users/staff-permissions`,
+                    {
+                        authRedirect: true,
+                        loginCompanyCode: companyCode
+                    }
+            );
+            applyStaffPermissionSettings(settings);
+        } catch (error) {
+            showToast(error?.message || "직원 권한 설정을 불러오지 못했습니다.", "error");
+        } finally {
+            setFormSaving(staffPermissionForm, false);
+        }
+    };
+
+    const readEnabledStaffPermissions = () => {
+        return Array.from(staffPermissionInputs)
+                .filter((input) => input.checked)
+                .map((input) => input.value);
+    };
+
     const loadUsers = async (page = 0, options = {}) => {
         const companyCode = getCompanyCode();
         if (!companyCode) {
@@ -459,6 +501,7 @@
             if (!canUsePage) {
                 return;
             }
+            await loadStaffPermissionSettings(companyCode);
             await loadUsers(0);
         } catch (error) {
             setEmptyMessage(error?.message || "업체 주소를 확인할 수 없습니다.");
@@ -557,6 +600,35 @@
             showToast(error?.message || "사용자를 수정하지 못했습니다.", "error");
         } finally {
             setFormSaving(editForm, false);
+        }
+    });
+
+    staffPermissionForm?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const companyCode = getCompanyCode();
+        if (!companyCode || staffPermissionForm.dataset.saving === "true") {
+            return;
+        }
+
+        try {
+            setFormSaving(staffPermissionForm, true);
+            const settings = await window.PcsApi.getData(
+                    `/api/workspaces/${encodeURIComponent(companyCode)}/users/staff-permissions`,
+                    {
+                        method: "PATCH",
+                        body: {
+                            enabledPermissions: readEnabledStaffPermissions()
+                        },
+                        authRedirect: true,
+                        loginCompanyCode: companyCode
+                    }
+            );
+            applyStaffPermissionSettings(settings);
+            showToast("직원 권한 설정을 저장했습니다.", "success");
+        } catch (error) {
+            showToast(error?.message || "직원 권한 설정을 저장하지 못했습니다.", "error");
+        } finally {
+            setFormSaving(staffPermissionForm, false);
         }
     });
 

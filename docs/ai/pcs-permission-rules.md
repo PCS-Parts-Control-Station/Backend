@@ -124,6 +124,30 @@ STAFF
 `제한`은 기능을 바로 열지 않고 별도 정책이 있을 때만 허용한다는 뜻이다.
 초기 기준에서 회사 정보 변경은 OWNER 중심으로 본다.
 
+## STAFF 업무 권한 설정
+
+STAFF 업무 권한은 개인별로 세밀하게 나누기보다 업체 단위 정책으로 먼저 다룬다.
+
+기준:
+
+- 기본값은 STAFF 업무 권한 전체 허용이다.
+- OWNER와 ADMIN은 사용자 관리 화면에서 STAFF 공통 업무 권한을 조정할 수 있다.
+- 이 설정은 STAFF에게만 적용하며 OWNER/ADMIN의 업무 권한에는 영향을 주지 않는다.
+- 권한을 끄면 해당 업체의 모든 STAFF가 그 업무 메뉴와 API를 사용할 수 없다.
+- 권한 설정은 꺼진 권한만 `tb_company_staff_permission_disabled`에 저장한다.
+- 개인별 예외 권한은 초기 범위가 아니며, 필요해지면 별도 정책과 테이블로 분리한다.
+
+초기 STAFF 업무 권한:
+
+```text
+STAFF_PARTNER_MANAGE
+STAFF_PART_CREATE
+STAFF_CATEGORY_MANAGE
+STAFF_INBOUND
+STAFF_INSPECTION
+STAFF_OUTBOUND
+```
+
 ## 삭제 / 사용 중지 / 취소 기준
 
 권한만으로 삭제 가능 여부를 판단하지 않는다.

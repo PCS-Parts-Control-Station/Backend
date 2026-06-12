@@ -1,9 +1,11 @@
 package com.pcs.domain.member.api;
 
 import com.pcs.domain.member.dto.request.CreateMemberRequest;
+import com.pcs.domain.member.dto.request.UpdateStaffPermissionRequest;
 import com.pcs.domain.member.dto.request.UpdateMemberRequest;
 import com.pcs.domain.member.dto.response.SearchMemberResponse;
 import com.pcs.domain.member.dto.response.SearchMemberSummaryResponse;
+import com.pcs.domain.member.dto.response.StaffPermissionSettingsResponse;
 import com.pcs.domain.member.dto.response.TemporaryPasswordResponse;
 import com.pcs.domain.member.facade.MemberFacade;
 import com.pcs.domain.member.type.MemberRole;
@@ -96,5 +98,24 @@ public class MemberApiController {
     ) {
         TemporaryPasswordResponse response = memberFacade.issueTemporaryPassword(principal, companyCode, memberId);
         return ResponseEntity.ok(ApiResultDto.ok("임시 비밀번호가 발급되었습니다.", response));
+    }
+
+    @GetMapping("/workspaces/{companyCode}/users/staff-permissions")
+    public ResponseEntity<ApiResultDto<StaffPermissionSettingsResponse>> getStaffPermissions(
+            @PathVariable String companyCode,
+            @AuthenticationPrincipal PcsPrincipal principal
+    ) {
+        StaffPermissionSettingsResponse response = memberFacade.getStaffPermissions(principal, companyCode);
+        return ResponseEntity.ok(ApiResultDto.ok(response));
+    }
+
+    @PatchMapping("/workspaces/{companyCode}/users/staff-permissions")
+    public ResponseEntity<ApiResultDto<StaffPermissionSettingsResponse>> updateStaffPermissions(
+            @PathVariable String companyCode,
+            @AuthenticationPrincipal PcsPrincipal principal,
+            @Valid @RequestBody UpdateStaffPermissionRequest request
+    ) {
+        StaffPermissionSettingsResponse response = memberFacade.updateStaffPermissions(principal, companyCode, request);
+        return ResponseEntity.ok(ApiResultDto.ok("직원 권한 설정을 저장했습니다.", response));
     }
 }
