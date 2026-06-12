@@ -4,6 +4,27 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.pcs.domain.member.mapper.MemberMapper">
 
+    <sql id="manageableRoleCondition">
+        AND role IN
+        <foreach collection="manageableRoles" item="manageableRole" open="(" separator="," close=")">
+            #{manageableRole}
+        </foreach>
+    </sql>
+
+    <sql id="memberSearchWhere">
+        WHERE company_id = #{companyId}
+        <include refid="manageableRoleCondition" />
+        <if test="role != null">
+          AND role = #{role}
+        </if>
+        <if test="keyword != null and keyword != ''">
+          AND (
+              name LIKE CONCAT('%', #{keyword}, '%')
+              OR login_id LIKE CONCAT('%', #{keyword}, '%')
+          )
+        </if>
+    </sql>
+
     <insert id="insert" parameterType="com.pcs.domain.member.entity.Member"
             useGeneratedKeys="true" keyProperty="memberId">
         INSERT INTO tb_member (
@@ -30,5 +51,85 @@
             #{createdBy}
         )
     </insert>
+
+    <select id="searchMembers" resultType="com.pcs.domain.member.dto.response.SearchMemberResponse">
+        SELECT
+            member_id,
+            name AS member_name,
+            login_id,
+            role,
+            password_status,
+            active,
+            updated_at
+        FROM tb_member
+        <include refid="memberSearchWhere" />
+        ORDER BY updated_at DESC, member_id DESC
+        LIMIT #{size}
+        OFFSET #{offset}
+    </select>
+
+    <select id="countMembers" resultType="long">
+        SELECT COUNT(*)
+        FROM tb_member
+        <include refid="memberSearchWhere" />
+    </select>
+
+    <select id="summarizeMembers" resultType="com.pcs.domain.member.dto.response.SearchMemberSummaryResponse">
+        SELECT
+            COUNT(*) AS total_count,
+            COALESCE(SUM(CASE WHEN role = 'ADMIN' THEN 1 ELSE 0 END), 0) AS admin_count,
+            COALESCE(SUM(CASE WHEN role = 'STAFF' THEN 1 ELSE 0 END), 0) AS staff_count
+        FROM tb_member
+        <include refid="memberSearchWhere" />
+    </select>
+
+    <select id="findResponseById" resultType="com.pcs.domain.member.dto.response.SearchMemberResponse">
+        SELECT
+            member_id,
+            name AS member_name,
+            login_id,
+            role,
+            password_status,
+            active,
+            updated_at
+        FROM tb_member
+        WHERE company_id = #{companyId}
+          AND member_id = #{memberId}
+        LIMIT 1
+    </select>
+
+    <select id="existsByLoginId" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM tb_member
+            WHERE company_id = #{companyId}
+              AND login_id = #{loginId}
+        )
+    </select>
+
+    <update id="updateMember">
+        UPDATE tb_member
+        SET
+            name = #{memberName},
+            role = #{role},
+            owner_slot = NULL,
+            updated_at = NOW(6)
+        WHERE company_id = #{companyId}
+          AND member_id = #{memberId}
+    </update>
+
+    <update id="updateTemporaryPassword">
+        UPDATE tb_member
+        SET
+            password_hash = #{passwordHash},
+            password_status = 'TEMPORARY',
+            temp_password_expires_at = #{expiresAt},
+            password_changed_at = NULL,
+            login_failed_count = 0,
+            locked_until_at = NULL,
+            updated_at = NOW(6)
+        WHERE company_id = #{companyId}
+          AND member_id = #{memberId}
+    </update>
 
 </mapper>

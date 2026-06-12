@@ -31,6 +31,18 @@ com.pcs.domain.member
 - OWNER 저장 규칙과 `ownerSlot` DB 기준은 `docs/features/member-db.md`를 따른다.
 - 역할별 권한 기준은 `docs/ai/pcs-permission-rules.md`를 따른다.
 - 사용자 삭제는 하지 않고 `docs/ai/pcs-status-lifecycle-rules.md` 기준의 `active` 상태만 변경한다.
+- 사용자 관리 화면과 API는 로그인한 사용자가 관리 가능한 역할만 다룬다.
+- OWNER는 ADMIN/STAFF를 조회, 검색, 생성, 수정, 임시 비밀번호 발급할 수 있다.
+- ADMIN은 STAFF만 조회, 검색, 생성, 수정, 임시 비밀번호 발급할 수 있다.
+- STAFF는 사용자 관리 기능에 접근하지 않는다.
+- 사용자 생성 시 초기 비밀번호는 로그인 아이디와 동일하게 발급하고 `TEMPORARY` 상태로 저장한다.
+- 임시 비밀번호 재발급 시 원문 비밀번호는 응답에서 한 번만 보여주고 DB에는 해시만 저장한다.
+
+## 목록 / 검색 응답
+
+- 사용자 목록은 `PageResultDto` 구조를 사용한다.
+- `summary.totalCount`, `summary.adminCount`, `summary.staffCount`는 현재 검색 조건과 관리 가능 역할 범위 기준으로 계산한다.
+- 프론트는 현재 페이지 행을 직접 세서 요약을 만들지 않고 서버 summary를 사용한다.
 
 ## 하네스 포인트
 
