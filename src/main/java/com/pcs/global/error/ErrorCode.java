@@ -37,9 +37,9 @@ public enum ErrorCode {
     PARTNER_NAME_DUPLICATED(HttpStatus.CONFLICT, "PARTNER-002", "이미 사용 중인 거래처명입니다."),
     PARTNER_INACTIVE(HttpStatus.BAD_REQUEST, "PARTNER-003", "사용할 수 없는 거래처입니다."),
 
-    CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "CATEGORY-001", "카테고리를 찾을 수 없습니다."),
-    CATEGORY_NAME_DUPLICATED(HttpStatus.CONFLICT, "CATEGORY-002", "이미 사용 중인 카테고리명입니다."),
-    CATEGORY_IN_USE(HttpStatus.CONFLICT, "CATEGORY-003", "연결된 부품이 있는 카테고리는 삭제할 수 없습니다."),
+    CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "CATEGORY-001", "분류를 찾을 수 없습니다."),
+    CATEGORY_NAME_DUPLICATED(HttpStatus.CONFLICT, "CATEGORY-002", "이미 사용 중인 분류명입니다."),
+    CATEGORY_IN_USE(HttpStatus.CONFLICT, "CATEGORY-003", "연결된 품목이 있는 분류는 삭제할 수 없습니다."),
 
     PART_NOT_FOUND(HttpStatus.NOT_FOUND, "PART-001", "부품을 찾을 수 없습니다."),
     PART_CODE_DUPLICATED(HttpStatus.CONFLICT, "PART-002", "이미 사용 중인 부품 코드입니다."),

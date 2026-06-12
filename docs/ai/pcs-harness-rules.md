@@ -133,9 +133,29 @@ src/main/resources/static/js/main.js
 - PageController는 forward만 담당
 - JPA 흔적 금지
 - JS 문법 검사
+- 관리형 페이지 JS에서 공통 유틸을 다시 구현하는지 WARN 검사
 - `.gitignore` 필수 규칙 확인
 - `domain/{feature}`가 있으면 `docs/features/{feature}.md`가 있어야 함
 - 인증 기능은 `docs/features/auth.md`와 `docs/ai/pcs-auth-client-rules.md` 기준을 유지함
+
+관리형 페이지 JS 공통 유틸 WARN 검사 대상:
+
+```text
+src/main/resources/static/js/partners.js
+src/main/resources/static/js/categories.js
+src/main/resources/static/js/parts.js
+src/main/resources/static/js/users.js
+```
+
+아래 처리를 화면별 JS에서 직접 다시 만들면 WARN으로 보고한다.
+
+- 업체 코드 추출
+- 날짜/숫자 포맷
+- 토스트 피드백
+- 저장 중 폼 비활성화
+- 빈 목록/로딩/오류 행 렌더링
+
+WARN은 즉시 실패는 아니지만, 새 관리형 페이지 작업이나 기존 관리형 페이지 수정 시 먼저 정리해야 하는 검토 대상이다.
 
 ## Feature / DB 문서 작성 규칙
 

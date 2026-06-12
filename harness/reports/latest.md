@@ -1,13 +1,13 @@
 ﻿# PCS Harness Report
 
 - Mode: bootstrap
-- Feature: none
+- Feature: category
 - RunDb: False
 - DbFeature: none
-- GeneratedAt: 2026-06-08 16:17:40
+- GeneratedAt: 2026-06-11 13:58:26
 - FAIL: 0
 - WARN: 0
-- INFO: 5
+- INFO: 6
 
 ## FAIL
 
@@ -23,5 +23,6 @@
 2. [JAVA_17_REQUIRED] Java 17 or later is available.
 3. [JAVA_HOME_17_REQUIRED] JAVA_HOME points to Java 17 or later.
 4. [JS_SYNTAX] JS syntax check passed.
-5. [COMPILE_JAVA] compileJava passed.
+5. [CATEGORY_FEATURE] Category feature checks completed.
+6. [COMPILE_JAVA] compileJava passed.
 

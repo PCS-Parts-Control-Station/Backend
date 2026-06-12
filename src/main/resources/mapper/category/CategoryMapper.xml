@@ -4,15 +4,6 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.pcs.domain.category.mapper.CategoryMapper">
 
-    <select id="isCompanyActive" resultType="boolean">
-        SELECT EXISTS (
-            SELECT 1
-            FROM tb_company
-            WHERE company_id = #{companyId}
-              AND active = TRUE
-        )
-    </select>
-
     <sql id="categorySearchWhere">
         WHERE c.company_id = #{companyId}
         <if test="keyword != null and keyword != ''">
@@ -160,49 +151,6 @@
             #{active}
         )
     </insert>
-
-    <select id="findSpecDefinitions" resultType="com.pcs.domain.category.dto.response.CategorySpecDefinitionRow">
-        SELECT
-            spec_definition_id,
-            category_id,
-            spec_key,
-            spec_name,
-            input_type,
-            unit,
-            required,
-            searchable,
-            sort_order,
-            active
-        FROM tb_part_spec_definition
-        WHERE company_id = #{companyId}
-          AND category_id = #{categoryId}
-          AND active = TRUE
-        ORDER BY sort_order ASC, spec_definition_id ASC
-    </select>
-
-    <select id="findSpecOptions" resultType="com.pcs.domain.category.dto.response.CategorySpecOptionResponse">
-        SELECT
-            option_id,
-            spec_definition_id,
-            option_label,
-            option_value,
-            sort_order,
-            active
-        FROM tb_part_spec_option
-        WHERE active = TRUE
-        <choose>
-            <when test="specDefinitionIds != null and specDefinitionIds.size() > 0">
-              AND spec_definition_id IN
-              <foreach collection="specDefinitionIds" item="specDefinitionId" open="(" separator="," close=")">
-                #{specDefinitionId}
-              </foreach>
-            </when>
-            <otherwise>
-              AND 1 = 0
-            </otherwise>
-        </choose>
-        ORDER BY spec_definition_id ASC, sort_order ASC, option_id ASC
-    </select>
 
     <select id="countPartsByCategory" resultType="long">
         SELECT COUNT(*)

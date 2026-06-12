@@ -56,69 +56,16 @@
     let currentPartners = [];
     let selectedPartnerId = null;
 
-    const getCompanyCode = () => {
-        const match = window.location.pathname.match(/^\/w\/([^/]+)/);
-        return match ? decodeURIComponent(match[1]) : "";
-    };
-
-    const updateWorkspaceLinks = (companyCode) => {
-        if (!companyCode) {
-            return;
-        }
-        document.querySelectorAll("a[href^='/w/pcs-seoul']").forEach((link) => {
-            link.href = link.getAttribute("href").replace("/w/pcs-seoul", `/w/${encodeURIComponent(companyCode)}`);
-        });
-        const brandWorkspace = document.querySelector(".sidebar-brand small");
-        if (brandWorkspace) {
-            brandWorkspace.textContent = companyCode;
-        }
-    };
-
-    const formatDate = (value) => {
-        if (!value) {
-            return "-";
-        }
-        if (Array.isArray(value)) {
-            const [year, month, day] = value;
-            if (year && month && day) {
-                return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-            }
-        }
-        return String(value).slice(0, 10);
-    };
-
-    const numberText = (value) => {
-        return Number(value || 0).toLocaleString("ko-KR");
-    };
-
-    const clearRows = () => {
-        table?.querySelectorAll(".data-row:not(.table-head)").forEach((row) => row.remove());
-    };
-
-    const setEmptyMessage = (message) => {
-        clearRows();
-        const row = document.createElement("div");
-        row.className = "data-row management-data-row empty-data-row";
-        row.setAttribute("role", "row");
-
-        const cell = document.createElement("span");
-        cell.setAttribute("role", "cell");
-        cell.setAttribute("data-label", "안내");
-        cell.textContent = message;
-
-        row.append(cell);
-        table.append(row);
-    };
-
-    const createTextCell = (label, text, tagName = "span") => {
-        const cell = document.createElement(tagName);
-        cell.setAttribute("role", "cell");
-        if (label) {
-            cell.setAttribute("data-label", label);
-        }
-        cell.textContent = text || "-";
-        return cell;
-    };
+    const getCompanyCode = window.PcsWorkspace.getCompanyCode;
+    const updateWorkspaceLinks = window.PcsWorkspace.updateWorkspaceLinks;
+    const formatDate = window.PcsFormat.date;
+    const numberText = window.PcsFormat.number;
+    const clearRows = () => window.PcsTable.clearRows(table);
+    const setEmptyMessage = (message) => window.PcsTable.emptyRow(table, {
+        rowClassName: "data-row management-data-row empty-data-row",
+        message
+    });
+    const createTextCell = window.PcsTable.textCell;
 
     const createBadgeCell = (label, badgeText, badgeClass) => {
         const cell = document.createElement("span");
@@ -309,33 +256,8 @@
         }
     };
 
-    const showToast = (message, type = "info") => {
-        window.PcsUi?.toast({
-            message,
-            type
-        });
-    };
-
-    const setFormSaving = (targetForm, isSaving, savingText = "저장 중") => {
-        if (!targetForm) {
-            return;
-        }
-
-        targetForm.dataset.saving = String(isSaving);
-        targetForm.querySelectorAll("button, input, select, textarea").forEach((element) => {
-            element.disabled = isSaving;
-        });
-
-        const submitButton = targetForm.querySelector("button[type='submit']");
-        if (!submitButton) {
-            return;
-        }
-
-        if (!submitButton.dataset.defaultText) {
-            submitButton.dataset.defaultText = submitButton.textContent;
-        }
-        submitButton.textContent = isSaving ? savingText : submitButton.dataset.defaultText;
-    };
+    const showToast = window.PcsFeedback.toast;
+    const setFormSaving = window.PcsForm.setSaving;
 
     const readPartnerForm = (targetForm, options = {}) => ({
         partnerName: targetForm.elements.partnerName.value.trim(),
@@ -347,18 +269,6 @@
         memo: targetForm.elements.memo.value.trim() || null,
         ...(options.includeActive ? { active: targetForm.elements.active?.checked !== false } : {})
     });
-
-    const updatePartnerActive = async (companyCode, partnerId, active) => {
-        await window.PcsApi.request(
-                `/api/workspaces/${encodeURIComponent(companyCode)}/partners/${partnerId}/active`,
-                {
-                    method: "PATCH",
-                    body: { active },
-                    authRedirect: true,
-                    loginCompanyCode: companyCode
-                }
-        );
-    };
 
     const loadPartners = async (page = 0, options = {}) => {
         const companyCode = getCompanyCode();
@@ -521,16 +431,11 @@
                 `/api/workspaces/${encodeURIComponent(companyCode)}/partners/${partner.partnerId}`,
                 {
                     method: "PATCH",
-                    body: readPartnerForm(editForm),
+                    body: readPartnerForm(editForm, { includeActive: true }),
                     authRedirect: true,
                     loginCompanyCode: companyCode
                 }
             );
-
-            const activeChanged = editForm.elements.active.checked !== partner.active;
-            if (activeChanged) {
-                await updatePartnerActive(companyCode, partner.partnerId, editForm.elements.active.checked);
-            }
 
             await loadPartners(currentPage, { keepSelection: true, preserveScroll: true });
             const refreshedPartner = getSelectedPartner();

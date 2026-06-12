@@ -1,7 +1,5 @@
 package com.pcs.domain.part.mapper;
 
-import com.pcs.domain.category.dto.response.CategorySpecDefinitionRow;
-import com.pcs.domain.category.dto.response.CategorySpecOptionResponse;
 import com.pcs.domain.part.dto.response.PartSpecValueResponse;
 import com.pcs.domain.part.dto.response.SearchPartResponse;
 import com.pcs.domain.part.entity.PartSpecValue;
@@ -12,8 +10,6 @@ import org.apache.ibatis.annotations.Param;
 
 @Mapper
 public interface PartMapper {
-
-    boolean isCompanyActive(@Param("companyId") Long companyId);
 
     List<SearchPartResponse> searchParts(
             @Param("companyId") Long companyId,
@@ -55,15 +51,6 @@ public interface PartMapper {
     void insert(PcPart part);
 
     void update(PcPart part);
-
-    List<CategorySpecDefinitionRow> findSpecDefinitionsByCategory(
-            @Param("companyId") Long companyId,
-            @Param("categoryId") Long categoryId
-    );
-
-    List<CategorySpecOptionResponse> findSpecOptions(
-            @Param("specDefinitionIds") List<Long> specDefinitionIds
-    );
 
     List<PartSpecValueResponse> findSpecValuesByPart(
             @Param("companyId") Long companyId,

@@ -6,18 +6,19 @@ import com.pcs.domain.category.dto.response.CategoryDetailResponse;
 import com.pcs.domain.category.dto.response.SearchCategoryResponse;
 import com.pcs.domain.category.service.CategoryService;
 import com.pcs.global.dto.PageResultDto;
-import com.pcs.global.error.ErrorCode;
-import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.security.PcsPrincipal;
+import com.pcs.global.workspace.WorkspaceAccessValidator;
 import org.springframework.stereotype.Component;
 
 @Component
 public class CategoryFacade {
 
     private final CategoryService categoryService;
+    private final WorkspaceAccessValidator workspaceAccessValidator;
 
-    public CategoryFacade(CategoryService categoryService) {
+    public CategoryFacade(CategoryService categoryService, WorkspaceAccessValidator workspaceAccessValidator) {
         this.categoryService = categoryService;
+        this.workspaceAccessValidator = workspaceAccessValidator;
     }
 
     public PageResultDto<SearchCategoryResponse, Void> searchCategories(
@@ -28,10 +29,9 @@ public class CategoryFacade {
             Integer size,
             Integer limit
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
         return categoryService.searchCategories(
-                principal.companyId(),
+                checkedPrincipal.companyId(),
                 keyword,
                 page,
                 size,
@@ -44,9 +44,8 @@ public class CategoryFacade {
             String pathCompanyCode,
             CreateCategoryRequest request
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        return categoryService.createCategory(principal.companyId(), request, principal.memberId());
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
+        return categoryService.createCategory(checkedPrincipal.companyId(), request, checkedPrincipal.memberId());
     }
 
     public CategoryDetailResponse getCategory(
@@ -54,9 +53,8 @@ public class CategoryFacade {
             String pathCompanyCode,
             Long categoryId
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        return categoryService.getCategory(principal.companyId(), categoryId);
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
+        return categoryService.getCategory(checkedPrincipal.companyId(), categoryId);
     }
 
     public CategoryDetailResponse updateCategory(
@@ -65,9 +63,8 @@ public class CategoryFacade {
             Long categoryId,
             UpdateCategoryRequest request
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        return categoryService.updateCategory(principal.companyId(), categoryId, request, principal.memberId());
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
+        return categoryService.updateCategory(checkedPrincipal.companyId(), categoryId, request, checkedPrincipal.memberId());
     }
 
     public void deleteCategory(
@@ -75,23 +72,7 @@ public class CategoryFacade {
             String pathCompanyCode,
             Long categoryId
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        categoryService.deleteCategory(principal.companyId(), categoryId);
-    }
-
-    private void validateAuthenticated(PcsPrincipal principal) {
-        if (principal == null) {
-            throw new BusinessException(ErrorCode.AUTH_REQUIRED);
-        }
-    }
-
-    private void validateWorkspace(String pathCompanyCode, String tokenCompanyCode) {
-        if (pathCompanyCode == null || pathCompanyCode.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "업체 코드가 필요합니다.");
-        }
-        if (!tokenCompanyCode.equals(pathCompanyCode.trim().toLowerCase())) {
-            throw new BusinessException(ErrorCode.AUTH_WORKSPACE_MISMATCH);
-        }
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
+        categoryService.deleteCategory(checkedPrincipal.companyId(), categoryId);
     }
 }

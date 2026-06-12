@@ -69,12 +69,8 @@
     let activeSpecModalMode = "create";
     let activeCategoryPickerMode = "filter";
 
-    const getCompanyCode = () => {
-        const match = window.location.pathname.match(/^\/w\/([^/]+)/);
-        return match ? decodeURIComponent(match[1]) : "";
-    };
-
-    const numberText = (value) => Number(value || 0).toLocaleString("ko-KR");
+    const getCompanyCode = window.PcsWorkspace.getCompanyCode;
+    const numberText = window.PcsFormat.number;
 
     const getCurrentStock = (part) => Number(part?.currentStockQuantity ?? part?.stockQuantity ?? 0);
 
@@ -85,13 +81,7 @@
         return safeQuantity > 0 && getCurrentStock(part) < safeQuantity;
     };
 
-    const formatMoney = (value) => {
-        const amount = Number(value ?? 0);
-        if (!Number.isFinite(amount) || amount <= 0) {
-            return "0원";
-        }
-        return `${amount.toLocaleString("ko-KR")}원`;
-    };
+    const formatMoney = window.PcsFormat.money;
 
     const normalizeString = (value) => (value === null || value === undefined ? "" : String(value));
 
@@ -248,51 +238,35 @@
         return false;
     };
 
-    const clearRows = () => {
-        table?.querySelectorAll(".data-row:not(.table-head)").forEach((row) => row.remove());
-    };
-
-    const setEmptyMessage = (message) => {
-        clearRows();
-        const row = document.createElement("div");
-        row.className = "data-row management-data-row part-management-data-row empty-data-row";
-        row.setAttribute("role", "row");
-
-        const cell = document.createElement("span");
-        cell.setAttribute("role", "cell");
-        cell.setAttribute("data-label", "안내");
-        cell.textContent = message;
-
-        row.append(cell);
-        table.append(row);
-    };
+    const clearRows = () => window.PcsTable.clearRows(table);
+    const setEmptyMessage = (message) => window.PcsTable.emptyRow(table, {
+        rowClassName: "data-row management-data-row part-management-data-row empty-data-row",
+        message
+    });
 
     const createStackedCell = (label, primary, secondary, className = "part-meta-cell") => {
         const cell = document.createElement("span");
+        const primaryText = primary || "-";
+        const secondaryText = secondary || "";
         cell.className = className;
         cell.setAttribute("role", "cell");
         cell.setAttribute("data-label", label);
+        cell.title = secondaryText ? `${primaryText} / ${secondaryText}` : primaryText;
 
         const primaryElement = document.createElement("strong");
-        primaryElement.textContent = primary || "-";
+        primaryElement.textContent = primaryText;
         cell.append(primaryElement);
 
-        if (secondary) {
+        if (secondaryText) {
             const secondaryElement = document.createElement("small");
-            secondaryElement.textContent = secondary;
+            secondaryElement.textContent = secondaryText;
             cell.append(secondaryElement);
         }
 
         return cell;
     };
 
-    const createTextCell = (label, text) => {
-        const cell = document.createElement("span");
-        cell.setAttribute("role", "cell");
-        cell.setAttribute("data-label", label);
-        cell.textContent = text || "-";
-        return cell;
-    };
+    const createTextCell = window.PcsTable.textCell;
 
     const createQuantityCell = (label, value, secondary = "", low = false) => {
         const cell = document.createElement("span");
@@ -450,12 +424,7 @@
         updateDetailSummary("edit");
     };
 
-    const showToast = (message, type = "info") => {
-        window.PcsUi?.toast({
-            message,
-            type
-        });
-    };
+    const showToast = window.PcsFeedback.toast;
 
     const fetchPartDetail = async (partId) => {
         const companyCode = getCompanyCode();
@@ -588,26 +557,7 @@
         searchButton.textContent = isLoading ? "조회 중" : "검색";
     };
 
-    const setFormSaving = (targetForm, isSaving, savingText = "저장 중") => {
-        if (!targetForm) {
-            return;
-        }
-
-        targetForm.dataset.saving = String(isSaving);
-        targetForm.querySelectorAll("button, input, textarea, select").forEach((element) => {
-            element.disabled = isSaving;
-        });
-
-        const submitButton = targetForm.querySelector("button[type='submit']");
-        if (!submitButton) {
-            return;
-        }
-
-        if (!submitButton.dataset.defaultText) {
-            submitButton.dataset.defaultText = submitButton.textContent;
-        }
-        submitButton.textContent = isSaving ? savingText : submitButton.dataset.defaultText;
-    };
+    const setFormSaving = window.PcsForm.setSaving;
 
     const readNumberValue = (value) => {
         if (value === undefined || value === null || value === "") {
