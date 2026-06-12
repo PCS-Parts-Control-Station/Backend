@@ -9,10 +9,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/admin.css?20260610_sidebar_lock">
+    <link rel="stylesheet" href="/css/admin.css?20260611_side_panel_400">
     <link rel="stylesheet" href="/css/workflow.css?20260522_split">
     <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
-    <link rel="stylesheet" href="/css/inspection.css?20260605_ui_tune2">
+    <link rel="stylesheet" href="/css/inspection.css?20260612_history_modal_refine">
 </head>
 <body class="has-collapsible-sidebar inspection-page">
 <div class="workspace-layout">
@@ -136,9 +136,6 @@
                         <div class="pagination-actions">
                             <button type="button" data-inspection-document-page-prev>이전</button>
                             <button type="button" data-inspection-document-page-next>다음</button>
-                        </div>
-                        <div class="data-row management-data-row empty-data-row inspection-empty-row" role="row" data-inspection-waiting-empty hidden>
-                            <span role="cell" data-label="안내">검수 대상 전표를 불러오는 중입니다.</span>
                         </div>
                     </div>
                 </section>
@@ -305,12 +302,12 @@
                 <section class="table-card inspection-step-card inspection-history-card" aria-labelledby="inspection-history-title">
                     <div class="table-header inspection-step-header">
                         <div>
-                            <h2 id="inspection-history-title"><span class="inspection-step-number inspection-step-number-muted">4</span> 참고 이력</h2>
-                            <p>최근 검수, 정정, 재검수 기록입니다. 전표번호는 추적용 보조 정보입니다.</p>
+                            <h2 id="inspection-history-title"><span class="inspection-step-number">4</span> 검수 이력</h2>
+                            <p data-inspection-history-scope>전표를 선택하면 해당 전표 또는 관리번호 기준 이력이 표시됩니다.</p>
                         </div>
                     </div>
 
-                    <div class="data-table" role="table" aria-label="최근 검수 이력" data-inspection-history-table>
+                    <div class="data-table" role="table" aria-label="검수 이력" data-inspection-history-table>
                         <div class="data-row management-data-row inspection-history-row table-head" role="row">
                             <span role="columnheader">검수일</span>
                             <span role="columnheader">부품</span>
@@ -321,108 +318,134 @@
                             <span role="columnheader">상세</span>
                         </div>
                         <div class="data-row management-data-row empty-data-row inspection-empty-row" role="row" data-inspection-history-empty>
-                            <span role="cell" data-label="안내">검수 이력을 불러오는 중입니다.</span>
+                            <span role="cell" data-label="안내">전표를 선택하면 검수 이력이 표시됩니다.</span>
+                        </div>
+                    </div>
+                    <div class="pagination-bar inspection-pagination-bar" data-inspection-history-pagination hidden>
+                        <p data-inspection-history-page-info>0건</p>
+                        <div class="pagination-actions">
+                            <button type="button" data-inspection-history-page-prev>이전</button>
+                            <button type="button" data-inspection-history-page-next>다음</button>
                         </div>
                     </div>
 
-                    <div class="inspection-history-detail" data-inspection-history-detail hidden>
-                        <div class="section-title-row">
-                            <h3>검수 이력 상세</h3>
-                            <span data-inspection-history-item-count>-</span>
-                        </div>
-                        <div class="inspection-history-detail-grid">
-                            <div class="inspection-detail-card">
-                                <strong data-inspection-history-unit>-</strong>
-                                <div class="detail-badge-row">
-                                    <em class="badge badge-active" data-inspection-history-type>-</em>
-                                    <em class="badge badge-blue" data-inspection-history-grade>-</em>
-                                    <em class="badge badge-active" data-inspection-history-result>-</em>
+                    <dialog class="part-modal inspection-history-modal" data-inspection-history-detail aria-labelledby="inspection-history-detail-modal-title">
+                        <div class="part-modal-card inspection-history-modal-card">
+                            <div class="part-modal-header">
+                                <div>
+                                    <h2 id="inspection-history-detail-modal-title">검수 이력 상세</h2>
+                                    <p><span data-inspection-history-item-count>-</span></p>
+                                </div>
+                                <button class="modal-close-button" type="button" data-inspection-history-close aria-label="닫기">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                        <path d="M18 6 6 18" />
+                                        <path d="m6 6 12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="modal-detail-body inspection-history-detail">
+                                <div class="inspection-detail-card inspection-history-unit-card">
+                                    <strong data-inspection-history-unit>-</strong>
+                                    <div class="detail-badge-row">
+                                        <em class="badge badge-active" data-inspection-history-type>-</em>
+                                        <em class="badge badge-blue" data-inspection-history-grade>-</em>
+                                        <em class="badge badge-active" data-inspection-history-result>-</em>
+                                    </div>
+                                </div>
+                                <dl class="detail-list inspection-selected-meta">
+                                    <div>
+                                        <dt>입고 전표</dt>
+                                        <dd data-inspection-history-document-no>-</dd>
+                                    </div>
+                                    <div>
+                                        <dt>품목</dt>
+                                        <dd data-inspection-history-part>-</dd>
+                                    </div>
+                                    <div>
+                                        <dt>검수일</dt>
+                                        <dd data-inspection-history-date>-</dd>
+                                    </div>
+                                    <div>
+                                        <dt>처리자</dt>
+                                        <dd data-inspection-history-worker>-</dd>
+                                    </div>
+                                    <div>
+                                        <dt>판매상태</dt>
+                                        <dd data-inspection-history-sales>-</dd>
+                                    </div>
+                                    <div>
+                                        <dt>메모</dt>
+                                        <dd data-inspection-history-memo>-</dd>
+                                    </div>
+                                    <div>
+                                        <dt>이력 관계</dt>
+                                        <dd data-inspection-history-relation>-</dd>
+                                    </div>
+                                </dl>
+                                <div class="inspection-result-list" data-inspection-history-items>
+                                    <p class="detail-empty-text">검수 이력을 선택해 주세요.</p>
+                                </div>
+                                <div class="inspection-history-actions" data-inspection-history-actions>
+                                    <button class="btn btn-secondary" type="button" data-inspection-correction-start>정정 등록</button>
+                                    <button class="btn btn-primary" type="button" data-inspection-reinspection-start>재검수 등록</button>
+                                </div>
+                                <div class="inspection-history-workflow" data-inspection-history-workflow hidden>
+                                    <div class="section-title-row">
+                                        <h3 data-inspection-workflow-title>정정 등록</h3>
+                                        <span data-inspection-workflow-base>-</span>
+                                    </div>
+                                    <!-- API: POST /api/workspaces/{companyCode}/inspections/{inspectionId}/corrections -->
+                                    <!-- API: POST /api/workspaces/{companyCode}/inspections/{inspectionId}/reinspections -->
+                                    <form class="inspection-history-form" data-inspection-workflow-form autocomplete="off">
+                                        <div class="inspection-form-grid">
+                                            <label>
+                                                <span>검수 결과</span>
+                                                <select name="result" required>
+                                                    <option value="PASS">통과</option>
+                                                    <option value="FAIL">불합격</option>
+                                                </select>
+                                            </label>
+                                            <label>
+                                                <span>등급</span>
+                                                <select name="grade" required>
+                                                    <option value="A">A</option>
+                                                    <option value="B">B</option>
+                                                    <option value="C">C</option>
+                                                    <option value="DEFECTIVE">불량</option>
+                                                </select>
+                                            </label>
+                                            <label>
+                                                <span>판매상태</span>
+                                                <select name="salesStatus" required>
+                                                    <option value="AVAILABLE">판매 가능</option>
+                                                    <option value="HOLD">판매 보류</option>
+                                                    <option value="UNAVAILABLE">판매 불가</option>
+                                                </select>
+                                            </label>
+                                        </div>
+                                        <div class="inspection-line-section inspection-template-item-section">
+                                            <div class="section-title-row">
+                                                <h3>검수 항목</h3>
+                                                <span data-inspection-workflow-item-count>항목 없음</span>
+                                            </div>
+                                            <div class="inspection-checklist" data-inspection-workflow-template-items>
+                                                <p class="detail-empty-text">이력 상세의 검수 항목을 불러오는 중입니다.</p>
+                                            </div>
+                                        </div>
+                                        <label>
+                                            <span data-inspection-workflow-memo-label>정정 사유</span>
+                                            <textarea name="memo" rows="3" placeholder="변경 사유를 입력해 주세요" required></textarea>
+                                        </label>
+                                        <p class="field-message" data-inspection-workflow-message role="status" aria-live="polite" hidden></p>
+                                        <div class="form-actions">
+                                            <button class="btn btn-secondary" type="button" data-inspection-workflow-cancel>취소</button>
+                                            <button class="btn btn-primary" type="submit" data-inspection-workflow-submit>저장</button>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
-                            <dl class="detail-list inspection-selected-meta">
-                                <div>
-                                    <dt>입고 전표</dt>
-                                    <dd data-inspection-history-document-no>-</dd>
-                                </div>
-                                <div>
-                                    <dt>부품</dt>
-                                    <dd data-inspection-history-part>-</dd>
-                                </div>
-                                <div>
-                                    <dt>검수일</dt>
-                                    <dd data-inspection-history-date>-</dd>
-                                </div>
-                                <div>
-                                    <dt>처리자</dt>
-                                    <dd data-inspection-history-worker>-</dd>
-                                </div>
-                                <div>
-                                    <dt>판매상태</dt>
-                                    <dd data-inspection-history-sales>-</dd>
-                                </div>
-                                <div>
-                                    <dt>메모</dt>
-                                    <dd data-inspection-history-memo>-</dd>
-                                </div>
-                                <div>
-                                    <dt>이력 관계</dt>
-                                    <dd data-inspection-history-relation>-</dd>
-                                </div>
-                            </dl>
                         </div>
-                        <div class="inspection-history-actions" data-inspection-history-actions>
-                            <button class="btn btn-secondary" type="button" data-inspection-correction-start>정정 등록</button>
-                            <button class="btn btn-primary" type="button" data-inspection-reinspection-start>재검수 등록</button>
-                        </div>
-                        <div class="inspection-history-workflow" data-inspection-history-workflow hidden>
-                            <div class="section-title-row">
-                                <h3 data-inspection-workflow-title>정정 등록</h3>
-                                <span data-inspection-workflow-base>-</span>
-                            </div>
-                            <!-- API: POST /api/workspaces/{companyCode}/inspections/{inspectionId}/corrections -->
-                            <!-- API: POST /api/workspaces/{companyCode}/inspections/{inspectionId}/reinspections -->
-                            <form class="inspection-history-form" data-inspection-workflow-form autocomplete="off">
-                                <div class="inspection-form-grid">
-                                    <label>
-                                        <span>검수 결과</span>
-                                        <select name="result" required>
-                                            <option value="PASS">통과</option>
-                                            <option value="FAIL">불합격</option>
-                                        </select>
-                                    </label>
-                                    <label>
-                                        <span>등급</span>
-                                        <select name="grade" required>
-                                            <option value="A">A</option>
-                                            <option value="B">B</option>
-                                            <option value="C">C</option>
-                                            <option value="DEFECTIVE">불량</option>
-                                        </select>
-                                    </label>
-                                    <label>
-                                        <span>판매상태</span>
-                                        <select name="salesStatus" required>
-                                            <option value="AVAILABLE">판매 가능</option>
-                                            <option value="HOLD">판매 보류</option>
-                                            <option value="UNAVAILABLE">판매 불가</option>
-                                        </select>
-                                    </label>
-                                </div>
-                                <label>
-                                    <span data-inspection-workflow-memo-label>정정 사유</span>
-                                    <textarea name="memo" rows="3" placeholder="변경 사유를 입력해 주세요" required></textarea>
-                                </label>
-                                <p class="field-message" data-inspection-workflow-message role="status" aria-live="polite" hidden></p>
-                                <div class="form-actions">
-                                    <button class="btn btn-secondary" type="button" data-inspection-workflow-cancel>취소</button>
-                                    <button class="btn btn-primary" type="submit" data-inspection-workflow-submit>저장</button>
-                                </div>
-                            </form>
-                        </div>
-                        <div class="inspection-result-list" data-inspection-history-items>
-                            <p class="detail-empty-text">검수 이력을 선택해 주세요.</p>
-                        </div>
-                    </div>
+                    </dialog>
                 </section>
             </div>
 
@@ -468,8 +491,8 @@
                                     <li>
                                         <span>4</span>
                                         <div>
-                                            <strong>이력 확인</strong>
-                                            <p>최근 검수와 정정 기록을 확인합니다.</p>
+                                            <strong>검수 이력</strong>
+                                            <p>선택한 전표와 관리번호의 검수 기록을 확인합니다.</p>
                                         </div>
                                     </li>
                                 </ol>
@@ -541,6 +564,6 @@
 <script src="/js/workspace-layout.js?20260610_sidebar_collapse"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
-<script src="/js/inspection.js?20260605_ui_tune2"></script>
+<script src="/js/inspection.js?20260612_history_modal_refine"></script>
 </body>
 </html>

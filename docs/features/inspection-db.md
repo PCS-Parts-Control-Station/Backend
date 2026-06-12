@@ -228,6 +228,7 @@ tb_inspection_item_result.idx_inspection_item_result_selected_option
 
 - 모든 조회는 `company_id` 조건을 반드시 포함한다.
 - 관리번호, 부품, 전표, 검수 유형, 결과, 등급, 기간 조건으로 검색할 수 있어야 한다.
+- 전표 기준 이력은 `documentId`, 개별 관리번호 기준 이력은 `unitId` 조건으로 조회한다.
 - 목록은 `inspected_at DESC, inspection_id DESC` 순서로 정렬한다.
 
 ## 정합성 기준
@@ -247,6 +248,8 @@ tb_inspection_item_result.idx_inspection_item_result_selected_option
 
 - 최초 검수는 `inspection_type = INITIAL`, `original_inspection_id = NULL`이어야 한다.
 - 정정과 재검수는 `inspection_type IN ('CORRECTION', 'REINSPECTION')`, `original_inspection_id IS NOT NULL`이어야 한다.
+- 최초 검수를 기준으로 정정/재검수를 생성하면 `original_inspection_id`는 기준 검수 ID여야 한다.
+- 정정 또는 재검수 이력을 기준으로 다시 정정/재검수를 생성하면 기존 `original_inspection_id`를 유지해야 한다.
 - `tb_inspection.chk_inspection_original` 제약을 만족해야 한다.
 - 검수 요청 body에는 `inspectedAt`을 받지 않고, 서버가 현재 시각을 `inspected_at`에 저장한다.
 - `grade = DEFECTIVE`이면 `sales_status = UNAVAILABLE`이어야 한다.
@@ -273,3 +276,15 @@ tb_inspection_item_result.idx_inspection_item_result_selected_option
 실행 명령과 `-DbFeature inspection` 사용 기준은 `docs/ai/pcs-harness-rules.md`를 따른다.
 
 검수 DB 검증 시에는 `inspection.md`, `inspection-template.md`, `inspection-db.md`, `checkdb.md` 기준을 함께 확인한다.
+
+## JUnit 검증 기준
+
+검수 도메인 서비스 테스트는 아래 기준을 포함해야 한다.
+
+- 최초 검수 저장 시 `tb_inspection`, `tb_inspection_item_result`, `tb_pc_part_unit`, `tb_part_status_history` 저장/갱신 호출을 검증한다.
+- 정정과 재검수 저장 시 `inspection_type`, `original_inspection_id`, `template_id`, `memo` 정규화 값을 검증한다.
+- 검수 이력 목록 조회 시 필터, 기간, 페이징 정규화 값을 검증한다.
+- 검수 이력 상세 조회 시 항목별 결과 조회 호출을 검증한다.
+- 템플릿 항목 생성 시 `grade_impact = LOW`, `fail_policy = NONE` 기본값을 검증한다.
+- 템플릿/항목/선택지 `active` 변경 시 소속 검증 후 변경 호출을 검증한다.
+- 선택지 수정 시 `option_value`가 없으면 `option_label`을 저장 코드로 사용하는지 검증한다.

@@ -51,18 +51,6 @@
     line-height: 1;
 }
 
-.inspection-step-number-muted {
-    border-color: var(--line-strong);
-    background: var(--gray-soft);
-    color: var(--gray);
-}
-
-.inspection-form-card.is-active .inspection-step-number {
-    border-color: rgba(22, 163, 74, 0.24);
-    background: var(--green-soft);
-    color: var(--green);
-}
-
 .inspection-form-card:not(.is-active) .inspection-form-target,
 .inspection-form-card:not(.is-active) .inspection-form {
     display: none;
@@ -100,8 +88,33 @@
     background: rgba(255, 255, 255, 0.72);
 }
 
+.inspection-history-card .table-header.inspection-step-header {
+    padding: 16px 20px 14px;
+}
+
 .inspection-history-card .inspection-step-header h2 {
     color: var(--text);
+    font-size: 19px;
+}
+
+.inspection-history-card .inspection-step-header p {
+    margin-top: 4px;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.inspection-history-card .data-row.management-data-row.inspection-history-row.table-head {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.inspection-history-card .data-row.management-data-row.inspection-empty-row {
+    padding: 16px 20px;
+}
+
+.inspection-history-card .data-row.management-data-row.inspection-empty-row [role="cell"] {
+    font-size: 14px;
+    line-height: 1.35;
 }
 
 .inspection-document-card .inspection-step-header {
@@ -162,6 +175,15 @@
     grid-template-columns: minmax(156px, 1fr) minmax(220px, 1.25fr) 96px 96px 96px 92px;
 }
 
+.inspection-document-row > [role="cell"]:first-child {
+    color: var(--navy);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
 .data-row.management-data-row.inspection-history-row {
     grid-template-columns: 104px minmax(180px, 1.25fr) minmax(136px, 0.9fr) 78px 72px 86px 82px;
 }
@@ -189,6 +211,14 @@
     font-size: 12px;
     font-weight: 700;
     line-height: 1.35;
+}
+
+.inspection-history-row .inspection-stack-cell strong {
+    font-size: 13px;
+}
+
+.inspection-history-row .inspection-stack-cell small {
+    font-size: 11px;
 }
 
 .inspection-history-row [data-label="전표번호"] {
@@ -255,6 +285,10 @@
     border-top-color: var(--cyan);
     border-radius: 999px;
     animation: inspectionLoadingSpin 0.8s linear infinite;
+}
+
+.inspection-history-card .data-row.management-data-row.inspection-empty-row [role="cell"]::before {
+    display: none;
 }
 
 .inspection-detail-panel {
@@ -906,29 +940,133 @@
     background: var(--surface-soft);
 }
 
+.inspection-history-modal {
+    width: min(620px, calc(100vw - 28px));
+    max-height: calc(100vh - 44px);
+}
+
+.inspection-history-modal-card {
+    grid-template-rows: auto minmax(0, 1fr);
+    max-height: calc(100vh - 44px);
+    overflow: hidden;
+}
+
+.inspection-history-modal .part-modal-header {
+    padding: 18px 20px 16px;
+}
+
+.inspection-history-modal .part-modal-header h2 {
+    color: var(--navy);
+    font-size: 24px;
+    line-height: 1.15;
+}
+
+.inspection-history-modal .part-modal-header p:last-child {
+    margin-top: 6px;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.inspection-history-modal .modal-close-button {
+    width: 44px;
+    height: 44px;
+    border: 2px solid var(--cyan-dark);
+    border-radius: 10px;
+}
+
+.inspection-history-modal .inspection-history-detail {
+    gap: 12px;
+    min-height: 0;
+    max-height: calc(100vh - 102px);
+    margin: 0;
+    padding: 16px 18px 18px;
+    border: 0;
+    border-radius: 0;
+    overflow: auto;
+    scrollbar-gutter: stable;
+}
+
 .inspection-history-detail[hidden] {
     display: none;
 }
 
-.inspection-history-detail-grid {
-    display: grid;
-    grid-template-columns: minmax(220px, 0.55fr) minmax(0, 1fr);
-    gap: 14px;
-    align-items: start;
+.inspection-history-unit-card {
+    gap: 9px;
+    min-height: 76px;
+    padding: 14px 16px;
+    background: var(--surface-soft);
+}
+
+.inspection-history-detail .inspection-detail-card strong {
+    font-size: 15px;
+    line-height: 1.35;
+}
+
+.inspection-history-detail .detail-badge-row {
+    gap: 6px;
+}
+
+.inspection-history-detail .badge {
+    min-height: 28px;
+    padding: 0 10px;
+    font-size: 12px;
+}
+
+.inspection-history-detail .inspection-selected-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 13px 32px;
+    margin: 0;
+    padding: 3px 0 1px;
+    border: 0;
+    background: transparent;
+}
+
+.inspection-history-detail .inspection-selected-meta div {
+    gap: 4px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.inspection-history-detail .inspection-selected-meta dt {
+    font-size: 12px;
+    line-height: 1.25;
+}
+
+.inspection-history-detail .inspection-selected-meta dd {
+    font-size: 14px;
+    line-height: 1.35;
 }
 
 .inspection-history-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    padding-top: 2px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 7px;
+    margin-top: 2px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+}
+
+.inspection-history-actions[hidden] {
+    display: none;
+}
+
+.inspection-history-actions .btn,
+.inspection-history-form .form-actions .btn {
+    width: 100%;
+    min-height: 38px;
+    padding: 0 14px;
+    font-size: 14px;
+    font-weight: 800;
 }
 
 .inspection-history-workflow {
     display: grid;
-    gap: 12px;
-    padding: 14px;
+    gap: 10px;
+    margin-top: 2px;
+    padding: 12px;
     border: 1px solid rgba(37, 99, 235, 0.18);
+    border-top: 2px solid rgba(37, 99, 235, 0.32);
     border-radius: var(--radius);
     background: #f8fbff;
 }
@@ -939,12 +1077,12 @@
 
 .inspection-history-form {
     display: grid;
-    gap: 12px;
+    gap: 10px;
 }
 
 .inspection-history-form label {
     display: grid;
-    gap: 6px;
+    gap: 5px;
     min-width: 0;
 }
 
@@ -967,14 +1105,100 @@
 }
 
 .inspection-history-form select {
-    min-height: 42px;
-    padding: 0 12px;
+    min-height: 40px;
+    padding: 0 10px;
 }
 
 .inspection-history-form textarea {
-    min-height: 84px;
-    padding: 10px 12px;
+    min-height: 70px;
+    padding: 10px;
     resize: vertical;
+}
+
+.inspection-history-form .inspection-form-grid {
+    gap: 8px;
+}
+
+.inspection-history-form .inspection-line-section {
+    gap: 6px;
+    padding: 0;
+}
+
+.inspection-history-form .section-title-row h3 {
+    font-size: 14px;
+}
+
+.inspection-history-form .section-title-row span {
+    font-size: 12px;
+}
+
+.inspection-history-form .inspection-checklist,
+.inspection-history-form .inspection-template-group,
+.inspection-history-form .inspection-template-items {
+    gap: 5px;
+}
+
+.inspection-history-form .inspection-template-group + .inspection-template-group {
+    margin-top: 2px;
+}
+
+.inspection-history-form .inspection-check-item {
+    padding: 7px 9px;
+}
+
+.inspection-history-form .inspection-template-item {
+    grid-template-columns: minmax(0, 1fr) minmax(150px, 220px);
+}
+
+.inspection-history-form .inspection-template-control-grid {
+    grid-template-columns: minmax(68px, 1fr) 92px;
+    gap: 5px;
+}
+
+.inspection-history-form .form-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding-top: 4px;
+    border-top: 1px solid rgba(37, 99, 235, 0.14);
+}
+
+.inspection-history-form .inspection-template-item > span strong {
+    font-size: 12px;
+}
+
+.inspection-history-form .inspection-template-item > span small {
+    font-size: 10px;
+}
+
+.inspection-history-detail .inspection-result-list {
+    gap: 7px;
+    max-height: none;
+}
+
+.inspection-history-detail .inspection-result-item {
+    gap: 5px;
+    min-height: 62px;
+    padding: 10px 12px;
+    background: var(--surface);
+}
+
+.inspection-history-detail .inspection-result-item header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-bottom: 0;
+}
+
+.inspection-history-detail .inspection-result-item header strong {
+    font-size: 14px;
+}
+
+.inspection-history-detail .inspection-result-item p {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.35;
 }
 
 .inspection-history-form select:focus,
@@ -1270,7 +1494,6 @@
     }
 
     .inspection-form-grid,
-    .inspection-history-detail-grid,
     .inspection-selected-meta,
     .inspection-check-item,
     .inspection-template-item,
@@ -1375,6 +1598,10 @@
         font-size: 15px;
         line-height: 1.45;
         overflow-wrap: anywhere;
+    }
+
+    .inspection-document-row > [role="cell"]:nth-child(1) {
+        font-size: 13px;
     }
 
     .inspection-document-row > [role="cell"]:nth-child(2),

@@ -5,9 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.pcs.domain.part.dto.response.SearchPartResponse;
 import com.pcs.domain.part.mapper.PartMapper;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
+import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,23 +34,27 @@ class PartServiceTest {
     void searchParts_usesDefaultActiveAndLimit() {
         Long companyId = 1L;
         when(partMapper.isCompanyActive(companyId)).thenReturn(true);
-        when(partMapper.searchParts(companyId, "RTX", null, true, 20)).thenReturn(List.of());
+        when(partMapper.countParts(companyId, "RTX", null, true)).thenReturn(1L);
+        when(partMapper.searchParts(companyId, "RTX", null, true, 10, 0)).thenReturn(List.of(part()));
 
-        List<?> response = partService.searchParts(companyId, " RTX ", null, null, null);
+        var response = partService.searchParts(companyId, " RTX ", null, null, null, null, null);
 
-        assertEquals(0, response.size());
-        verify(partMapper).searchParts(companyId, "RTX", null, true, 20);
+        assertEquals(1, response.content().size());
+        assertEquals(0, response.page());
+        assertEquals(10, response.size());
+        verify(partMapper).searchParts(companyId, "RTX", null, true, 10, 0);
     }
 
     @Test
     void searchParts_capsLimitToMax() {
         Long companyId = 1L;
         when(partMapper.isCompanyActive(companyId)).thenReturn(true);
-        when(partMapper.searchParts(companyId, null, 3L, false, 50)).thenReturn(List.of());
+        when(partMapper.countParts(companyId, null, 3L, false)).thenReturn(1L);
+        when(partMapper.searchParts(companyId, null, 3L, false, 100, 100)).thenReturn(List.of(part()));
 
-        partService.searchParts(companyId, " ", 3L, false, 100);
+        partService.searchParts(companyId, " ", 3L, false, 1, 200, null);
 
-        verify(partMapper).searchParts(companyId, null, 3L, false, 50);
+        verify(partMapper).searchParts(companyId, null, 3L, false, 100, 100);
     }
 
     @Test
@@ -58,9 +64,25 @@ class PartServiceTest {
 
         BusinessException exception = assertThrows(
                 BusinessException.class,
-                () -> partService.searchParts(companyId, null, null, true, 20)
+                () -> partService.searchParts(companyId, null, null, true, null, 20, null)
         );
 
         assertEquals(ErrorCode.COMPANY_INACTIVE, exception.getErrorCode());
+    }
+
+    private SearchPartResponse part() {
+        return new SearchPartResponse(
+                1L,
+                3L,
+                "그래픽카드",
+                "RTX 3060",
+                "Ventus 2X",
+                "MSI",
+                "VGA-RTX3060-MSI",
+                BigDecimal.valueOf(200000),
+                2,
+                1,
+                true
+        );
     }
 }

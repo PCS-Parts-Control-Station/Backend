@@ -13,10 +13,12 @@ import com.pcs.domain.inspection.dto.request.CreateInspectionTemplateOptionReque
 import com.pcs.domain.inspection.dto.request.CreateInspectionTemplateRequest;
 import com.pcs.domain.inspection.dto.request.UpdateInspectionTemplateItemRequest;
 import com.pcs.domain.inspection.dto.request.UpdateInspectionTemplateItemSortOrderRequest;
+import com.pcs.domain.inspection.dto.request.UpdateInspectionTemplateOptionRequest;
 import com.pcs.domain.inspection.dto.request.UpdateInspectionTemplateOptionSortOrderRequest;
 import com.pcs.domain.inspection.dto.response.SearchInspectionTemplateResponse;
 import com.pcs.domain.inspection.entity.InspectionTemplate;
 import com.pcs.domain.inspection.entity.InspectionTemplateItem;
+import com.pcs.domain.inspection.entity.InspectionTemplateItemOption;
 import com.pcs.domain.inspection.mapper.InspectionTemplateMapper;
 import com.pcs.domain.inspection.mapper.SortOrderUpdate;
 import com.pcs.domain.inspection.type.GradeImpact;
@@ -30,6 +32,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -131,6 +134,151 @@ class InspectionTemplateServiceTest {
 
         assertEquals(ErrorCode.INVALID_INPUT_VALUE, exception.getErrorCode());
         verify(inspectionTemplateMapper, never()).insertOption(any());
+    }
+
+    @Test
+    void searchTemplates_normalizesFiltersAndPaging() {
+        Long companyId = 1L;
+        SearchInspectionTemplateResponse row = summary(100L, 10L, "그래픽카드", "그래픽카드 기본 검수");
+        var summary = new com.pcs.domain.inspection.dto.response.SearchInspectionTemplateSummaryResponse(1, 1, 3, 4);
+
+        when(inspectionTemplateMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(inspectionTemplateMapper.countTemplates(companyId, "그래픽", 10L, true)).thenReturn(1L);
+        when(inspectionTemplateMapper.searchTemplates(companyId, "그래픽", 10L, true, 100, 100))
+                .thenReturn(List.of(row));
+        when(inspectionTemplateMapper.summarizeTemplates(companyId, "그래픽", 10L, true)).thenReturn(summary);
+
+        var result = inspectionTemplateService.searchTemplates(
+                companyId,
+                " 그래픽 ",
+                10L,
+                true,
+                1,
+                150,
+                null
+        );
+
+        assertEquals(1, result.page());
+        assertEquals(100, result.size());
+        assertEquals(1, result.totalElements());
+        assertEquals(List.of(row), result.content());
+        assertEquals(summary, result.summary());
+    }
+
+    @Test
+    void createItem_defaultsAdvancedSettingsAndTouchesTemplate() {
+        Long companyId = 1L;
+        Long templateId = 100L;
+        InspectionTemplate template = template(templateId, companyId, 10L, "그래픽카드 기본 검수", 1, true);
+        SearchInspectionTemplateResponse summary = summary(templateId, 10L, "그래픽카드", "그래픽카드 기본 검수");
+        var request = new com.pcs.domain.inspection.dto.request.CreateInspectionTemplateItemRequest(
+                " 팬 소음 ",
+                InspectionItemGroup.DETAIL,
+                InspectionInputType.TEXT,
+                null,
+                null,
+                null,
+                null
+        );
+
+        when(inspectionTemplateMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(inspectionTemplateMapper.findTemplateById(companyId, templateId)).thenReturn(template);
+        when(inspectionTemplateMapper.existsItemName(templateId, "팬 소음", null)).thenReturn(false);
+        when(inspectionTemplateMapper.nextItemSortOrder(templateId)).thenReturn(30);
+        doAnswer((invocation) -> {
+            InspectionTemplateItem item = invocation.getArgument(0);
+            item.setItemId(201L);
+            return null;
+        }).when(inspectionTemplateMapper).insertItem(any(InspectionTemplateItem.class));
+        when(inspectionTemplateMapper.findTemplateSummaryById(companyId, templateId)).thenReturn(summary);
+        when(inspectionTemplateMapper.findItemsByTemplateId(templateId)).thenReturn(List.of());
+        when(inspectionTemplateMapper.findOptionsByTemplateId(templateId)).thenReturn(List.of());
+
+        inspectionTemplateService.createItem(companyId, templateId, request);
+
+        ArgumentCaptor<InspectionTemplateItem> itemCaptor = ArgumentCaptor.forClass(InspectionTemplateItem.class);
+        verify(inspectionTemplateMapper).insertItem(itemCaptor.capture());
+        verify(inspectionTemplateMapper).touchTemplate(templateId);
+
+        InspectionTemplateItem item = itemCaptor.getValue();
+        assertEquals("팬 소음", item.getItemName());
+        assertEquals(InspectionItemGroup.DETAIL, item.getItemGroup());
+        assertEquals(InspectionInputType.TEXT, item.getInputType());
+        assertEquals(30, item.getSortOrder());
+        assertEquals(GradeImpact.LOW, item.getGradeImpact());
+        assertEquals(InspectionFailPolicy.NONE, item.getFailPolicy());
+    }
+
+    @Test
+    void updateTemplateActive_validatesTemplateAndUpdatesActiveFlag() {
+        Long companyId = 1L;
+        Long templateId = 100L;
+        InspectionTemplate template = template(templateId, companyId, 10L, "그래픽카드 기본 검수", 1, true);
+
+        when(inspectionTemplateMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(inspectionTemplateMapper.findTemplateById(companyId, templateId)).thenReturn(template);
+
+        inspectionTemplateService.updateTemplateActive(companyId, templateId, false);
+
+        verify(inspectionTemplateMapper).updateTemplateActive(companyId, templateId, false);
+    }
+
+    @Test
+    void updateOption_defaultsValueToLabelAndTouchesTemplate() {
+        Long companyId = 1L;
+        Long templateId = 100L;
+        Long itemId = 200L;
+        Long optionId = 300L;
+        InspectionTemplateItem item = item(templateId, itemId, InspectionInputType.SELECT);
+        InspectionTemplateItemOption option = option(itemId, optionId, "정상", "NORMAL", 10);
+        SearchInspectionTemplateResponse summary = summary(templateId, 10L, "그래픽카드", "그래픽카드 기본 검수");
+        InspectionTemplate template = template(templateId, companyId, 10L, "그래픽카드 기본 검수", 1, true);
+        UpdateInspectionTemplateOptionRequest request = new UpdateInspectionTemplateOptionRequest(
+                " 팬 소음 ",
+                null,
+                20
+        );
+
+        when(inspectionTemplateMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(inspectionTemplateMapper.findItemById(companyId, templateId, itemId)).thenReturn(item);
+        when(inspectionTemplateMapper.findOptionById(companyId, templateId, itemId, optionId)).thenReturn(option);
+        when(inspectionTemplateMapper.existsOptionLabel(itemId, "팬 소음", optionId)).thenReturn(false);
+        when(inspectionTemplateMapper.existsOptionValue(itemId, "팬 소음", optionId)).thenReturn(false);
+        when(inspectionTemplateMapper.findTemplateSummaryById(companyId, templateId)).thenReturn(summary);
+        when(inspectionTemplateMapper.findItemsByTemplateId(templateId)).thenReturn(List.of(item));
+        when(inspectionTemplateMapper.findOptionsByTemplateId(templateId)).thenReturn(List.of());
+        when(inspectionTemplateMapper.findTemplateById(companyId, templateId)).thenReturn(template);
+
+        inspectionTemplateService.updateOption(companyId, templateId, itemId, optionId, request);
+
+        ArgumentCaptor<InspectionTemplateItemOption> optionCaptor =
+                ArgumentCaptor.forClass(InspectionTemplateItemOption.class);
+        verify(inspectionTemplateMapper).updateOption(optionCaptor.capture());
+        verify(inspectionTemplateMapper).touchTemplate(templateId);
+
+        InspectionTemplateItemOption savedOption = optionCaptor.getValue();
+        assertEquals("팬 소음", savedOption.getOptionLabel());
+        assertEquals("팬 소음", savedOption.getOptionValue());
+        assertEquals(20, savedOption.getSortOrder());
+    }
+
+    @Test
+    void updateOptionActive_validatesSelectItemAndOptionBeforeUpdating() {
+        Long companyId = 1L;
+        Long templateId = 100L;
+        Long itemId = 200L;
+        Long optionId = 300L;
+        InspectionTemplateItem item = item(templateId, itemId, InspectionInputType.SELECT);
+        InspectionTemplateItemOption option = option(itemId, optionId, "정상", "NORMAL", 10);
+
+        when(inspectionTemplateMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(inspectionTemplateMapper.findItemById(companyId, templateId, itemId)).thenReturn(item);
+        when(inspectionTemplateMapper.findOptionById(companyId, templateId, itemId, optionId)).thenReturn(option);
+
+        inspectionTemplateService.updateOptionActive(companyId, templateId, itemId, optionId, false);
+
+        verify(inspectionTemplateMapper).updateOptionActive(itemId, optionId, false);
+        verify(inspectionTemplateMapper).touchTemplate(templateId);
     }
 
     @Test
@@ -329,5 +477,22 @@ class InspectionTemplateServiceTest {
         );
         item.setItemId(itemId);
         return item;
+    }
+
+    private InspectionTemplateItemOption option(
+            Long itemId,
+            Long optionId,
+            String optionLabel,
+            String optionValue,
+            int sortOrder
+    ) {
+        InspectionTemplateItemOption option = new InspectionTemplateItemOption(
+                itemId,
+                optionLabel,
+                optionValue,
+                sortOrder
+        );
+        option.setOptionId(optionId);
+        return option;
     }
 }
