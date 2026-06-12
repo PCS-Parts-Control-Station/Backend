@@ -12,9 +12,9 @@
 
         <div class="sidebar-group">
             <div class="sidebar-group-title">업무</div>
-            <a data-route="inbound">입고</a>
-            <a data-route="inspection">검수</a>
-            <a data-route="outbound">출고</a>
+            <a data-route="inbound" data-staff-permission="STAFF_INBOUND">입고</a>
+            <a data-route="inspection" data-staff-permission="STAFF_INSPECTION">검수</a>
+            <a data-route="outbound" data-staff-permission="STAFF_OUTBOUND">출고</a>
         </div>
 
         <div class="sidebar-group">
@@ -26,17 +26,34 @@
         <div class="sidebar-group">
             <div class="sidebar-group-title">관리</div>
 
-            <a data-route="parts">품목 관리</a>
-            <a data-route="categories">품목 분류</a>
-            <a data-route="inspection/templates">검수 템플릿</a>
-            <a data-route="partners">거래처 관리</a>
-            <a data-route="users">사용자 관리</a>
+            <a data-route="parts" data-staff-permission="STAFF_PART_CREATE">품목 관리</a>
+            <a data-route="categories" data-staff-permission="STAFF_CATEGORY_MANAGE">품목 분류</a>
+            <a data-route="inspection/templates" data-staff-permission="STAFF_INSPECTION">검수 템플릿</a>
+            <a data-route="partners" data-staff-permission="STAFF_PARTNER_MANAGE">거래처 관리</a>
+            <a data-route="users" data-allowed-roles="OWNER,ADMIN" hidden>사용자 관리</a>
         </div>
     </nav>
 
     <div class="sidebar-footer">
-        <span>접속 계정</span>
-        <strong data-session-name>확인 중</strong>
+        <div class="sidebar-session">
+            <span>접속 계정</span>
+            <strong data-session-name>확인 중</strong>
+        </div>
+        <div class="sidebar-account-actions" aria-label="계정 작업">
+            <button class="sidebar-icon-button" type="button" data-sidebar-settings aria-label="마이페이지로 이동" title="마이페이지">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z"></path>
+                    <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 1.55V21a2 2 0 0 1-4 0v-.05a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 0 1 0-4h.05a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 0 1 4 0v.05a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.15.48.62 1 1.55 1H21a2 2 0 0 1 0 4h-.05A1.7 1.7 0 0 0 19.4 15Z"></path>
+                </svg>
+            </button>
+            <button class="sidebar-icon-button" type="button" data-sidebar-logout aria-label="로그아웃" title="로그아웃">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <path d="M16 17l5-5-5-5"></path>
+                    <path d="M21 12H9"></path>
+                </svg>
+            </button>
+        </div>
     </div>
 </aside>
 <button class="sidebar-backdrop" type="button" data-sidebar-backdrop aria-label="메뉴 닫기"></button>

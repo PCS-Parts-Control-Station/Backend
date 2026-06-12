@@ -18,6 +18,7 @@ public enum ErrorCode {
     AUTH_FORBIDDEN(HttpStatus.FORBIDDEN, "AUTH-005", "접근 권한이 없습니다."),
     AUTH_WORKSPACE_MISMATCH(HttpStatus.FORBIDDEN, "AUTH-006", "업체 코드와 로그인 정보가 일치하지 않습니다."),
     AUTH_ACCOUNT_LOCKED(HttpStatus.UNAUTHORIZED, "AUTH-007", "로그인 실패가 반복되어 계정이 잠시 잠겼습니다."),
+    AUTH_STAFF_PERMISSION_DENIED(HttpStatus.FORBIDDEN, "AUTH-008", "해당 업무 권한이 없습니다."),
 
     COMPANY_NOT_FOUND(HttpStatus.NOT_FOUND, "COMPANY-001", "업체를 찾을 수 없습니다."),
     COMPANY_CODE_DUPLICATED(HttpStatus.CONFLICT, "COMPANY-002", "이미 사용 중인 업체 코드입니다."),

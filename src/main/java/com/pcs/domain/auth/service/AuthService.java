@@ -7,6 +7,7 @@ import com.pcs.domain.auth.entity.AuthRefreshTokenSession;
 import com.pcs.domain.auth.mapper.AuthMapper;
 import com.pcs.domain.auth.type.LoginResult;
 import com.pcs.domain.auth.type.RefreshTokenRevokedReason;
+import com.pcs.domain.member.service.StaffPermissionService;
 import com.pcs.domain.member.type.MemberRole;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
@@ -29,16 +30,19 @@ public class AuthService {
     private static final Duration LOGIN_LOCK_DURATION = Duration.ofMinutes(10);
 
     private final AuthMapper authMapper;
+    private final StaffPermissionService staffPermissionService;
     private final PasswordEncoder passwordEncoder;
     private final SecureRandom secureRandom = new SecureRandom();
     private final Duration refreshTokenDuration;
 
     public AuthService(
             AuthMapper authMapper,
+            StaffPermissionService staffPermissionService,
             PasswordEncoder passwordEncoder,
             @Value("${pcs.jwt.refresh-token-expiration-days}") long refreshTokenExpirationDays
     ) {
         this.authMapper = authMapper;
+        this.staffPermissionService = staffPermissionService;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenDuration = Duration.ofDays(refreshTokenExpirationDays);
     }
@@ -236,7 +240,8 @@ public class AuthService {
                 member.getLoginId(),
                 member.getName(),
                 member.getRole(),
-                member.getPasswordStatus()
+                member.getPasswordStatus(),
+                staffPermissionService.findEnabledPermissions(member.getCompanyId(), member.getRole())
         );
     }
 

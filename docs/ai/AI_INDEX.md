@@ -211,6 +211,7 @@ SQL 참조 기준:
 백엔드:
 
 - 업체 코드/JWT 회사 범위 검증: `src/main/java/com/pcs/global/workspace/WorkspaceAccessValidator.java`
+- Security URL role 그룹: `src/main/java/com/pcs/global/security/PcsRoleGroups.java`
 - 회사 활성 여부 조회: `src/main/java/com/pcs/global/workspace/WorkspaceMapper.java`
 - 페이지/size/offset 정규화: `src/main/java/com/pcs/global/pagination/PageQuery.java`
 - 문자열 trim/null/required 처리: `src/main/java/com/pcs/global/util/TextNormalizer.java`

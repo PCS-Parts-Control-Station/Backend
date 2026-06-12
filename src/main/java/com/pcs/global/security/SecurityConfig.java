@@ -13,15 +13,18 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final StaffPermissionAuthorizationFilter staffPermissionAuthorizationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
+            StaffPermissionAuthorizationFilter staffPermissionAuthorizationFilter,
             JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
             JwtAccessDeniedHandler jwtAccessDeniedHandler
     ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.staffPermissionAuthorizationFilter = staffPermissionAuthorizationFilter;
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
         this.jwtAccessDeniedHandler = jwtAccessDeniedHandler;
     }
@@ -46,10 +49,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/workspaces/*/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
+                        .requestMatchers("/api/owners/**").hasRole(PcsRoleGroups.OWNER)
+                        .requestMatchers("/api/workspaces/*/users/**").hasAnyRole(PcsRoleGroups.USER_MANAGERS)
+                        .requestMatchers("/api/workspaces/*/company/**").hasRole(PcsRoleGroups.OWNER)
+                        .requestMatchers("/api/workspaces/*/companies/**").hasRole(PcsRoleGroups.OWNER)
+                        .requestMatchers("/api/workspaces/*/**").hasAnyRole(PcsRoleGroups.WORKSPACE_USERS)
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(staffPermissionAuthorizationFilter, JwtAuthenticationFilter.class)
                 .build();
     }
 }

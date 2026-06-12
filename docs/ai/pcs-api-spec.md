@@ -149,6 +149,8 @@ Owner 회원가입 + 회사 생성 요청 예시:
 | PATCH | `/api/workspaces/{companyCode}/users/{memberId}` | 사용자 수정 |
 | PATCH | `/api/workspaces/{companyCode}/users/{memberId}/active` | 사용자 활성 여부 변경 |
 | POST | `/api/workspaces/{companyCode}/users/{memberId}/temporary-password` | 임시 비밀번호 발급 |
+| GET | `/api/workspaces/{companyCode}/users/staff-permissions` | STAFF 공통 업무 권한 조회 |
+| PATCH | `/api/workspaces/{companyCode}/users/staff-permissions` | STAFF 공통 업무 권한 저장 |
 | GET | `/api/workspaces/{companyCode}/mypage` | 내 정보 조회 |
 | PATCH | `/api/workspaces/{companyCode}/mypage` | 내 정보 수정 |
 | PATCH | `/api/workspaces/{companyCode}/mypage/password` | 비밀번호 변경 |
@@ -721,6 +723,14 @@ com.pcs.domain.dashboard   대시보드
 
 권한 검증은 Controller가 아니라 인증/인가 계층과 Service 검증에서 처리한다.
 API별 특별 제한이 있으면 각 feature 문서에만 추가한다.
+
+기본 기준:
+
+- 업무 데이터 API는 인증된 `OWNER / ADMIN / STAFF`가 모두 사용할 수 있다.
+- `STAFF`도 품목, 품목 분류, 사양 항목, 거래처, 입고, 검수, 출고 같은 실무 기능을 처리할 수 있다.
+- `ADMIN`은 STAFF 업무에 사용자 관리 권한이 추가된 계정으로 본다.
+- 회사 소유권/회사 정보 변경은 OWNER 중심으로 둔다.
+- 사용자 생성/수정/권한 변경/임시 비밀번호 발급은 OWNER/ADMIN만 가능하다.
 
 ## 6. 공통 정책 참조
 
