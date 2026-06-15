@@ -5,8 +5,8 @@
         STAFF: "작업자"
     };
     const ROLE_OPTION_LABELS = {
-        ADMIN: "관리자 (ADMIN)",
-        STAFF: "작업자 (STAFF)"
+        ADMIN: "관리자",
+        STAFF: "작업자"
     };
 
     const filterForm = document.querySelector("[data-user-filter-form]");

@@ -13,6 +13,7 @@
 - `/w/{companyCode}/history`
 - `/w/{companyCode}/users`
 - `/w/{companyCode}/partners`
+- `/w/{companyCode}/mypage`
 
 ## 목적
 

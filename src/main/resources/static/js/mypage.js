@@ -2,9 +2,9 @@
     const companyCode = window.PcsWorkspace?.getCompanyCode?.() || window.location.pathname.split("/").filter(Boolean)[1] || "";
 
     const roleLabels = {
-        OWNER: "OWNER",
-        ADMIN: "ADMIN",
-        STAFF: "STAFF"
+        OWNER: "최고 관리자",
+        ADMIN: "관리자",
+        STAFF: "작업자"
     };
 
     const passwordStatusLabels = {
@@ -41,8 +41,8 @@
         });
     };
 
-    const renderStaffPermissions = (permissions = []) => {
-        const list = document.querySelector("[data-staff-permission-list]");
+    const renderPermissionList = (selector, permissions = []) => {
+        const list = document.querySelector(selector);
         if (!list) {
             return;
         }
@@ -51,7 +51,7 @@
         if (permissions.length === 0) {
             const empty = document.createElement("span");
             empty.className = "badge badge-inactive";
-            empty.textContent = "허용된 업무 권한 없음";
+            empty.textContent = "사용 가능한 업무 메뉴가 없습니다";
             list.append(empty);
             return;
         }
@@ -62,6 +62,11 @@
             chip.textContent = staffPermissionLabels[permission] || permission;
             list.append(chip);
         });
+    };
+
+    const renderStaffPermissions = (permissions = []) => {
+        renderPermissionList("[data-staff-permission-list]", permissions);
+        renderPermissionList("[data-staff-permission-aside-list]", permissions);
     };
 
     const bindUiOnlyActions = () => {
@@ -85,12 +90,22 @@
         text("[data-mypage-role]", roleLabels[role] || role || "-");
         text("[data-mypage-role-badge]", roleLabels[role] || role || "ROLE");
         text("[data-mypage-password-status]", passwordStatusLabels[session?.passwordStatus] || session?.passwordStatus || "-");
+        text("[data-side-name]", name);
+        text("[data-side-role]", roleLabels[role] || role || "-");
+        text("[data-side-company-code]", resolvedCompanyCode);
+        text("[data-side-login-id]", loginId);
+        value("[data-member-name-input]", name);
+        value("[data-member-login-id-input]", loginId);
+        value("[data-member-role-input]", roleLabels[role] || role || "");
+        value("[data-member-password-status-input]", passwordStatusLabels[session?.passwordStatus] || session?.passwordStatus || "");
         value("[data-owner-company-code]", resolvedCompanyCode);
 
-        const usersLink = document.querySelector("[data-users-link]");
-        if (usersLink) {
-            usersLink.href = `/w/${encodeURIComponent(resolvedCompanyCode)}/users`;
-        }
+        document.querySelectorAll("[data-users-link]").forEach((link) => {
+            link.href = `/w/${encodeURIComponent(resolvedCompanyCode)}/users`;
+        });
+        document.querySelectorAll("[data-dashboard-link]").forEach((link) => {
+            link.href = `/w/${encodeURIComponent(resolvedCompanyCode)}/dashboard`;
+        });
 
         showRoleSection(role);
         renderStaffPermissions(session?.staffPermissions || []);

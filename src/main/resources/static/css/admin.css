@@ -2093,9 +2093,26 @@ textarea:focus {
     grid-template-columns: minmax(0, 1fr) 360px;
 }
 
-.mypage-profile-card,
-.mypage-role-card {
+.mypage-account-card,
+.mypage-section {
     padding: 24px;
+}
+
+.mypage-section .table-header {
+    display: block;
+    max-width: 900px;
+    margin: 0 0 20px;
+    padding: 0 0 18px;
+}
+
+.mypage-section .table-header h2 {
+    margin: 0;
+    font-size: 21px;
+}
+
+.mypage-section .table-header p {
+    margin: 6px 0 0;
+    max-width: 720px;
 }
 
 .mypage-profile-head {
@@ -2112,7 +2129,7 @@ textarea:focus {
 }
 
 .mypage-profile-head h2 {
-    margin-top: 7px;
+    margin: 7px 0 0;
     color: var(--navy);
     font-size: 28px;
     font-weight: 800;
@@ -2120,7 +2137,7 @@ textarea:focus {
 }
 
 .mypage-profile-head p:not(.page-kicker) {
-    margin-top: 8px;
+    margin: 8px 0 0;
     color: var(--muted);
     font-size: 14px;
     font-weight: 700;
@@ -2162,7 +2179,29 @@ textarea:focus {
 }
 
 .mypage-form {
-    max-width: 560px;
+    max-width: none;
+}
+
+.mypage-form-grid {
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+    align-items: end;
+    max-width: 900px;
+    margin-top: 0;
+}
+
+.mypage-password-form {
+    grid-template-columns: repeat(3, minmax(220px, 1fr));
+}
+
+.mypage-form-grid .form-actions {
+    grid-column: 1 / -1;
+    padding-top: 2px;
+}
+
+.mypage-form-grid input[readonly] {
+    background: var(--surface-soft);
+    color: var(--navy);
+    font-weight: 800;
 }
 
 .mypage-action-panel {
@@ -2194,11 +2233,77 @@ textarea:focus {
     font-weight: 700;
 }
 
+.mypage-company-panel {
+    border-color: rgba(37, 99, 235, 0.18);
+    background: rgba(255, 255, 255, 0.96);
+}
+
+.mypage-company-panel input[readonly] {
+    background: var(--surface-soft);
+    color: var(--navy);
+    font-weight: 800;
+}
+
+.mypage-summary-panel .detail-list {
+    margin-bottom: 0;
+}
+
+.mypage-summary-panel h2,
+.mypage-role-guide h2,
+.muted-panel h2 {
+    margin: 0;
+}
+
+.mypage-role-guide {
+    display: grid;
+    gap: 14px;
+}
+
+.mypage-role-guide p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.6;
+}
+
+.mypage-guide-list {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding-left: 18px;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.mypage-link-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.mypage-link-list .panel-link-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    min-height: 38px;
+    padding: 0 10px;
+    font-size: 13px;
+    line-height: 1;
+    text-align: center;
+}
+
 .permission-chip-list {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
     margin-top: 4px;
+}
+
+.permission-chip-list.is-compact {
+    margin-top: 0;
 }
 
 .muted-panel {
@@ -2522,6 +2627,16 @@ textarea:focus {
     .mypage-info-grid div:nth-child(odd) {
         padding: 0;
         border-left: 0;
+    }
+
+    .mypage-form-grid,
+    .mypage-password-form {
+        grid-template-columns: 1fr;
+        max-width: none;
+    }
+
+    .mypage-link-list {
+        grid-template-columns: 1fr;
     }
 
     .filter-form {
