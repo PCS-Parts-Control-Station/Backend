@@ -7,6 +7,8 @@ param(
 
     [switch] $RunBuild,
 
+    [switch] $RunSwagger,
+
     [switch] $RunDb,
 
     [ValidateSet("none", "company", "member", "auth", "partner", "category")]
@@ -60,6 +62,10 @@ function Invoke-HarnessCheck {
 
     if ($RunBuild) {
         $arguments += "-RunBuild"
+    }
+
+    if ($RunSwagger) {
+        $arguments += "-RunSwagger"
     }
 
     if ($RunDb) {
@@ -132,6 +138,8 @@ function New-AgentFeedback {
     $feedback.Add("- GeneratedAt: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')") | Out-Null
     $feedback.Add("- Mode: $Mode") | Out-Null
     $feedback.Add("- Feature: $Feature") | Out-Null
+    $feedback.Add("- RunBuild: $RunBuild") | Out-Null
+    $feedback.Add("- RunSwagger: $RunSwagger") | Out-Null
     $feedback.Add("- RunDb: $RunDb") | Out-Null
     $feedback.Add("- DbFeature: $DbFeature") | Out-Null
     $feedback.Add("") | Out-Null
@@ -174,6 +182,8 @@ Write-Host ""
 Write-Host "PCS Feedback Loop Result"
 Write-Host "Mode: $Mode"
 Write-Host "Feature: $Feature"
+Write-Host "RunBuild: $RunBuild"
+Write-Host "RunSwagger: $RunSwagger"
 Write-Host "RunDb: $RunDb"
 Write-Host "DbFeature: $DbFeature"
 Write-Host "HarnessExitCode: $exitCode"

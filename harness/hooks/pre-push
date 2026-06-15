@@ -5,7 +5,7 @@ ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
 if command -v pwsh >/dev/null 2>&1; then
-  pwsh -NoProfile -ExecutionPolicy Bypass -File "./harness/run-harness.ps1" -Mode bootstrap -RunBuild
+  pwsh -NoProfile -ExecutionPolicy Bypass -File "./harness/run-harness.ps1" -Mode bootstrap -RunBuild -RunSwagger
 else
-  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "./harness/run-harness.ps1" -Mode bootstrap -RunBuild
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "./harness/run-harness.ps1" -Mode bootstrap -RunBuild -RunSwagger
 fi
