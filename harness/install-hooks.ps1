@@ -6,31 +6,49 @@ $ErrorActionPreference = "Stop"
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = Resolve-Path (Join-Path $ScriptDir "..")
-$GitHooksDir = Join-Path $ProjectRoot ".git/hooks"
+$GitHooksDir = Join-Path $ProjectRoot ".git\hooks"
 $SourceHooksDir = Join-Path $ScriptDir "hooks"
 
 if (-not (Test-Path (Join-Path $ProjectRoot ".git"))) {
-    throw "Backend 폴더가 Git 저장소가 아닙니다. Backend 폴더 안에서 실행하세요."
+    throw "Backend directory is not a Git repository. Run this script from Backend."
 }
 
 New-Item -ItemType Directory -Force -Path $GitHooksDir | Out-Null
 
-$hooks = @("pre-commit", "pre-push")
+$legacyCommitHook = Join-Path $GitHooksDir "pre-commit"
+if (Test-Path $legacyCommitHook) {
+    $legacyContent = Get-Content -Raw -Path $legacyCommitHook
+    if ($legacyContent -match "harness[/\\]run-harness\.ps1") {
+        Remove-Item -LiteralPath $legacyCommitHook -Force
+        Write-Host "Removed legacy PCS pre-commit hook: $legacyCommitHook"
+    } else {
+        Write-Warning "Existing non-PCS pre-commit hook was left unchanged: $legacyCommitHook"
+    }
+}
+
+$hooks = @("pre-push")
 
 foreach ($hook in $hooks) {
     $source = Join-Path $SourceHooksDir $hook
     $target = Join-Path $GitHooksDir $hook
 
-    if ((Test-Path $target) -and -not $Force) {
-        Write-Host "$hook 훅이 이미 있습니다. 덮어쓰려면 -Force 옵션을 사용하세요."
-        continue
+    if (-not (Test-Path $source)) {
+        throw "Hook source file is missing: $source"
+    }
+
+    if (Test-Path $target) {
+        $targetContent = Get-Content -Raw -Path $target
+        if (-not $Force -and $targetContent -notmatch "harness[/\\]run-harness\.ps1") {
+            Write-Warning "Existing non-PCS $hook hook was left unchanged: $target"
+            continue
+        }
     }
 
     Copy-Item -LiteralPath $source -Destination $target -Force
-    Write-Host "$hook 훅 설치 완료: $target"
+    Write-Host "Installed $hook hook: $target"
 }
 
 Write-Host ""
-Write-Host "설치 확인:"
-Write-Host "git commit 전: harness/run-harness.ps1 -Mode bootstrap"
-Write-Host "git push 전: harness/run-harness.ps1 -Mode bootstrap -RunBuild"
+Write-Host "Hook policy:"
+Write-Host "- git commit: no PCS hook"
+Write-Host "- git push: harness/run-harness.ps1 -Mode bootstrap -RunBuild -RunSwagger"

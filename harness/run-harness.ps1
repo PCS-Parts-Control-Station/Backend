@@ -9,6 +9,8 @@ param(
 
     [switch] $RunBuild,
 
+    [switch] $RunSwagger,
+
     [switch] $RunDb,
 
     [ValidateSet("none", "company", "member", "auth", "partner", "category")]
@@ -67,6 +69,86 @@ function Test-PathRequired {
     if (-not (Test-Path (Join-Path $ProjectRoot $RelativePath))) {
         Add-Result "FAIL" $Rule "Missing required path: $RelativePath" $Fix
     }
+}
+
+function Test-Java17VersionOutput {
+    param(
+        [string] $VersionOutput
+    )
+
+    return $VersionOutput -match 'version "17\.|version "18\.|version "19\.|version "2[0-9]\.'
+}
+
+function Get-JavaVersionOutput {
+    param(
+        [string] $JavaCommand
+    )
+
+    return (cmd /c "`"$JavaCommand`" -version 2>&1") -join "`n"
+}
+
+function Resolve-Java17Home {
+    $candidates = New-Object System.Collections.Generic.List[string]
+
+    if (-not [string]::IsNullOrWhiteSpace($env:JAVA_HOME)) {
+        $candidates.Add($env:JAVA_HOME) | Out-Null
+    }
+
+    foreach ($root in @(
+        "C:\Program Files\Java",
+        "C:\Program Files\Eclipse Adoptium",
+        "C:\Program Files\Microsoft",
+        "C:\Program Files\Amazon Corretto"
+    )) {
+        if (-not (Test-Path $root)) {
+            continue
+        }
+
+        Get-ChildItem -Path $root -Directory -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -match "17|18|19|2[0-9]" } |
+            ForEach-Object { $candidates.Add($_.FullName) | Out-Null }
+    }
+
+    foreach ($candidate in ($candidates | Select-Object -Unique)) {
+        $javaHomeCommand = Join-Path $candidate "bin\java.exe"
+        if (-not (Test-Path $javaHomeCommand)) {
+            continue
+        }
+
+        try {
+            $versionOutput = Get-JavaVersionOutput $javaHomeCommand
+            if (Test-Java17VersionOutput $versionOutput) {
+                return $candidate
+            }
+        } catch {
+        }
+    }
+
+    return $null
+}
+
+function Ensure-JavaHome17 {
+    if (-not [string]::IsNullOrWhiteSpace($env:JAVA_HOME)) {
+        $javaHomeCommand = Join-Path $env:JAVA_HOME "bin\java.exe"
+        if (Test-Path $javaHomeCommand) {
+            try {
+                $javaHomeVersionOutput = Get-JavaVersionOutput $javaHomeCommand
+                if (Test-Java17VersionOutput $javaHomeVersionOutput) {
+                    return $true
+                }
+            } catch {
+            }
+        }
+    }
+
+    $resolvedJavaHome = Resolve-Java17Home
+    if ($resolvedJavaHome) {
+        $env:JAVA_HOME = $resolvedJavaHome
+        Add-Result "INFO" "JAVA_HOME_17_AUTODETECTED" "Using Java 17 or later for harness checks: $resolvedJavaHome."
+        return $true
+    }
+
+    return $false
 }
 
 function Get-ProjectTextFiles {
@@ -146,8 +228,8 @@ function Ensure-GitignoreRules {
 
 function Test-JavaVersion {
     try {
-        $versionOutput = (cmd /c "java -version 2>&1") -join "`n"
-        if ($versionOutput -notmatch 'version "17\.|version "18\.|version "19\.|version "2[0-9]\.') {
+        $versionOutput = Get-JavaVersionOutput "java"
+        if (-not (Test-Java17VersionOutput $versionOutput)) {
             Add-Result "FAIL" "JAVA_17_REQUIRED" "java command is not Java 17 or later. Output: $versionOutput" "Set JAVA_HOME and IntelliJ Project SDK to JDK 17 or later."
         } else {
             Add-Result "INFO" "JAVA_17_REQUIRED" "Java 17 or later is available."
@@ -159,20 +241,28 @@ function Test-JavaVersion {
     if (-not [string]::IsNullOrWhiteSpace($env:JAVA_HOME)) {
         $javaHomeCommand = Join-Path $env:JAVA_HOME "bin\java.exe"
         if (-not (Test-Path $javaHomeCommand)) {
-            Add-Result "FAIL" "JAVA_HOME_COMMAND_REQUIRED" "JAVA_HOME does not point to a JDK with bin\java.exe: $env:JAVA_HOME" "Set JAVA_HOME to JDK 17 or later."
+            if (-not (Ensure-JavaHome17)) {
+                Add-Result "FAIL" "JAVA_HOME_COMMAND_REQUIRED" "JAVA_HOME does not point to a JDK with bin\java.exe: $env:JAVA_HOME" "Set JAVA_HOME to JDK 17 or later."
+            }
             return
         }
 
         try {
-            $javaHomeVersionOutput = (cmd /c "`"$javaHomeCommand`" -version 2>&1") -join "`n"
-            if ($javaHomeVersionOutput -notmatch 'version "17\.|version "18\.|version "19\.|version "2[0-9]\.') {
-                Add-Result "FAIL" "JAVA_HOME_17_REQUIRED" "JAVA_HOME is not Java 17 or later. Output: $javaHomeVersionOutput" "Set JAVA_HOME to JDK 17 or later."
+            $javaHomeVersionOutput = Get-JavaVersionOutput $javaHomeCommand
+            if (-not (Test-Java17VersionOutput $javaHomeVersionOutput)) {
+                if (-not (Ensure-JavaHome17)) {
+                    Add-Result "FAIL" "JAVA_HOME_17_REQUIRED" "JAVA_HOME is not Java 17 or later. Output: $javaHomeVersionOutput" "Set JAVA_HOME to JDK 17 or later."
+                }
             } else {
                 Add-Result "INFO" "JAVA_HOME_17_REQUIRED" "JAVA_HOME points to Java 17 or later."
             }
         } catch {
-            Add-Result "FAIL" "JAVA_HOME_VERSION_CHECK_FAILED" "Failed to execute JAVA_HOME bin\java.exe." "Set JAVA_HOME to a valid JDK 17 or later."
+            if (-not (Ensure-JavaHome17)) {
+                Add-Result "FAIL" "JAVA_HOME_VERSION_CHECK_FAILED" "Failed to execute JAVA_HOME bin\java.exe." "Set JAVA_HOME to a valid JDK 17 or later."
+            }
         }
+    } elseif ($RunBuild -or $RunSwagger) {
+        Ensure-JavaHome17 | Out-Null
     }
 }
 
@@ -223,6 +313,9 @@ function Test-ProjectSettings {
         }
         if ($build -notmatch "spring-boot-starter-security") {
             Add-Result "FAIL" "SPRING_SECURITY_REQUIRED" "spring-boot-starter-security is missing." "Use Spring Security for JWT request authentication."
+        }
+        if ($build -notmatch "springdoc-openapi-starter-webmvc-ui") {
+            Add-Result "FAIL" "SPRINGDOC_OPENAPI_REQUIRED" "springdoc-openapi UI starter is missing." "Keep automatic Swagger/OpenAPI generation enabled."
         }
     }
 
@@ -1895,18 +1988,9 @@ function Invoke-BuildCheck {
         return
     }
 
-    if ($env:JAVA_HOME) {
-        $javaHomeExe = Join-Path $env:JAVA_HOME "bin/java.exe"
-        if (-not (Test-Path $javaHomeExe)) {
-            Add-Result "FAIL" "JAVA_HOME_INVALID" "JAVA_HOME is set but bin/java.exe does not exist: $env:JAVA_HOME" "Set JAVA_HOME to JDK 17 or remove the invalid value."
-            return
-        }
-
-        $javaHomeVersion = (cmd /c "`"$javaHomeExe`" -version 2>&1") -join "`n"
-        if ($javaHomeVersion -notmatch 'version "17\.|version "18\.|version "19\.|version "2[0-9]\.') {
-            Add-Result "FAIL" "JAVA_HOME_17_REQUIRED" "Gradle uses JAVA_HOME, but JAVA_HOME is not JDK 17 or later: $env:JAVA_HOME" "Set JAVA_HOME to JDK 17 or create an ignored local gradle.properties from gradle.properties.example."
-            return
-        }
+    if (-not (Ensure-JavaHome17) -and $env:JAVA_HOME) {
+        Add-Result "FAIL" "JAVA_HOME_17_REQUIRED" "Gradle uses JAVA_HOME, but JAVA_HOME is not JDK 17 or later: $env:JAVA_HOME" "Set JAVA_HOME to JDK 17 or create an ignored local gradle.properties from gradle.properties.example."
+        return
     }
 
     Push-Location $ProjectRoot
@@ -1922,12 +2006,130 @@ function Invoke-BuildCheck {
     }
 }
 
+function Get-FreeTcpPort {
+    $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 0)
+    try {
+        $listener.Start()
+        return $listener.LocalEndpoint.Port
+    } finally {
+        $listener.Stop()
+    }
+}
+
+function Invoke-SwaggerSmokeCheck {
+    $gradlew = Join-Path $ProjectRoot "gradlew.bat"
+    if (-not (Test-Path $gradlew)) {
+        Add-Result "FAIL" "SWAGGER_GRADLEW_MISSING" "gradlew.bat is missing." "Restore Gradle Wrapper."
+        return
+    }
+
+    if (-not (Ensure-JavaHome17) -and $env:JAVA_HOME) {
+        Add-Result "FAIL" "SWAGGER_JAVA_HOME_17_REQUIRED" "Swagger smoke check requires JDK 17 or later." "Set JAVA_HOME to JDK 17 or later."
+        return
+    }
+
+    Push-Location $ProjectRoot
+    try {
+        & $gradlew "bootJar" | Out-Host
+        if ($LASTEXITCODE -ne 0) {
+            Add-Result "FAIL" "SWAGGER_BOOT_JAR" "bootJar failed before Swagger smoke check." "Fix build errors first."
+            return
+        }
+    } finally {
+        Pop-Location
+    }
+
+    $jar = Get-ChildItem -Path (Join-Path $ProjectRoot "build\libs") -Filter "*.jar" -File |
+        Where-Object { $_.Name -notmatch "-plain\.jar$" } |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -First 1
+
+    if (-not $jar) {
+        Add-Result "FAIL" "SWAGGER_BOOT_JAR_NOT_FOUND" "No executable bootJar artifact was found." "Run .\gradlew.bat bootJar and check build/libs."
+        return
+    }
+
+    $javaCommand = "java"
+    if (-not [string]::IsNullOrWhiteSpace($env:JAVA_HOME)) {
+        $javaHomeCommand = Join-Path $env:JAVA_HOME "bin\java.exe"
+        if (Test-Path $javaHomeCommand) {
+            $javaCommand = $javaHomeCommand
+        }
+    }
+
+    $port = Get-FreeTcpPort
+    $stdoutPath = Join-Path $ReportDir "swagger-smoke.out.log"
+    $stderrPath = Join-Path $ReportDir "swagger-smoke.err.log"
+    $process = $null
+
+    try {
+        $process = Start-Process `
+            -FilePath $javaCommand `
+            -ArgumentList @("-jar", $jar.FullName, "--server.port=$port") `
+            -RedirectStandardOutput $stdoutPath `
+            -RedirectStandardError $stderrPath `
+            -WindowStyle Hidden `
+            -PassThru
+
+        $apiDocsResponse = $null
+        for ($attempt = 0; $attempt -lt 40; $attempt++) {
+            Start-Sleep -Milliseconds 750
+            if ($process.HasExited) {
+                break
+            }
+
+            try {
+                $apiDocsResponse = Invoke-WebRequest -Uri "http://127.0.0.1:$port/v3/api-docs" -UseBasicParsing -TimeoutSec 2
+                if (
+                    $apiDocsResponse.StatusCode -eq 200 -and
+                    $apiDocsResponse.Content -match '"openapi"' -and
+                    $apiDocsResponse.Content -match '"paths"'
+                ) {
+                    break
+                }
+            } catch {
+                $apiDocsResponse = $null
+            }
+        }
+
+        if (
+            -not $apiDocsResponse -or
+            $apiDocsResponse.StatusCode -ne 200 -or
+            $apiDocsResponse.Content -notmatch '"openapi"' -or
+            $apiDocsResponse.Content -notmatch '"paths"'
+        ) {
+            Add-Result "FAIL" "SWAGGER_API_DOCS" "/v3/api-docs did not return a valid OpenAPI document." "Check $stdoutPath and $stderrPath."
+            return
+        }
+
+        try {
+            $swaggerUiResponse = Invoke-WebRequest -Uri "http://127.0.0.1:$port/swagger-ui/index.html" -UseBasicParsing -TimeoutSec 5
+            if ($swaggerUiResponse.StatusCode -ne 200) {
+                Add-Result "FAIL" "SWAGGER_UI" "Swagger UI returned HTTP $($swaggerUiResponse.StatusCode)." "Check springdoc and security configuration."
+                return
+            }
+        } catch {
+            Add-Result "FAIL" "SWAGGER_UI" "Swagger UI did not respond." "Check springdoc and security configuration."
+            return
+        }
+
+        Add-Result "INFO" "SWAGGER_SMOKE" "Swagger OpenAPI docs and UI responded successfully."
+    } finally {
+        if ($process -and -not $process.HasExited) {
+            Stop-Process -Id $process.Id -Force
+            $process.WaitForExit()
+        }
+    }
+}
+
 function Write-Report {
     $lines = New-Object System.Collections.Generic.List[string]
     $lines.Add("# PCS Harness Report") | Out-Null
     $lines.Add("") | Out-Null
     $lines.Add("- Mode: $Mode") | Out-Null
     $lines.Add("- Feature: $Feature") | Out-Null
+    $lines.Add("- RunBuild: $RunBuild") | Out-Null
+    $lines.Add("- RunSwagger: $RunSwagger") | Out-Null
     $lines.Add("- RunDb: $RunDb") | Out-Null
     $lines.Add("- DbFeature: $DbFeature") | Out-Null
     $lines.Add("- GeneratedAt: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')") | Out-Null
@@ -2006,12 +2208,18 @@ if ($RunBuild) {
     Invoke-BuildCheck
 }
 
+if ($RunSwagger) {
+    Invoke-SwaggerSmokeCheck
+}
+
 Write-Report
 
 Write-Host ""
 Write-Host "PCS Harness Result"
 Write-Host "Mode: $Mode"
 Write-Host "Feature: $Feature"
+Write-Host "RunBuild: $RunBuild"
+Write-Host "RunSwagger: $RunSwagger"
 Write-Host "RunDb: $RunDb"
 Write-Host "DbFeature: $DbFeature"
 Write-Host "FAIL: $($failures.Count), WARN: $($warnings.Count), INFO: $($infos.Count)"
