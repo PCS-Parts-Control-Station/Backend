@@ -1,54 +1,94 @@
-param(
-    [switch] $Force
-)
+param()
 
 $ErrorActionPreference = "Stop"
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = Resolve-Path (Join-Path $ScriptDir "..")
-$GitHooksDir = Join-Path $ProjectRoot ".git\hooks"
-$SourceHooksDir = Join-Path $ScriptDir "hooks"
+$GitDir = Join-Path $ProjectRoot ".git"
+$GitConfigPath = Join-Path $GitDir "config"
+$HooksPath = "harness/hooks"
 
-if (-not (Test-Path (Join-Path $ProjectRoot ".git"))) {
+if (-not (Test-Path $GitDir)) {
     throw "Backend directory is not a Git repository. Run this script from Backend."
 }
 
-New-Item -ItemType Directory -Force -Path $GitHooksDir | Out-Null
-
-$legacyCommitHook = Join-Path $GitHooksDir "pre-commit"
-if (Test-Path $legacyCommitHook) {
-    $legacyContent = Get-Content -Raw -Path $legacyCommitHook
-    if ($legacyContent -match "harness[/\\]run-harness\.ps1") {
-        Remove-Item -LiteralPath $legacyCommitHook -Force
-        Write-Host "Removed legacy PCS pre-commit hook: $legacyCommitHook"
-    } else {
-        Write-Warning "Existing non-PCS pre-commit hook was left unchanged: $legacyCommitHook"
-    }
+if (-not (Test-Path (Join-Path $ProjectRoot "harness/hooks/pre-push"))) {
+    throw "Missing shared pre-push hook: harness/hooks/pre-push"
 }
 
-$hooks = @("pre-push")
-
-foreach ($hook in $hooks) {
-    $source = Join-Path $SourceHooksDir $hook
-    $target = Join-Path $GitHooksDir $hook
-
-    if (-not (Test-Path $source)) {
-        throw "Hook source file is missing: $source"
+function Set-HooksPathWithGit {
+    $git = Get-Command "git" -ErrorAction SilentlyContinue
+    if (-not $git) {
+        return $false
     }
 
-    if (Test-Path $target) {
-        $targetContent = Get-Content -Raw -Path $target
-        if (-not $Force -and $targetContent -notmatch "harness[/\\]run-harness\.ps1") {
-            Write-Warning "Existing non-PCS $hook hook was left unchanged: $target"
-            continue
+    & $git.Source -C $ProjectRoot config core.hooksPath $HooksPath
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to set Git core.hooksPath with git command."
+    }
+
+    return $true
+}
+
+function Set-HooksPathInConfigFile {
+    if (-not (Test-Path $GitConfigPath)) {
+        throw "Git config file was not found: $GitConfigPath"
+    }
+
+    $lines = [System.Collections.Generic.List[string]]::new()
+    foreach ($line in [System.IO.File]::ReadAllLines($GitConfigPath)) {
+        $lines.Add($line) | Out-Null
+    }
+
+    $coreStart = -1
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i] -match '^\[core\]\s*$') {
+            $coreStart = $i
+            break
         }
     }
 
-    Copy-Item -LiteralPath $source -Destination $target -Force
-    Write-Host "Installed $hook hook: $target"
+    if ($coreStart -lt 0) {
+        $lines.Insert(0, "	hooksPath = $HooksPath")
+        $lines.Insert(0, "[core]")
+    } else {
+        $nextSection = $lines.Count
+        for ($i = $coreStart + 1; $i -lt $lines.Count; $i++) {
+            if ($lines[$i] -match '^\[.+\]\s*$') {
+                $nextSection = $i
+                break
+            }
+        }
+
+        $existingIndex = -1
+        for ($i = $coreStart + 1; $i -lt $nextSection; $i++) {
+            if ($lines[$i] -match '^\s*hooksPath\s*=') {
+                $existingIndex = $i
+                break
+            }
+        }
+
+        if ($existingIndex -ge 0) {
+            $lines[$existingIndex] = "	hooksPath = $HooksPath"
+        } else {
+            $lines.Insert($coreStart + 1, "	hooksPath = $HooksPath")
+        }
+    }
+
+    $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+    [System.IO.File]::WriteAllLines($GitConfigPath, $lines, $utf8NoBom)
+}
+
+$configuredWithGit = Set-HooksPathWithGit
+if (-not $configuredWithGit) {
+    Set-HooksPathInConfigFile
+    Write-Host "git command was not found. Updated .git/config directly."
 }
 
 Write-Host ""
 Write-Host "Hook policy:"
 Write-Host "- git commit: no PCS hook"
-Write-Host "- git push: harness/run-harness.ps1 -Mode bootstrap -RunBuild -RunSwagger"
+Write-Host "- git push: harness/hooks/pre-push"
+Write-Host "- pre-push command: harness/run-harness.ps1 -Mode full -RunBuild -RunDb"
+Write-Host ""
+Write-Host "Configured core.hooksPath: $HooksPath"
