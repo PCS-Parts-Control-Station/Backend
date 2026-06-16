@@ -1,11 +1,14 @@
 package com.pcs.domain.member.service;
 
 import com.pcs.domain.member.dto.request.CreateMemberRequest;
+import com.pcs.domain.member.dto.request.ChangeMypagePasswordRequest;
+import com.pcs.domain.member.dto.request.UpdateMypageRequest;
 import com.pcs.domain.member.dto.request.UpdateMemberRequest;
 import com.pcs.domain.member.dto.response.SearchMemberResponse;
 import com.pcs.domain.member.dto.response.SearchMemberSummaryResponse;
 import com.pcs.domain.member.dto.response.TemporaryPasswordResponse;
 import com.pcs.domain.member.entity.Member;
+import com.pcs.domain.member.entity.MemberAccount;
 import com.pcs.domain.member.mapper.MemberMapper;
 import com.pcs.domain.member.type.MemberRole;
 import com.pcs.domain.member.type.PasswordStatus;
@@ -171,6 +174,48 @@ public class MemberService {
                 expiresAt
         );
         return new TemporaryPasswordResponse(temporaryPassword, expiresAt);
+    }
+
+    public MemberAccount getMyAccount(Long companyId, Long memberId) {
+        validateCompanyActive(companyId);
+        MemberAccount account = memberMapper.findAccount(companyId, memberId);
+        if (account == null) {
+            throw new BusinessException(ErrorCode.MEMBER_NOT_FOUND);
+        }
+        if (Boolean.FALSE.equals(account.getActive())) {
+            throw new BusinessException(ErrorCode.MEMBER_INACTIVE);
+        }
+        return account;
+    }
+
+    @Transactional
+    public MemberAccount updateMyAccount(Long companyId, Long memberId, UpdateMypageRequest request) {
+        validateCompanyActive(companyId);
+        String name = TextNormalizer.required(request.name());
+        int updatedCount = memberMapper.updateMypageName(companyId, memberId, name);
+        if (updatedCount == 0) {
+            throw new BusinessException(ErrorCode.MEMBER_NOT_FOUND);
+        }
+        return getMyAccount(companyId, memberId);
+    }
+
+    @Transactional
+    public MemberAccount changeMyPassword(Long companyId, Long memberId, ChangeMypagePasswordRequest request) {
+        validateCompanyActive(companyId);
+        MemberAccount account = getMyAccount(companyId, memberId);
+        if (!passwordEncoder.matches(request.currentPassword(), account.getPasswordHash())) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "현재 비밀번호가 올바르지 않습니다.");
+        }
+        if (!request.newPassword().equals(request.newPasswordConfirm())) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "새 비밀번호 확인이 일치하지 않습니다.");
+        }
+
+        String passwordHash = passwordEncoder.encode(request.newPassword());
+        int updatedCount = memberMapper.updateMypagePassword(companyId, memberId, passwordHash);
+        if (updatedCount == 0) {
+            throw new BusinessException(ErrorCode.MEMBER_NOT_FOUND);
+        }
+        return getMyAccount(companyId, memberId);
     }
 
     private SearchMemberResponse findManagedMember(Long companyId, MemberRole actorRole, Long memberId) {

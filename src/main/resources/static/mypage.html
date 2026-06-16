@@ -71,7 +71,7 @@
                             <p>업무 화면에서 표시되는 이름과 계정 기본 정보를 확인합니다.</p>
                         </div>
                     </div>
-                    <form class="management-form mypage-form-grid" action="#" method="post" autocomplete="off">
+                    <form class="management-form mypage-form-grid" data-mypage-profile-form action="#" method="post" autocomplete="off">
                         <label>
                             <span>이름</span>
                             <input type="text" name="name" data-member-name-input placeholder="이름">
@@ -89,7 +89,7 @@
                             <input type="text" name="passwordStatus" data-member-password-status-input readonly>
                         </label>
                         <div class="form-actions">
-                            <button class="btn btn-primary" type="button" data-ui-only-action>내 정보 저장</button>
+                            <button class="btn btn-primary" type="submit">내 정보 저장</button>
                         </div>
                     </form>
                 </section>
@@ -101,29 +101,29 @@
                             <p>업체 작업공간을 구분하는 기준 정보를 관리합니다.</p>
                         </div>
                     </div>
-                    <form class="management-form mypage-form-grid" action="#" method="post" autocomplete="off">
+                    <form class="management-form mypage-form-grid" data-owner-company-form action="#" method="post" autocomplete="off">
                         <label>
                             <span>업체 코드</span>
                             <input type="text" name="companyCode" data-owner-company-code readonly>
                         </label>
                         <label>
                             <span>회사명</span>
-                            <input type="text" name="companyName" placeholder="예: 서울 중고PC 부품센터">
+                            <input type="text" name="companyName" data-owner-company-name placeholder="예: 서울 중고PC 부품센터">
                         </label>
                         <label>
                             <span>대표 이메일</span>
-                            <input type="email" name="companyEmail" placeholder="company@example.com">
+                            <input type="email" name="representativeEmail" data-owner-company-email placeholder="company@example.com">
                         </label>
                         <label>
                             <span>대표 연락처</span>
-                            <input type="text" name="companyPhone" placeholder="02-0000-0000">
+                            <input type="text" name="representativePhone" data-owner-company-phone placeholder="02-0000-0000">
                         </label>
                         <label>
                             <span>사업자등록번호</span>
-                            <input type="text" name="businessNumber" placeholder="000-00-00000">
+                            <input type="text" name="businessRegistrationNo" data-owner-company-business-no placeholder="000-00-00000">
                         </label>
                         <div class="form-actions">
-                            <button class="btn btn-primary" type="button" data-ui-only-action>회사 정보 저장</button>
+                            <button class="btn btn-primary" type="submit">회사 정보 저장</button>
                         </div>
                     </form>
                 </section>
@@ -163,7 +163,7 @@
                             <p>보안을 위해 현재 비밀번호 확인 후 새 비밀번호를 설정합니다.</p>
                         </div>
                     </div>
-                    <form class="management-form mypage-form-grid mypage-password-form" action="#" method="post" autocomplete="off">
+                    <form class="management-form mypage-form-grid mypage-password-form" data-mypage-password-form action="#" method="post" autocomplete="off">
                         <label>
                             <span>현재 비밀번호</span>
                             <input type="password" name="currentPassword" placeholder="현재 비밀번호">
@@ -177,7 +177,7 @@
                             <input type="password" name="newPasswordConfirm" placeholder="새 비밀번호 확인">
                         </label>
                         <div class="form-actions">
-                            <button class="btn btn-primary" type="button" data-ui-only-action>비밀번호 변경</button>
+                            <button class="btn btn-primary" type="submit">비밀번호 변경</button>
                         </div>
                     </form>
                 </section>
@@ -261,6 +261,6 @@
 <script src="/js/workspace-layout.js?20260612_mypage"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
 <script src="/js/pcs-common.js?20260611_common"></script>
-<script src="/js/mypage.js?20260615_1"></script>
+<script src="/js/mypage.js?20260615_api"></script>
 </body>
 </html>

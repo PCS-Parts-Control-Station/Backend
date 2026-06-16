@@ -1,8 +1,11 @@
 package com.pcs.domain.member.api;
 
 import com.pcs.domain.member.dto.request.CreateMemberRequest;
+import com.pcs.domain.member.dto.request.ChangeMypagePasswordRequest;
+import com.pcs.domain.member.dto.request.UpdateMypageRequest;
 import com.pcs.domain.member.dto.request.UpdateStaffPermissionRequest;
 import com.pcs.domain.member.dto.request.UpdateMemberRequest;
+import com.pcs.domain.member.dto.response.MypageResponse;
 import com.pcs.domain.member.dto.response.SearchMemberResponse;
 import com.pcs.domain.member.dto.response.SearchMemberSummaryResponse;
 import com.pcs.domain.member.dto.response.StaffPermissionSettingsResponse;
@@ -117,5 +120,34 @@ public class MemberApiController {
     ) {
         StaffPermissionSettingsResponse response = memberFacade.updateStaffPermissions(principal, companyCode, request);
         return ResponseEntity.ok(ApiResultDto.ok("직원 권한 설정을 저장했습니다.", response));
+    }
+
+    @GetMapping("/workspaces/{companyCode}/mypage")
+    public ResponseEntity<ApiResultDto<MypageResponse>> getMypage(
+            @PathVariable String companyCode,
+            @AuthenticationPrincipal PcsPrincipal principal
+    ) {
+        MypageResponse response = memberFacade.getMypage(principal, companyCode);
+        return ResponseEntity.ok(ApiResultDto.ok(response));
+    }
+
+    @PatchMapping("/workspaces/{companyCode}/mypage")
+    public ResponseEntity<ApiResultDto<MypageResponse>> updateMypage(
+            @PathVariable String companyCode,
+            @AuthenticationPrincipal PcsPrincipal principal,
+            @Valid @RequestBody UpdateMypageRequest request
+    ) {
+        MypageResponse response = memberFacade.updateMypage(principal, companyCode, request);
+        return ResponseEntity.ok(ApiResultDto.ok("내 정보가 저장되었습니다.", response));
+    }
+
+    @PatchMapping("/workspaces/{companyCode}/mypage/password")
+    public ResponseEntity<ApiResultDto<MypageResponse>> changeMypagePassword(
+            @PathVariable String companyCode,
+            @AuthenticationPrincipal PcsPrincipal principal,
+            @Valid @RequestBody ChangeMypagePasswordRequest request
+    ) {
+        MypageResponse response = memberFacade.changeMypagePassword(principal, companyCode, request);
+        return ResponseEntity.ok(ApiResultDto.ok("비밀번호가 변경되었습니다.", response));
     }
 }
