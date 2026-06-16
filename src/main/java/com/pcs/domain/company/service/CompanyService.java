@@ -1,5 +1,6 @@
 package com.pcs.domain.company.service;
 
+import com.pcs.domain.company.dto.response.OwnerCompanyResponse;
 import com.pcs.domain.company.dto.response.WorkspacePublicInfoResponse;
 import com.pcs.domain.company.entity.Company;
 import com.pcs.domain.company.mapper.CompanyMapper;
@@ -24,5 +25,25 @@ public class CompanyService {
 
     public void create(Company company) {
         companyMapper.insert(company);
+    }
+
+    public OwnerCompanyResponse findOwnerCompanyById(Long companyId) {
+        return companyMapper.findOwnerCompanyById(companyId);
+    }
+
+    public int updateOwnerCompany(
+            Long companyId,
+            String companyName,
+            String representativeEmail,
+            String representativePhone,
+            String businessRegistrationNo
+    ) {
+        return companyMapper.updateOwnerCompany(
+                companyId,
+                companyName,
+                representativeEmail,
+                representativePhone,
+                businessRegistrationNo
+        );
     }
 }
