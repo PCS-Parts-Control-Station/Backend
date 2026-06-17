@@ -25,12 +25,13 @@
     const targetStep = document.querySelector("[data-inspection-target-step]");
     const formStep = document.querySelector("[data-inspection-form-step]");
     const confirmModal = document.querySelector("[data-inspection-confirm-modal]");
+    const sideStepItems = document.querySelectorAll("[data-inspection-side-step]");
 
     const summaryFields = {
         documents: document.querySelector("[data-summary-total]"),
-        totalUnits: document.querySelector("[data-summary-waiting]"),
-        completed: document.querySelector("[data-summary-recheck]"),
-        waiting: document.querySelector("[data-summary-defective]")
+        totalUnits: document.querySelector("[data-summary-total-units]"),
+        completed: document.querySelector("[data-summary-completed]"),
+        waiting: document.querySelector("[data-summary-waiting]")
     };
 
     const documentFields = {
@@ -57,6 +58,7 @@
         documentNo: document.querySelector("[data-inspection-form-document-no]"),
         part: document.querySelector("[data-inspection-form-part]"),
         model: document.querySelector("[data-inspection-form-model]"),
+        templateItemSection: document.querySelector("[data-inspection-template-item-section]"),
         templateItemCount: document.querySelector("[data-inspection-template-item-count]"),
         templateItems: document.querySelector("[data-inspection-template-items]"),
         message: document.querySelector("[data-inspection-form-message]")
@@ -102,6 +104,7 @@
     let currentHistoryPageData = null;
     let currentDocumentDetail = null;
     let selectedDocumentId = null;
+    let selectedMovementId = null;
     let selectedUnits = [];
     let templatesByCategory = new Map();
     let templateDetailsById = new Map();
@@ -110,15 +113,17 @@
     let selectedHistoryId = null;
     let selectedHistoryDetail = null;
     let activeHistoryMode = null;
+    let historyStepActive = false;
     let pendingSavePayload = null;
     let historyWorkflowSaving = false;
     let documentDetailRequestId = 0;
     let historyRequestId = 0;
     let historyDetailRequestId = 0;
+    let targetStepHighlightTimer = null;
 
     const LABELS = {
         inspectionStatus: {
-            WAITING: "대기",
+            WAITING: "검수 전",
             IN_PROGRESS: "진행 중",
             COMPLETED: "완료"
         },
@@ -197,6 +202,13 @@
         return String(value).slice(0, 10);
     };
 
+    const formatLocalDate = (date) => {
+        const year = String(date.getFullYear());
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    };
+
     const statusBadgeClass = (status) => {
         if (status === "COMPLETED") return "badge-active";
         if (status === "IN_PROGRESS") return "badge-blue";
@@ -262,6 +274,47 @@
         workflowFields.message.classList.toggle("is-error", isError);
     };
 
+    function setCurrentSideStep(step) {
+        sideStepItems.forEach((item) => {
+            const isCurrent = item.dataset.inspectionSideStep === String(step);
+            item.classList.toggle("is-current", isCurrent);
+            if (isCurrent) {
+                item.setAttribute("aria-current", "step");
+            } else {
+                item.removeAttribute("aria-current");
+            }
+        });
+    }
+
+    function updateCurrentSideStep() {
+        if (historyStepActive || historyDetailPanel?.open || selectedHistoryId) {
+            setCurrentSideStep(4);
+            return;
+        }
+        if (selectedUnits.length || formStep?.classList.contains("is-active")) {
+            setCurrentSideStep(3);
+            return;
+        }
+        if (selectedDocumentId) {
+            setCurrentSideStep(2);
+            return;
+        }
+        setCurrentSideStep(1);
+    }
+
+    function highlightTargetStep() {
+        if (!targetStep) {
+            return;
+        }
+        window.clearTimeout(targetStepHighlightTimer);
+        targetStep.classList.remove("is-attention");
+        void targetStep.offsetWidth;
+        targetStep.classList.add("is-attention");
+        targetStepHighlightTimer = window.setTimeout(() => {
+            targetStep.classList.remove("is-attention");
+        }, 1200);
+    }
+
     const setFormDisabled = (disabled) => {
         inspectionForm?.querySelectorAll("select, input, textarea, button[type='submit']").forEach((field) => {
             field.disabled = disabled;
@@ -278,7 +331,7 @@
         if (inspectionForm?.elements.salesStatus) inspectionForm.elements.salesStatus.value = "AVAILABLE";
     };
 
-    const clearInspectionForm = () => {
+    const clearInspectionForm = (options = {}) => {
         selectedUnits = [];
         selectedTemplateDetail = null;
         pendingSavePayload = null;
@@ -286,7 +339,7 @@
         setFormDisabled(true);
         formStep?.classList.remove("is-active");
 
-        if (formFields.subtitle) formFields.subtitle.textContent = "2번에서 관리번호를 선택하면 검수 결과를 입력할 수 있습니다.";
+        if (formFields.subtitle) formFields.subtitle.textContent = "관리번호 선택 후 입력합니다.";
         if (formFields.unit) formFields.unit.textContent = "검수 대상 없음";
         if (formFields.badges) {
             formFields.badges.innerHTML = `
@@ -299,10 +352,14 @@
             formFields.serials.innerHTML = "";
             formFields.serials.hidden = true;
         }
-        if (formFields.applyNote) formFields.applyNote.textContent = "관리번호를 선택하면 저장 적용 범위가 표시됩니다.";
+        if (formFields.applyNote) {
+            formFields.applyNote.textContent = "";
+            formFields.applyNote.hidden = true;
+        }
         if (formFields.documentNo) formFields.documentNo.textContent = "-";
         if (formFields.part) formFields.part.textContent = "-";
         if (formFields.model) formFields.model.textContent = "-";
+        if (formFields.templateItemSection) formFields.templateItemSection.hidden = true;
         if (formFields.templateItemCount) formFields.templateItemCount.textContent = "항목 없음";
         if (formFields.templateItems) {
             formFields.templateItems.innerHTML = '<p class="detail-empty-text">검수 템플릿을 선택하면 항목이 표시됩니다.</p>';
@@ -311,6 +368,10 @@
             inspectionForm.elements.templateId.innerHTML = '<option value="">관리번호를 선택해 주세요</option>';
         }
         setFormMessage("검수할 관리번호를 먼저 선택해 주세요.");
+        syncSelectedUnitChecks();
+        if (!options.skipSideStepUpdate) {
+            updateCurrentSideStep();
+        }
     };
 
     const buildPeriodParams = (params) => {
@@ -319,7 +380,7 @@
             return;
         }
         const today = new Date();
-        const toDateText = today.toISOString().slice(0, 10);
+        const toDateText = formatLocalDate(today);
         const from = new Date(today);
         if (period === "today") {
             params.set("dateFrom", toDateText);
@@ -333,7 +394,7 @@
         } else {
             return;
         }
-        params.set("dateFrom", from.toISOString().slice(0, 10));
+        params.set("dateFrom", formatLocalDate(from));
         params.set("dateTo", toDateText);
     };
 
@@ -362,18 +423,20 @@
             row.dataset.inspectionDocumentId = String(item.documentId);
             row.innerHTML = `
                 <strong role="cell" data-label="전표번호">${escapeHtml(item.documentNo)}</strong>
-                <span class="inspection-stack-cell" role="cell" data-label="입고 내용">
-                    <strong>${escapeHtml(item.partnerName)} / ${escapeHtml(item.summary)}</strong>
-                    <small>입고일 ${escapeHtml(formatDate(item.createdAt))} · 검수 대기 ${numberText(item.waitingCount)}개</small>
+                <span class="inspection-stack-cell" role="cell" data-label="거래처">
+                    <strong>${escapeHtml(item.partnerName)}</strong>
+                    <small>${escapeHtml(item.summary)}</small>
                 </span>
+                <span class="inspection-date-cell" role="cell" data-label="입고일">${escapeHtml(formatDate(item.createdAt))}</span>
                 <span role="cell" data-label="총수량">${numberText(item.totalUnitCount)}</span>
+                <span role="cell" data-label="대기">${numberText(item.waitingCount)}</span>
                 <span role="cell" data-label="완료">${numberText(item.completedCount)}</span>
                 <span class="inspection-progress" role="cell" data-label="진행률">
                     <strong>${numberText(item.progressRate)}%</strong>
                     <span class="inspection-progress-track" aria-hidden="true"><i style="--progress: ${Number(item.progressRate || 0)}%"></i></span>
                 </span>
                 <span class="row-actions" role="cell" data-label="선택">
-                    <button type="button" data-inspection-document-action="${item.documentId}">전표 선택</button>
+                    <button type="button" data-inspection-document-action="${item.documentId}">선택</button>
                 </span>
             `;
             row.addEventListener("click", (event) => {
@@ -395,6 +458,12 @@
             const selected = String(row.dataset.inspectionDocumentId) === String(selectedDocumentId);
             row.classList.toggle("is-selected", selected);
             row.setAttribute("aria-selected", String(selected));
+            const button = row.querySelector("[data-inspection-document-action]");
+            if (button) {
+                button.textContent = selected ? "선택됨" : "선택";
+                button.classList.toggle("is-current", selected);
+                button.setAttribute("aria-pressed", String(selected));
+            }
         });
     };
 
@@ -483,6 +552,7 @@
         if (workflowFields.itemCount) {
             workflowFields.itemCount.textContent = "항목 없음";
         }
+        updateCurrentSideStep();
     };
 
     const resetHistorySection = (message = "전표를 선택하면 해당 전표 또는 관리번호 기준 이력이 표시됩니다.") => {
@@ -498,6 +568,24 @@
         if (historyScope) {
             historyScope.textContent = message;
         }
+    };
+
+    const resetDocumentSelectionContext = () => {
+        currentDocumentPage = 0;
+        selectedDocumentId = null;
+        currentDocumentDetail = null;
+        selectedMovementId = null;
+        historyStepActive = false;
+        clearInspectionForm();
+        resetHistorySection();
+        if (documentSummaryCard) documentSummaryCard.hidden = true;
+        if (documentFields.subtitle) {
+            documentFields.subtitle.hidden = false;
+            documentFields.subtitle.textContent = "전표 선택 후 표시됩니다.";
+        }
+        if (documentFields.lineCount) documentFields.lineCount.textContent = "전표 미선택";
+        if (documentFields.lines) documentFields.lines.innerHTML = '<p class="detail-empty-text">전표를 선택해 주세요.</p>';
+        updateCurrentSideStep();
     };
 
     const loadWaitingDocuments = async (page = currentDocumentPage, options = {}) => {
@@ -578,56 +666,79 @@
             return;
         }
         if (!lines?.length) {
+            selectedMovementId = null;
             documentFields.lines.innerHTML = '<p class="detail-empty-text">검수 대상 부품이 없습니다.</p>';
             return;
         }
 
-        documentFields.lines.innerHTML = lines.map((line) => {
-            const waitingUnits = (line.units || []).filter((unit) => unit.inspectionStatus !== "COMPLETED");
-            const unitsHtml = (line.units || []).map((unit) => {
-                const completed = unit.inspectionStatus === "COMPLETED";
-                return `
-                    <li class="${completed ? "is-completed" : "is-waiting"}">
-                        <input type="checkbox" aria-label="${escapeHtml(unit.internalSerialNo)} 선택" value="${unit.unitId}" data-inspection-unit-check${completed ? " disabled" : ""}>
-                        <span class="inspection-unit-main">
-                            <code>${escapeHtml(unit.internalSerialNo)}</code>
-                            <span class="inspection-unit-badges">
-                                <em class="badge ${statusBadgeClass(unit.inspectionStatus)}">${escapeHtml(LABELS.inspectionStatus[unit.inspectionStatus] || unit.inspectionStatus)}</em>
-                                <em class="badge ${gradeBadgeClass(unit.grade)}">${escapeHtml(LABELS.grade[unit.grade] || unit.grade)}</em>
-                            </span>
-                        </span>
-                        <button class="inspection-unit-action-button" type="button"
-                            ${completed && unit.latestInspectionId ? `data-inspection-history-action="${unit.latestInspectionId}" data-inspection-history-unit-id="${unit.unitId}"` : `data-inspection-unit-action="${unit.unitId}"`}
-                            ${completed && !unit.latestInspectionId ? " disabled" : ""}>
-                            ${completed ? "이력 보기" : "검수 등록"}
-                        </button>
-                    </li>
-                `;
-            }).join("");
-
+        if (!selectedMovementId || !lines.some((line) => String(line.movementId) === String(selectedMovementId))) {
+            selectedMovementId = lines[0].movementId;
+        }
+        const selectedLine = lines.find((line) => String(line.movementId) === String(selectedMovementId)) || lines[0];
+        const formatLineMeta = (line) => [line.modelName, line.categoryName].filter(Boolean).join(" · ");
+        const selectedLineMeta = formatLineMeta(selectedLine);
+        const waitingUnits = (selectedLine.units || []).filter((unit) => unit.inspectionStatus !== "COMPLETED");
+        const unitsHtml = (selectedLine.units || []).map((unit) => {
+            const completed = unit.inspectionStatus === "COMPLETED";
+            const gradeBadge = unit.grade && unit.grade !== "NONE"
+                    ? `<em class="badge ${gradeBadgeClass(unit.grade)}">${escapeHtml(LABELS.grade[unit.grade] || unit.grade)}</em>`
+                    : "";
             return `
-                <article class="inspection-target-item" data-inspection-line="${line.movementId}">
+                <li class="${completed ? "is-completed" : "is-waiting"}"${completed ? "" : ` data-inspection-unit-row="${escapeHtml(String(unit.unitId))}"`}>
+                    <input type="checkbox" aria-label="${escapeHtml(unit.internalSerialNo)} 선택" value="${unit.unitId}" data-inspection-unit-check${completed ? " disabled" : ""}>
+                    <span class="inspection-unit-main">
+                        <code>${escapeHtml(unit.internalSerialNo)}</code>
+                        <span class="inspection-unit-badges">
+                            <em class="badge ${statusBadgeClass(unit.inspectionStatus)}">${escapeHtml(LABELS.inspectionStatus[unit.inspectionStatus] || unit.inspectionStatus)}</em>
+                            ${gradeBadge}
+                        </span>
+                    </span>
+                    <button class="inspection-unit-action-button" type="button"
+                        ${completed && unit.latestInspectionId ? `data-inspection-history-action="${unit.latestInspectionId}" data-inspection-history-unit-id="${unit.unitId}"` : `data-inspection-unit-action="${unit.unitId}"`}
+                        ${completed && !unit.latestInspectionId ? " disabled" : ""}>
+                        ${completed ? "이력 보기" : "검수 등록"}
+                    </button>
+                </li>
+            `;
+        }).join("");
+
+        documentFields.lines.innerHTML = `
+            <div class="inspection-line-picker" aria-label="부품 묶음 선택">
+                ${lines.map((line) => {
+                    const selected = String(line.movementId) === String(selectedLine.movementId);
+                    return `
+                        <button class="inspection-line-picker-button${selected ? " is-selected" : ""}" type="button" data-inspection-line-picker-action="${line.movementId}" aria-pressed="${selected}">
+                            <span>
+                                <strong>${escapeHtml(line.partName)}</strong>
+                                <small>${escapeHtml(formatLineMeta(line))}</small>
+                            </span>
+                            <em>${numberText(line.quantity)}개</em>
+                        </button>
+                    `;
+                }).join("")}
+            </div>
+            <div class="inspection-line-detail">
+                <article class="inspection-target-item" data-inspection-line="${selectedLine.movementId}">
                     <header>
                         <span class="inspection-target-heading">
                             <span class="inspection-target-title">
-                                <strong>${escapeHtml(line.partName)}</strong>
-                                <small>${escapeHtml(line.modelName)}</small>
-                                <em class="badge badge-blue">${numberText(line.quantity)}개</em>
+                                <strong>${escapeHtml(selectedLine.partName)}</strong>
+                                <small>${escapeHtml(selectedLineMeta)}</small>
                             </span>
                         </span>
-                        <span class="inspection-target-summary">대기 ${numberText(line.waitingCount)}개 · 완료 ${numberText(line.completedCount)}개</span>
+                        <span class="inspection-target-summary">대기 ${numberText(selectedLine.waitingCount)}개 · 완료 ${numberText(selectedLine.completedCount)}개</span>
                     </header>
                     <div class="inspection-bulk-actions">
                         <span data-line-selected-count>선택 없음</span>
                         <div>
                             <button class="inspection-line-primary-action" type="button" data-inspection-line-selected-action disabled>선택 검수</button>
-                            <button class="inspection-line-quiet-action" type="button" data-inspection-line-waiting-action="${line.movementId}"${waitingUnits.length ? "" : " disabled"}>대기만 선택</button>
+                            <button class="inspection-line-quiet-action" type="button" data-inspection-line-toggle-selection${waitingUnits.length ? "" : " disabled"}>전체 선택</button>
                         </div>
                     </div>
                     <ul class="inspection-unit-list">${unitsHtml || "<li><span>관리번호가 없습니다.</span></li>"}</ul>
                 </article>
-            `;
-        }).join("");
+            </div>
+        `;
     };
 
     const loadDocumentDetail = async (documentId) => {
@@ -636,9 +747,14 @@
         }
         const requestId = ++documentDetailRequestId;
         const isDifferentDocument = String(selectedDocumentId || "") !== String(documentId);
-        clearInspectionForm();
+        historyStepActive = false;
+        selectedDocumentId = documentId;
+        selectedMovementId = isDifferentDocument ? null : selectedMovementId;
+        updateSelectedDocumentRow();
+        updateCurrentSideStep();
+        highlightTargetStep();
+        clearInspectionForm({ skipSideStepUpdate: true });
         if (isDifferentDocument) {
-            selectedDocumentId = null;
             currentDocumentDetail = null;
             resetHistorySection();
         } else {
@@ -675,6 +791,7 @@
             if (documentFields.lineCount) documentFields.lineCount.textContent = `${numberText(detail.lines?.length)}개 묶음`;
             renderDocumentLines(detail.lines || []);
             targetStep?.classList.add("is-active");
+            updateCurrentSideStep();
             await loadHistories(0);
         } catch (error) {
             if (requestId !== documentDetailRequestId) {
@@ -821,10 +938,12 @@
         }
         const items = (template?.items || []).filter((item) => item.active !== false);
         if (!items.length) {
-            formFields.templateItems.innerHTML = '<p class="detail-empty-text">검수 템플릿을 선택하면 항목이 표시됩니다.</p>';
+            if (formFields.templateItemSection) formFields.templateItemSection.hidden = true;
+            formFields.templateItems.innerHTML = "";
             if (formFields.templateItemCount) formFields.templateItemCount.textContent = "항목 없음";
             return;
         }
+        if (formFields.templateItemSection) formFields.templateItemSection.hidden = false;
 
         const groups = ["BASIC", "DETAIL"].map((group) => ({
             group,
@@ -868,50 +987,52 @@
         }
 
         selectedUnits = validContexts;
+        historyStepActive = false;
+        syncSelectedUnitChecks();
         resetInspectionFormValues();
         setFormDisabled(false);
+        const targetName = sameLine
+                ? [first.line.partName, first.line.modelName].filter(Boolean).join(" ")
+                : "여러 부품";
+        const targetMeta = validContexts.length === 1
+                ? `${first.unit.internalSerialNo} · ${currentDocumentDetail.documentNo || "-"}`
+                : `선택 ${numberText(validContexts.length)}개 · ${currentDocumentDetail.documentNo || "-"}`;
         if (formFields.subtitle) {
-            formFields.subtitle.textContent = validContexts.length === 1
-                    ? `${currentDocumentDetail.documentNo} · ${first.line.partName}`
-                    : `${currentDocumentDetail.documentNo} · ${numberText(validContexts.length)}개 일괄 검수`;
+            formFields.subtitle.textContent = targetMeta;
         }
         if (formFields.unit) {
-            formFields.unit.textContent = validContexts.length === 1
-                    ? first.unit.internalSerialNo
-                    : `선택 ${numberText(validContexts.length)}개 관리번호`;
+            formFields.unit.textContent = targetName || "검수 대상";
         }
         if (formFields.badges) {
+            const selectedCountBadge = `<em class="badge badge-blue inspection-selection-count">선택 ${numberText(validContexts.length)}개</em>`;
+            const statusText = LABELS.inspectionStatus[first.unit.inspectionStatus] || first.unit.inspectionStatus || "검수 전";
+            const statusClass = statusBadgeClass(first.unit.inspectionStatus || "WAITING");
             if (validContexts.length === 1) {
                 formFields.badges.innerHTML = `
-                    <em class="badge ${statusBadgeClass(first.unit.inspectionStatus)}">${escapeHtml(LABELS.inspectionStatus[first.unit.inspectionStatus] || first.unit.inspectionStatus)}</em>
-                    <em class="badge ${gradeBadgeClass(first.unit.grade)}">${escapeHtml(LABELS.grade[first.unit.grade] || first.unit.grade)}</em>
-                    <em class="badge ${salesBadgeClass(first.unit.salesStatus)}">${escapeHtml(LABELS.salesStatus[first.unit.salesStatus] || first.unit.salesStatus)}</em>
+                    ${selectedCountBadge}
+                    <em class="badge ${statusClass}">${escapeHtml(statusText)}</em>
                 `;
             } else {
                 formFields.badges.innerHTML = `
+                    ${selectedCountBadge}
+                    <em class="badge ${statusClass}">${escapeHtml(statusText)}</em>
                     <em class="badge badge-active">일괄 검수</em>
-                    <em class="badge badge-blue">${numberText(validContexts.length)}개 적용</em>
                 `;
             }
         }
         if (formFields.serials) {
-            if (validContexts.length > 1) {
-                formFields.serials.innerHTML = validContexts.map((context) => `<span>${escapeHtml(context.unit.internalSerialNo)}</span>`).join("");
-                formFields.serials.hidden = false;
-            } else {
-                formFields.serials.innerHTML = "";
-                formFields.serials.hidden = true;
-            }
+            formFields.serials.innerHTML = "";
+            formFields.serials.hidden = true;
         }
         if (formFields.applyNote) {
-            formFields.applyNote.textContent = validContexts.length === 1
-                    ? "저장 시 이 관리번호 1개에만 검수 결과가 반영됩니다."
-                    : `저장 시 선택한 ${numberText(validContexts.length)}개 관리번호에 동일한 결과가 반영됩니다.`;
+            formFields.applyNote.textContent = "";
+            formFields.applyNote.hidden = true;
         }
         if (formFields.documentNo) formFields.documentNo.textContent = currentDocumentDetail.documentNo || "-";
         if (formFields.part) formFields.part.textContent = sameLine ? first.line.partName : "여러 부품";
         if (formFields.model) formFields.model.textContent = sameLine ? first.line.modelName : "여러 모델";
         formStep?.classList.add("is-active");
+        updateCurrentSideStep();
         setFormMessage("");
         await renderTemplateOptions(first.line.categoryId);
         await loadHistories(0);
@@ -923,11 +1044,27 @@
             return;
         }
         const selectedCount = lineElement.querySelectorAll("[data-inspection-unit-check]:checked").length;
+        const selectableCount = lineElement.querySelectorAll("[data-inspection-unit-check]:not(:disabled)").length;
         const countText = lineElement.querySelector("[data-line-selected-count]");
         const selectedButton = lineElement.querySelector("[data-inspection-line-selected-action]");
+        const toggleButton = lineElement.querySelector("[data-inspection-line-toggle-selection]");
         if (countText) countText.textContent = selectedCount ? `${numberText(selectedCount)}개 선택` : "선택 없음";
         if (selectedButton) selectedButton.disabled = selectedCount === 0;
+        if (toggleButton) {
+            const allSelected = selectableCount > 0 && selectedCount === selectableCount;
+            toggleButton.textContent = allSelected ? "선택 취소" : "전체 선택";
+            toggleButton.setAttribute("aria-pressed", String(allSelected));
+            toggleButton.disabled = selectableCount === 0;
+        }
     };
+
+    function syncSelectedUnitChecks() {
+        const selectedUnitIds = new Set(selectedUnits.map((context) => String(context.unit.unitId)));
+        document.querySelectorAll("[data-inspection-unit-check]").forEach((input) => {
+            input.checked = selectedUnitIds.has(String(input.value));
+        });
+        document.querySelectorAll("[data-inspection-line]").forEach(updateLineSelectionState);
+    }
 
     const syncInspectionFormRule = () => {
         const result = inspectionForm?.elements.result;
@@ -1067,11 +1204,15 @@
             `;
             row.addEventListener("click", (event) => {
                 if (event.target.closest("button")) return;
+                historyStepActive = true;
+                updateCurrentSideStep();
                 loadHistoryDetail(history.inspectionId);
             });
             row.addEventListener("keydown", (event) => {
                 if (event.key !== "Enter" && event.key !== " ") return;
                 event.preventDefault();
+                historyStepActive = true;
+                updateCurrentSideStep();
                 loadHistoryDetail(history.inspectionId);
             });
             historyTable.append(row);
@@ -1348,6 +1489,7 @@
             }
             if (historyFields.itemCount) historyFields.itemCount.textContent = `${numberText(detail.itemResults?.length)}개 항목`;
             renderHistoryItems(detail.itemResults || []);
+            updateCurrentSideStep();
         } catch (error) {
             if (requestId !== historyDetailRequestId) {
                 return;
@@ -1361,6 +1503,7 @@
         if (context) {
             clearInspectionForm();
             selectedUnits = [context];
+            updateCurrentSideStep();
             await loadHistories(0);
         }
         await loadHistoryDetail(inspectionId);
@@ -1484,9 +1627,27 @@
             return;
         }
 
+        const linePickerButton = event.target.closest("[data-inspection-line-picker-action]");
+        if (linePickerButton) {
+            selectedMovementId = linePickerButton.dataset.inspectionLinePickerAction;
+            clearInspectionForm();
+            renderDocumentLines(currentDocumentDetail?.lines || []);
+            return;
+        }
+
         const unitButton = event.target.closest("[data-inspection-unit-action]");
         if (unitButton) {
             renderInspectionForm(findLineByUnitId(unitButton.dataset.inspectionUnitAction));
+            return;
+        }
+
+        const unitRow = event.target.closest("[data-inspection-unit-row]");
+        if (unitRow && !event.target.closest("button, input, select, textarea, a")) {
+            const unitCheck = unitRow.querySelector("[data-inspection-unit-check]");
+            if (unitCheck && !unitCheck.disabled) {
+                unitCheck.checked = !unitCheck.checked;
+                updateLineSelectionState(unitRow.closest("[data-inspection-line]"));
+            }
             return;
         }
 
@@ -1499,18 +1660,22 @@
             return;
         }
 
-        const waitingLineButton = event.target.closest("[data-inspection-line-waiting-action]");
-        if (waitingLineButton) {
-            const line = findLineByMovementId(waitingLineButton.dataset.inspectionLineWaitingAction);
-            const contexts = (line?.units || [])
-                    .filter((unit) => unit.inspectionStatus !== "COMPLETED")
-                    .map((unit) => ({ line, unit }));
-            renderInspectionForm(contexts);
+        const toggleLineButton = event.target.closest("[data-inspection-line-toggle-selection]");
+        if (toggleLineButton) {
+            const lineElement = toggleLineButton.closest("[data-inspection-line]");
+            const checks = Array.from(lineElement?.querySelectorAll("[data-inspection-unit-check]:not(:disabled)") || []);
+            const shouldSelect = checks.some((input) => !input.checked);
+            checks.forEach((input) => {
+                input.checked = shouldSelect;
+            });
+            updateLineSelectionState(lineElement);
             return;
         }
 
         const historyButton = event.target.closest("[data-inspection-history-action]");
         if (historyButton) {
+            historyStepActive = true;
+            updateCurrentSideStep();
             const unitId = historyButton.dataset.inspectionHistoryUnitId;
             if (unitId) {
                 void openUnitHistoryDetail(unitId, historyButton.dataset.inspectionHistoryAction);
@@ -1564,19 +1729,15 @@
 
     filterForm?.addEventListener("submit", (event) => {
         event.preventDefault();
-        currentDocumentPage = 0;
-        selectedDocumentId = null;
-        currentDocumentDetail = null;
-        clearInspectionForm();
-        resetHistorySection();
-        if (documentSummaryCard) documentSummaryCard.hidden = true;
-        if (documentFields.subtitle) {
-            documentFields.subtitle.hidden = false;
-            documentFields.subtitle.textContent = "1번에서 전표를 선택하면 부품 묶음과 관리번호가 표시됩니다.";
-        }
-        if (documentFields.lineCount) documentFields.lineCount.textContent = "전표 미선택";
-        if (documentFields.lines) documentFields.lines.innerHTML = '<p class="detail-empty-text">검수할 전표를 먼저 선택해 주세요.</p>';
+        resetDocumentSelectionContext();
         loadWaitingDocuments(0);
+    });
+
+    filterForm?.addEventListener("reset", () => {
+        window.setTimeout(() => {
+            resetDocumentSelectionContext();
+            loadWaitingDocuments(0);
+        }, 0);
     });
 
     documentPrevButton?.addEventListener("click", () => {
@@ -1599,6 +1760,8 @@
         if (!currentHistoryPageData?.hasPrevious) {
             return;
         }
+        historyStepActive = true;
+        updateCurrentSideStep();
         const scrollPosition = window.PcsPagination?.captureScroll?.();
         loadHistories(currentHistoryPage - 1, { preserveScroll: scrollPosition });
     });
@@ -1607,11 +1770,30 @@
         if (!currentHistoryPageData?.hasNext) {
             return;
         }
+        historyStepActive = true;
+        updateCurrentSideStep();
         const scrollPosition = window.PcsPagination?.captureScroll?.();
         loadHistories(currentHistoryPage + 1, { preserveScroll: scrollPosition });
     });
 
+    historyTable?.addEventListener("focusin", () => {
+        if (!selectedDocumentId) {
+            return;
+        }
+        historyStepActive = true;
+        updateCurrentSideStep();
+    });
+
+    historyTable?.addEventListener("click", () => {
+        if (!selectedDocumentId) {
+            return;
+        }
+        historyStepActive = true;
+        updateCurrentSideStep();
+    });
+
     clearFormButton?.addEventListener("click", () => {
+        historyStepActive = false;
         clearInspectionForm();
         loadHistories(0);
     });
