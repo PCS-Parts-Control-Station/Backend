@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="PCS 입고 등록 화면입니다. 거래처와 입고 부품 라인을 입력하고 관리번호 발급 대상을 확인합니다.">
+    <meta name="description" content="PCS 입고 등록 화면입니다. 거래처와 입고 품목을 입력하고 관리번호 발급 대상을 확인합니다.">
     <title>PCS | 입고 등록</title>
     <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -84,21 +84,21 @@
                             <div>
                                 <h2 id="part-search-title">
                                     <span class="section-step" aria-hidden="true">2</span>
-                                    <span>부품 검색</span>
+                                    <span>품목 검색</span>
                                 </h2>
-                                <p>부품 관리에 등록된 부품 종류를 검색한 뒤 수량과 라인 사유를 입력해 전표에 추가합니다.</p>
+                                <p>품목 관리에 등록된 품목을 검색한 뒤 수량과 품목 사유를 입력해 전표에 추가합니다.</p>
                             </div>
-                            <button class="btn btn-secondary btn-compact" type="button" data-open-part-modal disabled title="품목 등록은 품목 관리 화면에서 진행해 주세요.">새 품목 등록</button>
+                            <button class="btn btn-secondary btn-compact" type="button" data-open-part-modal>새 품목 등록</button>
                         </div>
                         <!-- API: GET /api/workspaces/{companyCode}/parts?keyword=&categoryId=&active=true -->
                         <div class="part-search-panel">
-                            <div class="part-search-form" aria-label="부품 검색 조건">
+                            <div class="part-search-form" aria-label="품목 검색 조건">
                                 <label>
                                     <span>검색어</span>
-                                    <input type="search" data-part-keyword placeholder="부품 이름, 제조사 모델명, 내부 부품코드">
+                                    <input type="search" data-part-keyword placeholder="품목명, 제조사 모델명, 내부코드">
                                 </label>
                                 <label>
-                                    <span>부품 분류</span>
+                                    <span>품목 분류</span>
                                     <select data-part-category>
                                         <option value="">전체 분류</option>
                                     </select>
@@ -106,11 +106,11 @@
                                 <button class="btn btn-primary" type="button" data-part-search>검색</button>
                             </div>
 
-                            <div class="part-search-results" aria-label="부품 검색 결과">
+                            <div class="part-search-results" aria-label="품목 검색 결과">
                                 <div class="part-result-head" aria-hidden="true">
-                                    <span>부품 이름</span>
+                                    <span>품목명</span>
                                     <span>제조사 모델 / 내부코드</span>
-                                    <span>부품 분류</span>
+                                    <span>품목 분류</span>
                                     <span>선택</span>
                                 </div>
                                 <p class="part-search-message" data-part-search-message role="status" aria-live="polite" hidden></p>
@@ -118,19 +118,19 @@
 
                             <div class="selected-part-panel" aria-live="polite">
                                 <div>
-                                    <span>선택한 부품</span>
-                                    <strong data-selected-part-name>부품을 검색해 주세요</strong>
-                                    <p data-selected-part-meta>검색 결과에서 부품을 선택하면 여기에 표시됩니다.</p>
+                                    <span>선택한 품목</span>
+                                    <strong data-selected-part-name>품목을 검색해 주세요</strong>
+                                    <p data-selected-part-meta>검색 결과에서 품목을 선택하면 여기에 표시됩니다.</p>
                                 </div>
                                 <label>
                                     <span>수량</span>
                                     <input type="number" min="1" value="1" data-add-quantity>
                                 </label>
                                 <label>
-                                    <span>라인 사유</span>
-                                    <input type="text" data-add-reason placeholder="라인 사유">
+                                    <span>품목 사유</span>
+                                    <input type="text" data-add-reason placeholder="품목 사유">
                                 </label>
-                                <button class="btn btn-primary" type="button" data-add-line>라인 추가</button>
+                                <button class="btn btn-primary" type="button" data-add-line>품목 추가</button>
                             </div>
                         </div>
                     </section>
@@ -140,14 +140,14 @@
                             <div>
                                 <h2 id="inbound-line-title">
                                     <span class="section-step" aria-hidden="true">3</span>
-                                    <span>부품 라인</span>
+                                    <span>입고 품목</span>
                                 </h2>
-                                <p>전표에 추가된 부품 라인입니다. 수량과 라인 사유를 수정하거나 삭제할 수 있습니다.</p>
+                                <p>전표에 추가된 품목입니다. 수량과 품목 사유를 수정하거나 삭제할 수 있습니다.</p>
                             </div>
-                            <span class="line-count" data-line-count>0개 라인</span>
+                            <span class="line-count" data-line-count>0개 품목</span>
                         </div>
-                        <div class="line-entry-list" aria-label="입고 부품 라인" data-line-list>
-                            <p class="line-empty-state" data-line-empty>검색한 부품을 추가하면 여기에 표시됩니다.</p>
+                        <div class="line-entry-list" aria-label="입고 품목" data-line-list>
+                            <p class="line-empty-state" data-line-empty>검색한 품목을 추가하면 여기에 표시됩니다.</p>
                         </div>
                     </section>
 
@@ -158,7 +158,7 @@
                                     <span class="section-step" aria-hidden="true">4</span>
                                     <span>저장 후 처리</span>
                                 </h2>
-                                <p>입고 저장 시 전표와 재고 변화 라인이 생성되고, 개별 부품은 검수 대기와 판매 보류 상태로 시작합니다.</p>
+                                <p>입고 저장 시 전표와 재고 변화 기록이 생성되고, 개별 부품은 검수 전 상태와 판매 보류 상태로 시작합니다.</p>
                                 <p class="submit-message" data-submit-message role="status" aria-live="polite"></p>
                             </div>
                             <div class="form-actions">
@@ -173,13 +173,13 @@
             <aside class="side-panel" aria-labelledby="inbound-register-guide-title">
                 <div class="panel-card process-panel">
                     <h2 id="inbound-register-guide-title">입고 등록 흐름</h2>
-                    <p>현재 입력 내용은 입고 전표와 부품별 재고 변화 라인으로 저장됩니다.</p>
+                    <p>현재 입력 내용은 입고 전표와 품목별 재고 변화 기록으로 저장됩니다.</p>
                     <ol class="workflow-list" aria-label="입고 등록 업무 흐름">
                         <li class="workflow-step active">
                             <span class="process-dot" aria-hidden="true"></span>
                             <div>
                                 <strong>입고 등록</strong>
-                                <p>거래처와 부품 라인을 입력하고 관리번호 발급 대상을 확인합니다.</p>
+                                <p>거래처와 입고 품목을 입력하고 관리번호 발급 대상을 확인합니다.</p>
                                 <ol class="sub-process-list" aria-label="입고 등록 세부 흐름">
                                     <li>
                                         <span>1</span>
@@ -191,21 +191,21 @@
                                     <li>
                                         <span>2</span>
                                         <div>
-                                            <strong>부품 검색</strong>
-                                            <p>부품을 찾아 수량과 사유를 입력합니다.</p>
+                                            <strong>품목 검색</strong>
+                                            <p>품목을 찾아 수량과 사유를 입력합니다.</p>
                                         </div>
                                     </li>
                                     <li>
                                         <span>3</span>
                                         <div>
-                                            <strong>라인 검토</strong>
-                                            <p>추가된 라인을 확인하고 수정합니다.</p>
+                                            <strong>품목 검토</strong>
+                                            <p>추가된 품목을 확인하고 수정합니다.</p>
                                         </div>
                                     </li>
                                     <li>
                                         <span>4</span>
                                         <div>
-                                            <strong>검수 대기</strong>
+                                            <strong>검수 전</strong>
                                             <p>저장 후 관리번호가 발급됩니다.</p>
                                         </div>
                                     </li>
@@ -223,7 +223,7 @@
                             <span class="process-dot" aria-hidden="true"></span>
                             <div>
                                 <strong>출고</strong>
-                                <p>판매 가능 부품을 출고합니다.</p>
+                                <p>판매 가능 품목을 출고합니다.</p>
                             </div>
                         </li>
                     </ol>
@@ -233,7 +233,7 @@
                     <h2>등록 규칙</h2>
                     <ul>
                         <li>전표 저장 후 원본 수량은 직접 수정하지 않음</li>
-                        <li>입고 취소는 취소 전표와 취소 라인으로 보존</li>
+                        <li>입고 취소는 취소 전표와 취소 기록으로 보존</li>
                         <li>제조사 시리얼은 추후 개별 부품 상세에서 보강 가능</li>
                     </ul>
                 </div>
@@ -246,9 +246,9 @@
     <form class="part-modal-card" method="dialog" data-part-modal-form>
         <div class="part-modal-header">
             <div>
-                <p class="page-kicker">부품 종류 빠른 등록</p>
-                <h2 id="part-modal-title">새 부품 등록</h2>
-                <p>입고 중 필요한 부품 종류만 빠르게 등록합니다. 상세 정보는 부품 관리에서 보강할 수 있습니다.</p>
+                <p class="page-kicker">품목 빠른 등록</p>
+                <h2 id="part-modal-title">새 품목 등록</h2>
+                <p>입고 중 필요한 품목만 빠르게 등록합니다. 상세 정보는 품목 관리에서 보강할 수 있습니다.</p>
             </div>
             <button class="modal-close-button" type="button" data-close-part-modal aria-label="닫기">
                 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -261,7 +261,7 @@
         <!-- API: POST /api/workspaces/{companyCode}/parts -->
         <div class="part-modal-fields">
             <label>
-                <span>부품 분류</span>
+                <span>품목 분류</span>
                 <select data-new-part-category required>
                     <option value="">분류 선택</option>
                 </select>
@@ -271,16 +271,12 @@
                 <input type="text" data-new-part-manufacturer placeholder="제조사명" required>
             </label>
             <label>
-                <span>부품 이름</span>
+                <span>품목명</span>
                 <input type="text" data-new-part-name placeholder="예: GeForce RTX 4060 Ti" required>
             </label>
             <label>
-                <span>내부 부품코드</span>
-                <input type="text" data-new-part-code placeholder="예: GPU-MSI-RTX4060TI" required>
-            </label>
-            <label>
                 <span>제조사 모델명</span>
-                <input type="text" data-new-part-model placeholder="예: RTX 4060 VENTUS 2X 8G OC">
+                <input type="text" data-new-part-model placeholder="예: RTX 4060 VENTUS 2X 8G OC" required>
             </label>
             <label>
                 <span>안전 재고</span>
@@ -299,7 +295,7 @@
 <script src="/js/pcs-api.js?20260526_1"></script>
 <script src="/js/workspace-layout.js?20260610_sidebar_collapse"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/inbound-register.js?20260610_sidebar_overlay"></script>
+<script src="/js/inbound-register.js?20260615_category_part_fix"></script>
 
 </body>
 </html>

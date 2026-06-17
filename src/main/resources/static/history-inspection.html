@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="PCS 검수 이력 화면입니다. 개별 부품의 검수 처리 기록을 조회합니다.">
+    <meta name="description" content="PCS 검수 이력 화면입니다. 전표 기준으로 검수 이력을 조회하고 관리번호별 상세 기록을 확인합니다.">
     <title>PCS | 검수 이력</title>
     <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/admin.css?20260611_side_panel_400">
+    <link rel="stylesheet" href="/css/history-inspection.css?20260617_2">
     <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
 </head>
 <body class="has-collapsible-sidebar">
@@ -28,53 +29,84 @@
             <div>
                 <p class="page-kicker">이력</p>
                 <h1>검수 이력</h1>
-                <p class="page-description">부품 검수 및 상태 변경 기록을 시간순으로 확인합니다.</p>
+                <p class="page-description">전표 기준으로 검수 이력을 조회합니다.</p>
+            </div>
+            <div class="header-actions">
+                <a class="btn btn-secondary" data-route="inspection">검수 관리</a>
+                <a class="btn btn-ghost history-template-link" data-route="inspection/templates">템플릿 관리</a>
             </div>
         </header>
 
-        <section class="content-grid" style="grid-template-columns: 1fr;">
+        <section class="content-grid history-content-grid">
             <div class="content-main">
-                <section class="filter-card management-filter-card" aria-labelledby="filter-title">
-                    <div>
+                <section class="filter-card management-filter-card history-filter-card" aria-labelledby="filter-title">
+                    <div class="history-filter-heading">
                         <h2 id="filter-title">이력 검색</h2>
-                        <p>기간, 부품 이름, 식별번호로 검수 기록을 좁혀 봅니다.</p>
                     </div>
-                    <!-- API: GET /api/workspaces/{companyCode}/history/inspections?keyword=&startDate=&endDate=&page=&size= -->
-                    <form class="filter-form management-filter-form" action="#" method="get" autocomplete="off" data-history-filter-form>
-                        <label>
+                    <!-- API: GET /api/workspaces/{companyCode}/inspections?keyword=&inspectionType=&result=&grade=&dateFrom=&dateTo=&page=&size= -->
+                    <form class="filter-form management-filter-form history-filter-form" action="#" method="get" autocomplete="off" data-history-filter-form>
+                        <label class="history-keyword-field">
                             <span>검색어</span>
-                            <input type="search" name="keyword" placeholder="부품 이름 또는 관리번호" autocomplete="off">
+                            <input type="search" name="keyword" placeholder="전표번호, 품목명, 관리번호" autocomplete="off">
                         </label>
-                        <label>
-                            <span>시작일</span>
-                            <input type="date" name="startDate">
+                        <fieldset class="history-date-range">
+                            <legend>기간</legend>
+                            <input type="date" name="dateFrom" aria-label="시작일">
+                            <span aria-hidden="true">~</span>
+                            <input type="date" name="dateTo" aria-label="종료일">
+                        </fieldset>
+                        <label class="history-filter-select">
+                            <span>이력 유형</span>
+                            <select name="inspectionType">
+                                <option value="">전체</option>
+                                <option value="INITIAL">최초 검수</option>
+                                <option value="CORRECTION">정정</option>
+                                <option value="REINSPECTION">재검수</option>
+                            </select>
                         </label>
-                        <label>
-                            <span>종료일</span>
-                            <input type="date" name="endDate">
+                        <label class="history-filter-select">
+                            <span>검수 결과</span>
+                            <select name="result">
+                                <option value="">전체</option>
+                                <option value="PASS">통과</option>
+                                <option value="FAIL">불합격</option>
+                                <option value="WARN">주의</option>
+                            </select>
                         </label>
-                        <button class="btn btn-primary" type="submit">검색</button>
+                        <label class="history-filter-select">
+                            <span>등급</span>
+                            <select name="grade">
+                                <option value="">전체</option>
+                                <option value="NONE">미정</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="DEFECTIVE">불량</option>
+                            </select>
+                        </label>
+                        <div class="history-filter-actions">
+                            <button class="btn btn-primary" type="submit">검색</button>
+                            <button class="btn btn-secondary" type="button" data-history-filter-reset>초기화</button>
+                        </div>
                     </form>
                 </section>
 
-                <section class="table-card" aria-labelledby="history-list-title">
+                <section class="table-card history-section-card history-document-card" aria-labelledby="history-document-title">
                     <div class="table-header inline-summary-header">
                         <div>
-                            <h2 id="history-list-title">검수 이력</h2>
-                            <p>검수 처리된 개별 부품 내역입니다.</p>
+                            <h2 id="history-document-title">전표 목록</h2>
                         </div>
                     </div>
 
-                    <div class="data-table document-data-table" role="table" aria-label="검수 이력" data-history-table>
-                        <div class="data-row document-data-row table-head" role="row">
-                            <span role="columnheader">부품 이름</span>
-                            <span role="columnheader">관리번호</span>
-                            <span role="columnheader">검수 상태</span>
-                            <span role="columnheader">등급</span>
-                            <span role="columnheader">처리자</span>
-                            <span role="columnheader">처리일</span>
+                    <div class="data-table document-data-table history-document-table" role="table" aria-label="전표 목록" data-history-document-table>
+                        <div class="data-row document-data-row history-document-row table-head" role="row">
+                            <span role="columnheader">전표번호</span>
+                            <span role="columnheader">품목 요약</span>
+                            <span role="columnheader">검수 건수</span>
+                            <span role="columnheader">불합격 건수</span>
+                            <span role="columnheader">최근 검수일</span>
                         </div>
-                        <div class="data-row document-data-row empty-data-row" role="row" data-history-empty>
+                        <div class="data-row document-data-row empty-data-row" role="row">
                             <span role="cell" data-label="안내">이력을 불러오는 중입니다.</span>
                         </div>
                     </div>
@@ -86,14 +118,75 @@
                         </div>
                     </div>
                 </section>
+
+                <section class="table-card history-section-card history-unit-card" aria-labelledby="history-unit-title" data-history-unit-section hidden>
+                    <div class="table-header inline-summary-header history-unit-header">
+                        <div>
+                            <h2 id="history-unit-title">전표 상세</h2>
+                            <p data-history-document-scope></p>
+                        </div>
+                        <button type="button" class="history-clear-document" data-history-clear-document hidden>선택 해제</button>
+                    </div>
+
+                    <div class="history-document-detail-layout">
+                        <aside class="history-part-group-panel" aria-labelledby="history-part-group-title">
+                            <div class="history-panel-title-row">
+                                <h3 id="history-part-group-title">품목 묶음</h3>
+                                <span data-history-part-count>0개</span>
+                            </div>
+                            <div class="history-part-group-list" data-history-part-groups aria-label="선택 전표 품목 묶음"></div>
+                        </aside>
+
+                        <div class="history-unit-list-panel">
+                            <div class="history-panel-title-row">
+                                <h3>관리번호 목록</h3>
+                                <span data-history-unit-count>0개</span>
+                            </div>
+
+                            <div class="history-unit-filter" data-history-unit-filter hidden aria-label="전표 내 검수 이력 필터">
+                                <button type="button" class="is-active" data-history-filter="ALL">전체</button>
+                                <button type="button" data-history-filter="INITIAL">최초 검수</button>
+                                <button type="button" data-history-filter="CORRECTION">정정</button>
+                                <button type="button" data-history-filter="REINSPECTION">재검수</button>
+                                <button type="button" data-history-filter="FAIL">불합격</button>
+                            </div>
+
+                            <div class="data-table document-data-table history-unit-table" role="table" aria-label="관리번호 목록" data-history-unit-table>
+                                <div class="data-row document-data-row history-unit-row table-head" role="row">
+                                    <span role="columnheader">관리번호</span>
+                                    <span role="columnheader">품목</span>
+                                    <span role="columnheader">최근 결과</span>
+                                    <span role="columnheader">이력 건수</span>
+                                    <span role="columnheader">최근 처리일</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
         </section>
     </main>
 </div>
+
+<div class="history-detail-overlay" data-history-detail-overlay hidden></div>
+<aside class="history-detail-panel" data-history-detail-panel role="dialog" aria-modal="true" aria-labelledby="history-detail-panel-title" tabindex="-1" hidden>
+    <header class="history-detail-panel-header">
+        <div>
+            <p class="history-panel-kicker">검수 상세 이력</p>
+            <h2 id="history-detail-panel-title">관리번호 상세</h2>
+            <p data-history-detail-scope></p>
+        </div>
+        <button type="button" class="history-panel-close" data-history-detail-close aria-label="상세 패널 닫기">×</button>
+    </header>
+    <div class="history-detail-body" data-history-detail-body>
+        <p class="detail-empty-text">상세 이력을 불러오는 중입니다.</p>
+    </div>
+</aside>
+
 <script src="/js/pcs-api.js?20260529_workspace_guard"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
 <script src="/js/workspace-layout.js?20260527_1"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/history-inspection.js?20260608_terms"></script>
+<script src="/js/history-inspection.js?20260617_part_groups"></script>
 </body>
 </html>

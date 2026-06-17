@@ -22,6 +22,11 @@
     const openPartModalButton = document.querySelector("[data-open-part-modal]");
     const closePartModalButtons = document.querySelectorAll("[data-close-part-modal]");
     const partModalMessage = document.querySelector("[data-part-modal-message]");
+    const newPartCategorySelect = document.querySelector("[data-new-part-category]");
+    const newPartManufacturerInput = document.querySelector("[data-new-part-manufacturer]");
+    const newPartNameInput = document.querySelector("[data-new-part-name]");
+    const newPartModelInput = document.querySelector("[data-new-part-model]");
+    const newPartSafeQuantityInput = document.querySelector("[data-new-part-safe-quantity]");
     const confirmModal = document.querySelector("[data-inbound-confirm-modal]");
     const closeConfirmModalButtons = document.querySelectorAll("[data-close-confirm-modal]");
     const confirmSaveButton = document.querySelector("[data-confirm-save]");
@@ -128,6 +133,21 @@
         selectedMeta.textContent = selectedPart.meta;
     };
 
+    const clearSelectedPart = () => {
+        selectedPart = null;
+        partOptions.forEach((partOption) => {
+            partOption.classList.remove("active");
+            const label = partOption.querySelector("[data-select-label]");
+            if (label) {
+                label.textContent = "선택";
+            }
+        });
+        selectedName.textContent = "품목을 검색해 주세요";
+        selectedMeta.textContent = "검색 결과에서 품목을 선택하면 여기에 표시됩니다.";
+        quantityInput.value = "1";
+        reasonInput.value = "";
+    };
+
     const serialPreview = (prefix, quantity) => {
         const count = Number(quantity) || 1;
         const createdDate = dateToken();
@@ -163,13 +183,13 @@
 
     const refreshLineState = () => {
         const lines = [...lineList.querySelectorAll("[data-line-entry]")];
-        lineCount.textContent = `${lines.length}개 라인`;
+        lineCount.textContent = `${lines.length}개 품목`;
         if (lineEmpty) {
             lineEmpty.hidden = lines.length > 0;
         }
 
         lines.forEach((line, index) => {
-            line.querySelector("legend").textContent = `라인 ${index + 1}`;
+            line.querySelector("legend").textContent = `품목 ${index + 1}`;
             line.querySelector("[data-line-part-id]").name = `lines[${index}].partId`;
             line.querySelector("[data-line-quantity]").name = `lines[${index}].quantity`;
             line.querySelector("[data-line-reason]").name = `lines[${index}].reason`;
@@ -185,11 +205,11 @@
         line.dataset.partMeta = meta;
         line.dataset.partPrefix = prefix;
         line.innerHTML = `
-            <legend>라인</legend>
+            <legend>품목</legend>
             <input type="hidden" value="${id}" data-line-part-id>
             <div class="line-entry-grid line-review-grid">
                 <div class="line-part-summary">
-                    <span>부품</span>
+                    <span>품목</span>
                     <strong>${escapeHtml(name)}</strong>
                     <p>${escapeHtml(meta)}</p>
                 </div>
@@ -198,7 +218,7 @@
                     <input type="number" min="1" value="${quantity}" required data-line-quantity>
                 </label>
                 <label class="field-wide">
-                    <span>라인 사유</span>
+                    <span>품목 사유</span>
                     <input type="text" value="${escapeHtml(reason)}" data-line-reason>
                 </label>
                 <button class="line-delete-button" type="button" data-delete-line>삭제</button>
@@ -212,7 +232,7 @@
 
     const addLine = () => {
         if (!selectedPart) {
-            setPartSearchMessage("먼저 부품을 검색하고 선택해 주세요.", "error");
+            setPartSearchMessage("먼저 품목을 검색하고 선택해 주세요.", "error");
             return;
         }
 
@@ -229,11 +249,13 @@
             }
             existingLine.querySelector(".serial-preview").innerHTML = serialPreview(selectedPart.prefix, existingQuantity.value);
             refreshLineState();
+            clearSelectedPart();
             return;
         }
 
         lineList.append(createLine(selectedPart, quantity, reason));
         refreshLineState();
+        clearSelectedPart();
     };
 
     const filterParts = ({ keepMessage = false } = {}) => {
@@ -264,7 +286,7 @@
         if (!visibleOptions.length) {
             selectedPart = null;
             selectedName.textContent = "검색 결과 없음";
-            selectedMeta.textContent = "검색어를 바꾸거나 부품을 새로 등록해 주세요.";
+            selectedMeta.textContent = "검색어를 바꾸거나 품목을 새로 등록해 주세요.";
         }
 
         if (!keepMessage) {
@@ -274,7 +296,7 @@
 
     const renderPartOptions = (parts) => {
         partOptions.forEach((option) => option.remove());
-        partOptions = parts.map((part) => createPartOption({
+        partOptions = normalizeListData(parts).map((part) => createPartOption({
             id: String(part.partId),
             name: part.partName,
             meta: partMeta(part),
@@ -285,7 +307,7 @@
         partOptions.forEach((option) => partResults.append(option));
 
         if (partOptions.length) {
-            setPartSearchMessage(`${partOptions.length}개 부품을 찾았습니다.`);
+            setPartSearchMessage(`${partOptions.length}개 품목을 찾았습니다.`);
             selectPart(partOptions[0]);
             return;
         }
@@ -293,7 +315,7 @@
         setPartSearchMessage("검색 결과가 없습니다.");
         selectedPart = null;
         selectedName.textContent = "검색 결과 없음";
-        selectedMeta.textContent = "검색어를 바꾸거나 부품을 새로 등록해 주세요.";
+        selectedMeta.textContent = "검색어를 바꾸거나 품목을 새로 등록해 주세요.";
     };
 
     const searchParts = async () => {
@@ -301,7 +323,7 @@
         const api = window.PcsApi;
         const params = new URLSearchParams({
             active: "true",
-            limit: "20",
+            limit: "100",
         });
         const keyword = keywordInput.value.trim();
         const categoryId = categorySelect.value;
@@ -320,17 +342,191 @@
         }
 
         searchButton.disabled = true;
-        setPartSearchMessage("부품을 검색하는 중입니다.");
+        setPartSearchMessage("품목을 검색하는 중입니다.");
         try {
             const parts = await api.getData(`/api/workspaces/${encodeURIComponent(companyCode)}/parts?${params.toString()}`, {
                 authRedirect: true,
                 loginCompanyCode: companyCode,
             });
-            renderPartOptions(parts || []);
+            renderPartOptions(parts);
         } catch (error) {
-            setPartSearchMessage(error.message || "부품 검색 요청을 처리할 수 없습니다.", "error");
+            setPartSearchMessage(error.message || "품목 검색 요청을 처리할 수 없습니다.", "error");
         } finally {
             searchButton.disabled = false;
+        }
+    };
+
+    const renderCategories = (categories) => {
+        const normalizedCategories = normalizeListData(categories);
+        if (categorySelect) {
+            categorySelect.innerHTML = '<option value="">전체 분류</option>';
+            normalizedCategories.forEach((category) => {
+                categorySelect.append(new Option(category.categoryName || "-", String(category.categoryId)));
+            });
+            categorySelect.disabled = false;
+        }
+        if (newPartCategorySelect) {
+            newPartCategorySelect.innerHTML = '<option value="">분류 선택</option>';
+            normalizedCategories.forEach((category) => {
+                newPartCategorySelect.append(new Option(category.categoryName || "-", String(category.categoryId)));
+            });
+            newPartCategorySelect.disabled = normalizedCategories.length === 0;
+        }
+        if (openPartModalButton) {
+            openPartModalButton.disabled = normalizedCategories.length === 0;
+            openPartModalButton.title = normalizedCategories.length === 0 ? "등록된 분류가 필요합니다." : "";
+        }
+    };
+
+    const appendAndSelectPart = (part) => {
+        if (keywordInput) {
+            keywordInput.value = "";
+        }
+        if (categorySelect && part.categoryId) {
+            categorySelect.value = String(part.categoryId);
+        }
+        const option = createPartOption({
+            id: String(part.partId),
+            name: part.partName,
+            meta: partMeta(part),
+            prefix: partPrefix(part.partCode),
+            category: String(part.categoryId || ""),
+            categoryLabel: part.categoryName,
+        });
+        partResults.append(option);
+        partOptions.push(option);
+        selectPart(option);
+        filterParts({ keepMessage: true });
+    };
+
+    const setPartModalMessage = (message, isError = false) => {
+        if (!partModalMessage) {
+            return;
+        }
+        partModalMessage.hidden = !message;
+        partModalMessage.textContent = message || "";
+        partModalMessage.classList.toggle("is-error", isError);
+    };
+
+    const setPartModalDisabled = (disabled) => {
+        partModalForm?.querySelectorAll("input, select, button").forEach((element) => {
+            if (element.matches("[data-close-part-modal]")) {
+                element.disabled = disabled;
+                return;
+            }
+            element.disabled = disabled;
+        });
+    };
+
+    const createQuickPart = async () => {
+        const companyCode = getCompanyCode();
+        const api = window.PcsApi;
+
+        if (!partModalForm?.reportValidity()) {
+            return;
+        }
+        if (!companyCode) {
+            setPartModalMessage("업체 코드를 확인할 수 없습니다.", true);
+            return;
+        }
+        if (!api) {
+            setPartModalMessage("공통 API 스크립트를 확인할 수 없습니다.", true);
+            return;
+        }
+
+        const body = {
+            categoryId: Number(newPartCategorySelect.value),
+            partName: newPartNameInput.value.trim(),
+            manufacturer: newPartManufacturerInput.value.trim(),
+            modelName: newPartModelInput.value.trim(),
+            estimatedPrice: null,
+            safeQuantity: Math.max(0, Number(newPartSafeQuantityInput.value) || 0),
+            specValues: []
+        };
+
+        setPartModalDisabled(true);
+        setPartModalMessage("품목을 등록하는 중입니다.");
+        try {
+            const result = await api.request(`/api/workspaces/${encodeURIComponent(companyCode)}/parts`, {
+                method: "POST",
+                body,
+                authRedirect: true,
+                loginCompanyCode: companyCode,
+            });
+            const part = result?.data;
+            if (!part?.partId) {
+                throw new Error("등록된 품목 정보를 확인할 수 없습니다.");
+            }
+            appendAndSelectPart(part);
+            setPartSearchMessage("새 품목을 등록하고 선택했습니다.");
+            partModalForm.reset();
+            setPartModalMessage("");
+            partModal?.close();
+        } catch (error) {
+            setPartModalMessage(error.message || "품목을 등록하지 못했습니다.", true);
+        } finally {
+            setPartModalDisabled(false);
+        }
+    };
+
+    const loadCategories = async () => {
+        if (!categorySelect && !newPartCategorySelect) {
+            return;
+        }
+
+        const companyCode = getCompanyCode();
+        const api = window.PcsApi;
+
+        if (!companyCode || !api) {
+            if (categorySelect) {
+                categorySelect.innerHTML = '<option value="">분류 조회 불가</option>';
+                categorySelect.disabled = true;
+            }
+            if (newPartCategorySelect) {
+                newPartCategorySelect.innerHTML = '<option value="">분류 조회 불가</option>';
+                newPartCategorySelect.disabled = true;
+            }
+            if (openPartModalButton) {
+                openPartModalButton.disabled = true;
+                openPartModalButton.title = "분류 목록을 불러올 수 없습니다.";
+            }
+            return;
+        }
+
+        if (categorySelect) {
+            categorySelect.disabled = true;
+            categorySelect.innerHTML = '<option value="">분류 불러오는 중</option>';
+        }
+        if (newPartCategorySelect) {
+            newPartCategorySelect.disabled = true;
+            newPartCategorySelect.innerHTML = '<option value="">분류 불러오는 중</option>';
+        }
+        if (openPartModalButton) {
+            openPartModalButton.disabled = true;
+            openPartModalButton.title = "분류 목록을 불러오는 중입니다.";
+        }
+
+        try {
+            const params = new URLSearchParams({ limit: "100" });
+            const data = await api.getData(`/api/workspaces/${encodeURIComponent(companyCode)}/categories?${params.toString()}`, {
+                authRedirect: true,
+                loginCompanyCode: companyCode,
+            });
+            renderCategories(data);
+        } catch (error) {
+            if (categorySelect) {
+                categorySelect.innerHTML = '<option value="">분류 조회 실패</option>';
+                categorySelect.disabled = true;
+            }
+            if (newPartCategorySelect) {
+                newPartCategorySelect.innerHTML = '<option value="">분류 조회 실패</option>';
+                newPartCategorySelect.disabled = true;
+            }
+            if (openPartModalButton) {
+                openPartModalButton.disabled = true;
+                openPartModalButton.title = "분류 목록을 불러올 수 없습니다.";
+            }
+            setPartSearchMessage(error.message || "분류 목록을 불러오지 못했습니다.", "error");
         }
     };
 
@@ -473,7 +669,7 @@
     const renderConfirmSummary = (summary) => {
         if (confirmPartner) confirmPartner.textContent = summary.partnerName;
         if (confirmReason) confirmReason.textContent = summary.reason;
-        if (confirmLineCount) confirmLineCount.textContent = `${summary.lineCount}개 라인`;
+        if (confirmLineCount) confirmLineCount.textContent = `${summary.lineCount}개 품목`;
         if (confirmTotalQuantity) confirmTotalQuantity.textContent = `${summary.totalQuantity}개`;
     };
 
@@ -559,7 +755,7 @@
             return;
         }
         if (!payload.lines.length) {
-            setSubmitMessage("부품 라인을 1개 이상 추가해 주세요.", true);
+            setSubmitMessage("입고 품목을 1개 이상 추가해 주세요.", true);
             return;
         }
 
@@ -594,6 +790,7 @@
     });
 
     openPartModalButton?.addEventListener("click", () => {
+        setPartModalMessage("");
         partModal?.showModal();
     });
 
@@ -615,13 +812,15 @@
             partModalMessage.hidden = false;
             partModalMessage.textContent = "품목 등록은 품목 관리 화면에서 진행해 주세요.";
         }
+        createQuickPart();
     });
 
     if (partOptions.length) {
         selectPart(partOptions[0]);
     } else {
-        setPartSearchMessage("검색 버튼을 눌러 부품을 조회하세요.");
+        setPartSearchMessage("검색 버튼을 눌러 품목을 조회하세요.");
     }
+    loadCategories();
     loadPartners();
     refreshLineState();
 })();

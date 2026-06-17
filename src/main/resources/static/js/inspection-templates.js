@@ -37,13 +37,26 @@
     const panelViews = document.querySelectorAll("[data-template-panel]");
     const createForm = document.querySelector("[data-template-create-form]");
     const editForm = document.querySelector("[data-template-edit-form]");
+    const categoryPickerModal = document.querySelector("[data-template-category-picker-modal]");
+    const categoryPickerSearch = document.querySelector("[data-template-category-picker-search]");
+    const categoryPickerList = document.querySelector("[data-template-category-picker-list]");
+    const categoryPickerMessage = document.querySelector("[data-template-category-picker-message]");
+    const categoryPickerInputs = {
+        create: createForm?.elements.categoryId,
+        edit: editForm?.elements.categoryId
+    };
+    const categoryPickerLabels = {
+        create: document.querySelector("[data-template-create-category-label]"),
+        edit: document.querySelector("[data-template-edit-category-label]")
+    };
     const itemForm = document.querySelector("[data-template-item-form]");
     const itemFormTitle = document.querySelector("[data-template-item-form-title]");
     const itemFormDescription = document.querySelector("[data-template-item-form-description]");
     const itemFormSubmit = document.querySelector("[data-template-item-submit]");
     const itemFormReset = document.querySelector("[data-template-item-reset]");
     const itemActiveToggle = document.querySelector("[data-template-item-active-toggle]");
-    const itemEditor = document.querySelector("[data-template-item-editor]");
+    const itemModal = document.querySelector("[data-template-item-modal]");
+    const itemModalCloseButtons = document.querySelectorAll("[data-close-template-item-modal]");
     const advancedFields = document.querySelector("[data-template-advanced-fields]");
     const advancedSummary = document.querySelector("[data-template-advanced-summary]");
     const builderEmpty = document.querySelector("[data-template-builder-empty]");
@@ -92,6 +105,7 @@
     let dragState = null;
     let isSorting = false;
     let inputTypeConfirmResolver = null;
+    let activeCategoryPickerMode = "create";
 
     const numberText = (value) => Number(value || 0).toLocaleString("ko-KR");
 
@@ -117,6 +131,113 @@
 
     const showToast = (message, type = "info") => {
         window.PcsUi?.toast({ message, type });
+    };
+
+    const normalizeString = (value) => (value === null || value === undefined ? "" : String(value));
+
+    const getCategoryById = (categoryId) => categories.find((category) => String(category.categoryId) === String(categoryId));
+
+    const getCategoryNameById = (categoryId) => {
+        const category = getCategoryById(categoryId);
+        return category ? category.categoryName : "-";
+    };
+
+    const syncCategoryLabel = (mode) => {
+        const input = categoryPickerInputs[mode];
+        const label = categoryPickerLabels[mode];
+        if (!input || !label) {
+            return;
+        }
+        label.textContent = input.value ? getCategoryNameById(input.value) : "선택";
+    };
+
+    const syncAllCategoryLabels = () => {
+        ["create", "edit"].forEach(syncCategoryLabel);
+    };
+
+    const setCategoryValue = (mode, categoryId) => {
+        const input = categoryPickerInputs[mode];
+        if (!input) {
+            return;
+        }
+        input.value = normalizeString(categoryId);
+        syncCategoryLabel(mode);
+    };
+
+    const matchesCategoryKeyword = (category, keyword) => {
+        if (!keyword) {
+            return true;
+        }
+        const target = `${category.categoryName || ""} ${category.description || ""}`.toLowerCase();
+        return target.includes(keyword.toLowerCase());
+    };
+
+    const createCategoryPickerOption = (category, selectedCategoryId) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "category-picker-option";
+        if (String(category.categoryId) === String(selectedCategoryId)) {
+            button.classList.add("is-selected");
+        }
+
+        const name = document.createElement("strong");
+        name.textContent = category.categoryName || "이름 없음";
+
+        const description = document.createElement("small");
+        description.textContent = category.description || "설명 없음";
+
+        button.append(name, description);
+        button.addEventListener("click", () => {
+            setCategoryValue(activeCategoryPickerMode, category.categoryId);
+            closeCategoryPicker();
+        });
+
+        return button;
+    };
+
+    const renderCategoryPickerList = () => {
+        if (!categoryPickerList) {
+            return;
+        }
+        const keyword = categoryPickerSearch?.value.trim() || "";
+        const selectedCategoryId = categoryPickerInputs[activeCategoryPickerMode]?.value || "";
+        const filteredCategories = categories.filter((category) => matchesCategoryKeyword(category, keyword));
+        categoryPickerList.innerHTML = "";
+
+        if (!filteredCategories.length) {
+            const empty = document.createElement("p");
+            empty.className = "spec-builder-empty";
+            empty.textContent = keyword ? "검색된 분류가 없습니다." : "등록된 분류가 없습니다.";
+            categoryPickerList.append(empty);
+            return;
+        }
+
+        filteredCategories.forEach((category) => {
+            categoryPickerList.append(createCategoryPickerOption(category, selectedCategoryId));
+        });
+    };
+
+    const openCategoryPicker = (mode) => {
+        if (!categoryPickerModal) {
+            return;
+        }
+        activeCategoryPickerMode = mode;
+        if (categoryPickerSearch) {
+            categoryPickerSearch.value = "";
+        }
+        if (categoryPickerMessage) {
+            categoryPickerMessage.textContent = "";
+        }
+        renderCategoryPickerList();
+        categoryPickerModal.showModal();
+        window.setTimeout(() => categoryPickerSearch?.focus(), 0);
+    };
+
+    const closeCategoryPicker = () => {
+        if (categoryPickerMessage) {
+            categoryPickerMessage.textContent = "";
+        }
+        categoryPickerModal?.close();
     };
 
     const formatDate = (value) => {
@@ -528,8 +649,7 @@
 
     const populateCategorySelects = () => {
         renderCategoryOptions(filterForm?.elements.categoryId, { includeAll: true });
-        renderCategoryOptions(createForm?.elements.categoryId);
-        renderCategoryOptions(editForm?.elements.categoryId);
+        syncAllCategoryLabels();
     };
 
     const loadCategories = async () => {
@@ -561,7 +681,7 @@
         }
 
         editForm.elements.templateName.value = template.templateName;
-        editForm.elements.categoryId.value = String(template.categoryId);
+        setCategoryValue("edit", template.categoryId);
         editForm.elements.version.value = template.version;
         editForm.elements.active.checked = template.active;
     };
@@ -773,6 +893,7 @@
             editingItemId = null;
             editingOptionId = null;
             await loadTemplates({ preferredTemplateId: template.id });
+            closeItemModal();
             showToast("검수 항목을 수정했습니다.", "success");
         } catch (error) {
             handleApiError(error, "검수 항목 수정에 실패했습니다.");
@@ -789,10 +910,19 @@
         itemFormSubmit.dataset.defaultText = text;
     };
 
+    const closeItemModal = () => {
+        itemModal?.close();
+    };
+
+    const focusItemName = () => {
+        window.setTimeout(() => {
+            itemForm?.elements.itemName?.focus();
+        }, 0);
+    };
+
     const resetItemForm = () => {
         editingItemId = null;
         itemForm?.reset();
-        itemEditor?.classList.add("is-add-mode");
         if (advancedFields) {
             advancedFields.open = false;
         }
@@ -810,9 +940,6 @@
             itemFormDescription.textContent = "새 검수 항목을 추가합니다.";
         }
         setItemFormSubmitText("항목 추가");
-        if (itemFormReset) {
-            itemFormReset.hidden = true;
-        }
         if (itemActiveToggle) {
             itemActiveToggle.hidden = true;
         }
@@ -824,7 +951,6 @@
             return;
         }
         editingItemId = item.id;
-        itemEditor?.classList.remove("is-add-mode");
         itemForm.elements.itemName.value = item.itemName;
         itemForm.elements.itemGroup.value = item.itemGroup;
         itemForm.elements.inputType.value = item.inputType;
@@ -842,32 +968,37 @@
             itemFormDescription.textContent = `${item.itemName} 항목을 수정 중입니다.`;
         }
         setItemFormSubmitText("항목 수정");
-        if (itemFormReset) {
-            itemFormReset.hidden = false;
-        }
         if (itemActiveToggle) {
             itemActiveToggle.hidden = false;
             itemActiveToggle.textContent = item.active ? "항목 중지" : "항목 사용";
         }
     };
 
-    const syncItemFormWithSelection = (template) => {
-        const item = getSelectedItem(template);
-        if (item) {
-            fillItemForm(item);
+    const openItemCreateModal = () => {
+        const template = getSelectedTemplate();
+        if (!template) {
+            showToast("항목을 추가할 템플릿을 먼저 선택해 주세요.", "warning");
             return;
         }
         resetItemForm();
+        itemModal?.showModal();
+        focusItemName();
     };
 
-    const focusItemEditor = () => {
-        if (!itemEditor || !itemForm) {
+    const openItemEditModal = (itemId) => {
+        const template = getSelectedTemplate();
+        const item = template?.items.find((candidate) => candidate.id === String(itemId));
+        if (!template || !item) {
+            showToast("수정할 항목을 먼저 선택해 주세요.", "warning");
             return;
         }
-        itemEditor.scrollIntoView({ behavior: "smooth", block: "nearest" });
-        window.setTimeout(() => {
-            itemForm.elements.itemName?.focus();
-        }, 220);
+        selectedItemId = item.id;
+        editingItemId = item.id;
+        editingOptionId = null;
+        fillItemForm(item);
+        renderItems(template);
+        itemModal?.showModal();
+        focusItemName();
     };
 
     const toggleSelectedItemActive = async () => {
@@ -890,9 +1021,10 @@
                 }
             );
             selectedItemId = item.id;
-            editingItemId = item.id;
+            editingItemId = null;
             editingOptionId = null;
             await loadTemplates({ preferredTemplateId: template.id });
+            closeItemModal();
             showToast("항목 상태를 변경했습니다.", "success");
         } catch (error) {
             handleApiError(error, "항목 상태 변경에 실패했습니다.");
@@ -1126,8 +1258,11 @@
 
         const typeBadge = createBadge(INPUT_TYPES[item.inputType], item.inputType === "SELECT" ? "badge-blue" : "badge-info");
         const activeBadge = createBadge(ACTIVE_LABELS[String(item.active)], item.active ? "badge-available" : "badge-inactive");
+        const badges = document.createElement("div");
+        badges.className = "template-item-badges";
+        badges.append(typeBadge, activeBadge);
 
-        summary.append(dragHandle, name, typeBadge, activeBadge);
+        summary.append(dragHandle, name, badges);
         card.append(summary);
         card.addEventListener("click", () => selectItem(item.id));
         card.addEventListener("keydown", (event) => {
@@ -1212,7 +1347,16 @@
             createBadge(INPUT_TYPES[item.inputType], item.inputType === "SELECT" ? "badge-blue" : "badge-info"),
             createBadge(ACTIVE_LABELS[String(item.active)], item.active ? "badge-available" : "badge-inactive")
         );
-        head.append(title, badges);
+        const editButton = document.createElement("button");
+        editButton.className = "btn btn-secondary template-selected-edit-button";
+        editButton.type = "button";
+        editButton.textContent = "항목 수정";
+        editButton.addEventListener("click", () => openItemEditModal(item.id));
+
+        const actions = document.createElement("div");
+        actions.className = "template-selected-head-actions";
+        actions.append(badges, editButton);
+        head.append(title, actions);
 
         selectedItemDetail.append(head);
         if (item.inputType === "SELECT") {
@@ -1281,7 +1425,6 @@
         });
 
         renderSelectedItemDetail(template);
-        syncItemFormWithSelection(template);
     };
 
     function renderBuilder() {
@@ -1293,6 +1436,9 @@
             selectedItemId = null;
             editingItemId = null;
             editingOptionId = null;
+            if (itemFormReset) {
+                itemFormReset.hidden = true;
+            }
             resetItemForm();
             return;
         }
@@ -1301,6 +1447,9 @@
         builderBody.hidden = false;
         builderDescription.textContent = `${template.templateName}의 검수 입력 항목입니다.`;
         counts.item.textContent = `항목 ${numberText(template.items.length)} · 선택지 ${numberText(countOptions(template))}`;
+        if (itemFormReset) {
+            itemFormReset.hidden = false;
+        }
         renderItems(template);
     }
 
@@ -1324,7 +1473,7 @@
 
     const selectItem = (itemId) => {
         selectedItemId = String(itemId);
-        editingItemId = String(itemId);
+        editingItemId = null;
         editingOptionId = null;
         const template = getSelectedTemplate();
         if (!template) {
@@ -1340,6 +1489,7 @@
         editingItemId = null;
         editingOptionId = null;
         createForm?.reset();
+        setCategoryValue("create", "");
         if (createForm?.elements.active) {
             createForm.elements.active.checked = true;
         }
@@ -1368,6 +1518,26 @@
         }
         fillEditForm(template);
         setPanelMode("edit");
+    });
+
+    document.querySelectorAll("[data-open-template-category-picker]").forEach((button) => {
+        button.addEventListener("click", () => openCategoryPicker(button.dataset.openTemplateCategoryPicker));
+    });
+
+    document.querySelectorAll("[data-close-template-category-picker]").forEach((button) => {
+        button.addEventListener("click", closeCategoryPicker);
+    });
+
+    categoryPickerModal?.addEventListener("click", (event) => {
+        if (event.target === categoryPickerModal) {
+            closeCategoryPicker();
+        }
+    });
+
+    categoryPickerSearch?.addEventListener("input", renderCategoryPickerList);
+
+    createForm?.addEventListener("reset", () => {
+        window.setTimeout(() => setCategoryValue("create", ""), 0);
     });
 
     document.querySelector("[data-template-detail-mode]")?.addEventListener("click", () => {
@@ -1435,6 +1605,7 @@
             selectedTemplateId = String(data.templateId);
             clearTemplateFilters();
             createForm.reset();
+            setCategoryValue("create", "");
             createForm.elements.active.checked = true;
             await loadTemplates({ preferredTemplateId: selectedTemplateId });
             showToast("템플릿을 등록했습니다.", "success");
@@ -1487,20 +1658,15 @@
         }
     });
 
-    itemFormReset?.addEventListener("click", () => {
-        const template = getSelectedTemplate();
-        selectedItemId = null;
-        editingItemId = null;
-        editingOptionId = null;
-        resetItemForm();
-        if (template) {
-            itemList.querySelectorAll("[data-item-id]").forEach((card) => {
-                card.classList.remove("is-selected");
-                card.setAttribute("aria-pressed", "false");
-            });
-            renderSelectedItemDetail(template);
-        }
-        focusItemEditor();
+    itemFormReset?.addEventListener("click", openItemCreateModal);
+
+    itemModalCloseButtons.forEach((button) => {
+        button.addEventListener("click", closeItemModal);
+    });
+
+    itemModal?.addEventListener("cancel", (event) => {
+        event.preventDefault();
+        closeItemModal();
     });
 
     itemActiveToggle?.addEventListener("click", () => {
@@ -1570,6 +1736,7 @@
             editingOptionId = null;
             itemForm.reset();
             await loadTemplates({ preferredTemplateId: template.id });
+            closeItemModal();
             showToast("검수 항목을 추가했습니다.", "success");
         } catch (error) {
             handleApiError(error, "검수 항목 추가에 실패했습니다.");

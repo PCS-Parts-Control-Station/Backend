@@ -2,7 +2,7 @@
 
 ## 목적
 
-입고/출고 전표, 부품별 재고 변화 라인, 개별 부품 입출고 매핑, 입출고 취소를 담당한다.
+입고/출고 전표, 품목별 재고 변화 라인, 개별 부품 입출고 매핑, 입출고 취소를 담당한다.
 
 ## 패키지
 
@@ -19,7 +19,7 @@ com.pcs.domain.stock
 | POST | `/api/workspaces/{companyCode}/stock/documents/{documentId}/cancel` | 입출고 전표 취소 |
 | GET | `/api/workspaces/{companyCode}/stock/documents` | 입출고 전표 목록 |
 | GET | `/api/workspaces/{companyCode}/stock/documents/{documentId}` | 입출고 전표 상세 |
-| GET | `/api/workspaces/{companyCode}/stock/documents/{documentId}/movements` | 전표의 부품별 재고 변화 라인 |
+| GET | `/api/workspaces/{companyCode}/stock/documents/{documentId}/movements` | 전표의 품목별 재고 변화 라인 |
 | GET | `/api/workspaces/{companyCode}/stock/movements` | 입출고 재고 변화 라인 목록 |
 | GET | `/api/workspaces/{companyCode}/stock/movements/{movementId}` | 입출고 재고 변화 라인 상세 |
 | GET | `/api/workspaces/{companyCode}/stock/movements/{movementId}/units` | 라인에 포함된 개별 부품 목록 |
@@ -57,7 +57,7 @@ Query:
 
 `GET /api/workspaces/{companyCode}/stock/documents/{documentId}`
 
-상세 응답은 전표 헤더, 부품 라인, 라인별 개별 부품 목록을 한 번에 내려준다.
+상세 응답은 전표 헤더, 품목별 재고 변화 라인, 라인별 개별 부품 목록을 한 번에 내려준다.
 
 주요 필드:
 
@@ -73,14 +73,41 @@ Query:
 | `lineCount`, `totalQuantity` | 라인 수와 총 수량 |
 | `cancelable` | 현재 취소 가능 여부 |
 | `cancelBlockedReason` | 취소 불가 사유 |
-| `lines` | 부품별 movement 목록 |
+| `lines` | 품목별 movement 목록 |
 | `lines[].units` | movement에 포함된 개별 부품 목록 |
+
+## 입고 등록 화면
+
+```text
+src/main/resources/static/inbound-register.html
+src/main/resources/static/css/inbound.css
+src/main/resources/static/js/inbound-register.js
+```
+
+입고 등록 화면은 거래처와 입고 사유를 입력한 뒤, 품목을 검색해 입고 품목으로 추가하고 전표를 저장한다.
+
+화면 흐름:
+
+1. 전표 기본 정보 입력
+2. 품목 검색과 품목 분류 필터
+3. 선택한 품목에 수량과 품목 사유 입력
+4. 입고 품목 목록 검토
+5. 저장 후 관리번호 생성
+
+화면 문구 기준:
+
+- 사용자 화면에서는 `품목 검색`, `입고 품목`, `품목 추가`, `품목 사유`를 사용한다.
+- DB와 API 설명에서는 기존 `stock movement`, `line` 용어를 사용할 수 있다.
+- 품목 분류는 배지보다 일반 텍스트에 가깝게 표시해 목록 가독성을 우선한다.
+- 품목 추가 후에는 선택한 품목, 수량, 품목 사유 입력 상태를 초기화한다.
+
+입고 전표 상세 화면의 오른쪽 보조 패널은 품목별 상세 행을 길게 펼치기보다 품목별 수량 요약을 우선 보여준다. 관리번호 전체 목록은 상세 조회나 확장 영역에서 확인한다.
 
 ## 주요 규칙
 
 - `tb_stock_document`는 거래처와 연결된 입출고 전표 헤더다.
 - 입고 전표번호는 서버가 `IN-YYYYMMDD-RANDOM16` 형식으로 자동 발급하고, 내부 정렬은 `document_id`를 사용한다.
-- `tb_stock_movement`는 전표 안의 부품별 재고 변화 라인이다.
+- `tb_stock_movement`는 전표 안의 품목별 재고 변화 라인이다.
 - `tb_stock_movement_unit`은 재고 변화 라인에 포함된 개별 부품 목록이다.
 - 입출고 원본은 수정/삭제하지 않고 취소 이력으로 처리한다.
 - 출고 시 검수 완료, 불량 아님, 판매 가능, 재고 보유 상태를 검증한다.

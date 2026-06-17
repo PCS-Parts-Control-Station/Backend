@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="PCS 입고 관리 화면입니다. 거래처 입고 전표를 등록하고 부품별 입고 수량과 관리번호 생성 대상을 확인합니다.">
+    <meta name="description" content="PCS 입고 관리 화면입니다. 거래처 입고 전표를 등록하고 품목별 입고 수량과 관리번호 생성 대상을 확인합니다.">
     <title>PCS | 입고 관리</title>
     <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="/css/admin.css?20260611_side_panel_400">
     <link rel="stylesheet" href="/css/workflow.css?20260522_split">
     <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
-    <link rel="stylesheet" href="/css/inbound.css?20260527_ui">
+    <link rel="stylesheet" href="/css/inbound.css?20260615_summary_panel">
 </head>
 <body class="has-collapsible-sidebar">
 <div class="workspace-layout">
@@ -40,7 +40,7 @@
                 <div>
                     <p class="page-kicker">재고 입출고 관리</p>
                     <h1>입고 관리</h1>
-                    <p class="page-description">거래처 입고 부품을 전표로 묶고 관리번호를 생성합니다.</p>
+                    <p class="page-description">거래처 입고 품목을 전표로 묶고 관리번호를 생성합니다.</p>
                 </div>
             </div>
             <div class="header-actions">
@@ -54,13 +54,13 @@
                 <section class="filter-card document-filter-card" aria-labelledby="inbound-filter-title">
                     <div>
                         <h2 id="inbound-filter-title">입고 전표 검색</h2>
-                        <p>전표번호, 거래처, 부품 이름, 처리 상태로 입고 내역을 좁혀 봅니다.</p>
+                        <p>전표번호, 거래처, 품목명, 처리 상태로 입고 내역을 좁혀 봅니다.</p>
                     </div>
                     <!-- API: GET /api/workspaces/{companyCode}/stock/documents?documentType=INBOUND&keyword=&partnerId=&documentStatus= -->
                     <form class="filter-form document-filter-form" action="#" method="get">
                         <label>
                             <span>검색어</span>
-                            <input type="search" name="keyword" placeholder="거래처, 부품 이름, 전표번호 검색">
+                            <input type="search" name="keyword" placeholder="거래처, 품목명, 전표번호 검색">
                         </label>
                         <label>
                             <span>거래처</span>
@@ -86,7 +86,7 @@
                     <div class="table-header inline-summary-header">
                         <div>
                             <h2 id="inbound-list-title">입고 전표 목록</h2>
-                            <p>거래처별 입고 묶음과 부품별 관리번호 생성 현황입니다.</p>
+                            <p>거래처별 입고 묶음과 품목별 관리번호 생성 현황입니다.</p>
                         </div>
                         <div class="list-summary-box" aria-label="입고 전표 목록 요약">
                             <dl class="list-summary">
@@ -95,7 +95,7 @@
                                     <dd data-summary-documents>0</dd>
                                 </div>
                                 <div>
-                                    <dt>부품</dt>
+                                    <dt>품목</dt>
                                     <dd data-summary-quantity>0</dd>
                                 </div>
                                 <div>
@@ -143,7 +143,7 @@
                             <span class="process-dot" aria-hidden="true"></span>
                             <div>
                                 <strong>입고</strong>
-                                <p>거래처 전표로 부품 입고를 기록합니다.</p>
+                                <p>거래처 전표로 품목 입고를 기록합니다.</p>
                                 <ol class="sub-process-list" aria-label="입고 세부 흐름">
                                     <li>
                                         <span>1</span>
@@ -155,8 +155,8 @@
                                     <li>
                                         <span>2</span>
                                         <div>
-                                            <strong>부품 라인</strong>
-                                            <p>부품과 수량을 추가합니다.</p>
+                                            <strong>입고 품목</strong>
+                                            <p>품목과 수량을 추가합니다.</p>
                                         </div>
                                     </li>
                                     <li>
@@ -169,7 +169,7 @@
                                     <li>
                                         <span>4</span>
                                         <div>
-                                            <strong>검수 대기</strong>
+                                            <strong>검수 전</strong>
                                             <p>검수 전 상태로 보관합니다.</p>
                                         </div>
                                     </li>
@@ -187,7 +187,7 @@
                             <span class="process-dot" aria-hidden="true"></span>
                             <div>
                                 <strong>출고</strong>
-                                <p>판매 가능 부품을 전표로 출고합니다.</p>
+                                <p>판매 가능 품목을 전표로 출고합니다.</p>
                             </div>
                         </li>
                         <li class="workflow-step">
@@ -204,7 +204,7 @@
                     <h2>입고 처리 기준</h2>
                     <ul>
                         <li>입고 완료 시 수량만큼 관리번호를 생성</li>
-                        <li>개별 부품은 검수 대기, 판매 보류로 시작</li>
+                        <li>개별 부품은 검수 전, 판매 보류로 시작</li>
                         <li>입고 오류는 원본 수정 대신 취소 전표로 보존</li>
                     </ul>
                 </div>
@@ -252,7 +252,7 @@
 
                         <div class="document-line-section">
                             <div class="section-title-row">
-                                <h3>부품 라인</h3>
+                                <h3>품목 요약</h3>
                                 <span data-detail-line-summary>-</span>
                             </div>
                             <div class="document-line-list" data-detail-lines>
@@ -296,7 +296,7 @@
                 <dd data-cancel-partner>-</dd>
             </div>
             <div>
-                <dt>부품 수량</dt>
+                <dt>품목 수량</dt>
                 <dd data-cancel-quantity>-</dd>
             </div>
         </dl>
@@ -312,6 +312,6 @@
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
 <script src="/js/workspace-layout.js?20260610_sidebar_collapse"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/inbound.js?20260529_1"></script>
+<script src="/js/inbound.js?20260615_summary_panel"></script>
 </body>
 </html>
