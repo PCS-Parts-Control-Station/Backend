@@ -81,7 +81,7 @@
         const result = await response.json().catch(() => null);
 
         if (!response.ok || result?.success === false) {
-            throw new PcsApiError(result?.message || 'API 요청을 처리할 수 없습니다.', {
+            throw new PcsApiError(result?.message || '요청을 처리할 수 없습니다.', {
                 status: response.status,
                 code: result?.code,
                 data: result?.data,

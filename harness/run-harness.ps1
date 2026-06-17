@@ -1,13 +1,15 @@
 param(
-    [ValidateSet("bootstrap", "full")]
+    [ValidateSet("bootstrap", "gate", "full")]
     [string] $Mode = "bootstrap",
 
-    [ValidateSet("none", "company", "member", "auth", "partner", "category")]
+    [ValidateSet("none", "company", "member", "auth", "partner", "category", "part")]
     [string] $Feature = "none",
 
     [switch] $FixGitignore,
 
     [switch] $RunBuild,
+
+    [switch] $RunSwagger,
 
     [switch] $RunDb,
 
@@ -16,7 +18,11 @@ param(
 
     [switch] $CheckPort,
 
-    [int] $Port = 8080
+    [int] $Port = 8080,
+
+    [string] $ChangedFilesPath = "",
+
+    [string] $TrackedFilesPath = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -31,6 +37,31 @@ New-Item -ItemType Directory -Force -Path $ReportDir | Out-Null
 $failures = New-Object System.Collections.Generic.List[object]
 $warnings = New-Object System.Collections.Generic.List[object]
 $infos = New-Object System.Collections.Generic.List[object]
+$SupportedFeatureNames = @("company", "member", "auth", "partner", "category", "part")
+$SupportedDbFeatureNames = @("company", "member", "auth", "partner", "category")
+$ForbiddenGitPathPatterns = @(
+    '^\.env$',
+    '^\.env\..+',
+    '^gradle\.properties$',
+    '^application-(local|secret)\.(ya?ml|properties)$',
+    '^src/main/resources/application-(local|secret)\.(ya?ml|properties)$',
+    '(^|/)\.gradle/',
+    '(^|/)build/',
+    '(^|/)out/',
+    '(^|/)\.idea/(workspace\.xml|tasks\.xml|shelf/|httpRequests/)',
+    '(^|/).*\.iml$',
+    '(^|/).*\.log$',
+    '(^|/).*\.tmp$',
+    '^tmp/',
+    '^harness/reports/(?!\.gitkeep$).+',
+    '(^|/)\.DS_Store$',
+    '(^|/)Thumbs\.db$'
+)
+$AllowedGitPathPatterns = @(
+    '^\.env\.example$',
+    '^harness/reports/\.gitkeep$'
+)
+$script:SelectedFeatures = @()
 
 function Add-Result {
     param(
@@ -67,6 +98,86 @@ function Test-PathRequired {
     if (-not (Test-Path (Join-Path $ProjectRoot $RelativePath))) {
         Add-Result "FAIL" $Rule "Missing required path: $RelativePath" $Fix
     }
+}
+
+function Test-Java17VersionOutput {
+    param(
+        [string] $VersionOutput
+    )
+
+    return $VersionOutput -match 'version "17\.|version "18\.|version "19\.|version "2[0-9]\.'
+}
+
+function Get-JavaVersionOutput {
+    param(
+        [string] $JavaCommand
+    )
+
+    return (cmd /c "`"$JavaCommand`" -version 2>&1") -join "`n"
+}
+
+function Resolve-Java17Home {
+    $candidates = New-Object System.Collections.Generic.List[string]
+
+    if (-not [string]::IsNullOrWhiteSpace($env:JAVA_HOME)) {
+        $candidates.Add($env:JAVA_HOME) | Out-Null
+    }
+
+    foreach ($root in @(
+        "C:\Program Files\Java",
+        "C:\Program Files\Eclipse Adoptium",
+        "C:\Program Files\Microsoft",
+        "C:\Program Files\Amazon Corretto"
+    )) {
+        if (-not (Test-Path $root)) {
+            continue
+        }
+
+        Get-ChildItem -Path $root -Directory -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -match "17|18|19|2[0-9]" } |
+            ForEach-Object { $candidates.Add($_.FullName) | Out-Null }
+    }
+
+    foreach ($candidate in ($candidates | Select-Object -Unique)) {
+        $javaHomeCommand = Join-Path $candidate "bin\java.exe"
+        if (-not (Test-Path $javaHomeCommand)) {
+            continue
+        }
+
+        try {
+            $versionOutput = Get-JavaVersionOutput $javaHomeCommand
+            if (Test-Java17VersionOutput $versionOutput) {
+                return $candidate
+            }
+        } catch {
+        }
+    }
+
+    return $null
+}
+
+function Ensure-JavaHome17 {
+    if (-not [string]::IsNullOrWhiteSpace($env:JAVA_HOME)) {
+        $javaHomeCommand = Join-Path $env:JAVA_HOME "bin\java.exe"
+        if (Test-Path $javaHomeCommand) {
+            try {
+                $javaHomeVersionOutput = Get-JavaVersionOutput $javaHomeCommand
+                if (Test-Java17VersionOutput $javaHomeVersionOutput) {
+                    return $true
+                }
+            } catch {
+            }
+        }
+    }
+
+    $resolvedJavaHome = Resolve-Java17Home
+    if ($resolvedJavaHome) {
+        $env:JAVA_HOME = $resolvedJavaHome
+        Add-Result "INFO" "JAVA_HOME_17_AUTODETECTED" "Using Java 17 or later for harness checks: $resolvedJavaHome."
+        return $true
+    }
+
+    return $false
 }
 
 function Get-ProjectTextFiles {
@@ -110,12 +221,20 @@ function Ensure-GitignoreRules {
         ".env",
         ".env.*",
         "!.env.example",
+        "application-local.yml",
+        "application-local.yaml",
+        "application-local.properties",
+        "application-secret.yml",
+        "application-secret.yaml",
+        "application-secret.properties",
         "gradle.properties",
         "*.log",
         "*.tmp",
         "tmp/",
         "harness/reports/*",
-        "!harness/reports/.gitkeep"
+        "!harness/reports/.gitkeep",
+        ".DS_Store",
+        "Thumbs.db"
     )
 
     if (-not (Test-Path $gitignorePath)) {
@@ -144,10 +263,123 @@ function Ensure-GitignoreRules {
     }
 }
 
+function Test-AllowedGitPath {
+    param(
+        [string] $Path
+    )
+
+    $normalizedPath = Normalize-HarnessPath $Path
+    foreach ($pattern in $AllowedGitPathPatterns) {
+        if ($normalizedPath -match $pattern) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
+function Test-ForbiddenGitPath {
+    param(
+        [string] $Path
+    )
+
+    $normalizedPath = Normalize-HarnessPath $Path
+    if ([string]::IsNullOrWhiteSpace($normalizedPath)) {
+        return $false
+    }
+
+    if (Test-AllowedGitPath $normalizedPath) {
+        return $false
+    }
+
+    foreach ($pattern in $ForbiddenGitPathPatterns) {
+        if ($normalizedPath -match $pattern) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
+function Get-GitTrackedFiles {
+    if (-not [string]::IsNullOrWhiteSpace($TrackedFilesPath)) {
+        $resolvedPath = $TrackedFilesPath
+        if (-not [System.IO.Path]::IsPathRooted($resolvedPath)) {
+            $resolvedPath = Join-Path $ProjectRoot $resolvedPath
+        }
+
+        if (Test-Path $resolvedPath) {
+            return @(Get-Content -Path $resolvedPath | ForEach-Object { Normalize-HarnessPath $_ } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+        }
+
+        Add-Result "WARN" "GIT_TRACKED_FILES_LIST_MISSING" "Tracked files list was not found: $TrackedFilesPath" "Check the pre-push hook tracked-file collection."
+    }
+
+    if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+        Add-Result "WARN" "GIT_COMMAND_UNAVAILABLE" "git command is not available, so tracked forbidden-file checks were skipped." "Run the harness from a shell where git is available."
+        return @()
+    }
+
+    try {
+        Push-Location $ProjectRoot
+        $trackedFiles = @(git ls-files 2>$null)
+        Pop-Location
+        return @($trackedFiles | ForEach-Object { Normalize-HarnessPath $_ } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    } catch {
+        try {
+            Pop-Location
+        } catch {
+        }
+        Add-Result "WARN" "GIT_TRACKED_FILES_UNAVAILABLE" "git tracked-file list could not be read." "Check git installation and repository state."
+        return @()
+    }
+}
+
+function Test-GitForbiddenFiles {
+    $trackedFiles = @(Get-GitTrackedFiles)
+    if ($trackedFiles.Count -gt 0) {
+        $forbiddenTrackedFiles = @($trackedFiles | Where-Object { Test-ForbiddenGitPath $_ } | Select-Object -Unique)
+        if ($forbiddenTrackedFiles.Count -gt 0) {
+            Add-Result "FAIL" "GIT_TRACKED_FORBIDDEN_FILES" "Forbidden files are already tracked by Git: $($forbiddenTrackedFiles -join ', ')" "Remove them from Git tracking with git rm --cached, keep them in .gitignore, then commit the removal."
+        } else {
+            Add-Result "INFO" "GIT_TRACKED_FORBIDDEN_FILES" "No forbidden files are tracked by Git."
+        }
+    }
+
+    if ([string]::IsNullOrWhiteSpace($ChangedFilesPath)) {
+        return
+    }
+
+    $changedFiles = @(Get-ChangedFilesForGate)
+    if ($changedFiles.Count -eq 0) {
+        return
+    }
+
+    $forbiddenChangedFiles = New-Object System.Collections.Generic.List[string]
+    foreach ($changedFile in $changedFiles) {
+        $normalizedPath = Normalize-HarnessPath $changedFile
+        if (-not (Test-ForbiddenGitPath $normalizedPath)) {
+            continue
+        }
+
+        $absolutePath = Join-Path $ProjectRoot $normalizedPath
+        if (Test-Path $absolutePath) {
+            $forbiddenChangedFiles.Add($normalizedPath) | Out-Null
+        }
+    }
+
+    $forbiddenChangedFiles = @($forbiddenChangedFiles | Select-Object -Unique)
+    if ($forbiddenChangedFiles.Count -gt 0) {
+        Add-Result "FAIL" "GIT_PUSH_FORBIDDEN_FILES" "Forbidden files are included in this push: $($forbiddenChangedFiles -join ', ')" "Remove these files from the commit or add only the approved example file."
+    } else {
+        Add-Result "INFO" "GIT_PUSH_FORBIDDEN_FILES" "No forbidden files are included in the changed-file list."
+    }
+}
+
 function Test-JavaVersion {
     try {
-        $versionOutput = (cmd /c "java -version 2>&1") -join "`n"
-        if ($versionOutput -notmatch 'version "17\.|version "18\.|version "19\.|version "2[0-9]\.') {
+        $versionOutput = Get-JavaVersionOutput "java"
+        if (-not (Test-Java17VersionOutput $versionOutput)) {
             Add-Result "FAIL" "JAVA_17_REQUIRED" "java command is not Java 17 or later. Output: $versionOutput" "Set JAVA_HOME and IntelliJ Project SDK to JDK 17 or later."
         } else {
             Add-Result "INFO" "JAVA_17_REQUIRED" "Java 17 or later is available."
@@ -159,20 +391,28 @@ function Test-JavaVersion {
     if (-not [string]::IsNullOrWhiteSpace($env:JAVA_HOME)) {
         $javaHomeCommand = Join-Path $env:JAVA_HOME "bin\java.exe"
         if (-not (Test-Path $javaHomeCommand)) {
-            Add-Result "FAIL" "JAVA_HOME_COMMAND_REQUIRED" "JAVA_HOME does not point to a JDK with bin\java.exe: $env:JAVA_HOME" "Set JAVA_HOME to JDK 17 or later."
+            if (-not (Ensure-JavaHome17)) {
+                Add-Result "FAIL" "JAVA_HOME_COMMAND_REQUIRED" "JAVA_HOME does not point to a JDK with bin\java.exe: $env:JAVA_HOME" "Set JAVA_HOME to JDK 17 or later."
+            }
             return
         }
 
         try {
-            $javaHomeVersionOutput = (cmd /c "`"$javaHomeCommand`" -version 2>&1") -join "`n"
-            if ($javaHomeVersionOutput -notmatch 'version "17\.|version "18\.|version "19\.|version "2[0-9]\.') {
-                Add-Result "FAIL" "JAVA_HOME_17_REQUIRED" "JAVA_HOME is not Java 17 or later. Output: $javaHomeVersionOutput" "Set JAVA_HOME to JDK 17 or later."
+            $javaHomeVersionOutput = Get-JavaVersionOutput $javaHomeCommand
+            if (-not (Test-Java17VersionOutput $javaHomeVersionOutput)) {
+                if (-not (Ensure-JavaHome17)) {
+                    Add-Result "FAIL" "JAVA_HOME_17_REQUIRED" "JAVA_HOME is not Java 17 or later. Output: $javaHomeVersionOutput" "Set JAVA_HOME to JDK 17 or later."
+                }
             } else {
                 Add-Result "INFO" "JAVA_HOME_17_REQUIRED" "JAVA_HOME points to Java 17 or later."
             }
         } catch {
-            Add-Result "FAIL" "JAVA_HOME_VERSION_CHECK_FAILED" "Failed to execute JAVA_HOME bin\java.exe." "Set JAVA_HOME to a valid JDK 17 or later."
+            if (-not (Ensure-JavaHome17)) {
+                Add-Result "FAIL" "JAVA_HOME_VERSION_CHECK_FAILED" "Failed to execute JAVA_HOME bin\java.exe." "Set JAVA_HOME to a valid JDK 17 or later."
+            }
         }
+    } elseif ($RunBuild -or $RunSwagger) {
+        Ensure-JavaHome17 | Out-Null
     }
 }
 
@@ -223,6 +463,9 @@ function Test-ProjectSettings {
         }
         if ($build -notmatch "spring-boot-starter-security") {
             Add-Result "FAIL" "SPRING_SECURITY_REQUIRED" "spring-boot-starter-security is missing." "Use Spring Security for JWT request authentication."
+        }
+        if ($build -notmatch "springdoc-openapi-starter-webmvc-ui") {
+            Add-Result "FAIL" "SPRINGDOC_OPENAPI_REQUIRED" "springdoc-openapi UI starter is missing." "Keep automatic Swagger/OpenAPI generation enabled."
         }
     }
 
@@ -372,6 +615,166 @@ function Test-FullModeStructure {
         foreach ($subdir in $requiredDomainSubdirs) {
             $ruleName = "FULL_DOMAIN_$($domain.ToUpper())_$($subdir.ToUpper().Replace('/', '_'))"
             Test-PathRequired "src/main/java/com/pcs/domain/$domain/$subdir" $ruleName "Keep the standard domain structure: api, dto/request, dto/response, entity, facade, mapper, service, type, validation."
+        }
+    }
+}
+
+function Normalize-HarnessPath {
+    param(
+        [string] $Path
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+        return ""
+    }
+
+    $normalized = ($Path -replace "\\", "/").Trim()
+    while ($normalized.StartsWith("./")) {
+        $normalized = $normalized.Substring(2)
+    }
+
+    return $normalized
+}
+
+function Add-FeatureIfSupported {
+    param(
+        [System.Collections.Generic.List[string]] $Features,
+        [string] $FeatureName
+    )
+
+    if ([string]::IsNullOrWhiteSpace($FeatureName)) {
+        return
+    }
+
+    if ($SupportedFeatureNames -notcontains $FeatureName) {
+        return
+    }
+
+    if ($Features -notcontains $FeatureName) {
+        $Features.Add($FeatureName) | Out-Null
+    }
+}
+
+function Resolve-FeatureFromChangedPath {
+    param(
+        [string] $Path
+    )
+
+    $path = Normalize-HarnessPath $Path
+
+    if ($path -match '^src/main/java/com/pcs/domain/company/' -or
+        $path -match '^src/main/resources/mapper/company/' -or
+        $path -match '^docs/features/company(-db)?\.md$' -or
+        $path -match '^src/main/resources/static/(company-register|company-complete)\.html$' -or
+        $path -match '^src/main/resources/static/js/(company-register|company-complete)\.js$') {
+        return "company"
+    }
+
+    if ($path -match '^src/main/java/com/pcs/domain/member/' -or
+        $path -match '^src/main/resources/mapper/member/' -or
+        $path -match '^docs/features/member(-db)?\.md$' -or
+        $path -match '^src/main/resources/static/(users|mypage)\.html$' -or
+        $path -match '^src/main/resources/static/js/(users|mypage)\.js$') {
+        return "member"
+    }
+
+    if ($path -match '^src/main/java/com/pcs/domain/auth/' -or
+        $path -match '^src/main/java/com/pcs/global/(jwt|security|auth)/' -or
+        $path -match '^src/main/resources/mapper/auth/' -or
+        $path -match '^docs/features/auth(-db)?\.md$' -or
+        $path -match '^src/main/resources/static/(login|workspace-login)\.html$' -or
+        $path -match '^src/main/resources/static/js/(login|workspace-login|pcs-api)\.js$' -or
+        $path -match '^docs/ai/pcs-auth-client-rules\.md$') {
+        return "auth"
+    }
+
+    if ($path -match '^src/main/java/com/pcs/domain/partner/' -or
+        $path -match '^src/main/resources/mapper/partner/' -or
+        $path -match '^docs/features/partner(-db)?\.md$' -or
+        $path -match '^src/main/resources/static/partners\.html$' -or
+        $path -match '^src/main/resources/static/js/partners\.js$') {
+        return "partner"
+    }
+
+    if ($path -match '^src/main/java/com/pcs/domain/category/' -or
+        $path -match '^src/main/resources/mapper/category/' -or
+        $path -match '^docs/features/category(-db)?\.md$' -or
+        $path -match '^src/main/resources/static/categories\.html$' -or
+        $path -match '^src/main/resources/static/js/categories\.js$') {
+        return "category"
+    }
+
+    if ($path -match '^src/main/java/com/pcs/domain/part/' -or
+        $path -match '^src/main/resources/mapper/part/' -or
+        $path -match '^docs/features/part(-db)?\.md$' -or
+        $path -match '^src/main/resources/static/parts\.html$' -or
+        $path -match '^src/main/resources/static/js/parts\.js$') {
+        return "part"
+    }
+
+    return $null
+}
+
+function Get-ChangedFilesForGate {
+    if (-not [string]::IsNullOrWhiteSpace($ChangedFilesPath)) {
+        $resolvedPath = $ChangedFilesPath
+        if (-not [System.IO.Path]::IsPathRooted($resolvedPath)) {
+            $resolvedPath = Join-Path $ProjectRoot $resolvedPath
+        }
+
+        if (Test-Path $resolvedPath) {
+            return @(Get-Content -Path $resolvedPath | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+        }
+
+        Add-Result "WARN" "GATE_CHANGED_FILES_MISSING" "Changed files list was not found: $ChangedFilesPath" "Check the pre-push hook changed-file collection."
+        return @()
+    }
+
+    Add-Result "INFO" "GATE_CHANGED_FILES_EMPTY" "No changed files list was provided." "Pass -ChangedFilesPath from pre-push hook when running gate mode."
+    return @()
+}
+
+function Resolve-GateFeatures {
+    $features = [System.Collections.Generic.List[string]]::new()
+
+    if ($Feature -ne "none") {
+        Add-FeatureIfSupported $features $Feature
+        return $features.ToArray()
+    }
+
+    $changedFiles = Get-ChangedFilesForGate
+    foreach ($changedFile in $changedFiles) {
+        $resolvedFeature = Resolve-FeatureFromChangedPath $changedFile
+        Add-FeatureIfSupported $features $resolvedFeature
+    }
+
+    if ($features.Count -eq 0) {
+        Add-Result "INFO" "GATE_FEATURES_NONE" "No supported feature-specific checks were inferred from changed files." "Common, build, and DB preflight checks still run."
+    } else {
+        Add-Result "INFO" "GATE_FEATURES" "Gate inferred feature checks: $($features -join ', ')." "Feature inference is based on changed file paths."
+    }
+
+    return $features.ToArray()
+}
+
+function Invoke-FeatureChecks {
+    param(
+        [string[]] $Features
+    )
+
+    foreach ($selectedFeature in $Features) {
+        if ($selectedFeature -eq "company") {
+            Test-CompanyFeature
+        } elseif ($selectedFeature -eq "member") {
+            Test-MemberFeature
+        } elseif ($selectedFeature -eq "auth") {
+            Test-AuthFeature
+        } elseif ($selectedFeature -eq "partner") {
+            Test-PartnerFeature
+        } elseif ($selectedFeature -eq "category") {
+            Test-CategoryFeature
+        } elseif ($selectedFeature -eq "part") {
+            Test-PartFeature
         }
     }
 }
@@ -802,6 +1205,49 @@ function Test-CategoryFeature {
     }
 
     Add-Result "INFO" "CATEGORY_FEATURE" "Category feature checks completed."
+}
+
+function Test-PartFeature {
+    Test-PathRequired "docs/features/part.md" "PART_FEATURE_DOC" "Keep docs/features/part.md as the part feature rule source."
+    Test-PathRequired "docs/features/part-db.md" "PART_DB_DOC" "Keep docs/features/part-db.md as the part DB rule source."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/api/PartApiController.java" "PART_API" "Expose part workspace APIs in part/api."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/dto/request/CreatePartRequest.java" "PART_CREATE_REQUEST" "Keep part create request DTO."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/dto/request/UpdatePartRequest.java" "PART_UPDATE_REQUEST" "Keep part update request DTO."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/dto/request/PartSpecValueRequest.java" "PART_SPEC_VALUE_REQUEST" "Keep part spec value request DTO."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/dto/response/SearchPartResponse.java" "PART_SEARCH_RESPONSE" "Keep part list response DTO."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/dto/response/PartDetailResponse.java" "PART_DETAIL_RESPONSE" "Keep part detail response DTO."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/dto/response/PartSpecValueResponse.java" "PART_SPEC_VALUE_RESPONSE" "Keep part spec value response DTO."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/entity/PcPart.java" "PART_ENTITY" "Keep tb_pc_part row state in part/entity."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/entity/PartSpecValue.java" "PART_SPEC_VALUE_ENTITY" "Keep tb_part_spec_value row state in part/entity."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/facade/PartFacade.java" "PART_FACADE" "Keep part company-scope validation in part/facade."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/service/PartService.java" "PART_SERVICE" "Keep part business rules in part/service."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/mapper/PartMapper.java" "PART_MAPPER" "Keep MyBatis mapper interface for part persistence."
+    Test-PathRequired "src/main/resources/mapper/part/PartMapper.xml" "PART_MAPPER_XML" "Keep MyBatis mapper XML for part persistence."
+
+    $controller = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/part/api/PartApiController.java"
+    if (Test-Path $controller) {
+        $controllerContent = Get-Content -Raw $controller
+        foreach ($pattern in @("@RestController", '@RequestMapping\("/api"\)', '@GetMapping\("/workspaces/\{companyCode\}/parts"\)', '@PostMapping\("/workspaces/\{companyCode\}/parts"\)', '@PatchMapping\("/workspaces/\{companyCode\}/parts/\{partId\}"\)', "@AuthenticationPrincipal", "ApiResultDto", "PageResultDto")) {
+            if ($controllerContent -notmatch $pattern) {
+                Add-Result "FAIL" "PART_CONTROLLER_PATTERN" "PartApiController is missing required pattern: $pattern" "Keep part CRUD/list API aligned with docs/features/part.md."
+            }
+        }
+    }
+
+    $mapperXml = Join-Path $ProjectRoot "src/main/resources/mapper/part/PartMapper.xml"
+    if (Test-Path $mapperXml) {
+        $mapperXmlContent = Get-Content -Raw $mapperXml
+        if ($mapperXmlContent -notmatch 'namespace="com\.pcs\.domain\.part\.mapper\.PartMapper"') {
+            Add-Result "FAIL" "PART_MAPPER_NAMESPACE" "PartMapper.xml namespace does not match PartMapper FQCN." "Match XML namespace to mapper interface."
+        }
+        foreach ($pattern in @("tb_pc_part", "tb_part_spec_value", "tb_part_category", "LIMIT", "OFFSET", "COUNT(*)", "ORDER BY p.part_id DESC")) {
+            if ($mapperXmlContent -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "PART_MAPPER_PATTERN" "PartMapper.xml is missing required SQL pattern: $pattern" "Keep part search and spec value SQL aligned with docs/features/part.md."
+            }
+        }
+    }
+
+    Add-Result "INFO" "PART_FEATURE" "Part feature checks completed."
 }
 
 function Get-DbConfig {
@@ -1864,8 +2310,14 @@ function Invoke-DbChecks {
         $requestedChecks.Add("checkdb") | Out-Null
     }
 
-    if ($RunDb -and $Feature -ne "none") {
-        $requestedChecks.Add($Feature) | Out-Null
+    if ($RunDb -and $script:SelectedFeatures -and $script:SelectedFeatures.Count -gt 0) {
+        foreach ($selectedFeature in $script:SelectedFeatures) {
+            if ($SupportedDbFeatureNames -contains $selectedFeature) {
+                $requestedChecks.Add($selectedFeature) | Out-Null
+            } else {
+                Add-Result "INFO" "DB_FEATURE_NOT_IMPLEMENTED_$($selectedFeature.ToUpper())" "DB harness check is not implemented for feature: $selectedFeature." "Add a DB checker before requiring this feature in DB gate."
+            }
+        }
     }
 
     if ($DbFeature -ne "none") {
@@ -1895,18 +2347,9 @@ function Invoke-BuildCheck {
         return
     }
 
-    if ($env:JAVA_HOME) {
-        $javaHomeExe = Join-Path $env:JAVA_HOME "bin/java.exe"
-        if (-not (Test-Path $javaHomeExe)) {
-            Add-Result "FAIL" "JAVA_HOME_INVALID" "JAVA_HOME is set but bin/java.exe does not exist: $env:JAVA_HOME" "Set JAVA_HOME to JDK 17 or remove the invalid value."
-            return
-        }
-
-        $javaHomeVersion = (cmd /c "`"$javaHomeExe`" -version 2>&1") -join "`n"
-        if ($javaHomeVersion -notmatch 'version "17\.|version "18\.|version "19\.|version "2[0-9]\.') {
-            Add-Result "FAIL" "JAVA_HOME_17_REQUIRED" "Gradle uses JAVA_HOME, but JAVA_HOME is not JDK 17 or later: $env:JAVA_HOME" "Set JAVA_HOME to JDK 17 or create an ignored local gradle.properties from gradle.properties.example."
-            return
-        }
+    if (-not (Ensure-JavaHome17) -and $env:JAVA_HOME) {
+        Add-Result "FAIL" "JAVA_HOME_17_REQUIRED" "Gradle uses JAVA_HOME, but JAVA_HOME is not JDK 17 or later: $env:JAVA_HOME" "Set JAVA_HOME to JDK 17 or create an ignored local gradle.properties from gradle.properties.example."
+        return
     }
 
     Push-Location $ProjectRoot
@@ -1922,14 +2365,139 @@ function Invoke-BuildCheck {
     }
 }
 
+function Get-FreeTcpPort {
+    $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 0)
+    try {
+        $listener.Start()
+        return $listener.LocalEndpoint.Port
+    } finally {
+        $listener.Stop()
+    }
+}
+
+function Invoke-SwaggerSmokeCheck {
+    $gradlew = Join-Path $ProjectRoot "gradlew.bat"
+    if (-not (Test-Path $gradlew)) {
+        Add-Result "FAIL" "SWAGGER_GRADLEW_MISSING" "gradlew.bat is missing." "Restore Gradle Wrapper."
+        return
+    }
+
+    if (-not (Ensure-JavaHome17) -and $env:JAVA_HOME) {
+        Add-Result "FAIL" "SWAGGER_JAVA_HOME_17_REQUIRED" "Swagger smoke check requires JDK 17 or later." "Set JAVA_HOME to JDK 17 or later."
+        return
+    }
+
+    Push-Location $ProjectRoot
+    try {
+        & $gradlew "bootJar" | Out-Host
+        if ($LASTEXITCODE -ne 0) {
+            Add-Result "FAIL" "SWAGGER_BOOT_JAR" "bootJar failed before Swagger smoke check." "Fix build errors first."
+            return
+        }
+    } finally {
+        Pop-Location
+    }
+
+    $jar = Get-ChildItem -Path (Join-Path $ProjectRoot "build\libs") -Filter "*.jar" -File |
+        Where-Object { $_.Name -notmatch "-plain\.jar$" } |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -First 1
+
+    if (-not $jar) {
+        Add-Result "FAIL" "SWAGGER_BOOT_JAR_NOT_FOUND" "No executable bootJar artifact was found." "Run .\gradlew.bat bootJar and check build/libs."
+        return
+    }
+
+    $javaCommand = "java"
+    if (-not [string]::IsNullOrWhiteSpace($env:JAVA_HOME)) {
+        $javaHomeCommand = Join-Path $env:JAVA_HOME "bin\java.exe"
+        if (Test-Path $javaHomeCommand) {
+            $javaCommand = $javaHomeCommand
+        }
+    }
+
+    $port = Get-FreeTcpPort
+    $stdoutPath = Join-Path $ReportDir "swagger-smoke.out.log"
+    $stderrPath = Join-Path $ReportDir "swagger-smoke.err.log"
+    $process = $null
+
+    try {
+        $process = Start-Process `
+            -FilePath $javaCommand `
+            -ArgumentList @("-jar", $jar.FullName, "--server.port=$port") `
+            -RedirectStandardOutput $stdoutPath `
+            -RedirectStandardError $stderrPath `
+            -WindowStyle Hidden `
+            -PassThru
+
+        $apiDocsResponse = $null
+        for ($attempt = 0; $attempt -lt 40; $attempt++) {
+            Start-Sleep -Milliseconds 750
+            if ($process.HasExited) {
+                break
+            }
+
+            try {
+                $apiDocsResponse = Invoke-WebRequest -Uri "http://127.0.0.1:$port/v3/api-docs" -UseBasicParsing -TimeoutSec 2
+                if (
+                    $apiDocsResponse.StatusCode -eq 200 -and
+                    $apiDocsResponse.Content -match '"openapi"' -and
+                    $apiDocsResponse.Content -match '"paths"'
+                ) {
+                    break
+                }
+            } catch {
+                $apiDocsResponse = $null
+            }
+        }
+
+        if (
+            -not $apiDocsResponse -or
+            $apiDocsResponse.StatusCode -ne 200 -or
+            $apiDocsResponse.Content -notmatch '"openapi"' -or
+            $apiDocsResponse.Content -notmatch '"paths"'
+        ) {
+            Add-Result "FAIL" "SWAGGER_API_DOCS" "/v3/api-docs did not return a valid OpenAPI document." "Check $stdoutPath and $stderrPath."
+            return
+        }
+
+        try {
+            $swaggerUiResponse = Invoke-WebRequest -Uri "http://127.0.0.1:$port/swagger-ui/index.html" -UseBasicParsing -TimeoutSec 5
+            if ($swaggerUiResponse.StatusCode -ne 200) {
+                Add-Result "FAIL" "SWAGGER_UI" "Swagger UI returned HTTP $($swaggerUiResponse.StatusCode)." "Check springdoc and security configuration."
+                return
+            }
+        } catch {
+            Add-Result "FAIL" "SWAGGER_UI" "Swagger UI did not respond." "Check springdoc and security configuration."
+            return
+        }
+
+        Add-Result "INFO" "SWAGGER_SMOKE" "Swagger OpenAPI docs and UI responded successfully."
+    } finally {
+        if ($process -and -not $process.HasExited) {
+            Stop-Process -Id $process.Id -Force
+            $process.WaitForExit()
+        }
+    }
+}
+
 function Write-Report {
     $lines = New-Object System.Collections.Generic.List[string]
     $lines.Add("# PCS Harness Report") | Out-Null
     $lines.Add("") | Out-Null
     $lines.Add("- Mode: $Mode") | Out-Null
     $lines.Add("- Feature: $Feature") | Out-Null
+    $lines.Add("- RunBuild: $RunBuild") | Out-Null
+    $lines.Add("- RunSwagger: $RunSwagger") | Out-Null
     $lines.Add("- RunDb: $RunDb") | Out-Null
     $lines.Add("- DbFeature: $DbFeature") | Out-Null
+    $lines.Add("- ChangedFilesPath: $ChangedFilesPath") | Out-Null
+    $lines.Add("- TrackedFilesPath: $TrackedFilesPath") | Out-Null
+    if ($script:SelectedFeatures.Count -gt 0) {
+        $lines.Add("- SelectedFeatures: $($script:SelectedFeatures -join ', ')") | Out-Null
+    } else {
+        $lines.Add("- SelectedFeatures: none") | Out-Null
+    }
     $lines.Add("- GeneratedAt: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')") | Out-Null
     $lines.Add("- FAIL: $($failures.Count)") | Out-Null
     $lines.Add("- WARN: $($warnings.Count)") | Out-Null
@@ -1964,6 +2532,7 @@ function Write-Report {
 }
 
 Ensure-GitignoreRules
+Test-GitForbiddenFiles
 Test-JavaVersion
 Test-BootstrapStructure
 Test-ProjectSettings
@@ -1980,30 +2549,24 @@ if ($Mode -eq "full") {
     Test-FullModeStructure
 }
 
-if ($Feature -eq "company") {
-    Test-CompanyFeature
+if ($Mode -eq "gate") {
+    $script:SelectedFeatures = @(Resolve-GateFeatures)
+} elseif ($Feature -ne "none") {
+    $script:SelectedFeatures = @($Feature)
+} else {
+    $script:SelectedFeatures = @()
 }
 
-if ($Feature -eq "member") {
-    Test-MemberFeature
-}
-
-if ($Feature -eq "auth") {
-    Test-AuthFeature
-}
-
-if ($Feature -eq "partner") {
-    Test-PartnerFeature
-}
-
-if ($Feature -eq "category") {
-    Test-CategoryFeature
-}
+Invoke-FeatureChecks $script:SelectedFeatures
 
 Invoke-DbChecks
 
 if ($RunBuild) {
     Invoke-BuildCheck
+}
+
+if ($RunSwagger) {
+    Invoke-SwaggerSmokeCheck
 }
 
 Write-Report
@@ -2012,8 +2575,13 @@ Write-Host ""
 Write-Host "PCS Harness Result"
 Write-Host "Mode: $Mode"
 Write-Host "Feature: $Feature"
+Write-Host "RunBuild: $RunBuild"
+Write-Host "RunSwagger: $RunSwagger"
 Write-Host "RunDb: $RunDb"
 Write-Host "DbFeature: $DbFeature"
+Write-Host "ChangedFilesPath: $ChangedFilesPath"
+Write-Host "TrackedFilesPath: $TrackedFilesPath"
+Write-Host "SelectedFeatures: $(if ($script:SelectedFeatures.Count -gt 0) { $script:SelectedFeatures -join ', ' } else { 'none' })"
 Write-Host "FAIL: $($failures.Count), WARN: $($warnings.Count), INFO: $($infos.Count)"
 Write-Host "Report: $ReportPath"
 

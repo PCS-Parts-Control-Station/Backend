@@ -32,6 +32,7 @@ tb_company
 tb_member
 tb_auth_refresh_token
 tb_auth_login_history
+tb_company_staff_permission_disabled
 tb_trade_partner
 tb_part_category
 tb_pc_part
@@ -56,6 +57,7 @@ tb_inspection_item_result
 tb_member.company_id
 tb_auth_refresh_token.company_id
 tb_auth_login_history.company_id
+tb_company_staff_permission_disabled.company_id
 tb_trade_partner.company_id
 tb_part_category.company_id
 tb_pc_part.company_id
@@ -109,6 +111,7 @@ tb_member.uk_member_company_login
 tb_member.uk_member_company_owner
 tb_member.chk_member_owner_slot
 tb_auth_refresh_token.uk_auth_refresh_token_hash
+tb_company_staff_permission_disabled.uk_company_staff_permission_disabled
 ```
 
 ## 하네스 기준

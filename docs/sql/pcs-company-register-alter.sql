@@ -32,12 +32,19 @@ SET @chk_member_owner_slot_exists = (
       AND CONSTRAINT_NAME = 'chk_member_owner_slot'
 );
 
-SET @chk_member_owner_slot_sql = IF(
-    @chk_member_owner_slot_exists = 0,
-    'ALTER TABLE tb_member ADD CONSTRAINT chk_member_owner_slot CHECK ((role = ''OWNER'' AND owner_slot = 1) OR (role <> ''OWNER'' AND owner_slot IS NULL))',
+SET @drop_chk_member_owner_slot_sql = IF(
+    @chk_member_owner_slot_exists > 0,
+    'ALTER TABLE tb_member DROP CONSTRAINT chk_member_owner_slot',
     'SELECT 1'
 );
 
-PREPARE chk_member_owner_slot_stmt FROM @chk_member_owner_slot_sql;
-EXECUTE chk_member_owner_slot_stmt;
-DEALLOCATE PREPARE chk_member_owner_slot_stmt;
+PREPARE drop_chk_member_owner_slot_stmt FROM @drop_chk_member_owner_slot_sql;
+EXECUTE drop_chk_member_owner_slot_stmt;
+DEALLOCATE PREPARE drop_chk_member_owner_slot_stmt;
+
+ALTER TABLE tb_member
+    ADD CONSTRAINT chk_member_owner_slot
+    CHECK (
+        (role = 'OWNER' AND owner_slot IS NOT NULL AND owner_slot = 1)
+        OR (role <> 'OWNER' AND owner_slot IS NULL)
+    );

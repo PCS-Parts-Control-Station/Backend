@@ -177,6 +177,7 @@ SQL 참조 기준:
 읽을 문서:
 
 - `docs/ai/pcs-harness-rules.md`
+- `docs/ai/pcs-powershell-harness-rules.md`
 - `docs/ai/pcs-agent-context.md`
 - 필요한 경우 `docs/ai/pcs-project-structure-reference.md`
 
@@ -184,11 +185,17 @@ SQL 참조 기준:
 
 - `harness/run-harness.ps1`
 - `harness/run-feedback-loop.ps1`
+- `harness/install-hooks.ps1`
+- `harness/hooks/*`
+- `.codex/hooks/*.ps1`
 
 기준:
 
 - 새 `-Feature` 또는 `-DbFeature` 값을 추가하면 두 스크립트의 허용값을 함께 맞춘다.
 - 실제 검사는 `run-harness.ps1`에 구현하고, `run-feedback-loop.ps1`은 옵션 전달과 실패 요약 생성을 담당한다.
+- PowerShell 하네스 코드는 Windows/macOS 검증 로직을 복제하지 않고, 공통 검증 로직 + OS 어댑터 구조를 따른다.
+- Git pre-push 훅은 `bootstrap`이나 `full`이 아니라 `gate` 모드로 변경 파일 기준 feature 검사와 공통 검증을 실행한다.
+- `.gitignore` 필수 패턴, Git 추적 금지 파일, pre-push 변경 파일 금지 검사는 `docs/ai/pcs-harness-rules.md`의 `.gitignore 규칙` 기준을 따른다.
 
 ---
 
@@ -211,6 +218,7 @@ SQL 참조 기준:
 백엔드:
 
 - 업체 코드/JWT 회사 범위 검증: `src/main/java/com/pcs/global/workspace/WorkspaceAccessValidator.java`
+- Security URL role 그룹: `src/main/java/com/pcs/global/security/PcsRoleGroups.java`
 - 회사 활성 여부 조회: `src/main/java/com/pcs/global/workspace/WorkspaceMapper.java`
 - 페이지/size/offset 정규화: `src/main/java/com/pcs/global/pagination/PageQuery.java`
 - 문자열 trim/null/required 처리: `src/main/java/com/pcs/global/util/TextNormalizer.java`

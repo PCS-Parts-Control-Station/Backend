@@ -9,6 +9,47 @@
         document.body.classList.add("sidebar-collapsed");
     }
 
+    const normalizeRole = (role) => String(role || "").trim().toUpperCase();
+    const normalizePermission = (permission) => String(permission || "").trim().toUpperCase();
+
+    const STAFF_ROUTE_PERMISSIONS = {
+        inbound: "STAFF_INBOUND",
+        inspection: "STAFF_INSPECTION",
+        outbound: "STAFF_OUTBOUND",
+        parts: "STAFF_PART_CREATE",
+        categories: "STAFF_CATEGORY_MANAGE",
+        "inspection/templates": "STAFF_INSPECTION",
+        partners: "STAFF_PARTNER_MANAGE"
+    };
+
+    const getAllowedRoles = (element) => {
+        return String(element.dataset.allowedRoles || "")
+            .split(",")
+            .map((role) => normalizeRole(role))
+            .filter(Boolean);
+    };
+
+    const isAllowedForRole = (element, role) => {
+        const allowedRoles = getAllowedRoles(element);
+        return allowedRoles.length === 0 || allowedRoles.includes(normalizeRole(role));
+    };
+
+    const getStaffPermissions = (session) => {
+        return new Set((session?.staffPermissions || []).map((permission) => normalizePermission(permission)));
+    };
+
+    const isStaffPermissionAllowed = (element, role, staffPermissions) => {
+        if (normalizeRole(role) !== "STAFF") {
+            return true;
+        }
+        const requiredPermission = normalizePermission(element.dataset.staffPermission);
+        return !requiredPermission || staffPermissions.has(requiredPermission);
+    };
+
+    const getRouteStaffPermission = (route) => {
+        return STAFF_ROUTE_PERMISSIONS[route] || "";
+    };
+
     const applyWorkspaceContext = () => {
         document.querySelectorAll("[data-company-code]").forEach((element) => {
             element.textContent = companyCode;
@@ -50,6 +91,43 @@
                 link.removeAttribute("aria-current");
             }
         });
+    };
+
+    const applyWorkspaceVisibility = (session) => {
+        const normalizedRole = normalizeRole(session?.role);
+        const staffPermissions = getStaffPermissions(session);
+        const activeRoute = getActiveRoute();
+        let activeRouteBlocked = false;
+
+        document.querySelectorAll("[data-allowed-roles], [data-staff-permission]").forEach((element) => {
+            const allowed = isAllowedForRole(element, normalizedRole)
+                    && isStaffPermissionAllowed(element, normalizedRole, staffPermissions);
+            element.hidden = !allowed;
+
+            const route = element.dataset.route;
+            if (!allowed && route && (route === activeRoute || activeRoute.startsWith(`${route}/`))) {
+                activeRouteBlocked = true;
+            }
+        });
+
+        const activeRoutePermission = getRouteStaffPermission(activeRoute);
+        if (
+            normalizedRole === "STAFF" &&
+            activeRoutePermission &&
+            !staffPermissions.has(activeRoutePermission)
+        ) {
+            activeRouteBlocked = true;
+        }
+
+        document.querySelectorAll(".sidebar-group").forEach((group) => {
+            const hasVisibleLink = Array.from(group.querySelectorAll("a[data-route]"))
+                .some((link) => !link.hidden);
+            group.hidden = !hasVisibleLink;
+        });
+
+        if (activeRouteBlocked && window.PcsApi?.redirectToInvalidAccess) {
+            window.PcsApi.redirectToInvalidAccess({ code: "AUTH-005" }, companyCode);
+        }
     };
 
     const bindSidebarToggle = () => {
@@ -125,6 +203,47 @@
         syncToggleState();
     };
 
+    const bindAccountActions = () => {
+        const settingsButton = document.querySelector("[data-sidebar-settings]");
+        const logoutButton = document.querySelector("[data-sidebar-logout]");
+
+        if (settingsButton) {
+            settingsButton.addEventListener("click", () => {
+                window.location.href = `/w/${encodeURIComponent(companyCode)}/mypage`;
+            });
+        }
+
+        if (!logoutButton) {
+            return;
+        }
+
+        logoutButton.addEventListener("click", async () => {
+            if (logoutButton.dataset.busy === "true") {
+                return;
+            }
+
+            logoutButton.dataset.busy = "true";
+            logoutButton.disabled = true;
+
+            try {
+                if (window.PcsApi?.logout) {
+                    await window.PcsApi.logout();
+                } else {
+                    await fetch("/api/auth/logout", {
+                        method: "POST",
+                        credentials: "same-origin",
+                        headers: {
+                            "Accept": "application/json"
+                        }
+                    });
+                    window.localStorage.removeItem("pcsAccessToken");
+                }
+            } finally {
+                window.location.href = `/w/${encodeURIComponent(companyCode)}`;
+            }
+        });
+    };
+
     const loadSession = async () => {
         const sessionName = document.querySelector("[data-session-name]");
         if (!sessionName || !window.PcsApi || !companyCode) {
@@ -140,8 +259,10 @@
             if (me?.name) {
                 sessionName.textContent = `${me.name} (${me.role})`;
             }
+            applyWorkspaceVisibility(me);
         } catch (error) {
             sessionName.textContent = "로그인 필요";
+            applyWorkspaceVisibility(null);
         }
     };
 
@@ -151,6 +272,7 @@
             applyWorkspaceContext();
             applyActiveRoute();
             bindSidebarToggle();
+            bindAccountActions();
             await loadSession();
             return;
         }
@@ -173,6 +295,7 @@
         applyWorkspaceContext();
         applyActiveRoute();
         bindSidebarToggle();
+        bindAccountActions();
         await loadSession();
     };
 

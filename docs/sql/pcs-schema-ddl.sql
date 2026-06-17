@@ -29,6 +29,7 @@ DROP TABLE IF EXISTS tb_part_category;
 DROP TABLE IF EXISTS tb_trade_partner;
 DROP TABLE IF EXISTS tb_auth_login_history;
 DROP TABLE IF EXISTS tb_auth_refresh_token;
+DROP TABLE IF EXISTS tb_company_staff_permission_disabled;
 DROP TABLE IF EXISTS tb_member;
 DROP TABLE IF EXISTS tb_company;
 
@@ -75,7 +76,7 @@ CREATE TABLE tb_member (
     CONSTRAINT uk_member_company_owner UNIQUE (company_id, owner_slot),
     CONSTRAINT uk_member_company_member_id UNIQUE (company_id, member_id),
     CONSTRAINT chk_member_owner_slot CHECK (
-        (role = 'OWNER' AND owner_slot = 1)
+        (role = 'OWNER' AND owner_slot IS NOT NULL AND owner_slot = 1)
         OR (role <> 'OWNER' AND owner_slot IS NULL)
     ),
     INDEX idx_member_company_created_by (company_id, created_by),
@@ -119,6 +120,25 @@ CREATE TABLE tb_auth_login_history (
     INDEX idx_auth_login_history_company_date (company_id, created_at),
     INDEX idx_auth_login_history_member_date (company_id, member_id, created_at),
     INDEX idx_auth_login_history_login_id_date (login_id_snapshot, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE tb_company_staff_permission_disabled (
+    disabled_permission_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_id BIGINT NOT NULL,
+    permission_code ENUM(
+        'STAFF_PARTNER_MANAGE',
+        'STAFF_PART_CREATE',
+        'STAFF_CATEGORY_MANAGE',
+        'STAFF_INBOUND',
+        'STAFF_INSPECTION',
+        'STAFF_OUTBOUND'
+    ) NOT NULL,
+    disabled_by BIGINT NOT NULL,
+    disabled_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (disabled_permission_id),
+    CONSTRAINT uk_company_staff_permission_disabled UNIQUE (company_id, permission_code),
+    INDEX idx_company_staff_permission_disabled_company (company_id),
+    INDEX idx_company_staff_permission_disabled_by (company_id, disabled_by)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE tb_trade_partner (

@@ -41,4 +41,29 @@
         )
     </insert>
 
+    <select id="findOwnerCompanyById" resultType="com.pcs.domain.company.dto.response.OwnerCompanyResponse">
+        SELECT
+            company_id,
+            company_code,
+            company_name,
+            representative_email,
+            representative_phone,
+            business_registration_no,
+            active
+        FROM tb_company
+        WHERE company_id = #{companyId}
+        LIMIT 1
+    </select>
+
+    <update id="updateOwnerCompany">
+        UPDATE tb_company
+        SET
+            company_name = #{companyName},
+            representative_email = #{representativeEmail},
+            representative_phone = #{representativePhone},
+            business_registration_no = #{businessRegistrationNo},
+            updated_at = NOW(6)
+        WHERE company_id = #{companyId}
+    </update>
+
 </mapper>

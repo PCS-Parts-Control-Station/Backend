@@ -337,7 +337,7 @@
         }
 
         if (!api) {
-            setPartSearchMessage("공통 API 스크립트를 확인할 수 없습니다.", "error");
+            setPartSearchMessage("필요한 화면 기능을 불러오지 못했습니다. 새로고침 후 다시 시도하세요.", "error");
             return;
         }
 
@@ -565,9 +565,9 @@
         }
 
         if (!api) {
-            partnerSelect.innerHTML = '<option value="">공통 API 스크립트를 확인할 수 없습니다</option>';
+            partnerSelect.innerHTML = '<option value="">필요한 화면 기능을 불러오지 못했습니다</option>';
             partnerSelect.disabled = true;
-            setPartnerMessage("공통 API 스크립트를 확인할 수 없습니다.", "error");
+            setPartnerMessage("필요한 화면 기능을 불러오지 못했습니다. 새로고침 후 다시 시도하세요.", "error");
             return;
         }
 
@@ -693,7 +693,7 @@
 
         try {
             if (!api) {
-                throw new Error("공통 API 스크립트를 확인할 수 없습니다.");
+                throw new Error("필요한 화면 기능을 불러오지 못했습니다. 새로고침 후 다시 시도하세요.");
             }
 
             const result = await api.request(`/api/workspaces/${encodeURIComponent(companyCode)}/stock/documents/inbounds`, {
@@ -808,6 +808,10 @@
 
     partModalForm?.addEventListener("submit", (event) => {
         event.preventDefault();
+        if (partModalMessage) {
+            partModalMessage.hidden = false;
+            partModalMessage.textContent = "품목 등록은 품목 관리 화면에서 진행해 주세요.";
+        }
         createQuickPart();
     });
 

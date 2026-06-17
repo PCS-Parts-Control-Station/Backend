@@ -1,5 +1,13 @@
 (function () {
     const PAGE_SIZE = 10;
+    const ROLE_LABELS = {
+        ADMIN: "관리자",
+        STAFF: "작업자"
+    };
+    const ROLE_OPTION_LABELS = {
+        ADMIN: "관리자",
+        STAFF: "작업자"
+    };
 
     const filterForm = document.querySelector("[data-user-filter-form]");
     const table = document.querySelector("[data-user-table]");
@@ -11,6 +19,8 @@
     const panelViews = document.querySelectorAll("[data-user-panel]");
     const createForm = document.querySelector("[data-user-create-form]");
     const editForm = document.querySelector("[data-user-edit-form]");
+    const staffPermissionForm = document.querySelector("[data-staff-permission-form]");
+    const staffPermissionInputs = document.querySelectorAll("[data-staff-permission-input]");
     const detailFields = {
         name: document.querySelector("[data-detail-name]"),
         loginId: document.querySelector("[data-detail-login-id]"),
@@ -36,6 +46,7 @@
     let currentPage = 0;
     let currentUsers = [];
     let selectedUserId = null;
+    let currentSession = null;
 
     const getCompanyCode = window.PcsWorkspace?.getCompanyCode;
     const formatDate = window.PcsFormat?.date;
@@ -45,10 +56,76 @@
     const showToast = window.PcsFeedback?.toast;
     const setFormSaving = window.PcsForm?.setSaving;
     const setEmptyMessage = (message) => window.PcsTable.emptyRow(table, {
-        rowClassName: "data-row management-data-row empty-data-row",
+        rowClassName: "data-row management-data-row user-management-data-row empty-data-row",
         label: "안내",
         message
     });
+
+    const manageableRoles = () => {
+        if (currentSession?.role === "OWNER") {
+            return ["ADMIN", "STAFF"];
+        }
+        if (currentSession?.role === "ADMIN") {
+            return ["STAFF"];
+        }
+        return [];
+    };
+
+    const canManageRole = (role) => manageableRoles().includes(role);
+
+    const roleLabel = (role) => {
+        if (role === "OWNER") {
+            return "소유자";
+        }
+        return ROLE_LABELS[role] || "작업자";
+    };
+
+    const configureRoleSelect = (select, options = {}) => {
+        if (!select) {
+            return;
+        }
+
+        const roles = manageableRoles();
+        const previousValue = select.value;
+        select.innerHTML = "";
+
+        if (options.includeAll) {
+            const allOption = document.createElement("option");
+            allOption.value = "";
+            allOption.textContent = "전체";
+            select.append(allOption);
+        } else {
+            const placeholder = document.createElement("option");
+            placeholder.value = "";
+            placeholder.textContent = "선택";
+            placeholder.disabled = options.placeholderDisabled === true;
+            select.append(placeholder);
+        }
+
+        roles.forEach((role) => {
+            const option = document.createElement("option");
+            option.value = role;
+            option.textContent = ROLE_OPTION_LABELS[role] || role;
+            select.append(option);
+        });
+
+        if (roles.includes(previousValue) || (options.includeAll && previousValue === "")) {
+            select.value = previousValue;
+            return;
+        }
+
+        if (!options.includeAll && roles.length === 1) {
+            select.value = roles[0];
+        } else {
+            select.value = "";
+        }
+    };
+
+    const configureRoleControls = () => {
+        configureRoleSelect(filterForm?.elements.role, { includeAll: true });
+        configureRoleSelect(createForm?.elements.role, { placeholderDisabled: true });
+        configureRoleSelect(editForm?.elements.role, { placeholderDisabled: true });
+    };
 
     const createBadgeCell = (label, value) => {
         const cell = document.createElement("span");
@@ -60,13 +137,13 @@
         
         if (value === "OWNER") {
             badge.className = "badge badge-blue";
-            badge.textContent = "소유자";
+            badge.textContent = roleLabel(value);
         } else if (value === "ADMIN") {
             badge.className = "badge badge-orange";
-            badge.textContent = "관리자";
+            badge.textContent = roleLabel(value);
         } else {
             badge.className = "badge badge-gray";
-            badge.textContent = "작업자";
+            badge.textContent = roleLabel(value);
         }
         
         cell.append(badge);
@@ -104,23 +181,22 @@
         
         if (user.role === "OWNER") {
             detailFields.roleBadge.className = "badge badge-blue";
-            detailFields.roleBadge.textContent = "소유자";
+            detailFields.roleBadge.textContent = roleLabel(user.role);
         } else if (user.role === "ADMIN") {
             detailFields.roleBadge.className = "badge badge-orange";
-            detailFields.roleBadge.textContent = "관리자";
+            detailFields.roleBadge.textContent = roleLabel(user.role);
         } else {
             detailFields.roleBadge.className = "badge badge-gray";
-            detailFields.roleBadge.textContent = "작업자";
+            detailFields.roleBadge.textContent = roleLabel(user.role);
         }
         
-        // Hide edit/reset actions for OWNER if current login isn't OWNER (this is managed by API usually, but we can do a simple check)
-        const isOwner = user.role === "OWNER";
+        const canManage = canManageRole(user.role);
         const editButton = document.querySelector("[data-user-edit-mode]");
         if (editButton) {
-            editButton.style.display = isOwner ? "none" : "";
+            editButton.hidden = !canManage;
         }
         if (openPasswordModalButton) {
-            openPasswordModalButton.style.display = isOwner ? "none" : "";
+            openPasswordModalButton.hidden = !canManage;
         }
     };
 
@@ -128,6 +204,7 @@
         if (!editForm || !user) {
             return;
         }
+        configureRoleSelect(editForm.elements.role, { placeholderDisabled: true });
         editForm.elements.memberName.value = user.memberName || "";
         editForm.elements.loginId.value = user.loginId || "";
         editForm.elements.role.value = user.role || "";
@@ -148,19 +225,19 @@
         selectedUserId = null;
         updateSelectedRow();
         createForm?.reset();
+        configureRoleSelect(createForm?.elements.role, { placeholderDisabled: true });
         setPanelMode("create");
     };
 
-    const renderSummary = (summary) => {
-        if (!summaryFields.total || !summary) return;
-        summaryFields.total.textContent = numberText(summary.totalElements);
-        
-        // Simple client-side reduction for current page if exact summary is absent
-        const adminCount = currentUsers.filter(u => u.role === "ADMIN" || u.role === "OWNER").length;
-        const staffCount = currentUsers.filter(u => u.role === "STAFF").length;
-        
-        summaryFields.admin.textContent = numberText(adminCount);
-        summaryFields.staff.textContent = numberText(staffCount);
+    const renderSummary = (pageData) => {
+        if (!summaryFields.total || !pageData) {
+            return;
+        }
+
+        const summary = pageData.summary || {};
+        summaryFields.total.textContent = numberText(summary.totalCount ?? pageData.totalElements);
+        summaryFields.admin.textContent = numberText(summary.adminCount ?? 0);
+        summaryFields.staff.textContent = numberText(summary.staffCount ?? 0);
     };
 
     const renderRows = (items) => {
@@ -175,7 +252,7 @@
 
         items.forEach((user) => {
             const row = document.createElement("div");
-            row.className = "data-row management-data-row is-selectable";
+            row.className = "data-row management-data-row user-management-data-row is-selectable";
             row.setAttribute("role", "row");
             row.setAttribute("tabindex", "0");
             row.dataset.userId = String(user.memberId);
@@ -237,6 +314,64 @@
         loginId: targetForm.elements.loginId.value.trim(),
         role: targetForm.elements.role.value || null
     });
+
+    const loadCurrentSession = async (companyCode) => {
+        currentSession = await window.PcsApi.getData(
+            `/api/workspaces/${encodeURIComponent(companyCode)}/me`,
+            {
+                authRedirect: true,
+                loginCompanyCode: companyCode
+            }
+        );
+
+        if (!["OWNER", "ADMIN"].includes(currentSession?.role)) {
+            window.PcsApi.redirectToInvalidAccess?.({ code: "AUTH-006" }, companyCode);
+            return false;
+        }
+
+        configureRoleControls();
+        return true;
+    };
+
+    const applyStaffPermissionSettings = (settings) => {
+        const enabledPermissions = new Set(
+                (settings?.permissions || [])
+                        .filter((permission) => permission.enabled)
+                        .map((permission) => permission.code)
+        );
+
+        staffPermissionInputs.forEach((input) => {
+            input.checked = enabledPermissions.has(input.value);
+        });
+    };
+
+    const loadStaffPermissionSettings = async (companyCode) => {
+        if (!staffPermissionForm) {
+            return;
+        }
+
+        try {
+            setFormSaving(staffPermissionForm, true, "조회 중");
+            const settings = await window.PcsApi.getData(
+                    `/api/workspaces/${encodeURIComponent(companyCode)}/users/staff-permissions`,
+                    {
+                        authRedirect: true,
+                        loginCompanyCode: companyCode
+                    }
+            );
+            applyStaffPermissionSettings(settings);
+        } catch (error) {
+            showToast(error?.message || "직원 권한 설정을 불러오지 못했습니다.", "error");
+        } finally {
+            setFormSaving(staffPermissionForm, false);
+        }
+    };
+
+    const readEnabledStaffPermissions = () => {
+        return Array.from(staffPermissionInputs)
+                .filter((input) => input.checked)
+                .map((input) => input.value);
+    };
 
     const loadUsers = async (page = 0, options = {}) => {
         const companyCode = getCompanyCode();
@@ -362,6 +497,11 @@
                     return;
                 }
             }
+            const canUsePage = await loadCurrentSession(companyCode);
+            if (!canUsePage) {
+                return;
+            }
+            await loadStaffPermissionSettings(companyCode);
             await loadUsers(0);
         } catch (error) {
             setEmptyMessage(error?.message || "업체 주소를 확인할 수 없습니다.");
@@ -419,6 +559,7 @@
             await loadUsers(0, { keepSelection: true });
             showToast("사용자를 등록했습니다.", "success");
             createForm.reset();
+            configureRoleSelect(createForm.elements.role, { placeholderDisabled: true });
         } catch (error) {
             showToast(error?.message || "사용자를 등록하지 못했습니다.", "error");
         } finally {
@@ -459,6 +600,35 @@
             showToast(error?.message || "사용자를 수정하지 못했습니다.", "error");
         } finally {
             setFormSaving(editForm, false);
+        }
+    });
+
+    staffPermissionForm?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const companyCode = getCompanyCode();
+        if (!companyCode || staffPermissionForm.dataset.saving === "true") {
+            return;
+        }
+
+        try {
+            setFormSaving(staffPermissionForm, true);
+            const settings = await window.PcsApi.getData(
+                    `/api/workspaces/${encodeURIComponent(companyCode)}/users/staff-permissions`,
+                    {
+                        method: "PATCH",
+                        body: {
+                            enabledPermissions: readEnabledStaffPermissions()
+                        },
+                        authRedirect: true,
+                        loginCompanyCode: companyCode
+                    }
+            );
+            applyStaffPermissionSettings(settings);
+            showToast("직원 권한 설정을 저장했습니다.", "success");
+        } catch (error) {
+            showToast(error?.message || "직원 권한 설정을 저장하지 못했습니다.", "error");
+        } finally {
+            setFormSaving(staffPermissionForm, false);
         }
     });
 
