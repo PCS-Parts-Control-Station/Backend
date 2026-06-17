@@ -230,6 +230,10 @@ tb_inspection_item_result.idx_inspection_item_result_selected_option
 - 관리번호, 부품, 전표, 검수 유형, 결과, 등급, 기간 조건으로 검색할 수 있어야 한다.
 - 전표 기준 이력은 `documentId`, 개별 관리번호 기준 이력은 `unitId` 조건으로 조회한다.
 - 목록은 `inspected_at DESC, inspection_id DESC` 순서로 정렬한다.
+- 검수 이력 화면에서 전표 단위 목록을 보여주더라도 실제 검수 이력 row는 `tb_inspection`의 관리번호 단위 기록이다.
+- 전표 단위 요약은 `documentId` 기준 집계 결과이며, 개별 이력 추적은 항상 `unitId`와 `inspection_id` 기준으로 내려간다.
+- 전표 단위 페이징을 서버에서 직접 지원할 경우 `tb_inspection` row 페이징과 혼동하지 않도록 별도 집계 쿼리 또는 별도 응답 DTO를 사용한다.
+- 검수 이력 화면의 품목 묶음 구성을 위해 이력 목록 또는 전표 상세 조회 응답에는 품목명, 모델명, 품목 분류명 또는 카테고리명을 포함한다.
 
 ## 정합성 기준
 
