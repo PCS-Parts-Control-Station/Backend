@@ -47,10 +47,18 @@ out/
 .idea/
 .env.*
 !.env.example
+application-local.yml
+application-local.yaml
+application-local.properties
+application-secret.yml
+application-secret.yaml
+application-secret.properties
 gradle.properties
 *.log
 *.tmp
 tmp/
 harness/reports/*
 !harness/reports/.gitkeep
+.DS_Store
+Thumbs.db
 

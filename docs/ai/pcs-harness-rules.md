@@ -40,7 +40,7 @@ Feature:
 Git pre-push 훅은 `full`이 아니라 `gate`를 실행한다.
 
 ```powershell
-.\harness\run-harness.ps1 -Mode gate -RunBuild -RunDb -ChangedFilesPath <changed-files>
+.\harness\run-harness.ps1 -Mode gate -RunBuild -RunDb -ChangedFilesPath <changed-files> -TrackedFilesPath <tracked-files>
 ```
 
 기준:
@@ -48,6 +48,7 @@ Git pre-push 훅은 `full`이 아니라 `gate`를 실행한다.
 - push 직전에는 공통 규칙, JS 문법, compileJava, DB 기본 정합성을 항상 확인한다.
 - 변경 파일이 지원 중인 feature에 매핑되면 해당 feature 검사와 feature DB 검사를 추가한다.
 - 변경 파일이 feature에 매핑되지 않으면 공통 검사만 실행한다.
+- `TrackedFilesPath`는 pre-push 훅에서 `git ls-files` 결과를 넘기며, 이미 추적 중인 금지 파일을 잡기 위해 사용한다.
 - 아직 구현하지 않은 도메인을 이유로 push를 막지 않는다.
 - 전체 도메인 회귀 검사는 `full` 모드의 역할이며, 현재 개발 중 pre-push 기본값으로 사용하지 않는다.
 
@@ -306,11 +307,19 @@ out/
 .idea/
 .env
 .env.*
+application-local.yml
+application-local.yaml
+application-local.properties
+application-secret.yml
+application-secret.yaml
+application-secret.properties
 gradle.properties
 *.log
 *.tmp
 tmp/
 harness/reports/*
+.DS_Store
+Thumbs.db
 ```
 
 예외:
@@ -318,6 +327,51 @@ harness/reports/*
 ```text
 !.env.example
 !harness/reports/.gitkeep
+```
+
+Git 추적 금지:
+
+- `.gitignore`에 추가해도 이미 Git에 올라간 파일은 계속 추적된다.
+- 하네스는 `git ls-files` 기준으로 금지 파일이 이미 추적 중이면 실패해야 한다.
+- 삭제 커밋을 막지 않기 위해, pre-push 변경 파일 검사는 금지 파일이 현재 워크스페이스에 존재하는 경우에만 실패 처리한다.
+
+대표 금지 대상:
+
+```text
+.env
+.env.*
+gradle.properties
+application-local.yml
+application-local.yaml
+application-local.properties
+application-secret.yml
+application-secret.yaml
+application-secret.properties
+build/
+out/
+.gradle/
+.idea/workspace.xml
+.idea/tasks.xml
+*.iml
+*.log
+*.tmp
+tmp/
+harness/reports/*
+.DS_Store
+Thumbs.db
+```
+
+예외:
+
+```text
+.env.example
+harness/reports/.gitkeep
+```
+
+금지 파일이 이미 추적 중이면 아래처럼 Git 추적에서만 제거한다.
+
+```powershell
+git rm --cached <file>
 ```
 
 ## full 모드에서 강화할 규칙

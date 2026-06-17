@@ -5,8 +5,10 @@ ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
 CHANGED_FILES_PATH="harness/reports/pre-push-changed-files.txt"
+TRACKED_FILES_PATH="harness/reports/pre-push-tracked-files.txt"
 mkdir -p "harness/reports"
 : > "$CHANGED_FILES_PATH"
+git ls-files > "$TRACKED_FILES_PATH"
 
 while read local_ref local_sha remote_ref remote_sha
 do
@@ -26,9 +28,9 @@ done
 sort -u "$CHANGED_FILES_PATH" -o "$CHANGED_FILES_PATH"
 
 if command -v pwsh >/dev/null 2>&1; then
-  pwsh -NoProfile -File "./harness/run-harness.ps1" -Mode gate -RunBuild -RunDb -ChangedFilesPath "$CHANGED_FILES_PATH"
+  pwsh -NoProfile -File "./harness/run-harness.ps1" -Mode gate -RunBuild -RunDb -ChangedFilesPath "$CHANGED_FILES_PATH" -TrackedFilesPath "$TRACKED_FILES_PATH"
 elif command -v powershell.exe >/dev/null 2>&1; then
-  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "./harness/run-harness.ps1" -Mode gate -RunBuild -RunDb -ChangedFilesPath "$CHANGED_FILES_PATH"
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "./harness/run-harness.ps1" -Mode gate -RunBuild -RunDb -ChangedFilesPath "$CHANGED_FILES_PATH" -TrackedFilesPath "$TRACKED_FILES_PATH"
 else
   echo "PCS pre-push failed: PowerShell runner was not found."
   echo "Install PowerShell 7+."

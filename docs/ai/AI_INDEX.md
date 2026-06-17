@@ -195,6 +195,7 @@ SQL 참조 기준:
 - 실제 검사는 `run-harness.ps1`에 구현하고, `run-feedback-loop.ps1`은 옵션 전달과 실패 요약 생성을 담당한다.
 - PowerShell 하네스 코드는 Windows/macOS 검증 로직을 복제하지 않고, 공통 검증 로직 + OS 어댑터 구조를 따른다.
 - Git pre-push 훅은 `bootstrap`이나 `full`이 아니라 `gate` 모드로 변경 파일 기준 feature 검사와 공통 검증을 실행한다.
+- `.gitignore` 필수 패턴, Git 추적 금지 파일, pre-push 변경 파일 금지 검사는 `docs/ai/pcs-harness-rules.md`의 `.gitignore 규칙` 기준을 따른다.
 
 ---
 

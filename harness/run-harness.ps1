@@ -20,7 +20,9 @@ param(
 
     [int] $Port = 8080,
 
-    [string] $ChangedFilesPath = ""
+    [string] $ChangedFilesPath = "",
+
+    [string] $TrackedFilesPath = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -37,6 +39,28 @@ $warnings = New-Object System.Collections.Generic.List[object]
 $infos = New-Object System.Collections.Generic.List[object]
 $SupportedFeatureNames = @("company", "member", "auth", "partner", "category", "part")
 $SupportedDbFeatureNames = @("company", "member", "auth", "partner", "category")
+$ForbiddenGitPathPatterns = @(
+    '^\.env$',
+    '^\.env\..+',
+    '^gradle\.properties$',
+    '^application-(local|secret)\.(ya?ml|properties)$',
+    '^src/main/resources/application-(local|secret)\.(ya?ml|properties)$',
+    '(^|/)\.gradle/',
+    '(^|/)build/',
+    '(^|/)out/',
+    '(^|/)\.idea/(workspace\.xml|tasks\.xml|shelf/|httpRequests/)',
+    '(^|/).*\.iml$',
+    '(^|/).*\.log$',
+    '(^|/).*\.tmp$',
+    '^tmp/',
+    '^harness/reports/(?!\.gitkeep$).+',
+    '(^|/)\.DS_Store$',
+    '(^|/)Thumbs\.db$'
+)
+$AllowedGitPathPatterns = @(
+    '^\.env\.example$',
+    '^harness/reports/\.gitkeep$'
+)
 $script:SelectedFeatures = @()
 
 function Add-Result {
@@ -197,12 +221,20 @@ function Ensure-GitignoreRules {
         ".env",
         ".env.*",
         "!.env.example",
+        "application-local.yml",
+        "application-local.yaml",
+        "application-local.properties",
+        "application-secret.yml",
+        "application-secret.yaml",
+        "application-secret.properties",
         "gradle.properties",
         "*.log",
         "*.tmp",
         "tmp/",
         "harness/reports/*",
-        "!harness/reports/.gitkeep"
+        "!harness/reports/.gitkeep",
+        ".DS_Store",
+        "Thumbs.db"
     )
 
     if (-not (Test-Path $gitignorePath)) {
@@ -228,6 +260,119 @@ function Ensure-GitignoreRules {
         }
     } else {
         Add-Result "INFO" "GITIGNORE_REQUIRED_RULES" ".gitignore contains required rules."
+    }
+}
+
+function Test-AllowedGitPath {
+    param(
+        [string] $Path
+    )
+
+    $normalizedPath = Normalize-HarnessPath $Path
+    foreach ($pattern in $AllowedGitPathPatterns) {
+        if ($normalizedPath -match $pattern) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
+function Test-ForbiddenGitPath {
+    param(
+        [string] $Path
+    )
+
+    $normalizedPath = Normalize-HarnessPath $Path
+    if ([string]::IsNullOrWhiteSpace($normalizedPath)) {
+        return $false
+    }
+
+    if (Test-AllowedGitPath $normalizedPath) {
+        return $false
+    }
+
+    foreach ($pattern in $ForbiddenGitPathPatterns) {
+        if ($normalizedPath -match $pattern) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
+function Get-GitTrackedFiles {
+    if (-not [string]::IsNullOrWhiteSpace($TrackedFilesPath)) {
+        $resolvedPath = $TrackedFilesPath
+        if (-not [System.IO.Path]::IsPathRooted($resolvedPath)) {
+            $resolvedPath = Join-Path $ProjectRoot $resolvedPath
+        }
+
+        if (Test-Path $resolvedPath) {
+            return @(Get-Content -Path $resolvedPath | ForEach-Object { Normalize-HarnessPath $_ } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+        }
+
+        Add-Result "WARN" "GIT_TRACKED_FILES_LIST_MISSING" "Tracked files list was not found: $TrackedFilesPath" "Check the pre-push hook tracked-file collection."
+    }
+
+    if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+        Add-Result "WARN" "GIT_COMMAND_UNAVAILABLE" "git command is not available, so tracked forbidden-file checks were skipped." "Run the harness from a shell where git is available."
+        return @()
+    }
+
+    try {
+        Push-Location $ProjectRoot
+        $trackedFiles = @(git ls-files 2>$null)
+        Pop-Location
+        return @($trackedFiles | ForEach-Object { Normalize-HarnessPath $_ } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    } catch {
+        try {
+            Pop-Location
+        } catch {
+        }
+        Add-Result "WARN" "GIT_TRACKED_FILES_UNAVAILABLE" "git tracked-file list could not be read." "Check git installation and repository state."
+        return @()
+    }
+}
+
+function Test-GitForbiddenFiles {
+    $trackedFiles = @(Get-GitTrackedFiles)
+    if ($trackedFiles.Count -gt 0) {
+        $forbiddenTrackedFiles = @($trackedFiles | Where-Object { Test-ForbiddenGitPath $_ } | Select-Object -Unique)
+        if ($forbiddenTrackedFiles.Count -gt 0) {
+            Add-Result "FAIL" "GIT_TRACKED_FORBIDDEN_FILES" "Forbidden files are already tracked by Git: $($forbiddenTrackedFiles -join ', ')" "Remove them from Git tracking with git rm --cached, keep them in .gitignore, then commit the removal."
+        } else {
+            Add-Result "INFO" "GIT_TRACKED_FORBIDDEN_FILES" "No forbidden files are tracked by Git."
+        }
+    }
+
+    if ([string]::IsNullOrWhiteSpace($ChangedFilesPath)) {
+        return
+    }
+
+    $changedFiles = @(Get-ChangedFilesForGate)
+    if ($changedFiles.Count -eq 0) {
+        return
+    }
+
+    $forbiddenChangedFiles = New-Object System.Collections.Generic.List[string]
+    foreach ($changedFile in $changedFiles) {
+        $normalizedPath = Normalize-HarnessPath $changedFile
+        if (-not (Test-ForbiddenGitPath $normalizedPath)) {
+            continue
+        }
+
+        $absolutePath = Join-Path $ProjectRoot $normalizedPath
+        if (Test-Path $absolutePath) {
+            $forbiddenChangedFiles.Add($normalizedPath) | Out-Null
+        }
+    }
+
+    $forbiddenChangedFiles = @($forbiddenChangedFiles | Select-Object -Unique)
+    if ($forbiddenChangedFiles.Count -gt 0) {
+        Add-Result "FAIL" "GIT_PUSH_FORBIDDEN_FILES" "Forbidden files are included in this push: $($forbiddenChangedFiles -join ', ')" "Remove these files from the commit or add only the approved example file."
+    } else {
+        Add-Result "INFO" "GIT_PUSH_FORBIDDEN_FILES" "No forbidden files are included in the changed-file list."
     }
 }
 
@@ -2347,6 +2492,7 @@ function Write-Report {
     $lines.Add("- RunDb: $RunDb") | Out-Null
     $lines.Add("- DbFeature: $DbFeature") | Out-Null
     $lines.Add("- ChangedFilesPath: $ChangedFilesPath") | Out-Null
+    $lines.Add("- TrackedFilesPath: $TrackedFilesPath") | Out-Null
     if ($script:SelectedFeatures.Count -gt 0) {
         $lines.Add("- SelectedFeatures: $($script:SelectedFeatures -join ', ')") | Out-Null
     } else {
@@ -2386,6 +2532,7 @@ function Write-Report {
 }
 
 Ensure-GitignoreRules
+Test-GitForbiddenFiles
 Test-JavaVersion
 Test-BootstrapStructure
 Test-ProjectSettings
@@ -2433,6 +2580,7 @@ Write-Host "RunSwagger: $RunSwagger"
 Write-Host "RunDb: $RunDb"
 Write-Host "DbFeature: $DbFeature"
 Write-Host "ChangedFilesPath: $ChangedFilesPath"
+Write-Host "TrackedFilesPath: $TrackedFilesPath"
 Write-Host "SelectedFeatures: $(if ($script:SelectedFeatures.Count -gt 0) { $script:SelectedFeatures -join ', ' } else { 'none' })"
 Write-Host "FAIL: $($failures.Count), WARN: $($warnings.Count), INFO: $($infos.Count)"
 Write-Host "Report: $ReportPath"
