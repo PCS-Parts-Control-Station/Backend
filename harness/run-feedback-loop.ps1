@@ -1,8 +1,8 @@
 param(
-    [ValidateSet("bootstrap", "full")]
+    [ValidateSet("bootstrap", "gate", "full")]
     [string] $Mode = "bootstrap",
 
-    [ValidateSet("none", "company", "member", "auth", "partner", "category")]
+    [ValidateSet("none", "company", "member", "auth", "partner", "category", "part")]
     [string] $Feature = "none",
 
     [switch] $RunBuild,
@@ -16,7 +16,9 @@ param(
 
     [switch] $CheckPort,
 
-    [int] $Port = 8080
+    [int] $Port = 8080,
+
+    [string] $ChangedFilesPath = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -78,6 +80,10 @@ function Invoke-HarnessCheck {
 
     if ($CheckPort) {
         $arguments += @("-CheckPort", "-Port", "$Port")
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($ChangedFilesPath)) {
+        $arguments += @("-ChangedFilesPath", $ChangedFilesPath)
     }
 
     Push-Location $ProjectRoot
@@ -142,6 +148,7 @@ function New-AgentFeedback {
     $feedback.Add("- RunSwagger: $RunSwagger") | Out-Null
     $feedback.Add("- RunDb: $RunDb") | Out-Null
     $feedback.Add("- DbFeature: $DbFeature") | Out-Null
+    $feedback.Add("- ChangedFilesPath: $ChangedFilesPath") | Out-Null
     $feedback.Add("") | Out-Null
 
     $feedback.Add("## FAIL") | Out-Null
@@ -186,6 +193,7 @@ Write-Host "RunBuild: $RunBuild"
 Write-Host "RunSwagger: $RunSwagger"
 Write-Host "RunDb: $RunDb"
 Write-Host "DbFeature: $DbFeature"
+Write-Host "ChangedFilesPath: $ChangedFilesPath"
 Write-Host "HarnessExitCode: $exitCode"
 Write-Host "HarnessReport: $LatestReportPath"
 Write-Host "AgentFeedback: $AgentFeedbackPath"

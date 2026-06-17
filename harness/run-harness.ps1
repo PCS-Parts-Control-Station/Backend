@@ -1,8 +1,8 @@
 param(
-    [ValidateSet("bootstrap", "full")]
+    [ValidateSet("bootstrap", "gate", "full")]
     [string] $Mode = "bootstrap",
 
-    [ValidateSet("none", "company", "member", "auth", "partner", "category")]
+    [ValidateSet("none", "company", "member", "auth", "partner", "category", "part")]
     [string] $Feature = "none",
 
     [switch] $FixGitignore,
@@ -18,7 +18,9 @@ param(
 
     [switch] $CheckPort,
 
-    [int] $Port = 8080
+    [int] $Port = 8080,
+
+    [string] $ChangedFilesPath = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -33,6 +35,9 @@ New-Item -ItemType Directory -Force -Path $ReportDir | Out-Null
 $failures = New-Object System.Collections.Generic.List[object]
 $warnings = New-Object System.Collections.Generic.List[object]
 $infos = New-Object System.Collections.Generic.List[object]
+$SupportedFeatureNames = @("company", "member", "auth", "partner", "category", "part")
+$SupportedDbFeatureNames = @("company", "member", "auth", "partner", "category")
+$script:SelectedFeatures = @()
 
 function Add-Result {
     param(
@@ -469,6 +474,166 @@ function Test-FullModeStructure {
     }
 }
 
+function Normalize-HarnessPath {
+    param(
+        [string] $Path
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+        return ""
+    }
+
+    $normalized = ($Path -replace "\\", "/").Trim()
+    while ($normalized.StartsWith("./")) {
+        $normalized = $normalized.Substring(2)
+    }
+
+    return $normalized
+}
+
+function Add-FeatureIfSupported {
+    param(
+        [System.Collections.Generic.List[string]] $Features,
+        [string] $FeatureName
+    )
+
+    if ([string]::IsNullOrWhiteSpace($FeatureName)) {
+        return
+    }
+
+    if ($SupportedFeatureNames -notcontains $FeatureName) {
+        return
+    }
+
+    if ($Features -notcontains $FeatureName) {
+        $Features.Add($FeatureName) | Out-Null
+    }
+}
+
+function Resolve-FeatureFromChangedPath {
+    param(
+        [string] $Path
+    )
+
+    $path = Normalize-HarnessPath $Path
+
+    if ($path -match '^src/main/java/com/pcs/domain/company/' -or
+        $path -match '^src/main/resources/mapper/company/' -or
+        $path -match '^docs/features/company(-db)?\.md$' -or
+        $path -match '^src/main/resources/static/(company-register|company-complete)\.html$' -or
+        $path -match '^src/main/resources/static/js/(company-register|company-complete)\.js$') {
+        return "company"
+    }
+
+    if ($path -match '^src/main/java/com/pcs/domain/member/' -or
+        $path -match '^src/main/resources/mapper/member/' -or
+        $path -match '^docs/features/member(-db)?\.md$' -or
+        $path -match '^src/main/resources/static/(users|mypage)\.html$' -or
+        $path -match '^src/main/resources/static/js/(users|mypage)\.js$') {
+        return "member"
+    }
+
+    if ($path -match '^src/main/java/com/pcs/domain/auth/' -or
+        $path -match '^src/main/java/com/pcs/global/(jwt|security|auth)/' -or
+        $path -match '^src/main/resources/mapper/auth/' -or
+        $path -match '^docs/features/auth(-db)?\.md$' -or
+        $path -match '^src/main/resources/static/(login|workspace-login)\.html$' -or
+        $path -match '^src/main/resources/static/js/(login|workspace-login|pcs-api)\.js$' -or
+        $path -match '^docs/ai/pcs-auth-client-rules\.md$') {
+        return "auth"
+    }
+
+    if ($path -match '^src/main/java/com/pcs/domain/partner/' -or
+        $path -match '^src/main/resources/mapper/partner/' -or
+        $path -match '^docs/features/partner(-db)?\.md$' -or
+        $path -match '^src/main/resources/static/partners\.html$' -or
+        $path -match '^src/main/resources/static/js/partners\.js$') {
+        return "partner"
+    }
+
+    if ($path -match '^src/main/java/com/pcs/domain/category/' -or
+        $path -match '^src/main/resources/mapper/category/' -or
+        $path -match '^docs/features/category(-db)?\.md$' -or
+        $path -match '^src/main/resources/static/categories\.html$' -or
+        $path -match '^src/main/resources/static/js/categories\.js$') {
+        return "category"
+    }
+
+    if ($path -match '^src/main/java/com/pcs/domain/part/' -or
+        $path -match '^src/main/resources/mapper/part/' -or
+        $path -match '^docs/features/part(-db)?\.md$' -or
+        $path -match '^src/main/resources/static/parts\.html$' -or
+        $path -match '^src/main/resources/static/js/parts\.js$') {
+        return "part"
+    }
+
+    return $null
+}
+
+function Get-ChangedFilesForGate {
+    if (-not [string]::IsNullOrWhiteSpace($ChangedFilesPath)) {
+        $resolvedPath = $ChangedFilesPath
+        if (-not [System.IO.Path]::IsPathRooted($resolvedPath)) {
+            $resolvedPath = Join-Path $ProjectRoot $resolvedPath
+        }
+
+        if (Test-Path $resolvedPath) {
+            return @(Get-Content -Path $resolvedPath | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+        }
+
+        Add-Result "WARN" "GATE_CHANGED_FILES_MISSING" "Changed files list was not found: $ChangedFilesPath" "Check the pre-push hook changed-file collection."
+        return @()
+    }
+
+    Add-Result "INFO" "GATE_CHANGED_FILES_EMPTY" "No changed files list was provided." "Pass -ChangedFilesPath from pre-push hook when running gate mode."
+    return @()
+}
+
+function Resolve-GateFeatures {
+    $features = [System.Collections.Generic.List[string]]::new()
+
+    if ($Feature -ne "none") {
+        Add-FeatureIfSupported $features $Feature
+        return $features.ToArray()
+    }
+
+    $changedFiles = Get-ChangedFilesForGate
+    foreach ($changedFile in $changedFiles) {
+        $resolvedFeature = Resolve-FeatureFromChangedPath $changedFile
+        Add-FeatureIfSupported $features $resolvedFeature
+    }
+
+    if ($features.Count -eq 0) {
+        Add-Result "INFO" "GATE_FEATURES_NONE" "No supported feature-specific checks were inferred from changed files." "Common, build, and DB preflight checks still run."
+    } else {
+        Add-Result "INFO" "GATE_FEATURES" "Gate inferred feature checks: $($features -join ', ')." "Feature inference is based on changed file paths."
+    }
+
+    return $features.ToArray()
+}
+
+function Invoke-FeatureChecks {
+    param(
+        [string[]] $Features
+    )
+
+    foreach ($selectedFeature in $Features) {
+        if ($selectedFeature -eq "company") {
+            Test-CompanyFeature
+        } elseif ($selectedFeature -eq "member") {
+            Test-MemberFeature
+        } elseif ($selectedFeature -eq "auth") {
+            Test-AuthFeature
+        } elseif ($selectedFeature -eq "partner") {
+            Test-PartnerFeature
+        } elseif ($selectedFeature -eq "category") {
+            Test-CategoryFeature
+        } elseif ($selectedFeature -eq "part") {
+            Test-PartFeature
+        }
+    }
+}
+
 function Test-CompanyFeature {
     Test-PathRequired "docs/features/company.md" "COMPANY_FEATURE_DOC" "Keep docs/features/company.md as the company feature rule source."
     Test-PathRequired "src/main/java/com/pcs/domain/company/api/OwnerSignupApiController.java" "COMPANY_SIGNUP_API" "Expose POST /api/owners/signup in company/api."
@@ -895,6 +1060,49 @@ function Test-CategoryFeature {
     }
 
     Add-Result "INFO" "CATEGORY_FEATURE" "Category feature checks completed."
+}
+
+function Test-PartFeature {
+    Test-PathRequired "docs/features/part.md" "PART_FEATURE_DOC" "Keep docs/features/part.md as the part feature rule source."
+    Test-PathRequired "docs/features/part-db.md" "PART_DB_DOC" "Keep docs/features/part-db.md as the part DB rule source."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/api/PartApiController.java" "PART_API" "Expose part workspace APIs in part/api."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/dto/request/CreatePartRequest.java" "PART_CREATE_REQUEST" "Keep part create request DTO."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/dto/request/UpdatePartRequest.java" "PART_UPDATE_REQUEST" "Keep part update request DTO."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/dto/request/PartSpecValueRequest.java" "PART_SPEC_VALUE_REQUEST" "Keep part spec value request DTO."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/dto/response/SearchPartResponse.java" "PART_SEARCH_RESPONSE" "Keep part list response DTO."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/dto/response/PartDetailResponse.java" "PART_DETAIL_RESPONSE" "Keep part detail response DTO."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/dto/response/PartSpecValueResponse.java" "PART_SPEC_VALUE_RESPONSE" "Keep part spec value response DTO."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/entity/PcPart.java" "PART_ENTITY" "Keep tb_pc_part row state in part/entity."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/entity/PartSpecValue.java" "PART_SPEC_VALUE_ENTITY" "Keep tb_part_spec_value row state in part/entity."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/facade/PartFacade.java" "PART_FACADE" "Keep part company-scope validation in part/facade."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/service/PartService.java" "PART_SERVICE" "Keep part business rules in part/service."
+    Test-PathRequired "src/main/java/com/pcs/domain/part/mapper/PartMapper.java" "PART_MAPPER" "Keep MyBatis mapper interface for part persistence."
+    Test-PathRequired "src/main/resources/mapper/part/PartMapper.xml" "PART_MAPPER_XML" "Keep MyBatis mapper XML for part persistence."
+
+    $controller = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/part/api/PartApiController.java"
+    if (Test-Path $controller) {
+        $controllerContent = Get-Content -Raw $controller
+        foreach ($pattern in @("@RestController", '@RequestMapping\("/api"\)', '@GetMapping\("/workspaces/\{companyCode\}/parts"\)', '@PostMapping\("/workspaces/\{companyCode\}/parts"\)', '@PatchMapping\("/workspaces/\{companyCode\}/parts/\{partId\}"\)', "@AuthenticationPrincipal", "ApiResultDto", "PageResultDto")) {
+            if ($controllerContent -notmatch $pattern) {
+                Add-Result "FAIL" "PART_CONTROLLER_PATTERN" "PartApiController is missing required pattern: $pattern" "Keep part CRUD/list API aligned with docs/features/part.md."
+            }
+        }
+    }
+
+    $mapperXml = Join-Path $ProjectRoot "src/main/resources/mapper/part/PartMapper.xml"
+    if (Test-Path $mapperXml) {
+        $mapperXmlContent = Get-Content -Raw $mapperXml
+        if ($mapperXmlContent -notmatch 'namespace="com\.pcs\.domain\.part\.mapper\.PartMapper"') {
+            Add-Result "FAIL" "PART_MAPPER_NAMESPACE" "PartMapper.xml namespace does not match PartMapper FQCN." "Match XML namespace to mapper interface."
+        }
+        foreach ($pattern in @("tb_pc_part", "tb_part_spec_value", "tb_part_category", "LIMIT", "OFFSET", "COUNT(*)", "ORDER BY p.part_id DESC")) {
+            if ($mapperXmlContent -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "PART_MAPPER_PATTERN" "PartMapper.xml is missing required SQL pattern: $pattern" "Keep part search and spec value SQL aligned with docs/features/part.md."
+            }
+        }
+    }
+
+    Add-Result "INFO" "PART_FEATURE" "Part feature checks completed."
 }
 
 function Get-DbConfig {
@@ -1957,8 +2165,14 @@ function Invoke-DbChecks {
         $requestedChecks.Add("checkdb") | Out-Null
     }
 
-    if ($RunDb -and $Feature -ne "none") {
-        $requestedChecks.Add($Feature) | Out-Null
+    if ($RunDb -and $script:SelectedFeatures -and $script:SelectedFeatures.Count -gt 0) {
+        foreach ($selectedFeature in $script:SelectedFeatures) {
+            if ($SupportedDbFeatureNames -contains $selectedFeature) {
+                $requestedChecks.Add($selectedFeature) | Out-Null
+            } else {
+                Add-Result "INFO" "DB_FEATURE_NOT_IMPLEMENTED_$($selectedFeature.ToUpper())" "DB harness check is not implemented for feature: $selectedFeature." "Add a DB checker before requiring this feature in DB gate."
+            }
+        }
     }
 
     if ($DbFeature -ne "none") {
@@ -2132,6 +2346,12 @@ function Write-Report {
     $lines.Add("- RunSwagger: $RunSwagger") | Out-Null
     $lines.Add("- RunDb: $RunDb") | Out-Null
     $lines.Add("- DbFeature: $DbFeature") | Out-Null
+    $lines.Add("- ChangedFilesPath: $ChangedFilesPath") | Out-Null
+    if ($script:SelectedFeatures.Count -gt 0) {
+        $lines.Add("- SelectedFeatures: $($script:SelectedFeatures -join ', ')") | Out-Null
+    } else {
+        $lines.Add("- SelectedFeatures: none") | Out-Null
+    }
     $lines.Add("- GeneratedAt: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')") | Out-Null
     $lines.Add("- FAIL: $($failures.Count)") | Out-Null
     $lines.Add("- WARN: $($warnings.Count)") | Out-Null
@@ -2182,25 +2402,15 @@ if ($Mode -eq "full") {
     Test-FullModeStructure
 }
 
-if ($Feature -eq "company") {
-    Test-CompanyFeature
+if ($Mode -eq "gate") {
+    $script:SelectedFeatures = @(Resolve-GateFeatures)
+} elseif ($Feature -ne "none") {
+    $script:SelectedFeatures = @($Feature)
+} else {
+    $script:SelectedFeatures = @()
 }
 
-if ($Feature -eq "member") {
-    Test-MemberFeature
-}
-
-if ($Feature -eq "auth") {
-    Test-AuthFeature
-}
-
-if ($Feature -eq "partner") {
-    Test-PartnerFeature
-}
-
-if ($Feature -eq "category") {
-    Test-CategoryFeature
-}
+Invoke-FeatureChecks $script:SelectedFeatures
 
 Invoke-DbChecks
 
@@ -2222,6 +2432,8 @@ Write-Host "RunBuild: $RunBuild"
 Write-Host "RunSwagger: $RunSwagger"
 Write-Host "RunDb: $RunDb"
 Write-Host "DbFeature: $DbFeature"
+Write-Host "ChangedFilesPath: $ChangedFilesPath"
+Write-Host "SelectedFeatures: $(if ($script:SelectedFeatures.Count -gt 0) { $script:SelectedFeatures -join ', ' } else { 'none' })"
 Write-Host "FAIL: $($failures.Count), WARN: $($warnings.Count), INFO: $($infos.Count)"
 Write-Host "Report: $ReportPath"
 
