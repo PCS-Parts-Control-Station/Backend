@@ -1,10 +1,12 @@
 (function () {
-    const companyCode = window.PcsWorkspace?.getCompanyCode?.() || window.location.pathname.split("/").filter(Boolean)[1] || "";
+    const companyCode = window.PcsWorkspace?.getCompanyCode?.()
+            || window.location.pathname.split("/").filter(Boolean)[1]
+            || "";
 
     const roleLabels = {
-        OWNER: "OWNER",
-        ADMIN: "ADMIN",
-        STAFF: "STAFF"
+        OWNER: "최고 관리자",
+        ADMIN: "관리자",
+        STAFF: "작업자"
     };
 
     const passwordStatusLabels = {
@@ -21,6 +23,14 @@
         STAFF_OUTBOUND: "출고"
     };
 
+    const profileForm = document.querySelector("[data-mypage-profile-form]");
+    const ownerCompanyForm = document.querySelector("[data-owner-company-form]");
+    const passwordForm = document.querySelector("[data-mypage-password-form]");
+    const showToast = window.PcsFeedback?.toast || ((message, type = "info") => {
+        window.PcsUi?.toast?.({ message, type });
+    });
+    const setFormSaving = window.PcsForm?.setSaving || (() => {});
+
     const text = (selector, value) => {
         const element = document.querySelector(selector);
         if (element) {
@@ -35,14 +45,19 @@
         }
     };
 
+    const trimOrNull = (value) => {
+        const normalized = String(value || "").trim();
+        return normalized || null;
+    };
+
     const showRoleSection = (role) => {
         document.querySelectorAll("[data-role-section]").forEach((section) => {
             section.hidden = section.dataset.roleSection !== role;
         });
     };
 
-    const renderStaffPermissions = (permissions = []) => {
-        const list = document.querySelector("[data-staff-permission-list]");
+    const renderPermissionList = (selector, permissions = []) => {
+        const list = document.querySelector(selector);
         if (!list) {
             return;
         }
@@ -51,7 +66,7 @@
         if (permissions.length === 0) {
             const empty = document.createElement("span");
             empty.className = "badge badge-inactive";
-            empty.textContent = "허용된 업무 권한 없음";
+            empty.textContent = "사용 가능한 업무 메뉴가 없습니다";
             list.append(empty);
             return;
         }
@@ -64,11 +79,17 @@
         });
     };
 
-    const bindUiOnlyActions = () => {
-        document.querySelectorAll("[data-ui-only-action]").forEach((button) => {
-            button.addEventListener("click", () => {
-                window.PcsFeedback?.toast("마이페이지 화면만 준비되어 있습니다.", "info");
-            });
+    const renderStaffPermissions = (permissions = []) => {
+        renderPermissionList("[data-staff-permission-list]", permissions);
+        renderPermissionList("[data-staff-permission-aside-list]", permissions);
+    };
+
+    const updateWorkspaceLinks = (resolvedCompanyCode) => {
+        document.querySelectorAll("[data-users-link]").forEach((link) => {
+            link.href = `/w/${encodeURIComponent(resolvedCompanyCode)}/users`;
+        });
+        document.querySelectorAll("[data-dashboard-link]").forEach((link) => {
+            link.href = `/w/${encodeURIComponent(resolvedCompanyCode)}/dashboard`;
         });
     };
 
@@ -77,23 +98,47 @@
         const name = session?.name || "접속 계정";
         const loginId = session?.loginId || "-";
         const resolvedCompanyCode = session?.companyCode || companyCode;
+        const roleLabel = roleLabels[role] || role || "-";
+        const passwordStatusLabel = passwordStatusLabels[session?.passwordStatus] || session?.passwordStatus || "-";
 
         text("[data-mypage-name]", name);
         text("[data-mypage-description]", `${loginId} 계정으로 접속 중입니다.`);
         text("[data-mypage-company-code]", resolvedCompanyCode);
         text("[data-mypage-login-id]", loginId);
-        text("[data-mypage-role]", roleLabels[role] || role || "-");
-        text("[data-mypage-role-badge]", roleLabels[role] || role || "ROLE");
-        text("[data-mypage-password-status]", passwordStatusLabels[session?.passwordStatus] || session?.passwordStatus || "-");
+        text("[data-mypage-role]", roleLabel);
+        text("[data-mypage-role-badge]", roleLabel);
+        text("[data-mypage-password-status]", passwordStatusLabel);
+        text("[data-side-name]", name);
+        text("[data-side-role]", roleLabel);
+        text("[data-side-company-code]", resolvedCompanyCode);
+        text("[data-side-login-id]", loginId);
+        text("[data-session-name]", `${name} (${role})`);
+
+        value("[data-member-name-input]", name);
+        value("[data-member-login-id-input]", loginId);
+        value("[data-member-role-input]", roleLabel);
+        value("[data-member-password-status-input]", passwordStatusLabel);
         value("[data-owner-company-code]", resolvedCompanyCode);
 
-        const usersLink = document.querySelector("[data-users-link]");
-        if (usersLink) {
-            usersLink.href = `/w/${encodeURIComponent(resolvedCompanyCode)}/users`;
-        }
-
+        updateWorkspaceLinks(resolvedCompanyCode);
         showRoleSection(role);
         renderStaffPermissions(session?.staffPermissions || []);
+    };
+
+    const renderOwnerCompany = (company) => {
+        value("[data-owner-company-code]", company?.companyCode || companyCode);
+        value("[data-owner-company-name]", company?.companyName || "");
+        value("[data-owner-company-email]", company?.representativeEmail || "");
+        value("[data-owner-company-phone]", company?.representativePhone || "");
+        value("[data-owner-company-business-no]", company?.businessRegistrationNo || "");
+    };
+
+    const loadOwnerCompany = async () => {
+        const company = await window.PcsApi.getData("/api/owners/company", {
+            authRedirect: true,
+            loginCompanyCode: companyCode
+        });
+        renderOwnerCompany(company);
     };
 
     const loadMypage = async () => {
@@ -102,17 +147,147 @@
         }
 
         try {
-            const session = await window.PcsApi.getData(`/api/workspaces/${encodeURIComponent(companyCode)}/me`, {
+            const session = await window.PcsApi.getData(`/api/workspaces/${encodeURIComponent(companyCode)}/mypage`, {
                 authRedirect: true,
                 loginCompanyCode: companyCode
             });
             renderSession(session);
+
+            if (session?.role === "OWNER") {
+                await loadOwnerCompany();
+            }
         } catch (error) {
             text("[data-mypage-name]", "계정 확인 실패");
-            text("[data-mypage-description]", "로그인 정보를 다시 확인해야 합니다.");
+            text("[data-mypage-description]", "로그인 정보를 다시 확인해 주세요.");
+            showToast(error.message || "마이페이지 정보를 불러오지 못했습니다.", "error");
         }
     };
 
-    bindUiOnlyActions();
+    const bindProfileForm = () => {
+        if (!profileForm) {
+            return;
+        }
+
+        profileForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const name = String(profileForm.elements.name?.value || "").trim();
+            if (!name) {
+                showToast("이름을 입력해 주세요.", "warning");
+                profileForm.elements.name?.focus();
+                return;
+            }
+
+            setFormSaving(profileForm, true, "저장 중");
+            try {
+                const result = await window.PcsApi.request(`/api/workspaces/${encodeURIComponent(companyCode)}/mypage`, {
+                    method: "PATCH",
+                    body: { name },
+                    authRedirect: true,
+                    loginCompanyCode: companyCode
+                });
+                renderSession(result.data);
+                showToast(result.message || "내 정보가 저장되었습니다.", "success");
+            } catch (error) {
+                showToast(error.message || "내 정보를 저장하지 못했습니다.", "error");
+            } finally {
+                setFormSaving(profileForm, false);
+            }
+        });
+    };
+
+    const bindOwnerCompanyForm = () => {
+        if (!ownerCompanyForm) {
+            return;
+        }
+
+        ownerCompanyForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const companyName = String(ownerCompanyForm.elements.companyName?.value || "").trim();
+            if (!companyName) {
+                showToast("회사명을 입력해 주세요.", "warning");
+                ownerCompanyForm.elements.companyName?.focus();
+                return;
+            }
+
+            const payload = {
+                companyName,
+                representativeEmail: trimOrNull(ownerCompanyForm.elements.representativeEmail?.value),
+                representativePhone: trimOrNull(ownerCompanyForm.elements.representativePhone?.value),
+                businessRegistrationNo: trimOrNull(ownerCompanyForm.elements.businessRegistrationNo?.value)
+            };
+
+            setFormSaving(ownerCompanyForm, true, "저장 중");
+            try {
+                const result = await window.PcsApi.request("/api/owners/company", {
+                    method: "PATCH",
+                    body: payload,
+                    authRedirect: true,
+                    loginCompanyCode: companyCode
+                });
+                renderOwnerCompany(result.data);
+                showToast(result.message || "회사 정보가 저장되었습니다.", "success");
+            } catch (error) {
+                showToast(error.message || "회사 정보를 저장하지 못했습니다.", "error");
+            } finally {
+                setFormSaving(ownerCompanyForm, false);
+            }
+        });
+    };
+
+    const bindPasswordForm = () => {
+        if (!passwordForm) {
+            return;
+        }
+
+        passwordForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const currentPassword = passwordForm.elements.currentPassword?.value || "";
+            const newPassword = passwordForm.elements.newPassword?.value || "";
+            const newPasswordConfirm = passwordForm.elements.newPasswordConfirm?.value || "";
+
+            if (!currentPassword || !newPassword || !newPasswordConfirm) {
+                showToast("비밀번호 입력 항목을 모두 채워 주세요.", "warning");
+                return;
+            }
+            if (newPassword.length < 8) {
+                showToast("새 비밀번호는 8자 이상으로 입력해 주세요.", "warning");
+                passwordForm.elements.newPassword?.focus();
+                return;
+            }
+            if (newPassword !== newPasswordConfirm) {
+                showToast("새 비밀번호 확인이 일치하지 않습니다.", "warning");
+                passwordForm.elements.newPasswordConfirm?.focus();
+                return;
+            }
+
+            setFormSaving(passwordForm, true, "변경 중");
+            try {
+                const result = await window.PcsApi.request(`/api/workspaces/${encodeURIComponent(companyCode)}/mypage/password`, {
+                    method: "PATCH",
+                    body: {
+                        currentPassword,
+                        newPassword,
+                        newPasswordConfirm
+                    },
+                    authRedirect: true,
+                    loginCompanyCode: companyCode
+                });
+                passwordForm.reset();
+                renderSession(result.data);
+                showToast(result.message || "비밀번호가 변경되었습니다.", "success");
+            } catch (error) {
+                showToast(error.message || "비밀번호를 변경하지 못했습니다.", "error");
+            } finally {
+                setFormSaving(passwordForm, false);
+            }
+        });
+    };
+
+    bindProfileForm();
+    bindOwnerCompanyForm();
+    bindPasswordForm();
     loadMypage();
 })();

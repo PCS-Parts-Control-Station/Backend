@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="PCS 사용자 관리 화면입니다. 작업 공간의 사용자 계정과 권한을 관리합니다.">
+    <meta name="description" content="PCS 사용자 관리 화면입니다. 작업 공간의 사용자 계정과 업무 메뉴를 관리합니다.">
     <title>PCS | 사용자 관리</title>
     <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/admin.css?20260612_user_permission_ui">
+    <link rel="stylesheet" href="/css/admin.css?20260615_user_copy">
     <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
 </head>
 <body class="has-collapsible-sidebar">
@@ -28,7 +28,7 @@
             <div>
                 <p class="page-kicker">기준 정보 관리</p>
                 <h1>사용자 관리</h1>
-                <p class="page-description">작업 공간을 함께 사용할 계정을 등록하고 권한을 관리합니다.</p>
+                <p class="page-description">작업 공간을 함께 사용할 계정을 등록하고 사용할 업무 메뉴를 관리합니다.</p>
             </div>
         </header>
 
@@ -37,7 +37,7 @@
                 <section class="filter-card management-filter-card" aria-labelledby="filter-title">
                     <div>
                         <h2 id="filter-title">사용자 검색</h2>
-                        <p>이름, 로그인 아이디, 권한으로 목록을 좁혀 봅니다.</p>
+                        <p>이름, 로그인 아이디, 계정 유형으로 목록을 좁혀 봅니다.</p>
                     </div>
                     <form class="filter-form management-filter-form user-filter-form" action="#" method="get" autocomplete="off" data-user-filter-form>
                         <label>
@@ -45,11 +45,11 @@
                             <input type="search" name="keyword" placeholder="이름 또는 아이디" autocomplete="off">
                         </label>
                         <label>
-                            <span>권한</span>
+                            <span>계정 유형</span>
                             <select name="role">
                                 <option value="">전체</option>
-                                <option value="ADMIN">관리자 (ADMIN)</option>
-                                <option value="STAFF">작업자 (STAFF)</option>
+                                <option value="ADMIN">관리자</option>
+                                <option value="STAFF">작업자</option>
                             </select>
                         </label>
                         <button class="btn btn-primary" type="submit">검색</button>
@@ -84,7 +84,7 @@
                         <div class="data-row management-data-row user-management-data-row table-head" role="row">
                             <span role="columnheader">이름</span>
                             <span role="columnheader">로그인 아이디</span>
-                            <span role="columnheader">권한</span>
+                            <span role="columnheader">계정 유형</span>
                             <span role="columnheader">수정일</span>
                         </div>
                         <div class="data-row management-data-row user-management-data-row empty-data-row" role="row" data-user-empty>
@@ -105,7 +105,7 @@
                 <div class="panel-card side-work-panel">
                     <div class="panel-mode is-active" data-user-panel="create">
                         <h2 id="user-form-title">사용자 등록</h2>
-                        <p>새 사용자를 등록하고 권한을 지정합니다.</p>
+                        <p>새 사용자를 등록하고 계정 유형을 지정합니다.</p>
                         <form class="management-form" action="#" method="post" autocomplete="off" data-user-create-form>
                             <label>
                                 <span>이름</span>
@@ -116,11 +116,11 @@
                                 <input type="text" name="loginId" placeholder="예: user123" autocomplete="off" required>
                             </label>
                             <label>
-                                <span>권한</span>
+                                <span>계정 유형</span>
                                 <select name="role" required>
                                     <option value="">선택</option>
-                                    <option value="ADMIN">관리자 (모든 관리 가능)</option>
-                                    <option value="STAFF">작업자 (입출고/검수 처리)</option>
+                                    <option value="ADMIN">관리자</option>
+                                    <option value="STAFF">작업자</option>
                                 </select>
                             </label>
                             <div class="form-actions">
@@ -182,7 +182,7 @@
                                 <input type="text" name="loginId" readonly disabled>
                             </label>
                             <label>
-                                <span>권한</span>
+                                <span>계정 유형</span>
                                 <select name="role" required>
                                     <option value="ADMIN">관리자</option>
                                     <option value="STAFF">작업자</option>
@@ -199,10 +199,10 @@
                 <div class="panel-card staff-permission-panel" aria-labelledby="staff-permission-title">
                     <div class="panel-title-bar">
                         <div>
-                            <h2 id="staff-permission-title">직원 권한 설정</h2>
-                            <p>작업자에게 공통 적용할 업무 범위입니다.</p>
+                            <h2 id="staff-permission-title">작업자 업무 메뉴 설정</h2>
+                            <p>작업자 계정에서 사용할 메뉴를 선택합니다.</p>
                         </div>
-                        <i class="badge badge-blue">STAFF</i>
+                        <i class="badge badge-blue">작업자</i>
                     </div>
 
                     <form class="staff-permission-form" action="#" method="post" data-staff-permission-form>
@@ -270,7 +270,7 @@
                         <li>로그인 아이디는 한 번 등록하면 변경 불가</li>
                         <li>초기 비밀번호는 아이디와 동일</li>
                         <li>비밀번호 초기화 시 임시 비밀번호 팝업 표시</li>
-                        <li>OWNER 계정은 권한 변경 및 삭제 불가</li>
+                        <li>최고 관리자 계정은 별도 계정 설정에서 관리</li>
                     </ul>
                 </div>
             </aside>

@@ -3,6 +3,7 @@ package com.pcs.domain.member.mapper;
 import com.pcs.domain.member.dto.response.SearchMemberResponse;
 import com.pcs.domain.member.dto.response.SearchMemberSummaryResponse;
 import com.pcs.domain.member.entity.Member;
+import com.pcs.domain.member.entity.MemberAccount;
 import com.pcs.domain.member.type.MemberRole;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -59,5 +60,22 @@ public interface MemberMapper {
             @Param("memberId") Long memberId,
             @Param("passwordHash") String passwordHash,
             @Param("expiresAt") LocalDateTime expiresAt
+    );
+
+    MemberAccount findAccount(
+            @Param("companyId") Long companyId,
+            @Param("memberId") Long memberId
+    );
+
+    int updateMypageName(
+            @Param("companyId") Long companyId,
+            @Param("memberId") Long memberId,
+            @Param("name") String name
+    );
+
+    int updateMypagePassword(
+            @Param("companyId") Long companyId,
+            @Param("memberId") Long memberId,
+            @Param("passwordHash") String passwordHash
     );
 }

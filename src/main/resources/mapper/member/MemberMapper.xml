@@ -132,4 +132,45 @@
           AND member_id = #{memberId}
     </update>
 
+    <select id="findAccount" resultType="com.pcs.domain.member.entity.MemberAccount">
+        SELECT
+            m.company_id,
+            c.company_code,
+            m.member_id,
+            m.login_id,
+            m.password_hash,
+            m.name,
+            m.role,
+            m.password_status,
+            m.active
+        FROM tb_member m
+        JOIN tb_company c ON c.company_id = m.company_id
+        WHERE m.company_id = #{companyId}
+          AND m.member_id = #{memberId}
+        LIMIT 1
+    </select>
+
+    <update id="updateMypageName">
+        UPDATE tb_member
+        SET
+            name = #{name},
+            updated_at = NOW(6)
+        WHERE company_id = #{companyId}
+          AND member_id = #{memberId}
+    </update>
+
+    <update id="updateMypagePassword">
+        UPDATE tb_member
+        SET
+            password_hash = #{passwordHash},
+            password_status = 'ACTIVE',
+            temp_password_expires_at = NULL,
+            password_changed_at = NOW(6),
+            login_failed_count = 0,
+            locked_until_at = NULL,
+            updated_at = NOW(6)
+        WHERE company_id = #{companyId}
+          AND member_id = #{memberId}
+    </update>
+
 </mapper>

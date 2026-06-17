@@ -1,18 +1,24 @@
 package com.pcs.domain.member.facade;
 
 import com.pcs.domain.member.dto.request.CreateMemberRequest;
+import com.pcs.domain.member.dto.request.ChangeMypagePasswordRequest;
+import com.pcs.domain.member.dto.request.UpdateMypageRequest;
 import com.pcs.domain.member.dto.request.UpdateStaffPermissionRequest;
 import com.pcs.domain.member.dto.request.UpdateMemberRequest;
+import com.pcs.domain.member.dto.response.MypageResponse;
 import com.pcs.domain.member.dto.response.SearchMemberResponse;
 import com.pcs.domain.member.dto.response.SearchMemberSummaryResponse;
 import com.pcs.domain.member.dto.response.StaffPermissionSettingsResponse;
 import com.pcs.domain.member.dto.response.TemporaryPasswordResponse;
+import com.pcs.domain.member.entity.MemberAccount;
 import com.pcs.domain.member.service.MemberService;
 import com.pcs.domain.member.service.StaffPermissionService;
 import com.pcs.domain.member.type.MemberRole;
+import com.pcs.domain.member.type.StaffPermission;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.security.PcsPrincipal;
 import com.pcs.global.workspace.WorkspaceAccessValidator;
+import java.util.List;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -111,6 +117,57 @@ public class MemberFacade {
                 checkedPrincipal.memberId(),
                 checkedPrincipal.role(),
                 request
+        );
+    }
+
+    public MypageResponse getMypage(PcsPrincipal principal, String pathCompanyCode) {
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
+        MemberAccount account = memberService.getMyAccount(checkedPrincipal.companyId(), checkedPrincipal.memberId());
+        return toMypageResponse(account);
+    }
+
+    public MypageResponse updateMypage(
+            PcsPrincipal principal,
+            String pathCompanyCode,
+            UpdateMypageRequest request
+    ) {
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
+        MemberAccount account = memberService.updateMyAccount(
+                checkedPrincipal.companyId(),
+                checkedPrincipal.memberId(),
+                request
+        );
+        return toMypageResponse(account);
+    }
+
+    public MypageResponse changeMypagePassword(
+            PcsPrincipal principal,
+            String pathCompanyCode,
+            ChangeMypagePasswordRequest request
+    ) {
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
+        MemberAccount account = memberService.changeMyPassword(
+                checkedPrincipal.companyId(),
+                checkedPrincipal.memberId(),
+                request
+        );
+        return toMypageResponse(account);
+    }
+
+    private MypageResponse toMypageResponse(MemberAccount account) {
+        List<StaffPermission> permissions = staffPermissionService.findEnabledPermissions(
+                account.getCompanyId(),
+                account.getRole()
+        );
+        return new MypageResponse(
+                account.getCompanyId(),
+                account.getCompanyCode(),
+                account.getMemberId(),
+                account.getLoginId(),
+                account.getName(),
+                account.getRole(),
+                account.getPasswordStatus(),
+                permissions
         );
     }
 }
