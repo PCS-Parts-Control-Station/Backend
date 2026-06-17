@@ -79,6 +79,10 @@ STAFF:
 - `role = STAFF`
 - `owner_slot = NULL`
 
+`owner_slot`은 OWNER 단일 계정 보장을 위한 슬롯 컬럼이다.
+ADMIN/STAFF에는 `0` 같은 값을 넣지 않고 `NULL`을 유지한다.
+회사당 OWNER 1명 제한은 `UNIQUE(company_id, owner_slot)`과 `chk_member_owner_slot` 제약으로 검증한다.
+
 ## 비밀번호 기준
 
 - DB에는 원문 비밀번호를 저장하지 않는다.

@@ -13,19 +13,54 @@
 
 bootstrap:
 
-- 기본 프로젝트 구조와 선택한 feature 기준을 함께 검사하는 기본 모드
+- 기본 프로젝트 구조를 확인하는 초기 점검 모드
 - 기능 명세 없이 코드가 먼저 생기는 것을 막는다.
-- `-Feature`, `-RunBuild`, `-RunDb`, `-DbFeature` 옵션과 함께 기능 구현 후 검증에도 사용한다.
+- push hook의 최종 게이트로 사용하지 않는다.
+
+gate:
+
+- push 전 검증에 사용하는 현재 개발 단계의 기본 게이트 모드
+- 공통 규칙, JS 문법, 빌드, DB 기본 정합성을 확인한다.
+- `-ChangedFilesPath`로 전달된 변경 파일 목록을 기준으로 관련 feature 검사만 추가 실행한다.
+- 아직 구현하지 않은 `history`, `dashboard` 같은 도메인 때문에 push가 막히지 않도록 한다.
 
 full:
 
-- 기능 구조 확정 후 사용할 강한 검사
-- Controller/Facade/Service/Mapper, MyBatis, 인증, 이력 정합성까지 검사한다.
+- 프로젝트 완료 이후 전체 회귀 확인에 사용할 강한 검사
+- 전체 도메인 구조, Controller/Facade/Service/Mapper, MyBatis, 인증, 이력 정합성까지 검사한다.
+- 현재 개발 중 push hook에는 사용하지 않는다.
 
 Feature:
 
 - `Mode`와 별도로 특정 기능 문서 기준의 추가 검사를 실행한다.
 - 기능 구현 방식은 바꾸지 않고, `docs/features/{feature}.md`에 맞는 구조와 핵심 규칙을 더 확인한다.
+
+## pre-push 게이트
+
+Git pre-push 훅은 `full`이 아니라 `gate`를 실행한다.
+
+```powershell
+.\harness\run-harness.ps1 -Mode gate -RunBuild -RunDb -ChangedFilesPath <changed-files> -TrackedFilesPath <tracked-files>
+```
+
+기준:
+
+- push 직전에는 공통 규칙, JS 문법, compileJava, DB 기본 정합성을 항상 확인한다.
+- 변경 파일이 지원 중인 feature에 매핑되면 해당 feature 검사와 feature DB 검사를 추가한다.
+- 변경 파일이 feature에 매핑되지 않으면 공통 검사만 실행한다.
+- `TrackedFilesPath`는 pre-push 훅에서 `git ls-files` 결과를 넘기며, 이미 추적 중인 금지 파일을 잡기 위해 사용한다.
+- 아직 구현하지 않은 도메인을 이유로 push를 막지 않는다.
+- 전체 도메인 회귀 검사는 `full` 모드의 역할이며, 현재 개발 중 pre-push 기본값으로 사용하지 않는다.
+
+변경 파일 매핑 예:
+
+```text
+src/main/java/com/pcs/domain/member/** -> member
+src/main/resources/mapper/member/** -> member
+src/main/resources/static/js/users.js -> member
+src/main/java/com/pcs/domain/part/** -> part
+src/main/resources/static/js/parts.js -> part
+```
 
 ## 지원 중인 Feature 값
 
@@ -38,6 +73,7 @@ member
 auth
 partner
 category
+part
 ```
 
 새 도메인 문서를 만들었다고 해서 하네스가 자동으로 그 기능의 세부 규칙을 검사하는 것은 아니다.  
@@ -46,11 +82,12 @@ category
 예:
 
 ```powershell
-.\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature company -RunBuild -RunDb -DbFeature member
-.\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature auth -RunBuild -RunDb -DbFeature member
-.\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature partner -RunBuild -RunDb
-.\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature category -RunBuild -RunDb
-.\harness\run-feedback-loop.ps1 -Mode bootstrap -DbFeature member
+.\harness\run-feedback-loop.ps1 -Mode gate -Feature company -RunBuild -RunDb -DbFeature member
+.\harness\run-feedback-loop.ps1 -Mode gate -Feature auth -RunBuild -RunDb -DbFeature member
+.\harness\run-feedback-loop.ps1 -Mode gate -Feature partner -RunBuild -RunDb
+.\harness\run-feedback-loop.ps1 -Mode gate -Feature category -RunBuild -RunDb
+.\harness\run-feedback-loop.ps1 -Mode gate -Feature part -RunBuild -RunDb
+.\harness\run-feedback-loop.ps1 -Mode gate -DbFeature member
 ```
 
 ## Feature 검사 추가 방법
@@ -224,13 +261,13 @@ docs/features/checkdb.md
 기능 구현 후 검증 흐름:
 
 ```powershell
-.\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature {feature} -RunBuild -RunDb
+.\harness\run-feedback-loop.ps1 -Mode gate -Feature {feature} -RunBuild -RunDb
 ```
 
 다른 도메인의 DB 구조만 함께 확인해야 하면 기능 문서가 아니라 DB 문서 기준으로만 검사한다.
 
 ```powershell
-.\harness\run-feedback-loop.ps1 -Mode bootstrap -DbFeature member
+.\harness\run-feedback-loop.ps1 -Mode gate -DbFeature member
 ```
 
 기능 DB와 다른 도메인 DB 구조를 한 번에 확인해야 하면 `-RunDb`와 `-DbFeature`를 함께 쓴다.
@@ -238,7 +275,7 @@ docs/features/checkdb.md
 예: auth 기능 구현 중 member DB 구조도 함께 확인
 
 ```powershell
-.\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature auth -RunBuild -RunDb -DbFeature member
+.\harness\run-feedback-loop.ps1 -Mode gate -Feature auth -RunBuild -RunDb -DbFeature member
 ```
 
 ## 항상 금지
@@ -270,11 +307,19 @@ out/
 .idea/
 .env
 .env.*
+application-local.yml
+application-local.yaml
+application-local.properties
+application-secret.yml
+application-secret.yaml
+application-secret.properties
 gradle.properties
 *.log
 *.tmp
 tmp/
 harness/reports/*
+.DS_Store
+Thumbs.db
 ```
 
 예외:
@@ -282,6 +327,51 @@ harness/reports/*
 ```text
 !.env.example
 !harness/reports/.gitkeep
+```
+
+Git 추적 금지:
+
+- `.gitignore`에 추가해도 이미 Git에 올라간 파일은 계속 추적된다.
+- 하네스는 `git ls-files` 기준으로 금지 파일이 이미 추적 중이면 실패해야 한다.
+- 삭제 커밋을 막지 않기 위해, pre-push 변경 파일 검사는 금지 파일이 현재 워크스페이스에 존재하는 경우에만 실패 처리한다.
+
+대표 금지 대상:
+
+```text
+.env
+.env.*
+gradle.properties
+application-local.yml
+application-local.yaml
+application-local.properties
+application-secret.yml
+application-secret.yaml
+application-secret.properties
+build/
+out/
+.gradle/
+.idea/workspace.xml
+.idea/tasks.xml
+*.iml
+*.log
+*.tmp
+tmp/
+harness/reports/*
+.DS_Store
+Thumbs.db
+```
+
+예외:
+
+```text
+.env.example
+harness/reports/.gitkeep
+```
+
+금지 파일이 이미 추적 중이면 아래처럼 Git 추적에서만 제거한다.
+
+```powershell
+git rm --cached <file>
 ```
 
 ## full 모드에서 강화할 규칙
@@ -362,13 +452,14 @@ SQL 품질:
 이 스크립트는 내부에서 `run-harness.ps1`을 실행하고, 실패/경고 요약 파일을 추가로 만든다.
 
 ```powershell
-.\harness\run-feedback-loop.ps1 -Mode bootstrap
-.\harness\run-feedback-loop.ps1 -Mode bootstrap -RunBuild
-.\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature company -RunBuild -RunDb -DbFeature member
-.\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature auth -RunBuild -RunDb -DbFeature member
-.\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature partner -RunBuild -RunDb
-.\harness\run-feedback-loop.ps1 -Mode bootstrap -Feature category -RunBuild -RunDb
-.\harness\run-feedback-loop.ps1 -Mode bootstrap -DbFeature member
+.\harness\run-feedback-loop.ps1 -Mode gate
+.\harness\run-feedback-loop.ps1 -Mode gate -RunBuild
+.\harness\run-feedback-loop.ps1 -Mode gate -Feature company -RunBuild -RunDb -DbFeature member
+.\harness\run-feedback-loop.ps1 -Mode gate -Feature auth -RunBuild -RunDb -DbFeature member
+.\harness\run-feedback-loop.ps1 -Mode gate -Feature partner -RunBuild -RunDb
+.\harness\run-feedback-loop.ps1 -Mode gate -Feature category -RunBuild -RunDb
+.\harness\run-feedback-loop.ps1 -Mode gate -Feature part -RunBuild -RunDb
+.\harness\run-feedback-loop.ps1 -Mode gate -DbFeature member
 ```
 
 리포트:

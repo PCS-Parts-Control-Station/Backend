@@ -76,7 +76,7 @@ CREATE TABLE tb_member (
     CONSTRAINT uk_member_company_owner UNIQUE (company_id, owner_slot),
     CONSTRAINT uk_member_company_member_id UNIQUE (company_id, member_id),
     CONSTRAINT chk_member_owner_slot CHECK (
-        (role = 'OWNER' AND owner_slot = 1)
+        (role = 'OWNER' AND owner_slot IS NOT NULL AND owner_slot = 1)
         OR (role <> 'OWNER' AND owner_slot IS NULL)
     ),
     INDEX idx_member_company_created_by (company_id, created_by),
