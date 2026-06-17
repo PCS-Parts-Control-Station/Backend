@@ -99,6 +99,19 @@
         const activeRoute = getActiveRoute();
         let activeRouteBlocked = false;
 
+        if (session?.passwordStatus === "TEMPORARY") {
+            document.querySelectorAll(".sidebar-nav [data-route]").forEach((link) => {
+                link.hidden = true;
+            });
+            document.querySelectorAll(".sidebar-group").forEach((group) => {
+                group.hidden = true;
+            });
+            if (activeRoute !== "mypage") {
+                window.PcsApi?.redirectToPasswordChange?.(companyCode);
+            }
+            return;
+        }
+
         document.querySelectorAll("[data-allowed-roles], [data-staff-permission]").forEach((element) => {
             const allowed = isAllowedForRole(element, normalizedRole)
                     && isStaffPermissionAllowed(element, normalizedRole, staffPermissions);

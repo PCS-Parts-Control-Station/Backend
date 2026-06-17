@@ -33,6 +33,7 @@ public enum ErrorCode {
     MEMBER_LOGIN_ID_DUPLICATED(HttpStatus.CONFLICT, "MEMBER-002", "이미 사용 중인 로그인 ID입니다."),
     MEMBER_INACTIVE(HttpStatus.FORBIDDEN, "MEMBER-003", "비활성화된 사용자입니다."),
     MEMBER_TEMP_PASSWORD_EXPIRED(HttpStatus.UNAUTHORIZED, "MEMBER-004", "임시 비밀번호가 만료되었습니다."),
+    MEMBER_PASSWORD_CHANGE_REQUIRED(HttpStatus.FORBIDDEN, "MEMBER-005", "임시 비밀번호를 먼저 변경해 주세요."),
 
     PARTNER_NOT_FOUND(HttpStatus.NOT_FOUND, "PARTNER-001", "거래처를 찾을 수 없습니다."),
     PARTNER_NAME_DUPLICATED(HttpStatus.CONFLICT, "PARTNER-002", "이미 사용 중인 거래처명입니다."),

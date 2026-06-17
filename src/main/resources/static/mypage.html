@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/admin.css?20260615_mypage_user_copy">
+    <link rel="stylesheet" href="/css/admin.css?20260617_temp_password">
     <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
 </head>
 <body class="has-collapsible-sidebar">
@@ -156,12 +156,16 @@
                     </div>
                 </section>
 
-                <section class="table-card mypage-section" aria-labelledby="password-form-title">
+                <section class="table-card mypage-section" data-password-section aria-labelledby="password-form-title">
                     <div class="table-header">
                         <div>
                             <h2 id="password-form-title">비밀번호 변경</h2>
                             <p>보안을 위해 현재 비밀번호 확인 후 새 비밀번호를 설정합니다.</p>
                         </div>
+                    </div>
+                    <div class="mypage-password-required-notice" data-password-required-notice hidden role="status">
+                        <strong>새 비밀번호 설정이 필요합니다.</strong>
+                        <span>발급받은 임시 비밀번호를 현재 비밀번호에 입력한 뒤 새 비밀번호로 변경해 주세요.</span>
                     </div>
                     <form class="management-form mypage-form-grid mypage-password-form" data-mypage-password-form action="#" method="post" autocomplete="off">
                         <label>
@@ -257,10 +261,10 @@
     </main>
 </div>
 
-<script src="/js/pcs-api.js?20260529_workspace_guard"></script>
-<script src="/js/workspace-layout.js?20260612_mypage"></script>
+<script src="/js/pcs-api.js?20260617_temp_password"></script>
+<script src="/js/workspace-layout.js?20260617_temp_password"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
 <script src="/js/pcs-common.js?20260611_common"></script>
-<script src="/js/mypage.js?20260615_api"></script>
+<script src="/js/mypage.js?20260617_temp_password"></script>
 </body>
 </html>

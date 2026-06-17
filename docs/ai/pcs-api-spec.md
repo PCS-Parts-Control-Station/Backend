@@ -160,11 +160,23 @@ Owner 회원가입 + 회사 생성 요청 예시:
 ```json
 {
   "loginId": "staff01",
-  "name": "이검수",
-  "role": "STAFF",
-  "temporaryPassword": "temp-password"
+  "memberName": "이검수",
+  "role": "STAFF"
 }
 ```
+
+사용자 생성 시 초기 비밀번호는 로그인 아이디와 동일하게 임시 발급한다.
+
+임시 비밀번호 재발급 응답 예시:
+
+```json
+{
+  "temporaryPassword": "PCS-Ab3de5Fg7H",
+  "expiresAt": "2026-06-24T15:30:00"
+}
+```
+
+임시 비밀번호 원문은 이 응답에서 한 번만 확인할 수 있다. 발급과 동시에 기존 refresh token은 폐기하며, 사용자는 비밀번호 변경 전까지 업무 API를 사용할 수 없다.
 
 ### 3.4 거래처 `partner`
 

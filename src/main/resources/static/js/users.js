@@ -25,7 +25,9 @@
         name: document.querySelector("[data-detail-name]"),
         loginId: document.querySelector("[data-detail-login-id]"),
         updatedAt: document.querySelector("[data-detail-updated-at]"),
-        roleBadge: document.querySelector("[data-detail-role-badge]")
+        roleBadge: document.querySelector("[data-detail-role-badge]"),
+        activeBadge: document.querySelector("[data-detail-active-badge]"),
+        passwordBadge: document.querySelector("[data-detail-password-badge]")
     };
     const summaryFields = {
         total: document.querySelector("[data-summary-total]"),
@@ -36,10 +38,14 @@
     const openPasswordModalButton = document.querySelector("[data-open-reset-password-modal]");
     const closePasswordModalButtons = document.querySelectorAll("[data-close-reset-password-modal]");
     const confirmPasswordButton = document.querySelector("[data-confirm-reset-password]");
+    const copyTemporaryPasswordButton = document.querySelector("[data-copy-temp-password]");
     const passwordModalFields = {
         targetName: document.querySelector("[data-reset-password-target-name]"),
         tempPasswordContainer: document.querySelector("[data-temp-password-container]"),
         tempPasswordValue: document.querySelector("[data-temp-password-value]"),
+        tempPasswordExpiryContainer: document.querySelector("[data-temp-password-expiry-container]"),
+        tempPasswordExpiry: document.querySelector("[data-temp-password-expiry]"),
+        notice: document.querySelector("[data-temp-password-notice]"),
         message: document.querySelector("[data-reset-password-message]")
     };
 
@@ -52,7 +58,6 @@
     const formatDate = window.PcsFormat?.date;
     const numberText = window.PcsFormat?.number;
     const clearRows = () => window.PcsTable.clearRows(table);
-    const createTextCell = window.PcsTable?.textCell;
     const showToast = window.PcsFeedback?.toast;
     const setFormSaving = window.PcsForm?.setSaving;
     const setEmptyMessage = (message) => window.PcsTable.emptyRow(table, {
@@ -78,6 +83,24 @@
             return "소유자";
         }
         return ROLE_LABELS[role] || "작업자";
+    };
+
+    const roleBadgeClass = (role) => {
+        if (role === "OWNER") {
+            return "badge-blue";
+        }
+        if (role === "ADMIN") {
+            return "badge-pending";
+        }
+        return "badge-inactive";
+    };
+
+    const setBadge = (element, text, className) => {
+        if (!element) {
+            return;
+        }
+        element.className = `badge ${className}`;
+        element.textContent = text;
     };
 
     const configureRoleSelect = (select, options = {}) => {
@@ -127,26 +150,31 @@
         configureRoleSelect(editForm?.elements.role, { placeholderDisabled: true });
     };
 
-    const createBadgeCell = (label, value) => {
+    const createBadgeCell = (label, text, badgeClass, cellClass) => {
         const cell = document.createElement("span");
         cell.setAttribute("role", "cell");
+        cell.className = cellClass;
         if (label) {
             cell.setAttribute("data-label", label);
         }
         const badge = document.createElement("i");
-        
-        if (value === "OWNER") {
-            badge.className = "badge badge-blue";
-            badge.textContent = roleLabel(value);
-        } else if (value === "ADMIN") {
-            badge.className = "badge badge-orange";
-            badge.textContent = roleLabel(value);
-        } else {
-            badge.className = "badge badge-gray";
-            badge.textContent = roleLabel(value);
-        }
-        
+        badge.className = `badge ${badgeClass}`;
+        badge.textContent = text;
         cell.append(badge);
+        return cell;
+    };
+
+    const createUserIdentityCell = (user) => {
+        const cell = document.createElement("span");
+        cell.className = "user-identity-cell";
+        cell.setAttribute("role", "cell");
+        cell.setAttribute("data-label", "사용자");
+
+        const name = document.createElement("strong");
+        name.textContent = user.memberName || "-";
+        const loginId = document.createElement("small");
+        loginId.textContent = user.loginId || "-";
+        cell.append(name, loginId);
         return cell;
     };
 
@@ -178,18 +206,19 @@
         detailFields.name.textContent = user.memberName || "-";
         detailFields.loginId.textContent = user.loginId || "-";
         detailFields.updatedAt.textContent = formatDate(user.updatedAt);
-        
-        if (user.role === "OWNER") {
-            detailFields.roleBadge.className = "badge badge-blue";
-            detailFields.roleBadge.textContent = roleLabel(user.role);
-        } else if (user.role === "ADMIN") {
-            detailFields.roleBadge.className = "badge badge-orange";
-            detailFields.roleBadge.textContent = roleLabel(user.role);
-        } else {
-            detailFields.roleBadge.className = "badge badge-gray";
-            detailFields.roleBadge.textContent = roleLabel(user.role);
-        }
-        
+
+        setBadge(detailFields.roleBadge, roleLabel(user.role), roleBadgeClass(user.role));
+        setBadge(
+                detailFields.activeBadge,
+                user.active === false ? "사용 중지" : "사용 중",
+                user.active === false ? "badge-inactive" : "badge-active"
+        );
+        setBadge(
+                detailFields.passwordBadge,
+                user.passwordStatus === "TEMPORARY" ? "변경 필요" : "비밀번호 정상",
+                user.passwordStatus === "TEMPORARY" ? "badge-pending" : "badge-blue"
+        );
+
         const canManage = canManageRole(user.role);
         const editButton = document.querySelector("[data-user-edit-mode]");
         if (editButton) {
@@ -258,10 +287,20 @@
             row.dataset.userId = String(user.memberId);
 
             row.append(
-                createTextCell("이름", user.memberName, "strong"),
-                createTextCell("로그인 아이디", user.loginId),
-                createBadgeCell("권한", user.role),
-                createTextCell("수정일", formatDate(user.updatedAt))
+                createUserIdentityCell(user),
+                createBadgeCell("계정 유형", roleLabel(user.role), roleBadgeClass(user.role), "user-role-cell"),
+                createBadgeCell(
+                        "계정 상태",
+                        user.active === false ? "사용 중지" : "사용 중",
+                        user.active === false ? "badge-inactive" : "badge-active",
+                        "user-account-status-cell"
+                ),
+                createBadgeCell(
+                        "비밀번호",
+                        user.passwordStatus === "TEMPORARY" ? "변경 필요" : "정상",
+                        user.passwordStatus === "TEMPORARY" ? "badge-pending" : "badge-blue",
+                        "user-password-status-cell"
+                )
             );
 
             row.addEventListener("click", () => selectUser(user.memberId));
@@ -449,6 +488,38 @@
         passwordModalFields.message.hidden = !message;
     };
 
+    const formatExpiry = (value) => {
+        if (!value) {
+            return "-";
+        }
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+            return value;
+        }
+        return new Intl.DateTimeFormat("ko-KR", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit"
+        }).format(date);
+    };
+
+    const copyText = async (value) => {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(value);
+            return;
+        }
+        const input = document.createElement("textarea");
+        input.value = value;
+        input.style.position = "fixed";
+        input.style.opacity = "0";
+        document.body.append(input);
+        input.select();
+        document.execCommand("copy");
+        input.remove();
+    };
+
     const openPasswordModal = () => {
         const user = getSelectedUser();
         if (!passwordModal || !user) {
@@ -458,6 +529,9 @@
         passwordModalFields.targetName.textContent = `${user.memberName} (${user.loginId})`;
         passwordModalFields.tempPasswordContainer.hidden = true;
         passwordModalFields.tempPasswordValue.textContent = "-";
+        passwordModalFields.tempPasswordExpiryContainer.hidden = true;
+        passwordModalFields.tempPasswordExpiry.textContent = "-";
+        passwordModalFields.notice.hidden = true;
         
         setPasswordModalMessage();
         confirmPasswordButton.hidden = false;
@@ -469,6 +543,7 @@
             return;
         }
         setPasswordModalMessage();
+        passwordModalFields.tempPasswordValue.textContent = "-";
         passwordModal.close();
     };
 
@@ -654,7 +729,7 @@
         try {
             passwordModal.dataset.saving = "true";
             confirmPasswordButton.disabled = true;
-            confirmPasswordButton.textContent = "초기화 중";
+            confirmPasswordButton.textContent = "발급 중";
             
             const response = await window.PcsApi.getData(
                 `/api/workspaces/${encodeURIComponent(companyCode)}/users/${user.memberId}/temporary-password`,
@@ -667,7 +742,10 @@
 
             passwordModalFields.tempPasswordContainer.hidden = false;
             passwordModalFields.tempPasswordValue.textContent = response.temporaryPassword || "생성 완료";
-            confirmPasswordButton.hidden = true; // Hide the reset button so user copies the password
+            passwordModalFields.tempPasswordExpiryContainer.hidden = false;
+            passwordModalFields.tempPasswordExpiry.textContent = formatExpiry(response.expiresAt);
+            passwordModalFields.notice.hidden = false;
+            confirmPasswordButton.hidden = true;
             showToast("비밀번호를 초기화했습니다.", "success");
         } catch (error) {
             const message = error?.message || "비밀번호를 초기화하지 못했습니다.";
@@ -676,7 +754,20 @@
         } finally {
             passwordModal.dataset.saving = "false";
             confirmPasswordButton.disabled = false;
-            confirmPasswordButton.textContent = "초기화 실행";
+            confirmPasswordButton.textContent = "발급하기";
+        }
+    });
+
+    copyTemporaryPasswordButton?.addEventListener("click", async () => {
+        const temporaryPassword = passwordModalFields.tempPasswordValue.textContent.trim();
+        if (!temporaryPassword || temporaryPassword === "-") {
+            return;
+        }
+        try {
+            await copyText(temporaryPassword);
+            showToast("임시 비밀번호를 복사했습니다.", "success");
+        } catch (error) {
+            showToast("임시 비밀번호를 복사하지 못했습니다.", "error");
         }
     });
 

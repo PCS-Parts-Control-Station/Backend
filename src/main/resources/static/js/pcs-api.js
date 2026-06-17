@@ -10,6 +10,7 @@
         'COMPANY-001',
         'COMPANY-003'
     ]);
+    const PASSWORD_CHANGE_REQUIRED_CODE = 'MEMBER-005';
 
     let refreshPromise = null;
 
@@ -188,6 +189,17 @@
         }
     };
 
+    const redirectToPasswordChange = (companyCode) => {
+        const targetCompanyCode = companyCode || getCompanyCodeFromPath();
+        if (!targetCompanyCode) {
+            return;
+        }
+        const nextPath = `/w/${encodeURIComponent(targetCompanyCode)}/mypage`;
+        if (window.location.pathname !== nextPath) {
+            window.location.href = `${nextPath}?section=password&required=true`;
+        }
+    };
+
     const request = async (url, options = {}) => {
         const retryOnAuthError = options.retryOnAuthError !== false;
         const authRedirect = options.authRedirect === true;
@@ -207,6 +219,11 @@
         try {
             return await execute();
         } catch (error) {
+            if (error?.code === PASSWORD_CHANGE_REQUIRED_CODE) {
+                redirectToPasswordChange(loginCompanyCode);
+                throw error;
+            }
+
             if (options.workspaceErrorRedirect !== false && isWorkspaceAccessError(error)) {
                 redirectToInvalidAccess(error, loginCompanyCode);
                 throw error;
@@ -259,6 +276,7 @@
         setAccessToken,
         clearAccessToken,
         redirectToInvalidAccess,
+        redirectToPasswordChange,
         validateWorkspacePublic,
         logout,
         PcsApiError

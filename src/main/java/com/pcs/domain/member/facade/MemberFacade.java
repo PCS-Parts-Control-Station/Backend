@@ -1,6 +1,7 @@
 package com.pcs.domain.member.facade;
 
 import com.pcs.domain.member.dto.request.CreateMemberRequest;
+import com.pcs.domain.auth.service.AuthService;
 import com.pcs.domain.member.dto.request.ChangeMypagePasswordRequest;
 import com.pcs.domain.member.dto.request.UpdateMypageRequest;
 import com.pcs.domain.member.dto.request.UpdateStaffPermissionRequest;
@@ -20,20 +21,24 @@ import com.pcs.global.security.PcsPrincipal;
 import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.util.List;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class MemberFacade {
 
     private final MemberService memberService;
+    private final AuthService authService;
     private final StaffPermissionService staffPermissionService;
     private final WorkspaceAccessValidator workspaceAccessValidator;
 
     public MemberFacade(
             MemberService memberService,
+            AuthService authService,
             StaffPermissionService staffPermissionService,
             WorkspaceAccessValidator workspaceAccessValidator
     ) {
         this.memberService = memberService;
+        this.authService = authService;
         this.staffPermissionService = staffPermissionService;
         this.workspaceAccessValidator = workspaceAccessValidator;
     }
@@ -92,13 +97,20 @@ public class MemberFacade {
         return memberService.updateMember(checkedPrincipal.companyId(), checkedPrincipal.role(), memberId, request);
     }
 
+    @Transactional
     public TemporaryPasswordResponse issueTemporaryPassword(
             PcsPrincipal principal,
             String pathCompanyCode,
             Long memberId
     ) {
         PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
-        return memberService.issueTemporaryPassword(checkedPrincipal.companyId(), checkedPrincipal.role(), memberId);
+        TemporaryPasswordResponse response = memberService.issueTemporaryPassword(
+                checkedPrincipal.companyId(),
+                checkedPrincipal.role(),
+                memberId
+        );
+        authService.revokeMemberRefreshTokens(checkedPrincipal.companyId(), memberId);
+        return response;
     }
 
     public StaffPermissionSettingsResponse getStaffPermissions(PcsPrincipal principal, String pathCompanyCode) {
@@ -140,6 +152,7 @@ public class MemberFacade {
         return toMypageResponse(account);
     }
 
+    @Transactional
     public MypageResponse changeMypagePassword(
             PcsPrincipal principal,
             String pathCompanyCode,
@@ -151,6 +164,7 @@ public class MemberFacade {
                 checkedPrincipal.memberId(),
                 request
         );
+        authService.revokeMemberRefreshTokens(checkedPrincipal.companyId(), checkedPrincipal.memberId());
         return toMypageResponse(account);
     }
 

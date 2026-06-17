@@ -95,6 +95,12 @@ tb_auth_login_history.idx_auth_login_history_member_date
 - refresh token을 `revoked_reason = LOGOUT`으로 폐기한다.
 - refresh cookie를 만료시킨다.
 
+비밀번호 초기화/변경 시:
+
+- 해당 `company_id`, `member_id`의 `revoked_at IS NULL` refresh token을 모두 폐기한다.
+- 폐기 사유는 `ADMIN_REVOKED`를 사용한다.
+- 비밀번호 초기화와 refresh token 폐기는 하나의 트랜잭션으로 처리한다.
+
 ## 실패 시나리오
 
 - 업체 코드 또는 로그인 ID가 없으면 로그인 실패 이력을 남긴다.

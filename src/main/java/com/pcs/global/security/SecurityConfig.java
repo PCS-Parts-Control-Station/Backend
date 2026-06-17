@@ -14,17 +14,20 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final StaffPermissionAuthorizationFilter staffPermissionAuthorizationFilter;
+    private final TemporaryPasswordAuthorizationFilter temporaryPasswordAuthorizationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
             StaffPermissionAuthorizationFilter staffPermissionAuthorizationFilter,
+            TemporaryPasswordAuthorizationFilter temporaryPasswordAuthorizationFilter,
             JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
             JwtAccessDeniedHandler jwtAccessDeniedHandler
     ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.staffPermissionAuthorizationFilter = staffPermissionAuthorizationFilter;
+        this.temporaryPasswordAuthorizationFilter = temporaryPasswordAuthorizationFilter;
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
         this.jwtAccessDeniedHandler = jwtAccessDeniedHandler;
     }
@@ -65,7 +68,8 @@ public class SecurityConfig {
                         .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(staffPermissionAuthorizationFilter, JwtAuthenticationFilter.class)
+                .addFilterAfter(temporaryPasswordAuthorizationFilter, JwtAuthenticationFilter.class)
+                .addFilterAfter(staffPermissionAuthorizationFilter, TemporaryPasswordAuthorizationFilter.class)
                 .build();
     }
 }

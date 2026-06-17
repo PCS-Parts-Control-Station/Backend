@@ -158,4 +158,13 @@
           AND revoked_at IS NULL
     </update>
 
+    <update id="revokeMemberRefreshTokens">
+        UPDATE tb_auth_refresh_token
+        SET revoked_at = CURRENT_TIMESTAMP(6),
+            revoked_reason = #{revokedReason}
+        WHERE company_id = #{companyId}
+          AND member_id = #{memberId}
+          AND revoked_at IS NULL
+    </update>
+
 </mapper>

@@ -2193,6 +2193,54 @@ textarea:focus {
     grid-template-columns: repeat(3, minmax(220px, 1fr));
 }
 
+.temporary-password-output {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.temporary-password-output .btn {
+    flex: 0 0 auto;
+    min-height: 34px;
+    padding: 7px 11px;
+    font-size: 12px;
+}
+
+.temporary-password-notice {
+    margin: 0 20px 16px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.mypage-password-required-notice {
+    display: grid;
+    gap: 4px;
+    margin: 0 20px 16px;
+    padding: 14px 16px;
+    border: 1px solid var(--cyan);
+    border-radius: var(--radius);
+    background: var(--cyan-soft);
+    color: var(--text);
+}
+
+.mypage-password-required-notice strong {
+    color: var(--navy);
+    font-size: 14px;
+}
+
+.mypage-password-required-notice span {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
 .mypage-form-grid .form-actions {
     grid-column: 1 / -1;
     padding-top: 2px;
