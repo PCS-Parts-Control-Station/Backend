@@ -232,8 +232,10 @@ tb_inspection_item_result.idx_inspection_item_result_selected_option
 - 목록은 `inspected_at DESC, inspection_id DESC` 순서로 정렬한다.
 - 검수 이력 화면에서 전표 단위 목록을 보여주더라도 실제 검수 이력 row는 `tb_inspection`의 관리번호 단위 기록이다.
 - 전표 단위 요약은 `documentId` 기준 집계 결과이며, 개별 이력 추적은 항상 `unitId`와 `inspection_id` 기준으로 내려간다.
-- 전표 단위 페이징을 서버에서 직접 지원할 경우 `tb_inspection` row 페이징과 혼동하지 않도록 별도 집계 쿼리 또는 별도 응답 DTO를 사용한다.
+- 전표 단위 페이징은 `tb_inspection` row 페이징과 혼동하지 않도록 별도 집계 쿼리와 별도 응답 DTO를 사용한다.
+- 전표 단위 이력 목록은 집계 결과에 `LIMIT`, `OFFSET`을 적용해 서버 페이징한다.
 - 검수 이력 화면의 품목 묶음 구성을 위해 이력 목록 또는 전표 상세 조회 응답에는 품목명, 모델명, 품목 분류명 또는 카테고리명을 포함한다.
+- 전표 선택 후 품목 묶음과 관리번호 목록은 `documentId`로 조회한 관리번호 단위 이력 row를 클라이언트에서 묶어 표시한다.
 
 ## 정합성 기준
 
@@ -279,7 +281,7 @@ tb_inspection_item_result.idx_inspection_item_result_selected_option
 
 실행 명령과 `-DbFeature inspection` 사용 기준은 `docs/ai/pcs-harness-rules.md`를 따른다.
 
-검수 DB 검증 시에는 `inspection.md`, `inspection-template.md`, `inspection-db.md`, `checkdb.md` 기준을 함께 확인한다.
+검수 DB 검증 시에는 `inspection.md`, `inspection-history.md`, `inspection-template.md`, `inspection-db.md`, `checkdb.md` 기준을 함께 확인한다.
 
 ## JUnit 검증 기준
 

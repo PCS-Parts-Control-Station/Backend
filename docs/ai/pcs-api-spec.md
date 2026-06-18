@@ -531,6 +531,7 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&pag
 | POST | `/api/workspaces/{companyCode}/inspections/bulk` | 여러 관리번호 일괄 최초 검수 등록 |
 | POST | `/api/workspaces/{companyCode}/inspections/{inspectionId}/corrections` | 검수 정정 이력 생성 |
 | POST | `/api/workspaces/{companyCode}/inspections/{inspectionId}/reinspections` | 재검수 이력 생성 |
+| GET | `/api/workspaces/{companyCode}/inspections/history-documents` | 검수 이력 전표 목록 |
 | GET | `/api/workspaces/{companyCode}/inspections` | 검수 이력 목록 |
 | GET | `/api/workspaces/{companyCode}/inspections/{inspectionId}` | 검수 이력 상세 |
 | GET | `/api/workspaces/{companyCode}/inspection-templates` | 검수 템플릿 목록 |
@@ -549,7 +550,9 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&pag
 
 검수 대상 조회는 입고 전표를 기준으로 한다. 전표 목록은 `waiting-documents`, 전표별 관리번호는 `waiting-documents/{documentId}/units`를 사용한다.
 
-개별 부품 기준 검수 이력은 별도 URL을 두지 않고 `GET /api/workspaces/{companyCode}/inspections?unitId={unitId}`로 조회한다. 검수 이력 목록은 `keyword`, `documentId`, `unitId`, `partId`, `inspectionType`, `result`, `grade`, `dateFrom`, `dateTo`, `page`, `size`, `limit`을 지원한다.
+검수 이력 전표 목록은 `GET /api/workspaces/{companyCode}/inspections/history-documents`로 조회한다. 이 API는 검수 이력 화면의 전표 목록용 집계 응답이며 `keyword`, `partId`, `inspectionType`, `result`, `grade`, `dateFrom`, `dateTo`, `page`, `size`, `limit`을 지원한다. 화면의 기본 전표 검색은 검색어, 기간, 이력 유형을 사용하고, 검수 결과와 등급은 전표 선택 후 관리번호 목록 보조 필터로 사용한다.
+
+개별 부품 기준 검수 이력은 별도 URL을 두지 않고 `GET /api/workspaces/{companyCode}/inspections?unitId={unitId}`로 조회한다. 전표 선택 후 관리번호 목록은 `GET /api/workspaces/{companyCode}/inspections?documentId={documentId}`로 조회한다. 검수 이력 목록은 `keyword`, `documentId`, `unitId`, `partId`, `inspectionType`, `result`, `grade`, `dateFrom`, `dateTo`, `page`, `size`, `limit`을 지원한다. 관리번호 상세는 `GET /api/workspaces/{companyCode}/inspections/{inspectionId}`로 항목별 결과를 함께 조회한다.
 
 검수 등록 요청 예시:
 
