@@ -116,21 +116,6 @@
 
     const numberText = (value) => Number(value || 0).toLocaleString("ko-KR");
 
-    const statusText = (status) => {
-        const labels = {
-            WAITING: "검수 대기",
-            COMPLETED: "검수 완료",
-            HOLD: "판매 보류",
-            AVAILABLE: "판매 가능",
-            UNAVAILABLE: "판매 불가",
-            IN_STOCK: "재고",
-            OUTBOUND: "출고",
-            DISPOSED: "폐기",
-            CANCELED: "취소",
-        };
-        return labels[status] || status || "-";
-    };
-
     const setPanelMode = (mode) => {
         panelViews.forEach((panel) => {
             const isActive = panel.dataset.inboundPanel === mode;
@@ -349,57 +334,53 @@
         detailFields.status.textContent = documentStatusLabel(status);
     };
 
-    const copyText = async (text) => {
-        if (!text) {
-            return false;
-        }
-        if (navigator.clipboard?.writeText) {
-            await navigator.clipboard.writeText(text);
-            return true;
-        }
-        const input = document.createElement("textarea");
-        input.value = text;
-        input.setAttribute("readonly", "");
-        input.style.position = "fixed";
-        input.style.left = "-9999px";
-        document.body.append(input);
-        input.select();
-        const copied = document.execCommand("copy");
-        input.remove();
-        return copied;
-    };
-
     const renderDetailLines = (lines) => {
         if (!detailFields.lines) {
             return;
         }
         if (!lines?.length) {
-            detailFields.lines.innerHTML = '<p class="detail-empty-text">등록된 부품 라인이 없습니다.</p>';
+            detailFields.lines.innerHTML = '<p class="detail-empty-text">등록된 입고 품목이 없습니다.</p>';
+            if (detailFields.lineSummary) {
+                detailFields.lineSummary.textContent = "0개 품목 · 총 0개";
+            }
             return;
         }
 
-        detailFields.lines.innerHTML = lines.map((line) => {
-            const units = Array.isArray(line.units) ? line.units : [];
-            const unitList = units.length
-                    ? units.map((unit) => `
-                        <li>
-                            <code>${escapeHtml(unit.internalSerialNo || "-")}</code>
-                            <span>${escapeHtml(statusText(unit.inspectionStatus))}</span>
-                            <button type="button" data-copy-serial="${escapeHtml(unit.internalSerialNo || "")}">복사</button>
-                        </li>
-                    `).join("")
-                    : '<li><span>관리번호 없음</span></li>';
+        const summary = lines.reduce((items, line) => {
+            const key = [
+                line.partId,
+                line.partName,
+                line.modelName,
+                line.partCode,
+            ].filter(Boolean).join("|");
+            const existing = items.get(key);
+            if (existing) {
+                existing.quantity += Number(line.quantity || 0);
+                return items;
+            }
+            items.set(key, {
+                partName: line.partName || "-",
+                modelName: line.modelName || line.partCode || "",
+                quantity: Number(line.quantity || 0),
+            });
+            return items;
+        }, new Map());
+
+        const summaryItems = Array.from(summary.values());
+        const totalQuantity = summaryItems.reduce((sum, item) => sum + item.quantity, 0);
+        if (detailFields.lineSummary) {
+            detailFields.lineSummary.textContent = `${numberText(summaryItems.length)}개 품목 · 총 ${numberText(totalQuantity)}개`;
+        }
+
+        detailFields.lines.innerHTML = summaryItems.map((item) => {
             return `
-                <details class="document-line-item" open>
-                    <summary>
-                        <span>
-                            <strong>${escapeHtml(line.partName || "-")}</strong>
-                            <small>${escapeHtml(line.modelName || line.partCode || "-")}</small>
-                        </span>
-                        <b>${numberText(line.quantity)}개</b>
-                    </summary>
-                    <ul>${unitList}</ul>
-                </details>
+                <article class="document-line-item document-line-summary-item">
+                    <span>
+                        <strong>${escapeHtml(item.partName)}</strong>
+                        ${item.modelName ? `<small>${escapeHtml(item.modelName)}</small>` : ""}
+                    </span>
+                    <b>${numberText(item.quantity)}개</b>
+                </article>
             `;
         }).join("");
     };
@@ -418,9 +399,6 @@
             detailFields.cancelState.textContent = detail.cancelable === true
                     ? "취소 가능"
                     : detail.cancelBlockedReason || "취소할 수 없습니다.";
-        }
-        if (detailFields.lineSummary) {
-            detailFields.lineSummary.textContent = `${numberText(detail.lineCount)}개 라인 · ${numberText(detail.totalQuantity)}개`;
         }
         if (openCancelModalButton) {
             openCancelModalButton.disabled = detail.cancelable !== true;
@@ -674,27 +652,6 @@
 
     closeDetailButtons.forEach((button) => {
         button.addEventListener("click", closeDetailPanel);
-    });
-
-    detailFields.lines?.addEventListener("click", async (event) => {
-        const copyButton = event.target.closest("[data-copy-serial]");
-        if (!copyButton) {
-            return;
-        }
-        event.preventDefault();
-        const serialNo = copyButton.dataset.copySerial;
-        try {
-            const copied = await copyText(serialNo);
-            window.PcsUi?.toast({
-                type: copied ? "success" : "warning",
-                message: copied ? "관리번호를 복사했습니다." : "관리번호를 복사하지 못했습니다.",
-            });
-        } catch (error) {
-            window.PcsUi?.toast({
-                type: "error",
-                message: "관리번호를 복사하지 못했습니다.",
-            });
-        }
     });
 
     openCancelModalButton?.addEventListener("click", () => {

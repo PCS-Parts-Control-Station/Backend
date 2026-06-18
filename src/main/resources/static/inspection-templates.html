@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/admin.css?20260611_side_panel_400">
     <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
-    <link rel="stylesheet" href="/css/inspection-templates.css?20260606_1">
+    <link rel="stylesheet" href="/css/inspection-templates.css?20260615_item_modal">
 </head>
 <body class="has-collapsible-sidebar inspection-template-page">
 <div class="workspace-layout">
@@ -38,7 +38,7 @@
                 <section class="filter-card management-filter-card" aria-labelledby="template-filter-title">
                     <div>
                         <h2 id="template-filter-title">템플릿 검색</h2>
-                        <p>템플릿명, 카테고리, 사용 상태로 검수 양식을 찾습니다.</p>
+                        <p>템플릿명, 분류, 사용 상태로 검수 양식을 찾습니다.</p>
                     </div>
                     <!-- API: GET /api/workspaces/{companyCode}/inspection-templates?keyword=&categoryId=&active=&page=&size= -->
                     <form class="filter-form inspection-template-filter-form" action="#" method="get" autocomplete="off" data-template-filter-form>
@@ -47,7 +47,7 @@
                             <input type="search" name="keyword" placeholder="예: 메모리 검수" autocomplete="off">
                         </label>
                         <label>
-                            <span>카테고리</span>
+                            <span>분류</span>
                             <select name="categoryId" data-template-category-filter>
                                 <option value="">전체</option>
                             </select>
@@ -95,7 +95,7 @@
                     <div class="data-table" role="table" aria-label="검수 템플릿 목록" data-template-table>
                         <div class="data-row inspection-template-row table-head" role="row">
                             <span role="columnheader">템플릿</span>
-                            <span role="columnheader">카테고리</span>
+                            <span role="columnheader">분류</span>
                             <span role="columnheader">버전</span>
                             <span role="columnheader">항목</span>
                             <span role="columnheader">상태</span>
@@ -113,7 +113,6 @@
                             <h2 id="template-builder-title">항목 구성</h2>
                             <p data-template-builder-description>템플릿을 선택하면 항목과 선택지를 편집할 수 있습니다.</p>
                         </div>
-                        <button class="panel-link-button" type="button" data-template-item-reset hidden>새 항목 작성</button>
                     </div>
 
                     <div class="template-builder-empty" data-template-builder-empty>
@@ -128,81 +127,15 @@
                                     <h3 id="template-items-title">항목 목록</h3>
                                     <div class="template-item-title-actions">
                                         <span data-template-item-count>항목 0 · 선택지 0</span>
+                                        <button class="panel-link-button" type="button" data-template-item-reset hidden>항목 추가</button>
                                     </div>
                                 </div>
                                 <div class="template-item-list" data-template-item-list></div>
-
-                                <div class="template-item-editor" data-template-item-editor>
-                                    <div class="template-item-editor-head">
-                                        <div>
-                                            <strong data-template-item-form-title>항목 추가</strong>
-                                            <span data-template-item-form-description>새 검수 항목을 추가합니다.</span>
-                                        </div>
-                                        <div class="template-item-editor-actions">
-                                            <button class="panel-link-button" type="button" data-template-item-active-toggle hidden>항목 중지</button>
-                                        </div>
-                                    </div>
-                                    <!-- API: POST /api/workspaces/{companyCode}/inspection-templates/{templateId}/items -->
-                                    <form class="template-inline-form" action="#" method="post" autocomplete="off" data-template-item-form>
-                                        <label>
-                                            <span>항목명</span>
-                                            <input type="text" name="itemName" placeholder="예: 팬 동작" required>
-                                        </label>
-                                        <div class="template-inline-grid">
-                                            <label>
-                                                <span>항목 구분</span>
-                                                <select name="itemGroup" required>
-                                                    <option value="BASIC">주요 검수 항목</option>
-                                                    <option value="DETAIL">추가 검수 항목</option>
-                                                </select>
-                                            </label>
-                                            <label>
-                                                <span>입력 방식</span>
-                                                <select name="inputType" required>
-                                                    <option value="CHECK">통과/불합격</option>
-                                                    <option value="NUMBER">숫자</option>
-                                                    <option value="TEXT">텍스트</option>
-                                                    <option value="SELECT">선택형</option>
-                                                </select>
-                                            </label>
-                                        </div>
-                                        <details class="template-advanced-fields" data-template-advanced-fields>
-                                            <summary>
-                                                <span>고급 설정</span>
-                                                <em data-template-advanced-summary>등급 영향 낮음 · 별도 조치 없음</em>
-                                            </summary>
-                                            <div class="template-inline-grid template-advanced-body">
-                                                <label>
-                                                    <span>등급 영향</span>
-                                                    <select name="gradeImpact" required>
-                                                        <option value="LOW">낮음</option>
-                                                        <option value="MEDIUM">중간</option>
-                                                        <option value="HIGH">높음</option>
-                                                    </select>
-                                                </label>
-                                                <label>
-                                                    <span>불합격 시 처리</span>
-                                                    <select name="failPolicy" required>
-                                                        <option value="NONE">별도 조치 없음</option>
-                                                        <option value="GRADE_DOWN">등급 낮춤</option>
-                                                        <option value="MARK_DEFECTIVE">불량 처리</option>
-                                                        <option value="BLOCK_SALE">판매 불가 처리</option>
-                                                    </select>
-                                                </label>
-                                            </div>
-                                        </details>
-                                        <label class="switch-row">
-                                            <input type="checkbox" name="required">
-                                            <span>필수 항목</span>
-                                        </label>
-                                        <button class="btn btn-primary" type="submit" data-template-item-submit>항목 추가</button>
-                                    </form>
-                                </div>
                             </section>
 
                             <section class="template-selected-panel" aria-labelledby="template-selected-title">
                                 <div class="section-title-row">
-                                    <h3 id="template-selected-title">선택 항목 설정</h3>
+                                    <h3 id="template-selected-title">선택형 항목 설정</h3>
                                     <span data-selected-item-summary>항목 미선택</span>
                                 </div>
                                 <div class="template-selected-detail" data-selected-item-detail>
@@ -226,10 +159,12 @@
                                 <input type="text" name="templateName" placeholder="예: 그래픽카드 검수" required>
                             </label>
                             <label>
-                                <span>카테고리</span>
-                                <select name="categoryId" required data-template-category-create>
-                                    <option value="">카테고리 선택</option>
-                                </select>
+                                <span>분류</span>
+                                <input type="hidden" name="categoryId" data-template-category-create>
+                                <button class="category-picker-button" type="button" data-open-template-category-picker="create">
+                                    <span data-template-create-category-label>선택</span>
+                                    <small>분류 선택</small>
+                                </button>
                             </label>
                             <label>
                                 <span>버전</span>
@@ -309,10 +244,12 @@
                                 <input type="text" name="templateName" required>
                             </label>
                             <label>
-                                <span>카테고리</span>
-                                <select name="categoryId" required data-template-category-edit>
-                                    <option value="">카테고리 선택</option>
-                                </select>
+                                <span>분류</span>
+                                <input type="hidden" name="categoryId" data-template-category-edit>
+                                <button class="category-picker-button" type="button" data-open-template-category-picker="edit">
+                                    <span data-template-edit-category-label>선택</span>
+                                    <small>분류 선택</small>
+                                </button>
                             </label>
                             <label>
                                 <span>버전</span>
@@ -343,6 +280,112 @@
         </section>
     </main>
 </div>
+<dialog class="part-modal category-picker-modal" data-template-category-picker-modal aria-labelledby="template-category-picker-title">
+    <div class="part-modal-card">
+        <div class="part-modal-header">
+            <div>
+                <p class="page-kicker">분류 선택</p>
+                <h2 id="template-category-picker-title">품목 분류를 선택합니다.</h2>
+                <p>검색 후 목록에서 사용할 분류를 선택해 주세요.</p>
+            </div>
+            <button class="modal-close-button" type="button" data-close-template-category-picker aria-label="닫기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M6 6l12 12" />
+                    <path d="M18 6L6 18" />
+                </svg>
+            </button>
+        </div>
+        <div class="part-modal-fields">
+            <label>
+                <span>분류 검색</span>
+                <input type="search" data-template-category-picker-search placeholder="예: 그래픽카드" autocomplete="off">
+            </label>
+            <div class="category-picker-list" data-template-category-picker-list>
+                <p class="spec-builder-empty">분류 목록을 불러오는 중입니다.</p>
+            </div>
+        </div>
+        <p class="field-message is-error modal-message" data-template-category-picker-message role="status" aria-live="polite"></p>
+        <div class="part-modal-actions">
+            <button class="btn btn-secondary" type="button" data-close-template-category-picker>닫기</button>
+        </div>
+    </div>
+</dialog>
+<dialog class="part-modal template-item-modal" data-template-item-modal aria-labelledby="template-item-modal-title">
+    <div class="part-modal-card template-item-modal-card">
+        <div class="part-modal-header">
+            <div>
+                <p class="page-kicker">검수 항목</p>
+                <h2 id="template-item-modal-title" data-template-item-form-title>항목 추가</h2>
+                <p data-template-item-form-description>새 검수 항목을 추가합니다.</p>
+            </div>
+            <button class="modal-close-button" type="button" data-close-template-item-modal aria-label="닫기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M6 6l12 12" />
+                    <path d="M18 6L6 18" />
+                </svg>
+            </button>
+        </div>
+        <!-- API: POST /api/workspaces/{companyCode}/inspection-templates/{templateId}/items -->
+        <form class="template-inline-form" action="#" method="post" autocomplete="off" data-template-item-form>
+            <label>
+                <span>항목명</span>
+                <input type="text" name="itemName" placeholder="예: 팬 동작" required>
+            </label>
+            <div class="template-inline-grid">
+                <label>
+                    <span>항목 구분</span>
+                    <select name="itemGroup" required>
+                        <option value="BASIC">주요 검수 항목</option>
+                        <option value="DETAIL">추가 검수 항목</option>
+                    </select>
+                </label>
+                <label>
+                    <span>입력 방식</span>
+                    <select name="inputType" required>
+                        <option value="CHECK">통과/불합격</option>
+                        <option value="NUMBER">숫자</option>
+                        <option value="TEXT">텍스트</option>
+                        <option value="SELECT">선택형</option>
+                    </select>
+                </label>
+            </div>
+            <details class="template-advanced-fields" data-template-advanced-fields>
+                <summary>
+                    <span>고급 설정</span>
+                    <em data-template-advanced-summary>등급 영향 낮음 · 별도 조치 없음</em>
+                </summary>
+                <div class="template-inline-grid template-advanced-body">
+                    <label>
+                        <span>등급 영향</span>
+                        <select name="gradeImpact" required>
+                            <option value="LOW">낮음</option>
+                            <option value="MEDIUM">중간</option>
+                            <option value="HIGH">높음</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>불합격 시 처리</span>
+                        <select name="failPolicy" required>
+                            <option value="NONE">별도 조치 없음</option>
+                            <option value="GRADE_DOWN">등급 낮춤</option>
+                            <option value="MARK_DEFECTIVE">불량 처리</option>
+                            <option value="BLOCK_SALE">판매 불가 처리</option>
+                        </select>
+                    </label>
+                </div>
+            </details>
+            <label class="switch-row">
+                <input type="checkbox" name="required">
+                <span>필수 항목</span>
+            </label>
+            <div class="part-modal-actions template-item-modal-actions">
+                <button class="panel-link-button" type="button" data-template-item-active-toggle hidden>항목 중지</button>
+                <button class="btn btn-secondary" type="button" data-close-template-item-modal>취소</button>
+                <button class="btn btn-primary" type="submit" data-template-item-submit>항목 추가</button>
+            </div>
+        </form>
+    </div>
+</dialog>
 <dialog class="part-modal confirm-modal" data-template-input-type-modal aria-labelledby="template-input-type-modal-title">
     <form class="part-modal-card" method="dialog">
         <div class="part-modal-header">
@@ -382,6 +425,6 @@
 <script src="/js/pcs-api.js?20260617_temp_password"></script>
 <script src="/js/workspace-layout.js?20260617_temp_password"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/inspection-templates.js?20260608_api"></script>
+<script src="/js/inspection-templates.js?20260615_item_modal"></script>
 </body>
 </html>
