@@ -26,6 +26,8 @@
     const profileForm = document.querySelector("[data-mypage-profile-form]");
     const ownerCompanyForm = document.querySelector("[data-owner-company-form]");
     const passwordForm = document.querySelector("[data-mypage-password-form]");
+    const passwordSection = document.querySelector("[data-password-section]");
+    const passwordRequiredNotice = document.querySelector("[data-password-required-notice]");
     const showToast = window.PcsFeedback?.toast || ((message, type = "info") => {
         window.PcsUi?.toast?.({ message, type });
     });
@@ -100,6 +102,7 @@
         const resolvedCompanyCode = session?.companyCode || companyCode;
         const roleLabel = roleLabels[role] || role || "-";
         const passwordStatusLabel = passwordStatusLabels[session?.passwordStatus] || session?.passwordStatus || "-";
+        const passwordChangeRequired = session?.passwordStatus === "TEMPORARY";
 
         text("[data-mypage-name]", name);
         text("[data-mypage-description]", `${loginId} 계정으로 접속 중입니다.`);
@@ -123,6 +126,21 @@
         updateWorkspaceLinks(resolvedCompanyCode);
         showRoleSection(role);
         renderStaffPermissions(session?.staffPermissions || []);
+        passwordRequiredNotice.hidden = !passwordChangeRequired;
+        document.body.classList.toggle("is-password-change-required", passwordChangeRequired);
+
+        if (passwordChangeRequired) {
+            profileForm?.querySelectorAll("input, button").forEach((control) => {
+                control.disabled = true;
+            });
+            ownerCompanyForm?.querySelectorAll("input, button").forEach((control) => {
+                control.disabled = true;
+            });
+            const currentPasswordInput = passwordForm?.elements.currentPassword;
+            if (currentPasswordInput) {
+                currentPasswordInput.placeholder = "발급받은 임시 비밀번호";
+            }
+        }
     };
 
     const renderOwnerCompany = (company) => {
@@ -153,8 +171,13 @@
             });
             renderSession(session);
 
-            if (session?.role === "OWNER") {
+            if (session?.role === "OWNER" && session?.passwordStatus !== "TEMPORARY") {
                 await loadOwnerCompany();
+            }
+
+            if (session?.passwordStatus === "TEMPORARY") {
+                passwordSection?.scrollIntoView({ block: "start" });
+                passwordForm?.elements.currentPassword?.focus({ preventScroll: true });
             }
         } catch (error) {
             text("[data-mypage-name]", "계정 확인 실패");
@@ -276,8 +299,9 @@
                     loginCompanyCode: companyCode
                 });
                 passwordForm.reset();
-                renderSession(result.data);
-                showToast(result.message || "비밀번호가 변경되었습니다.", "success");
+                showToast(result.message || "비밀번호가 변경되었습니다. 다시 로그인해 주세요.", "success");
+                await window.PcsApi.logout();
+                window.location.href = `/w/${encodeURIComponent(companyCode)}`;
             } catch (error) {
                 showToast(error.message || "비밀번호를 변경하지 못했습니다.", "error");
             } finally {

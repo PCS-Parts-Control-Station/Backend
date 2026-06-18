@@ -955,6 +955,7 @@ function Test-AuthFeature {
     Test-PathRequired "src/main/java/com/pcs/global/security/JwtAuthenticationFilter.java" "AUTH_JWT_FILTER" "JWT Authorization header parsing must live in a Security filter."
     Test-PathRequired "src/main/java/com/pcs/global/security/JwtAuthenticationEntryPoint.java" "AUTH_ENTRY_POINT" "Security authentication failures must return ApiResultDto JSON."
     Test-PathRequired "src/main/java/com/pcs/global/security/JwtAccessDeniedHandler.java" "AUTH_ACCESS_DENIED_HANDLER" "Security authorization failures must return ApiResultDto JSON."
+    Test-PathRequired "src/main/java/com/pcs/global/security/TemporaryPasswordAuthorizationFilter.java" "AUTH_TEMP_PASSWORD_FILTER" "Temporary passwords must be restricted to password-change endpoints."
     Test-PathRequired "src/main/java/com/pcs/global/security/PcsPrincipal.java" "AUTH_SECURITY_PRINCIPAL" "Authenticated user claims must be exposed through PcsPrincipal."
     Test-PathRequired "src/main/resources/static/js/pcs-api.js" "AUTH_STATIC_API_FETCH" "Keep common fetch wrapper for access token attachment and refresh retry."
 
@@ -1013,7 +1014,7 @@ function Test-AuthFeature {
     $securityConfig = Join-Path $ProjectRoot "src/main/java/com/pcs/global/security/SecurityConfig.java"
     if (Test-Path $securityConfig) {
         $securityContent = Get-Content -Raw $securityConfig
-        foreach ($pattern in @("SecurityFilterChain", "SessionCreationPolicy.STATELESS", "/api/**", "authenticated", "permitAll", "addFilterBefore")) {
+        foreach ($pattern in @("SecurityFilterChain", "SessionCreationPolicy.STATELESS", "/api/**", "authenticated", "permitAll", "addFilterBefore", "TemporaryPasswordAuthorizationFilter")) {
             if ($securityContent -notmatch [regex]::Escape($pattern)) {
                 Add-Result "FAIL" "AUTH_SECURITY_CONFIG_PATTERN" "SecurityConfig is missing required pattern: $pattern" "Keep stateless JWT Security configuration."
             }
@@ -1059,7 +1060,7 @@ function Test-AuthFeature {
         if ($mapperXmlContent -notmatch 'namespace="com\.pcs\.domain\.auth\.mapper\.AuthMapper"') {
             Add-Result "FAIL" "AUTH_MAPPER_NAMESPACE" "AuthMapper.xml namespace does not match AuthMapper FQCN." "Match XML namespace to mapper interface."
         }
-        foreach ($column in @("tb_auth_refresh_token", "refresh_token_hash", "token_family_id", "revoked_reason", "tb_auth_login_history", "login_result", "last_login_at", "login_failed_count", "locked_until_at", "revokeRefreshTokenFamily")) {
+        foreach ($column in @("tb_auth_refresh_token", "refresh_token_hash", "token_family_id", "revoked_reason", "tb_auth_login_history", "login_result", "last_login_at", "login_failed_count", "locked_until_at", "revokeRefreshTokenFamily", "revokeMemberRefreshTokens")) {
             if ($mapperXmlContent -notmatch $column) {
                 Add-Result "FAIL" "AUTH_MAPPER_COLUMN_$($column.ToUpper())" "AuthMapper.xml does not use $column." "Keep required auth DB columns in Mapper XML."
             }
@@ -1102,12 +1103,26 @@ function Test-PartnerFeature {
         }
     }
 
+    $workspaceAccessValidator = Join-Path $ProjectRoot "src/main/java/com/pcs/global/workspace/WorkspaceAccessValidator.java"
+    $pageQuery = Join-Path $ProjectRoot "src/main/java/com/pcs/global/pagination/PageQuery.java"
+    Test-PathRequired "src/main/java/com/pcs/global/workspace/WorkspaceAccessValidator.java" "PARTNER_WORKSPACE_VALIDATOR" "Keep shared workspace scope validation available to partner/facade."
+    Test-PathRequired "src/main/java/com/pcs/global/pagination/PageQuery.java" "PARTNER_PAGE_QUERY" "Keep shared pagination normalization available to partner/service."
+
     $facade = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/partner/facade/PartnerFacade.java"
     if (Test-Path $facade) {
         $facadeContent = Get-Content -Raw $facade
-        foreach ($pattern in @("principal.companyId", "principal.companyCode", "AUTH_WORKSPACE_MISMATCH")) {
+        foreach ($pattern in @("WorkspaceAccessValidator", "validateAuthenticatedWorkspace", "checkedPrincipal.companyId")) {
             if ($facadeContent -notmatch $pattern) {
                 Add-Result "FAIL" "PARTNER_SCOPE_PATTERN" "PartnerFacade is missing company-scope pattern: $pattern" "Validate URL companyCode against authenticated workspace and query by companyId."
+            }
+        }
+    }
+
+    if (Test-Path $workspaceAccessValidator) {
+        $workspaceAccessValidatorContent = Get-Content -Raw $workspaceAccessValidator
+        foreach ($pattern in @("principal.companyCode", "AUTH_WORKSPACE_MISMATCH", "COMPANY_INACTIVE")) {
+            if ($workspaceAccessValidatorContent -notmatch $pattern) {
+                Add-Result "FAIL" "PARTNER_WORKSPACE_VALIDATOR_PATTERN" "WorkspaceAccessValidator is missing required pattern: $pattern" "Keep shared workspace identity and active-company validation intact."
             }
         }
     }
@@ -1115,9 +1130,18 @@ function Test-PartnerFeature {
     $service = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/partner/service/PartnerService.java"
     if (Test-Path $service) {
         $serviceContent = Get-Content -Raw $service
-        foreach ($pattern in @("DEFAULT_SIZE", "MAX_SIZE", "countPartners", "searchPartners", "summarizePartners", "COMPANY_INACTIVE")) {
+        foreach ($pattern in @("DEFAULT_SIZE", "PageQuery.of", "countPartners", "searchPartners", "summarizePartners", "validateCompanyActive")) {
             if ($serviceContent -notmatch $pattern) {
                 Add-Result "FAIL" "PARTNER_SERVICE_PATTERN" "PartnerService is missing required search/paging pattern: $pattern" "Keep partner list paging, summary, and inactive-company guard."
+            }
+        }
+    }
+
+    if (Test-Path $pageQuery) {
+        $pageQueryContent = Get-Content -Raw $pageQuery
+        foreach ($pattern in @("MAX_SIZE", "Math.min")) {
+            if ($pageQueryContent -notmatch $pattern) {
+                Add-Result "FAIL" "PARTNER_PAGE_QUERY_PATTERN" "PageQuery is missing required pagination bound pattern: $pattern" "Keep shared page-size bounds intact."
             }
         }
     }
@@ -1596,6 +1620,7 @@ public class PcsHarnessDbCheck {
         requireColumn("tb_auth_refresh_token", "replaced_by_token_id");
         requireEnumValue("tb_auth_refresh_token", "revoked_reason", "EXPIRED");
         requireEnumValue("tb_auth_refresh_token", "revoked_reason", "REUSE_DETECTED");
+        requireEnumValue("tb_auth_refresh_token", "revoked_reason", "ADMIN_REVOKED");
         requireColumn("tb_auth_login_history", "company_code_snapshot");
         requireColumn("tb_auth_login_history", "login_id_snapshot");
         requireColumn("tb_auth_login_history", "login_result");
@@ -1672,6 +1697,25 @@ public class PcsHarnessDbCheck {
                 pass("AUTH_REFRESH_TOKEN_REUSE_DETECTED", "Refresh token family reuse-detected state can be recorded.");
             } else {
                 fail("AUTH_REFRESH_TOKEN_REUSE_DETECTED", "Refresh token family reuse-detected state was not recorded as expected.");
+            }
+
+            String adminRevokedHash = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
+            insertRefreshToken(companyId, memberId, adminRevokedHash, "55555555-5555-5555-5555-555555555555");
+            revokeMemberRefreshTokens(companyId, memberId);
+            int activeTokenCount = queryInt(
+                "SELECT COUNT(*) FROM tb_auth_refresh_token WHERE company_id = ? AND member_id = ? AND revoked_at IS NULL",
+                companyId,
+                memberId
+            );
+            int adminRevokedCount = queryInt(
+                "SELECT COUNT(*) FROM tb_auth_refresh_token WHERE company_id = ? AND member_id = ? AND revoked_reason = 'ADMIN_REVOKED'",
+                companyId,
+                memberId
+            );
+            if (activeTokenCount == 0 && adminRevokedCount >= 2) {
+                pass("AUTH_MEMBER_REFRESH_TOKENS_REVOKED", "Password reset can revoke all active member refresh tokens.");
+            } else {
+                fail("AUTH_MEMBER_REFRESH_TOKENS_REVOKED", "Expected all active member refresh tokens to be ADMIN_REVOKED.");
             }
 
             expectSqlFailure("AUTH_REFRESH_TOKEN_HASH_UNIQUE", new SqlAction() {
@@ -2113,6 +2157,15 @@ public class PcsHarnessDbCheck {
             statement.setLong(1, companyId);
             statement.setLong(2, memberId);
             statement.setString(3, tokenFamilyId);
+            statement.executeUpdate();
+        }
+    }
+
+    private static void revokeMemberRefreshTokens(long companyId, long memberId) throws SQLException {
+        String sql = "UPDATE tb_auth_refresh_token SET revoked_at = CURRENT_TIMESTAMP(6), revoked_reason = 'ADMIN_REVOKED' WHERE company_id = ? AND member_id = ? AND revoked_at IS NULL";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, companyId);
+            statement.setLong(2, memberId);
             statement.executeUpdate();
         }
     }

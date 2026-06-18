@@ -81,3 +81,11 @@ Long memberId = jwtTokenProvider.parse(token);
 - access token 만료 시 `pcs-api.js`가 `/api/auth/refresh`를 호출한다.
 - refresh token 회전, 만료, 재사용 감지 정책은 `docs/features/auth.md`를 따른다.
 - refresh 실패 시 재로그인이 필요하다.
+
+## 임시 비밀번호 흐름
+
+- 로그인 응답의 `passwordChangeRequired`가 `true`이면 대시보드로 이동하지 않는다.
+- `/w/{companyCode}/mypage?section=password&required=true`로 이동해 비밀번호 변경을 먼저 완료한다.
+- 공통 API가 `MEMBER-005`를 받으면 같은 비밀번호 변경 화면으로 이동한다.
+- 비밀번호 변경 성공 후 `PcsApi.logout()`으로 토큰을 정리하고 `/w/{companyCode}` 로그인 화면으로 이동한다.
+- 임시 비밀번호 원문은 사용자 관리 초기화 응답에서 한 번만 표시하며 브라우저 저장소에 보관하지 않는다.

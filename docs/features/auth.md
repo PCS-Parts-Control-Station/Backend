@@ -35,6 +35,10 @@ com.pcs.domain.auth
 - 비활성 회사 또는 비활성 계정은 `docs/ai/pcs-status-lifecycle-rules.md` 기준에 따라 로그인할 수 없다.
 - 임시 비밀번호 상태면 비밀번호 변경이 필요한 상태로 응답한다.
 - 임시 비밀번호 만료 시간이 지난 계정은 로그인할 수 없다.
+- 임시 비밀번호 로그인 성공 시 프론트는 대시보드가 아니라 `/w/{companyCode}/mypage?section=password&required=true`로 이동한다.
+- 임시 비밀번호 상태의 access token은 세션/마이페이지 조회, 비밀번호 변경, 로그아웃 외 API에 사용할 수 없다.
+- 임시 비밀번호 상태에서는 refresh token 재발급도 허용하지 않는다.
+- 비밀번호 초기화와 비밀번호 변경 시 해당 회원의 활성 refresh token을 모두 `ADMIN_REVOKED`로 폐기한다.
 - 로그인 실패가 반복되면 계정을 일정 시간 잠근다.
 - 로그인 성공/실패는 `tb_auth_login_history`에 기록한다.
 - refresh token 재발급은 rotation 방식으로 처리한다. 재발급 성공 시 새 access token과 새 refresh token을 함께 발급하고, 기존 refresh token은 `ROTATED`로 폐기한다.
@@ -105,6 +109,7 @@ pcsRefreshToken={token}; HttpOnly; SameSite=Strict; Path=/api/auth
 - 비활성 회사: `COMPANY_INACTIVE`
 - 비활성 사용자: `MEMBER_INACTIVE`
 - 임시 비밀번호 만료: `MEMBER_TEMP_PASSWORD_EXPIRED`
+- 임시 비밀번호 변경 필요: `MEMBER_PASSWORD_CHANGE_REQUIRED`
 - URL 업체 코드와 JWT 업체 코드 불일치: `AUTH_WORKSPACE_MISMATCH`
 
 ## 하네스 포인트
@@ -112,6 +117,7 @@ pcsRefreshToken={token}; HttpOnly; SameSite=Strict; Path=/api/auth
 - 인증 실패 API 응답은 HTML이 아니라 `docs/ai/pcs-backend-common-rules.md` 기준의 JSON이어야 한다.
 - `/api/**`는 인증 실패 시 JSON 에러를 반환해야 한다.
 - Security 설정은 stateless 기준을 유지한다.
+- `TemporaryPasswordAuthorizationFilter`가 임시 비밀번호 상태의 허용 API 범위를 강제해야 한다.
 - Controller 응답 형식은 `docs/ai/pcs-backend-common-rules.md`를 따른다.
 - JWT 생성/검증 로직은 `global/jwt`, 요청 인증 연결은 `global/security`에서 처리한다.
 - MyBatis Mapper XML namespace는 Mapper FQCN과 일치해야 한다.

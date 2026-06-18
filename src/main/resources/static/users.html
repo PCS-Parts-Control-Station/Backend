@@ -9,15 +9,16 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/admin.css?20260615_user_copy">
+    <link rel="stylesheet" href="/css/admin.css?20260617_temp_password">
+    <link rel="stylesheet" href="/css/users.css?20260618_staff_permission_modal">
     <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
 </head>
-<body class="has-collapsible-sidebar">
+<body class="has-collapsible-sidebar users-page">
 <div class="workspace-layout">
     <div data-workspace-sidebar data-active-route="users"></div>
 
     <main class="workspace-main">
-        <header class="workspace-header">
+        <header class="workspace-header users-page-header">
             <button class="menu-toggle" type="button" data-sidebar-toggle aria-controls="workspace-sidebar" aria-expanded="false" aria-label="메뉴 열기">
                 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                     <path d="M4 7h16" />
@@ -25,16 +26,19 @@
                     <path d="M4 17h16" />
                 </svg>
             </button>
-            <div>
+            <div class="users-title-block">
                 <p class="page-kicker">기준 정보 관리</p>
                 <h1>사용자 관리</h1>
-                <p class="page-description">작업 공간을 함께 사용할 계정을 등록하고 사용할 업무 메뉴를 관리합니다.</p>
+                <p class="page-description">작업공간 계정과 작업자 공통 업무 권한을 관리합니다.</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" type="button" data-open-staff-permission-modal>작업자 권한</button>
             </div>
         </header>
 
-        <section class="content-grid">
+        <section class="content-grid user-management-grid">
             <div class="content-main">
-                <section class="filter-card management-filter-card" aria-labelledby="filter-title">
+                <section class="filter-card management-filter-card user-filter-card" aria-labelledby="filter-title">
                     <div>
                         <h2 id="filter-title">사용자 검색</h2>
                         <p>이름, 로그인 아이디, 계정 유형으로 목록을 좁혀 봅니다.</p>
@@ -56,11 +60,11 @@
                     </form>
                 </section>
 
-                <section class="table-card" aria-labelledby="user-list-title">
+                <section class="table-card user-list-card" aria-labelledby="user-list-title">
                     <div class="table-header inline-summary-header user-list-header">
                         <div>
                             <h2 id="user-list-title">사용자 목록</h2>
-                            <p>작업 공간에 등록된 전체 사용자 계정입니다.</p>
+                            <p>계정을 선택하면 오른쪽에서 상세 정보와 관리 작업을 확인할 수 있습니다.</p>
                         </div>
                         <div class="list-summary-box summary-compact user-summary-strip" aria-label="사용자 목록 요약">
                             <dl class="list-summary">
@@ -82,10 +86,10 @@
 
                     <div class="data-table" role="table" aria-label="사용자 목록" data-user-table>
                         <div class="data-row management-data-row user-management-data-row table-head" role="row">
-                            <span role="columnheader">이름</span>
-                            <span role="columnheader">로그인 아이디</span>
+                            <span role="columnheader">사용자</span>
                             <span role="columnheader">계정 유형</span>
-                            <span role="columnheader">수정일</span>
+                            <span role="columnheader">계정 상태</span>
+                            <span role="columnheader">비밀번호</span>
                         </div>
                         <div class="data-row management-data-row user-management-data-row empty-data-row" role="row" data-user-empty>
                             <span role="cell" data-label="안내">사용자 목록을 불러오는 중입니다.</span>
@@ -101,11 +105,12 @@
                 </section>
             </div>
 
-            <aside class="side-panel" aria-labelledby="user-form-title">
-                <div class="panel-card side-work-panel">
+            <aside class="side-panel user-account-panel" aria-label="사용자 계정 작업">
+                <div class="panel-card side-work-panel user-account-work-panel">
                     <div class="panel-mode is-active" data-user-panel="create">
-                        <h2 id="user-form-title">사용자 등록</h2>
-                        <p>새 사용자를 등록하고 계정 유형을 지정합니다.</p>
+                        <p class="panel-eyebrow">계정 작업</p>
+                        <h2 id="user-form-title">새 사용자 등록</h2>
+                        <p>업무에 참여할 계정과 역할을 지정합니다.</p>
                         <form class="management-form" action="#" method="post" autocomplete="off" data-user-create-form>
                             <label>
                                 <span>이름</span>
@@ -123,8 +128,9 @@
                                     <option value="STAFF">작업자</option>
                                 </select>
                             </label>
+                            <p class="account-form-note">초기 비밀번호는 로그인 아이디와 동일하게 발급되며, 첫 로그인 후 변경해야 합니다.</p>
                             <div class="form-actions">
-                                <button class="btn btn-primary" type="submit">저장</button>
+                                <button class="btn btn-primary" type="submit">사용자 등록</button>
                                 <button class="btn btn-secondary" type="reset">초기화</button>
                             </div>
                         </form>
@@ -133,16 +139,19 @@
                     <div class="panel-mode" data-user-panel="detail" hidden>
                         <div class="panel-title-bar">
                             <div>
+                                <p class="panel-eyebrow">계정 작업</p>
                                 <h2>사용자 상세</h2>
-                                <p>선택한 사용자 정보를 확인합니다.</p>
+                                <p>계정 상태와 관리 가능한 작업을 확인합니다.</p>
                             </div>
                             <button class="panel-link-button" type="button" data-user-create-mode>새 사용자 등록</button>
                         </div>
 
-                        <div class="side-detail-card">
+                        <div class="side-detail-card user-profile-summary">
                             <strong data-detail-name>-</strong>
                             <div class="detail-badge-row" data-detail-badges>
                                 <i class="badge" data-detail-role-badge>-</i>
+                                <i class="badge" data-detail-active-badge>-</i>
+                                <i class="badge" data-detail-password-badge>-</i>
                             </div>
                         </div>
 
@@ -158,16 +167,17 @@
                         </dl>
 
                         <div class="form-actions">
-                            <button class="btn btn-primary" type="button" data-user-edit-mode>수정</button>
-                            <button class="btn btn-secondary" type="button" data-open-reset-password-modal>비밀번호 초기화</button>
+                            <button class="btn btn-primary" type="button" data-user-edit-mode>정보 수정</button>
+                            <button class="btn btn-secondary" type="button" data-open-reset-password-modal>임시 비밀번호 발급</button>
                         </div>
                     </div>
 
                     <div class="panel-mode" data-user-panel="edit" hidden>
                         <div class="panel-title-bar">
                             <div>
-                                <h2>사용자 수정</h2>
-                                <p>선택한 사용자 정보를 수정합니다.</p>
+                                <p class="panel-eyebrow">계정 작업</p>
+                                <h2>사용자 정보 수정</h2>
+                                <p>이름과 계정 유형을 변경합니다.</p>
                             </div>
                             <button class="panel-link-button" type="button" data-user-create-mode>새 사용자 등록</button>
                         </div>
@@ -189,102 +199,103 @@
                                 </select>
                             </label>
                             <div class="form-actions">
-                                <button class="btn btn-primary" type="submit">저장</button>
+                                <button class="btn btn-primary" type="submit">변경 저장</button>
                                 <button class="btn btn-secondary" type="button" data-user-detail-mode>취소</button>
                             </div>
                         </form>
                     </div>
                 </div>
-
-                <div class="panel-card staff-permission-panel" aria-labelledby="staff-permission-title">
-                    <div class="panel-title-bar">
-                        <div>
-                            <h2 id="staff-permission-title">작업자 업무 메뉴 설정</h2>
-                            <p>작업자 계정에서 사용할 메뉴를 선택합니다.</p>
-                        </div>
-                        <i class="badge badge-blue">작업자</i>
-                    </div>
-
-                    <form class="staff-permission-form" action="#" method="post" data-staff-permission-form>
-                        <div class="permission-switch-list">
-                            <label class="permission-switch">
-                                <input type="checkbox" name="staffPermission" value="STAFF_INBOUND" data-staff-permission-input checked>
-                                <span class="permission-switch-body">
-                                    <strong>입고</strong>
-                                    <small>입고 전표와 입고 대상 등록</small>
-                                </span>
-                                <span class="permission-switch-control" aria-hidden="true"></span>
-                            </label>
-                            <label class="permission-switch">
-                                <input type="checkbox" name="staffPermission" value="STAFF_INSPECTION" data-staff-permission-input checked>
-                                <span class="permission-switch-body">
-                                    <strong>검수</strong>
-                                    <small>검수 등록, 정정, 재검수 처리</small>
-                                </span>
-                                <span class="permission-switch-control" aria-hidden="true"></span>
-                            </label>
-                            <label class="permission-switch">
-                                <input type="checkbox" name="staffPermission" value="STAFF_OUTBOUND" data-staff-permission-input checked>
-                                <span class="permission-switch-body">
-                                    <strong>출고</strong>
-                                    <small>출고 전표와 출고 대상 등록</small>
-                                </span>
-                                <span class="permission-switch-control" aria-hidden="true"></span>
-                            </label>
-                            <label class="permission-switch">
-                                <input type="checkbox" name="staffPermission" value="STAFF_PART_CREATE" data-staff-permission-input checked>
-                                <span class="permission-switch-body">
-                                    <strong>품목 관리</strong>
-                                    <small>품목 등록, 수정, 사양 입력</small>
-                                </span>
-                                <span class="permission-switch-control" aria-hidden="true"></span>
-                            </label>
-                            <label class="permission-switch">
-                                <input type="checkbox" name="staffPermission" value="STAFF_CATEGORY_MANAGE" data-staff-permission-input checked>
-                                <span class="permission-switch-body">
-                                    <strong>품목 분류</strong>
-                                    <small>분류와 사양 항목 관리</small>
-                                </span>
-                                <span class="permission-switch-control" aria-hidden="true"></span>
-                            </label>
-                            <label class="permission-switch">
-                                <input type="checkbox" name="staffPermission" value="STAFF_PARTNER_MANAGE" data-staff-permission-input checked>
-                                <span class="permission-switch-body">
-                                    <strong>거래처 관리</strong>
-                                    <small>거래처 등록, 수정, 거래 상태 관리</small>
-                                </span>
-                                <span class="permission-switch-control" aria-hidden="true"></span>
-                            </label>
-                        </div>
-
-                        <div class="form-actions">
-                            <button class="btn btn-primary" type="submit">저장</button>
-                            <button class="btn btn-secondary" type="reset">전체 허용</button>
-                        </div>
-                    </form>
-                </div>
-
-                <div class="panel-card muted-panel">
-                    <h2>운영 메모</h2>
-                    <ul>
-                        <li>로그인 아이디는 한 번 등록하면 변경 불가</li>
-                        <li>초기 비밀번호는 아이디와 동일</li>
-                        <li>비밀번호 초기화 시 임시 비밀번호 팝업 표시</li>
-                        <li>최고 관리자 계정은 별도 계정 설정에서 관리</li>
-                    </ul>
-                </div>
             </aside>
         </section>
+
     </main>
 </div>
 
-<dialog class="part-modal confirm-modal" data-reset-password-modal aria-labelledby="reset-password-modal-title">
+<dialog class="part-modal staff-permission-modal" data-staff-permission-modal aria-labelledby="staff-permission-title">
+    <div class="part-modal-card">
+        <div class="part-modal-header">
+            <div>
+                <p class="page-kicker">업체 공통 정책</p>
+                <h2 id="staff-permission-title">작업자 공통 업무 권한</h2>
+                <p>이 작업공간의 모든 작업자 계정에 동일하게 적용됩니다.</p>
+            </div>
+            <button class="modal-close-button" type="button" data-close-staff-permission-modal aria-label="닫기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M6 6l12 12" />
+                    <path d="M18 6L6 18" />
+                </svg>
+            </button>
+        </div>
+
+        <form class="staff-permission-form" action="#" method="post" data-staff-permission-form>
+            <div class="permission-switch-list">
+                <label class="permission-switch">
+                    <input type="checkbox" name="staffPermission" value="STAFF_INBOUND" data-staff-permission-input checked>
+                    <span class="permission-switch-body">
+                        <strong>입고</strong>
+                        <small>입고 전표와 입고 대상 등록</small>
+                    </span>
+                    <span class="permission-switch-control" aria-hidden="true"></span>
+                </label>
+                <label class="permission-switch">
+                    <input type="checkbox" name="staffPermission" value="STAFF_INSPECTION" data-staff-permission-input checked>
+                    <span class="permission-switch-body">
+                        <strong>검수</strong>
+                        <small>검수 등록, 정정, 재검수 처리</small>
+                    </span>
+                    <span class="permission-switch-control" aria-hidden="true"></span>
+                </label>
+                <label class="permission-switch">
+                    <input type="checkbox" name="staffPermission" value="STAFF_OUTBOUND" data-staff-permission-input checked>
+                    <span class="permission-switch-body">
+                        <strong>출고</strong>
+                        <small>출고 전표와 출고 대상 등록</small>
+                    </span>
+                    <span class="permission-switch-control" aria-hidden="true"></span>
+                </label>
+                <label class="permission-switch">
+                    <input type="checkbox" name="staffPermission" value="STAFF_PART_CREATE" data-staff-permission-input checked>
+                    <span class="permission-switch-body">
+                        <strong>품목 관리</strong>
+                        <small>품목 등록, 수정, 사양 입력</small>
+                    </span>
+                    <span class="permission-switch-control" aria-hidden="true"></span>
+                </label>
+                <label class="permission-switch">
+                    <input type="checkbox" name="staffPermission" value="STAFF_CATEGORY_MANAGE" data-staff-permission-input checked>
+                    <span class="permission-switch-body">
+                        <strong>품목 분류</strong>
+                        <small>분류와 사양 항목 관리</small>
+                    </span>
+                    <span class="permission-switch-control" aria-hidden="true"></span>
+                </label>
+                <label class="permission-switch">
+                    <input type="checkbox" name="staffPermission" value="STAFF_PARTNER_MANAGE" data-staff-permission-input checked>
+                    <span class="permission-switch-body">
+                        <strong>거래처 관리</strong>
+                        <small>거래처 등록, 수정, 거래 상태 관리</small>
+                    </span>
+                    <span class="permission-switch-control" aria-hidden="true"></span>
+                </label>
+            </div>
+
+            <p class="permission-modal-note">꺼진 업무는 작업자 메뉴와 해당 업무 API에서 함께 차단됩니다.</p>
+            <div class="part-modal-actions permission-modal-actions">
+                <button class="btn btn-secondary" type="reset">전체 허용</button>
+                <button class="btn btn-secondary" type="button" data-close-staff-permission-modal>닫기</button>
+                <button class="btn btn-primary" type="submit">권한 저장</button>
+            </div>
+        </form>
+    </div>
+</dialog>
+
+<dialog class="part-modal confirm-modal user-password-modal" data-reset-password-modal aria-labelledby="reset-password-modal-title">
     <form class="part-modal-card" method="dialog">
         <div class="part-modal-header">
             <div>
                 <p class="page-kicker">보안 관리</p>
-                <h2 id="reset-password-modal-title">비밀번호를 초기화할까요?</h2>
-                <p>기존 비밀번호는 즉시 파기되고 임시 비밀번호가 발급됩니다.</p>
+                <h2 id="reset-password-modal-title">임시 비밀번호를 발급할까요?</h2>
+                <p>현재 비밀번호를 사용할 수 없게 되고 새 임시 비밀번호가 발급됩니다.</p>
             </div>
             <button class="modal-close-button" type="button" data-close-reset-password-modal aria-label="닫기">
                 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -301,23 +312,34 @@
             </div>
             <div data-temp-password-container hidden>
                 <dt>임시 비밀번호</dt>
-                <dd class="mono-value" data-temp-password-value>-</dd>
+                <dd class="temporary-password-output">
+                    <span class="mono-value" data-temp-password-value>-</span>
+                    <button class="btn btn-secondary btn-compact" type="button" data-copy-temp-password>복사</button>
+                </dd>
+            </div>
+            <div data-temp-password-expiry-container hidden>
+                <dt>사용 기한</dt>
+                <dd data-temp-password-expiry>-</dd>
             </div>
         </dl>
+
+        <p class="temporary-password-notice" data-temp-password-notice hidden>
+            이 비밀번호는 지금만 확인할 수 있습니다. 닫기 전에 작업자에게 안전하게 전달해 주세요.
+        </p>
 
         <p class="field-message is-error modal-message" data-reset-password-message role="status" aria-live="polite" hidden></p>
         <div class="part-modal-actions">
             <button class="btn btn-secondary" type="button" data-close-reset-password-modal>닫기</button>
-            <button class="btn btn-danger" type="button" data-confirm-reset-password>초기화 실행</button>
+            <button class="btn btn-danger" type="button" data-confirm-reset-password>발급하기</button>
         </div>
     </form>
 </dialog>
 
-<script src="/js/pcs-api.js?20260529_workspace_guard"></script>
+<script src="/js/pcs-api.js?20260617_temp_password"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
-    <script src="/js/workspace-layout.js?20260612_staff_permission"></script>
+    <script src="/js/workspace-layout.js?20260617_temp_password"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
 <script src="/js/pcs-common.js?20260611_common"></script>
-<script src="/js/users.js?20260612_staff_permission"></script>
+<script src="/js/users.js?20260618_staff_permission_modal"></script>
 </body>
 </html>

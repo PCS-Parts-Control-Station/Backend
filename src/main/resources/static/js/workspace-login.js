@@ -201,6 +201,11 @@ workspaceLoginForm?.addEventListener('submit', async (event) => {
             window.PcsApi?.setAccessToken(responseData.accessToken);
         }
 
+        if (responseData.passwordChangeRequired) {
+            window.location.href = `/w/${encodeURIComponent(nextCompanyCode)}/mypage?section=password&required=true`;
+            return;
+        }
+
         window.location.href = `/w/${encodeURIComponent(nextCompanyCode)}/dashboard`;
     } catch (error) {
         setMessage('로그인 정보를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.', true);

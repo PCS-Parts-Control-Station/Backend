@@ -167,12 +167,15 @@ public class MemberService {
         SearchMemberResponse target = findManagedMember(companyId, actorRole, memberId);
         String temporaryPassword = generateTemporaryPassword();
         LocalDateTime expiresAt = LocalDateTime.now().plusDays(TEMP_PASSWORD_EXPIRE_DAYS);
-        memberMapper.updateTemporaryPassword(
+        int updatedCount = memberMapper.updateTemporaryPassword(
                 companyId,
                 target.memberId(),
                 passwordEncoder.encode(temporaryPassword),
                 expiresAt
         );
+        if (updatedCount == 0) {
+            throw new BusinessException(ErrorCode.MEMBER_NOT_FOUND);
+        }
         return new TemporaryPasswordResponse(temporaryPassword, expiresAt);
     }
 

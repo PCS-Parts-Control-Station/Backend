@@ -9,6 +9,7 @@ import com.pcs.domain.auth.type.LoginResult;
 import com.pcs.domain.auth.type.RefreshTokenRevokedReason;
 import com.pcs.domain.member.service.StaffPermissionService;
 import com.pcs.domain.member.type.MemberRole;
+import com.pcs.domain.member.type.PasswordStatus;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.security.PcsPrincipal;
@@ -183,6 +184,9 @@ public class AuthService {
         if (!session.isMemberActive()) {
             throw new BusinessException(ErrorCode.MEMBER_INACTIVE);
         }
+        if (session.getPasswordStatus() == PasswordStatus.TEMPORARY) {
+            throw new BusinessException(ErrorCode.MEMBER_PASSWORD_CHANGE_REQUIRED);
+        }
         return session;
     }
 
@@ -211,6 +215,14 @@ public class AuthService {
         if (session != null && !session.isRevoked()) {
             revokeRefreshToken(session.getTokenId(), revokedReason, null);
         }
+    }
+
+    public int revokeMemberRefreshTokens(Long companyId, Long memberId) {
+        return authMapper.revokeMemberRefreshTokens(
+                companyId,
+                memberId,
+                RefreshTokenRevokedReason.ADMIN_REVOKED
+        );
     }
 
     public SessionMeResponse findCurrentSession(PcsPrincipal principal, String pathCompanyCode) {

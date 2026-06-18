@@ -90,6 +90,9 @@ ADMIN/STAFF에는 `0` 같은 값을 넣지 않고 `NULL`을 유지한다.
 - 응답 DTO로 `password_hash`를 노출하지 않는다.
 - 비밀번호 변경 시각은 `password_changed_at`에 저장한다.
 - 임시 비밀번호 만료 시각은 `temp_password_expires_at`에 저장한다.
+- 임시 비밀번호 발급 시 `password_status = TEMPORARY`, `password_changed_at = NULL`로 갱신한다.
+- 임시 비밀번호 발급과 해당 회원 refresh token 폐기는 같은 트랜잭션으로 처리한다.
+- 비밀번호 변경 시 `password_status = ACTIVE`, `temp_password_expires_at = NULL`, `password_changed_at = NOW(6)`으로 갱신한다.
 
 ## 로그인 보안 기준
 
