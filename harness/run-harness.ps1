@@ -1103,12 +1103,26 @@ function Test-PartnerFeature {
         }
     }
 
+    $workspaceAccessValidator = Join-Path $ProjectRoot "src/main/java/com/pcs/global/workspace/WorkspaceAccessValidator.java"
+    $pageQuery = Join-Path $ProjectRoot "src/main/java/com/pcs/global/pagination/PageQuery.java"
+    Test-PathRequired "src/main/java/com/pcs/global/workspace/WorkspaceAccessValidator.java" "PARTNER_WORKSPACE_VALIDATOR" "Keep shared workspace scope validation available to partner/facade."
+    Test-PathRequired "src/main/java/com/pcs/global/pagination/PageQuery.java" "PARTNER_PAGE_QUERY" "Keep shared pagination normalization available to partner/service."
+
     $facade = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/partner/facade/PartnerFacade.java"
     if (Test-Path $facade) {
         $facadeContent = Get-Content -Raw $facade
-        foreach ($pattern in @("principal.companyId", "principal.companyCode", "AUTH_WORKSPACE_MISMATCH")) {
+        foreach ($pattern in @("WorkspaceAccessValidator", "validateAuthenticatedWorkspace", "checkedPrincipal.companyId")) {
             if ($facadeContent -notmatch $pattern) {
                 Add-Result "FAIL" "PARTNER_SCOPE_PATTERN" "PartnerFacade is missing company-scope pattern: $pattern" "Validate URL companyCode against authenticated workspace and query by companyId."
+            }
+        }
+    }
+
+    if (Test-Path $workspaceAccessValidator) {
+        $workspaceAccessValidatorContent = Get-Content -Raw $workspaceAccessValidator
+        foreach ($pattern in @("principal.companyCode", "AUTH_WORKSPACE_MISMATCH", "COMPANY_INACTIVE")) {
+            if ($workspaceAccessValidatorContent -notmatch $pattern) {
+                Add-Result "FAIL" "PARTNER_WORKSPACE_VALIDATOR_PATTERN" "WorkspaceAccessValidator is missing required pattern: $pattern" "Keep shared workspace identity and active-company validation intact."
             }
         }
     }
@@ -1116,9 +1130,18 @@ function Test-PartnerFeature {
     $service = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/partner/service/PartnerService.java"
     if (Test-Path $service) {
         $serviceContent = Get-Content -Raw $service
-        foreach ($pattern in @("DEFAULT_SIZE", "MAX_SIZE", "countPartners", "searchPartners", "summarizePartners", "COMPANY_INACTIVE")) {
+        foreach ($pattern in @("DEFAULT_SIZE", "PageQuery.of", "countPartners", "searchPartners", "summarizePartners", "validateCompanyActive")) {
             if ($serviceContent -notmatch $pattern) {
                 Add-Result "FAIL" "PARTNER_SERVICE_PATTERN" "PartnerService is missing required search/paging pattern: $pattern" "Keep partner list paging, summary, and inactive-company guard."
+            }
+        }
+    }
+
+    if (Test-Path $pageQuery) {
+        $pageQueryContent = Get-Content -Raw $pageQuery
+        foreach ($pattern in @("MAX_SIZE", "Math.min")) {
+            if ($pageQueryContent -notmatch $pattern) {
+                Add-Result "FAIL" "PARTNER_PAGE_QUERY_PATTERN" "PageQuery is missing required pagination bound pattern: $pattern" "Keep shared page-size bounds intact."
             }
         }
     }
