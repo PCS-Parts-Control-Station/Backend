@@ -1,5 +1,5 @@
 (function () {
-    const SOURCE_PAGE_SIZE = 100;
+    const SOURCE_PAGE_SIZE = 10;
     const DETAIL_PAGE_SIZE = 100;
     const MAX_DETAIL_PAGES = 5;
 
@@ -19,6 +19,9 @@
     const partCountText = document.querySelector("[data-history-part-count]");
     const unitCountText = document.querySelector("[data-history-unit-count]");
     const unitFilter = document.querySelector("[data-history-unit-filter]");
+    const unitRefine = document.querySelector("[data-history-unit-refine]");
+    const resultFilterSelect = document.querySelector("[data-history-result-filter]");
+    const gradeFilterSelect = document.querySelector("[data-history-grade-filter]");
     const detailOverlay = document.querySelector("[data-history-detail-overlay]");
     const detailPanel = document.querySelector("[data-history-detail-panel]");
     const detailCloseButton = document.querySelector("[data-history-detail-close]");
@@ -33,6 +36,8 @@
     let selectedManagementNumber = null;
     let selectedPartGroup = "ALL";
     let activeHistoryFilter = "ALL";
+    let activeResultFilter = "";
+    let activeGradeFilter = "";
     let detailPanelOpen = false;
     let lastDetailTrigger = null;
 
@@ -123,7 +128,10 @@
 
     const gradeBadgeClass = (grade) => {
         if (grade === "DEFECTIVE") return "badge-danger";
-        if (grade === "NONE") return "badge-warning";
+        if (grade === "NONE") return "badge-grade-none";
+        if (grade === "A") return "badge-grade-a";
+        if (grade === "B") return "badge-grade-b";
+        if (grade === "C") return "badge-grade-c";
         return "badge-blue";
     };
 
@@ -185,6 +193,9 @@
     };
 
     const summarizeParts = (group) => {
+        if (group.partSummary) {
+            return group.partSummary;
+        }
         const parts = Array.from(group.parts.entries())
                 .sort((a, b) => b[1] - a[1])
                 .map(([name]) => name);
@@ -212,6 +223,21 @@
             return names.join(" · ");
         }
         return `${names.slice(0, 2).join(" · ")} 외 ${numberText(names.length - 2)}개 품목`;
+    };
+
+    const normalizeDocumentGroups = (items) => {
+        return items.map((item) => ({
+            key: getDocumentKey(item),
+            documentId: item.documentId,
+            documentNo: item.documentNo || "-",
+            partSummary: item.partSummary || "-",
+            latestAt: item.latestInspectedAt,
+            inspections: item.inspectionCount || 0,
+            failCount: item.failCount || 0,
+            unitCount: item.unitCount || 0,
+            unitIds: new Set(),
+            parts: new Map()
+        }));
     };
 
     const getLatestInspection = (items) => {
@@ -244,13 +270,22 @@
     };
 
     const matchesUnitFilter = (item) => {
-        if (activeHistoryFilter === "ALL") {
-            return true;
-        }
+        let matchesType = true;
         if (activeHistoryFilter === "FAIL") {
-            return isProblemInspection(item);
+            matchesType = isProblemInspection(item);
+        } else if (activeHistoryFilter !== "ALL") {
+            matchesType = item.inspectionType === activeHistoryFilter;
         }
-        return item.inspectionType === activeHistoryFilter;
+        if (!matchesType) {
+            return false;
+        }
+        if (activeResultFilter && item.result !== activeResultFilter) {
+            return false;
+        }
+        if (activeGradeFilter && item.grade !== activeGradeFilter) {
+            return false;
+        }
+        return true;
     };
 
     const getRowsForSelectedPart = () => selectedDocumentRows.filter(matchesPartGroup);
@@ -300,6 +335,8 @@
         selectedManagementNumber = null;
         selectedPartGroup = "ALL";
         activeHistoryFilter = "ALL";
+        activeResultFilter = "";
+        activeGradeFilter = "";
         if (unitSection) {
             unitSection.hidden = true;
         }
@@ -311,6 +348,15 @@
         }
         if (unitFilter) {
             unitFilter.hidden = true;
+        }
+        if (unitRefine) {
+            unitRefine.hidden = true;
+        }
+        if (resultFilterSelect) {
+            resultFilterSelect.value = "";
+        }
+        if (gradeFilterSelect) {
+            gradeFilterSelect.value = "";
         }
         if (partGroupList) {
             partGroupList.innerHTML = "";
@@ -510,7 +556,7 @@
                 <code role="cell" data-label="전표번호">${escapeHtml(group.documentNo)}</code>
                 <span class="history-stack-cell" role="cell" data-label="품목 요약">
                     <strong>${escapeHtml(summarizeParts(group))}</strong>
-                    <small>관리번호 ${numberText(group.unitIds.size)}개</small>
+                    <small>관리번호 ${numberText(group.unitCount ?? group.unitIds.size)}개</small>
                 </span>
                 <span role="cell" data-label="검수 건수">${numberText(group.inspections)}건</span>
                 <span role="cell" data-label="불합격 건수">${numberText(group.failCount)}건</span>
@@ -530,7 +576,8 @@
             unitCountText.textContent = `${numberText(groups.length)}개`;
         }
         if (!groups.length) {
-            setTableMessage(unitTable, activeHistoryFilter === "ALL" ? "표시할 관리번호가 없습니다." : "선택한 조건의 관리번호가 없습니다.");
+            const hasDetailFilter = activeHistoryFilter !== "ALL" || activeResultFilter || activeGradeFilter;
+            setTableMessage(unitTable, hasDetailFilter ? "선택한 조건의 관리번호가 없습니다." : "표시할 관리번호가 없습니다.");
             return;
         }
 
@@ -551,6 +598,7 @@
                 </span>
                 <span class="history-result-cell" role="cell" data-label="최근 결과">
                     <em class="badge ${resultBadgeClass(latest.result)}">${escapeHtml(LABELS.result[latest.result] || latest.result || "-")}</em>
+                    <span class="history-result-separator" aria-hidden="true">/</span>
                     <em class="badge ${gradeBadgeClass(latest.grade)}">${escapeHtml(LABELS.grade[latest.grade] || latest.grade || "-")}</em>
                 </span>
                 <span role="cell" data-label="이력 건수">${numberText(group.rows.length)}건</span>
@@ -566,30 +614,37 @@
         const unitKey = getUnitKey(detail);
         const rows = selectedDocumentRows.filter((item) => {
             return getUnitKey(item) === unitKey;
-        }).sort((a, b) => String(b.inspectedAt || "").localeCompare(String(a.inspectedAt || "")));
+        }).sort((a, b) => String(a.inspectedAt || "").localeCompare(String(b.inspectedAt || "")));
 
         const sourceRows = rows.length ? rows : [detail];
-        return sourceRows.map((item) => `
+        return sourceRows.map((item, index) => {
+            const typeText = LABELS.inspectionType[item.inspectionType] || item.inspectionType || "-";
+            const resultText = LABELS.result[item.result] || item.result || "-";
+            const gradeText = LABELS.grade[item.grade] || item.grade || "-";
+            return `
             <article class="history-timeline-item ${isProblemInspection(item) ? "is-problem" : ""}">
-                <span class="history-timeline-dot" aria-hidden="true"></span>
+                <div class="history-timeline-marker" aria-hidden="true">
+                    <span class="history-timeline-dot">${numberText(index + 1)}</span>
+                </div>
                 <div class="history-timeline-copy">
-                    <strong>${escapeHtml(LABELS.inspectionType[item.inspectionType] || item.inspectionType || "-")} · ${escapeHtml(LABELS.result[item.result] || item.result || "-")} · ${escapeHtml(LABELS.grade[item.grade] || item.grade || "-")}</strong>
-                    <span>${escapeHtml(formatDate(item.inspectedAt))} · ${escapeHtml(item.inspectedByName || "-")}</span>
+                    <strong>${escapeHtml(typeText)} / ${escapeHtml(resultText)} / ${escapeHtml(gradeText)}</strong>
+                    <span>${escapeHtml(item.inspectedByName || "-")}</span>
+                    <small>${escapeHtml(formatDate(item.inspectedAt))}</small>
                 </div>
             </article>
-        `).join("");
+        `;
+        }).join("");
     };
 
     const renderHistoryDetail = (detail) => {
         const itemResults = Array.isArray(detail.itemResults) ? detail.itemResults : [];
         const partText = [detail.partName, detail.modelName].filter(Boolean).join(" ") || "-";
-        const latestResultText = `${LABELS.result[detail.result] || detail.result || "-"} · ${LABELS.grade[detail.grade] || detail.grade || "-"}`;
 
         if (detailPanelTitle) {
             detailPanelTitle.textContent = detail.internalSerialNo || "관리번호 상세";
         }
         if (detailScope) {
-            detailScope.textContent = `${partText} · ${latestResultText} · ${formatDate(detail.inspectedAt)} · ${detail.inspectedByName || "-"}`;
+            detailScope.textContent = partText;
         }
         if (!detailBody) {
             return;
@@ -613,36 +668,14 @@
                 }).join("")
                 : '<p class="history-empty-detail">항목별 결과가 없습니다.</p>';
 
-        detailBody.innerHTML = `
+        const memoMarkup = detail.memo ? `
             <section class="history-detail-section">
-                <div class="history-detail-summary">
-                    <div class="history-detail-summary-title">
-                        <strong>${escapeHtml(partText)}</strong>
-                        <span class="history-result-cell">
-                            <em class="badge ${resultBadgeClass(detail.result)}">${escapeHtml(LABELS.result[detail.result] || detail.result || "-")}</em>
-                            <em class="badge ${gradeBadgeClass(detail.grade)}">${escapeHtml(LABELS.grade[detail.grade] || detail.grade || "-")}</em>
-                        </span>
-                    </div>
-                    <dl class="history-detail-meta">
-                        <div>
-                            <dt>전표번호</dt>
-                            <dd>${escapeHtml(detail.documentNo || "-")}</dd>
-                        </div>
-                        <div>
-                            <dt>처리일</dt>
-                            <dd>${escapeHtml(formatDate(detail.inspectedAt))}</dd>
-                        </div>
-                        <div>
-                            <dt>담당자</dt>
-                            <dd>${escapeHtml(detail.inspectedByName || "-")}</dd>
-                        </div>
-                        <div>
-                            <dt>판매상태</dt>
-                            <dd>${escapeHtml(LABELS.salesStatus[detail.salesStatus] || detail.salesStatus || "-")}</dd>
-                        </div>
-                    </dl>
-                </div>
+                <h3>메모</h3>
+                <p class="history-empty-detail">${escapeHtml(detail.memo)}</p>
             </section>
+        ` : "";
+
+        detailBody.innerHTML = `
             <section class="history-detail-section">
                 <h3>검수 이력 타임라인</h3>
                 <div class="history-timeline">${renderTimeline(detail)}</div>
@@ -651,14 +684,7 @@
                 <h3>항목별 검수 결과</h3>
                 <div class="history-result-list">${itemsMarkup}</div>
             </section>
-            <section class="history-detail-section">
-                <h3>메모</h3>
-                <p class="history-empty-detail">${escapeHtml(detail.memo || "등록된 메모가 없습니다.")}</p>
-            </section>
-            <section class="history-detail-section">
-                <h3>첨부 이미지 또는 파일</h3>
-                <p class="history-empty-detail">첨부 파일이 없습니다.</p>
-            </section>
+            ${memoMarkup}
         `;
     };
 
@@ -698,6 +724,15 @@
         return window.PcsPagination.normalizePageData(data, size);
     };
 
+    const fetchHistoryDocumentPage = async (page, size) => {
+        const params = buildParams(page, size);
+        const data = await window.PcsApi.getData(`${apiBase()}/inspections/history-documents?${params.toString()}`, {
+            authRedirect: true,
+            loginCompanyCode: getCompanyCode()
+        });
+        return window.PcsPagination.normalizePageData(data, size);
+    };
+
     const loadDocumentGroups = async (page = 0, options = {}) => {
         if (!getCompanyCode()) {
             setTableMessage(documentTable, "업체 주소가 올바르지 않습니다.");
@@ -716,13 +751,13 @@
                 setTableMessage(documentTable, "이력을 불러오는 중입니다.");
             }
 
-            let pageData = await fetchHistoryPage(page, SOURCE_PAGE_SIZE);
+            let pageData = await fetchHistoryDocumentPage(page, SOURCE_PAGE_SIZE);
             if (pageData.content.length === 0 && pageData.totalElements > 0 && pageData.page > 0) {
-                pageData = await fetchHistoryPage(pageData.page - 1, SOURCE_PAGE_SIZE);
+                pageData = await fetchHistoryDocumentPage(pageData.page - 1, SOURCE_PAGE_SIZE);
             }
             currentPage = pageData.page;
 
-            const groups = createDocumentGroups(pageData.content);
+            const groups = normalizeDocumentGroups(pageData.content);
             currentDocumentGroups = groups;
             renderDocumentRows(groups, pageData);
             updatePagination(pageData);
@@ -769,10 +804,18 @@
         selectedManagementNumber = null;
         selectedPartGroup = "ALL";
         activeHistoryFilter = "ALL";
+        activeResultFilter = "";
+        activeGradeFilter = "";
         selectedDocumentRows = [];
         closeDetailPanel({ restoreFocus: false });
         updateSelectedDocumentRow();
         updateUnitFilterControls();
+        if (resultFilterSelect) {
+            resultFilterSelect.value = "";
+        }
+        if (gradeFilterSelect) {
+            gradeFilterSelect.value = "";
+        }
 
         if (unitSection) {
             unitSection.hidden = false;
@@ -785,6 +828,9 @@
         }
         if (unitFilter) {
             unitFilter.hidden = true;
+        }
+        if (unitRefine) {
+            unitRefine.hidden = true;
         }
         setTableMessage(unitTable, "관리번호를 불러오는 중입니다.");
 
@@ -811,6 +857,9 @@
             updateUnitFilterCounts(getRowsForSelectedPart());
             if (unitFilter) {
                 unitFilter.hidden = false;
+            }
+            if (unitRefine) {
+                unitRefine.hidden = false;
             }
             renderUnitRows(rows);
         } catch (error) {
@@ -851,8 +900,6 @@
     const resetFilterForm = () => {
         filterForm.elements.keyword.value = "";
         filterForm.elements.inspectionType.value = "";
-        filterForm.elements.result.value = "";
-        filterForm.elements.grade.value = "";
         const end = new Date();
         const start = new Date();
         start.setDate(start.getDate() - 30);
@@ -936,6 +983,14 @@
         selectedPartGroup = button.dataset.historyPartGroup || "ALL";
         selectedManagementNumber = null;
         activeHistoryFilter = "ALL";
+        activeResultFilter = "";
+        activeGradeFilter = "";
+        if (resultFilterSelect) {
+            resultFilterSelect.value = "";
+        }
+        if (gradeFilterSelect) {
+            gradeFilterSelect.value = "";
+        }
         closeDetailPanel({ restoreFocus: false });
         renderPartGroups(selectedDocumentRows);
         updateUnitFilterCounts(getRowsForSelectedPart());
@@ -981,6 +1036,20 @@
         selectedManagementNumber = null;
         closeDetailPanel({ restoreFocus: false });
         updateUnitFilterControls();
+        renderUnitRows(selectedDocumentRows);
+    });
+
+    resultFilterSelect?.addEventListener("change", () => {
+        activeResultFilter = resultFilterSelect.value;
+        selectedManagementNumber = null;
+        closeDetailPanel({ restoreFocus: false });
+        renderUnitRows(selectedDocumentRows);
+    });
+
+    gradeFilterSelect?.addEventListener("change", () => {
+        activeGradeFilter = gradeFilterSelect.value;
+        selectedManagementNumber = null;
+        closeDetailPanel({ restoreFocus: false });
         renderUnitRows(selectedDocumentRows);
     });
 

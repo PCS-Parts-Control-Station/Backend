@@ -15,6 +15,8 @@ import com.pcs.domain.inspection.dto.response.InspectionHistoryDetailRow;
 import com.pcs.domain.inspection.dto.response.InspectionItemResultResponse;
 import com.pcs.domain.inspection.dto.response.InspectionPartUnitRow;
 import com.pcs.domain.inspection.dto.response.InspectionTemplateOptionRow;
+import com.pcs.domain.inspection.dto.response.SearchInspectionHistoryDocumentResponse;
+import com.pcs.domain.inspection.dto.response.SearchInspectionHistoryDocumentSummaryResponse;
 import com.pcs.domain.inspection.dto.response.SearchInspectionHistoryResponse;
 import com.pcs.domain.inspection.dto.response.SearchInspectionHistorySummaryResponse;
 import com.pcs.domain.inspection.entity.Inspection;
@@ -305,6 +307,8 @@ class InspectionServiceTest {
                 100L,
                 "PCS-RAM-20260608-0001",
                 11L,
+                12L,
+                "RAM",
                 "DDR4 8GB",
                 "MTA8ATF1G64AZ",
                 200L,
@@ -382,6 +386,78 @@ class InspectionServiceTest {
     }
 
     @Test
+    void searchHistoryDocuments_returnsDocumentSummaries() {
+        Long companyId = 1L;
+        LocalDate dateFrom = LocalDate.of(2026, 6, 1);
+        LocalDate dateTo = LocalDate.of(2026, 6, 8);
+        SearchInspectionHistoryDocumentSummaryResponse summary =
+                new SearchInspectionHistoryDocumentSummaryResponse(1, 3, 1);
+        SearchInspectionHistoryDocumentResponse row = new SearchInspectionHistoryDocumentResponse(
+                20L,
+                "IN-20260608-001",
+                "DDR4 8GB MTA8ATF1G64AZ",
+                2,
+                3,
+                1,
+                LocalDateTime.of(2026, 6, 8, 10, 0)
+        );
+
+        when(inspectionMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(inspectionMapper.countHistoryDocuments(
+                companyId,
+                "RAM",
+                11L,
+                InspectionType.INITIAL,
+                InspectionResult.PASS,
+                PartGrade.A,
+                dateFrom.atStartOfDay(),
+                dateTo.plusDays(1).atStartOfDay()
+        )).thenReturn(1L);
+        when(inspectionMapper.searchHistoryDocuments(
+                companyId,
+                "RAM",
+                11L,
+                InspectionType.INITIAL,
+                InspectionResult.PASS,
+                PartGrade.A,
+                dateFrom.atStartOfDay(),
+                dateTo.plusDays(1).atStartOfDay(),
+                10,
+                10
+        )).thenReturn(List.of(row));
+        when(inspectionMapper.summarizeHistoryDocuments(
+                companyId,
+                "RAM",
+                11L,
+                InspectionType.INITIAL,
+                InspectionResult.PASS,
+                PartGrade.A,
+                dateFrom.atStartOfDay(),
+                dateTo.plusDays(1).atStartOfDay()
+        )).thenReturn(summary);
+
+        var result = inspectionService.searchHistoryDocuments(
+                companyId,
+                " RAM ",
+                11L,
+                InspectionType.INITIAL,
+                InspectionResult.PASS,
+                PartGrade.A,
+                dateFrom,
+                dateTo,
+                1,
+                10,
+                null
+        );
+
+        assertEquals(1, result.page());
+        assertEquals(10, result.size());
+        assertEquals(1, result.totalElements());
+        assertEquals(List.of(row), result.content());
+        assertEquals(summary, result.summary());
+    }
+
+    @Test
     void getHistoryDetail_returnsDetailWithItemResults() {
         Long companyId = 1L;
         Long inspectionId = 500L;
@@ -394,6 +470,8 @@ class InspectionServiceTest {
                 100L,
                 "PCS-RAM-20260608-0001",
                 11L,
+                12L,
+                "RAM",
                 "DDR4 8GB",
                 "MTA8ATF1G64AZ",
                 200L,
@@ -427,6 +505,7 @@ class InspectionServiceTest {
 
         assertEquals(inspectionId, response.inspectionId());
         assertEquals("PCS-RAM-20260608-0001", response.internalSerialNo());
+        assertEquals("RAM", response.categoryName());
         assertEquals(List.of(itemResult), response.itemResults());
     }
 

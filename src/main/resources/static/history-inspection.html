@@ -43,7 +43,7 @@
                     <div class="history-filter-heading">
                         <h2 id="filter-title">이력 검색</h2>
                     </div>
-                    <!-- API: GET /api/workspaces/{companyCode}/inspections?keyword=&inspectionType=&result=&grade=&dateFrom=&dateTo=&page=&size= -->
+                    <!-- API: GET /api/workspaces/{companyCode}/inspections/history-documents?keyword=&inspectionType=&dateFrom=&dateTo=&page=&size= -->
                     <form class="filter-form management-filter-form history-filter-form" action="#" method="get" autocomplete="off" data-history-filter-form>
                         <label class="history-keyword-field">
                             <span>검색어</span>
@@ -62,26 +62,6 @@
                                 <option value="INITIAL">최초 검수</option>
                                 <option value="CORRECTION">정정</option>
                                 <option value="REINSPECTION">재검수</option>
-                            </select>
-                        </label>
-                        <label class="history-filter-select">
-                            <span>검수 결과</span>
-                            <select name="result">
-                                <option value="">전체</option>
-                                <option value="PASS">통과</option>
-                                <option value="FAIL">불합격</option>
-                                <option value="WARN">주의</option>
-                            </select>
-                        </label>
-                        <label class="history-filter-select">
-                            <span>등급</span>
-                            <select name="grade">
-                                <option value="">전체</option>
-                                <option value="NONE">미정</option>
-                                <option value="A">A</option>
-                                <option value="B">B</option>
-                                <option value="C">C</option>
-                                <option value="DEFECTIVE">불량</option>
                             </select>
                         </label>
                         <div class="history-filter-actions">
@@ -150,6 +130,28 @@
                                 <button type="button" data-history-filter="REINSPECTION">재검수</button>
                                 <button type="button" data-history-filter="FAIL">불합격</button>
                             </div>
+                            <div class="history-unit-refine" data-history-unit-refine hidden aria-label="관리번호 목록 상세 필터">
+                                <label>
+                                    <span>검수 결과</span>
+                                    <select data-history-result-filter>
+                                        <option value="">전체</option>
+                                        <option value="PASS">통과</option>
+                                        <option value="FAIL">불합격</option>
+                                        <option value="WARN">주의</option>
+                                    </select>
+                                </label>
+                                <label>
+                                    <span>등급</span>
+                                    <select data-history-grade-filter>
+                                        <option value="">전체</option>
+                                        <option value="NONE">미정</option>
+                                        <option value="A">A</option>
+                                        <option value="B">B</option>
+                                        <option value="C">C</option>
+                                        <option value="DEFECTIVE">불량</option>
+                                    </select>
+                                </label>
+                            </div>
 
                             <div class="data-table document-data-table history-unit-table" role="table" aria-label="관리번호 목록" data-history-unit-table>
                                 <div class="data-row document-data-row history-unit-row table-head" role="row">
@@ -187,6 +189,6 @@
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
 <script src="/js/workspace-layout.js?20260527_1"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/history-inspection.js?20260617_part_groups"></script>
+<script src="/js/history-inspection.js?20260618_unit_filters"></script>
 </body>
 </html>

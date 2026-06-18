@@ -14,6 +14,8 @@ import com.pcs.domain.inspection.dto.response.InspectionItemResultResponse;
 import com.pcs.domain.inspection.dto.response.InspectionPartUnitRow;
 import com.pcs.domain.inspection.dto.response.InspectionTemplateOptionRow;
 import com.pcs.domain.inspection.dto.response.InspectionWaitingDocumentDetailResponse;
+import com.pcs.domain.inspection.dto.response.SearchInspectionHistoryDocumentResponse;
+import com.pcs.domain.inspection.dto.response.SearchInspectionHistoryDocumentSummaryResponse;
 import com.pcs.domain.inspection.dto.response.SearchInspectionHistoryResponse;
 import com.pcs.domain.inspection.dto.response.SearchInspectionHistorySummaryResponse;
 import com.pcs.domain.inspection.dto.response.SearchWaitingInspectionDocumentResponse;
@@ -317,6 +319,64 @@ public class InspectionService {
         return PageResultDto.of(items, normalizedPage, normalizedSize, totalElements, summary);
     }
 
+    public PageResultDto<SearchInspectionHistoryDocumentResponse, SearchInspectionHistoryDocumentSummaryResponse> searchHistoryDocuments(
+            Long companyId,
+            String keyword,
+            Long partId,
+            InspectionType inspectionType,
+            InspectionResult result,
+            PartGrade grade,
+            LocalDate dateFrom,
+            LocalDate dateTo,
+            Integer page,
+            Integer size,
+            Integer limit
+    ) {
+        validateCompanyActive(companyId);
+        String normalizedKeyword = normalizeOptional(keyword);
+        int normalizedPage = normalizePage(page);
+        int normalizedSize = normalizeSize(size, limit);
+        int offset = normalizedPage * normalizedSize;
+        LocalDateTime from = toStartOfDay(dateFrom);
+        LocalDateTime to = toExclusiveEnd(dateTo);
+
+        long totalElements = inspectionMapper.countHistoryDocuments(
+                companyId,
+                normalizedKeyword,
+                partId,
+                inspectionType,
+                result,
+                grade,
+                from,
+                to
+        );
+        List<SearchInspectionHistoryDocumentResponse> items = totalElements == 0
+                ? List.of()
+                : inspectionMapper.searchHistoryDocuments(
+                        companyId,
+                        normalizedKeyword,
+                        partId,
+                        inspectionType,
+                        result,
+                        grade,
+                        from,
+                        to,
+                        normalizedSize,
+                        offset
+                );
+        SearchInspectionHistoryDocumentSummaryResponse summary = inspectionMapper.summarizeHistoryDocuments(
+                companyId,
+                normalizedKeyword,
+                partId,
+                inspectionType,
+                result,
+                grade,
+                from,
+                to
+        );
+        return PageResultDto.of(items, normalizedPage, normalizedSize, totalElements, summary);
+    }
+
     public InspectionHistoryDetailResponse getHistoryDetail(Long companyId, Long inspectionId) {
         validateCompanyActive(companyId);
         InspectionHistoryDetailRow row = inspectionMapper.findHistoryDetail(companyId, inspectionId);
@@ -333,6 +393,8 @@ public class InspectionService {
                 row.unitId(),
                 row.internalSerialNo(),
                 row.partId(),
+                row.categoryId(),
+                row.categoryName(),
                 row.partName(),
                 row.modelName(),
                 row.templateId(),

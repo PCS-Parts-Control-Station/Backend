@@ -6,6 +6,8 @@ import com.pcs.domain.inspection.dto.request.CreateInspectionRevisionRequest;
 import com.pcs.domain.inspection.dto.response.CreateInspectionResponse;
 import com.pcs.domain.inspection.dto.response.InspectionHistoryDetailResponse;
 import com.pcs.domain.inspection.dto.response.InspectionWaitingDocumentDetailResponse;
+import com.pcs.domain.inspection.dto.response.SearchInspectionHistoryDocumentResponse;
+import com.pcs.domain.inspection.dto.response.SearchInspectionHistoryDocumentSummaryResponse;
 import com.pcs.domain.inspection.dto.response.SearchInspectionHistoryResponse;
 import com.pcs.domain.inspection.dto.response.SearchInspectionHistorySummaryResponse;
 import com.pcs.domain.inspection.dto.response.SearchWaitingInspectionDocumentResponse;
@@ -135,6 +137,36 @@ public class InspectionFacade {
                 keyword,
                 documentId,
                 unitId,
+                partId,
+                inspectionType,
+                result,
+                grade,
+                dateFrom,
+                dateTo,
+                page,
+                size,
+                limit
+        );
+    }
+
+    public PageResultDto<SearchInspectionHistoryDocumentResponse, SearchInspectionHistoryDocumentSummaryResponse> searchHistoryDocuments(
+            String authorizationHeader,
+            String pathCompanyCode,
+            String keyword,
+            Long partId,
+            InspectionType inspectionType,
+            InspectionResult result,
+            PartGrade grade,
+            LocalDate dateFrom,
+            LocalDate dateTo,
+            Integer page,
+            Integer size,
+            Integer limit
+    ) {
+        JwtClaims claims = parseAndValidateWorkspace(authorizationHeader, pathCompanyCode);
+        return inspectionService.searchHistoryDocuments(
+                claims.companyId(),
+                keyword,
                 partId,
                 inspectionType,
                 result,
