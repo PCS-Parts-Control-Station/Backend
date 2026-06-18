@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="PCS 품목 분류 화면입니다. 중고 PC 품목의 분류와 사양 항목을 등록하고 관리합니다.">
-    <title>PCS | 품목 분류</title>
+    <meta name="description" content="PCS 품목 분류 관리 화면입니다. 중고 PC 품목의 분류와 사양 항목을 등록하고 관리합니다.">
+    <title>PCS | 품목 분류 관리</title>
     <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="/css/admin.css?20260611_side_panel_400">
+    <link rel="stylesheet" href="/css/admin.css?20260618_sidebar_and_management">
     <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
 </head>
 <body class="has-collapsible-sidebar">
@@ -28,7 +28,7 @@
             </button>
             <div>
                 <p class="page-kicker">기준 정보 관리</p>
-                <h1>품목 분류</h1>
+                <h1>품목 분류 관리</h1>
                 <p class="page-description">CPU, RAM, GPU, SSD 등 품목 분류 기준과 입력받을 사양 항목을 관리합니다.</p>
             </div>
         </header>
@@ -82,7 +82,7 @@
                 <div class="panel-card side-work-panel">
                     <div class="panel-mode is-active" data-category-panel="create">
                         <h2 id="category-form-title">분류 등록</h2>
-                        <p>부품 등록 전에 사용할 분류 기준과 사양 항목을 등록합니다.</p>
+                        <p>품목 등록 전에 사용할 분류 기준과 사양 항목을 등록합니다.</p>
 
                         <form class="category-form" action="#" method="post" autocomplete="off" data-category-create-form>
                             <label>
@@ -96,7 +96,7 @@
                             <div class="optional-field-group">
                                 <span class="optional-field-label">사양 항목</span>
                                 <div class="spec-summary-list" data-create-spec-list>
-                                    <p class="spec-builder-empty" data-create-spec-empty>부품 등록 때 입력받을 사양 항목을 추가하세요.</p>
+                                    <p class="spec-builder-empty" data-create-spec-empty>품목 등록 때 입력받을 사양 항목을 추가하세요.</p>
                                 </div>
                                 <button class="panel-link-button spec-add-button" type="button" data-open-spec-modal data-spec-owner="create">사양 항목 추가</button>
                             </div>
@@ -126,7 +126,7 @@
                                 <dd data-detail-description>-</dd>
                             </div>
                             <div>
-                                <dt>연결된 부품 종류</dt>
+                                <dt>연결 품목</dt>
                                 <dd data-detail-part-count>-</dd>
                             </div>
                             <div>
@@ -172,7 +172,7 @@
                                     <p class="spec-builder-empty" data-edit-spec-empty>등록된 사양 항목이 없습니다.</p>
                                 </div>
                                 <button class="panel-link-button spec-add-button" type="button" data-open-spec-modal data-spec-owner="edit">사양 항목 추가</button>
-                                <p class="field-message" data-spec-edit-locked hidden>연결된 부품 종류가 있는 분류는 사양 항목을 수정할 수 없습니다.</p>
+                                <p class="field-message" data-spec-edit-locked hidden>연결된 품목이 있는 분류는 사양 항목을 수정할 수 없습니다.</p>
                             </div>
                             <p class="field-message is-error" data-category-edit-message role="status" aria-live="polite"></p>
                             <div class="form-actions">
@@ -187,9 +187,9 @@
                     <h2>운영 메모</h2>
                     <ul>
                         <li>분류명은 회사 안에서 중복 불가</li>
-                        <li>사양 항목은 부품 등록 때 분류별 입력 기준으로 사용</li>
-                        <li>연결된 부품 종류가 있으면 분류 삭제 불가</li>
-                        <li>연결된 부품 종류가 있으면 사양 항목 수정 제한</li>
+                        <li>사양 항목은 품목 등록 때 분류별 입력 기준으로 사용</li>
+                        <li>연결된 품목이 있으면 분류 삭제 불가</li>
+                        <li>연결된 품목이 있으면 사양 항목 수정 제한</li>
                     </ul>
                 </div>
             </aside>
@@ -203,7 +203,7 @@
             <div>
                 <p class="page-kicker" data-spec-modal-kicker>사양 항목</p>
                 <h2 id="spec-modal-title" data-spec-modal-title>사양 항목을 추가합니다.</h2>
-                <p data-spec-modal-description>부품 등록 때 입력받을 항목 기준을 설정합니다.</p>
+                <p data-spec-modal-description>품목 등록 때 입력받을 항목 기준을 설정합니다.</p>
             </div>
             <button class="modal-close-button" type="button" data-close-spec-modal aria-label="닫기">
                 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -275,7 +275,7 @@
                 <dd data-delete-category-name>-</dd>
             </div>
             <div>
-                <dt>연결된 부품 종류</dt>
+                <dt>연결 품목</dt>
                 <dd data-delete-category-part-count>-</dd>
             </div>
         </dl>
@@ -289,7 +289,7 @@
 </dialog>
 <script src="/js/pcs-api.js?20260617_temp_password"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
-<script src="/js/workspace-layout.js?20260617_temp_password"></script>
+<script src="/js/workspace-layout.js?20260618_sidebar_breakpoint"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
 <script src="/js/pcs-common.js?20260610_common"></script>
 <script src="/js/categories.js?20260608_terms"></script>

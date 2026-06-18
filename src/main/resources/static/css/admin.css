@@ -528,7 +528,7 @@ strong {
 
 .content-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 400px;
+    grid-template-columns: minmax(0, 1fr) 336px;
     gap: 18px;
     align-items: start;
 }
@@ -2452,7 +2452,7 @@ textarea:focus {
     }
 
     .has-collapsible-sidebar .content-grid {
-        grid-template-columns: minmax(0, 1fr) 400px;
+        grid-template-columns: minmax(0, 1fr) 336px;
     }
 
     .has-collapsible-sidebar .table-header {
@@ -2466,6 +2466,38 @@ textarea:focus {
     .has-collapsible-sidebar .inline-summary-header .list-summary-box {
         width: auto;
         margin-left: auto;
+    }
+}
+
+@media (min-width: 1521px) {
+    .has-collapsible-sidebar .workspace-layout {
+        display: grid;
+        grid-template-columns: 248px minmax(0, 1fr);
+    }
+
+    .has-collapsible-sidebar.sidebar-collapsed .workspace-layout {
+        grid-template-columns: 0 minmax(0, 1fr);
+    }
+
+    .has-collapsible-sidebar .workspace-sidebar {
+        position: sticky;
+        top: 0;
+        width: auto;
+        height: 100vh;
+        visibility: visible;
+        transform: none;
+        border-right: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: none;
+    }
+
+    .has-collapsible-sidebar.sidebar-collapsed .workspace-sidebar {
+        visibility: hidden;
+        transform: translateX(-102%);
+    }
+
+    .has-collapsible-sidebar .sidebar-backdrop {
+        display: none;
     }
 }
 
@@ -2488,6 +2520,10 @@ textarea:focus {
 
     .has-collapsible-sidebar .management-filter-form label:first-child {
         grid-column: 1 / -1;
+    }
+
+    .has-collapsible-sidebar .part-filter-form label:first-child {
+        grid-column: auto;
     }
 
 }

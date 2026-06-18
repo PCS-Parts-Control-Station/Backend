@@ -5,7 +5,7 @@
     const pageActiveRoute = sidebarPlaceholder?.dataset.activeRoute || "";
     const isCollapsibleSidebarPage = document.body.classList.contains("has-collapsible-sidebar");
 
-    if (isCollapsibleSidebarPage) {
+    if (isCollapsibleSidebarPage && window.matchMedia("(max-width: 1520px)").matches) {
         document.body.classList.add("sidebar-collapsed");
     }
 
@@ -147,6 +147,7 @@
         const body = document.body;
         const toggle = document.querySelector("[data-sidebar-toggle]");
         const backdrop = document.querySelector("[data-sidebar-backdrop]");
+        const compactSidebarMedia = window.matchMedia("(max-width: 1520px)");
         let sidebarAnimationTimer = null;
 
         if (!toggle || !backdrop) {
@@ -154,7 +155,9 @@
         }
 
         const syncToggleState = () => {
-            const isOpen = body.classList.contains("sidebar-open");
+            const isOpen = compactSidebarMedia.matches
+                ? body.classList.contains("sidebar-open")
+                : !body.classList.contains("sidebar-collapsed");
             toggle.setAttribute("aria-expanded", String(isOpen));
             toggle.setAttribute("aria-label", isOpen ? "메뉴 닫기" : "메뉴 열기");
         };
@@ -190,14 +193,22 @@
 
         const openMenu = () => {
             animateSidebar();
-            lockPageScroll();
             body.classList.remove("sidebar-collapsed");
-            body.classList.add("sidebar-open");
+            if (compactSidebarMedia.matches) {
+                lockPageScroll();
+                body.classList.add("sidebar-open");
+            } else {
+                body.classList.remove("sidebar-open");
+                unlockPageScroll();
+            }
             syncToggleState();
         };
 
         toggle.addEventListener("click", () => {
-            if (body.classList.contains("sidebar-open")) {
+            const isOpen = compactSidebarMedia.matches
+                ? body.classList.contains("sidebar-open")
+                : !body.classList.contains("sidebar-collapsed");
+            if (isOpen) {
                 closeMenu();
                 return;
             }
@@ -212,8 +223,24 @@
             }
         });
 
-        closeMenu(false);
-        syncToggleState();
+        compactSidebarMedia.addEventListener("change", (event) => {
+            body.classList.remove("sidebar-open");
+            unlockPageScroll();
+            if (event.matches) {
+                body.classList.add("sidebar-collapsed");
+            } else {
+                body.classList.remove("sidebar-collapsed");
+            }
+            syncToggleState();
+        });
+
+        if (compactSidebarMedia.matches) {
+            closeMenu(false);
+        } else {
+            body.classList.remove("sidebar-open", "sidebar-collapsed");
+            unlockPageScroll();
+            syncToggleState();
+        }
     };
 
     const bindAccountActions = () => {
