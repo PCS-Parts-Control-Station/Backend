@@ -19,6 +19,9 @@
     const panelViews = document.querySelectorAll("[data-user-panel]");
     const createForm = document.querySelector("[data-user-create-form]");
     const editForm = document.querySelector("[data-user-edit-form]");
+    const staffPermissionModal = document.querySelector("[data-staff-permission-modal]");
+    const openStaffPermissionModalButton = document.querySelector("[data-open-staff-permission-modal]");
+    const closeStaffPermissionModalButtons = document.querySelectorAll("[data-close-staff-permission-modal]");
     const staffPermissionForm = document.querySelector("[data-staff-permission-form]");
     const staffPermissionInputs = document.querySelectorAll("[data-staff-permission-input]");
     const detailFields = {
@@ -412,6 +415,22 @@
                 .map((input) => input.value);
     };
 
+    const openStaffPermissionModal = async () => {
+        if (!staffPermissionModal) {
+            return;
+        }
+
+        staffPermissionModal.showModal();
+        await loadStaffPermissionSettings(getCompanyCode());
+    };
+
+    const closeStaffPermissionModal = () => {
+        if (!staffPermissionModal || staffPermissionForm?.dataset.saving === "true") {
+            return;
+        }
+        staffPermissionModal.close();
+    };
+
     const loadUsers = async (page = 0, options = {}) => {
         const companyCode = getCompanyCode();
         if (!companyCode) {
@@ -699,11 +718,30 @@
                     }
             );
             applyStaffPermissionSettings(settings);
-            showToast("직원 권한 설정을 저장했습니다.", "success");
+            showToast("작업자 권한 설정을 저장했습니다.", "success");
+            staffPermissionModal?.close();
         } catch (error) {
-            showToast(error?.message || "직원 권한 설정을 저장하지 못했습니다.", "error");
+            showToast(error?.message || "작업자 권한 설정을 저장하지 못했습니다.", "error");
         } finally {
             setFormSaving(staffPermissionForm, false);
+        }
+    });
+
+    openStaffPermissionModalButton?.addEventListener("click", openStaffPermissionModal);
+
+    closeStaffPermissionModalButtons.forEach((button) => {
+        button.addEventListener("click", closeStaffPermissionModal);
+    });
+
+    staffPermissionModal?.addEventListener("click", (event) => {
+        if (event.target === staffPermissionModal) {
+            closeStaffPermissionModal();
+        }
+    });
+
+    staffPermissionModal?.addEventListener("cancel", (event) => {
+        if (staffPermissionForm?.dataset.saving === "true") {
+            event.preventDefault();
         }
     });
 

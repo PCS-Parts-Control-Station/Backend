@@ -154,27 +154,28 @@
     font-size: 13px;
 }
 
-.users-page .user-permission-section {
-    margin-top: 20px;
-    padding: 0;
+.users-page .staff-permission-modal {
+    width: min(860px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
     overflow: hidden;
 }
 
-.users-page .permission-section-header {
-    align-items: center;
-    margin: 0;
-    padding: 22px 24px;
-    border-bottom: 1px solid var(--line);
+.users-page .staff-permission-modal .part-modal-card {
+    max-height: calc(100dvh - 32px);
+    overflow: hidden;
 }
 
-.users-page .staff-permission-form {
-    gap: 20px;
-    padding: 20px 24px 22px;
+.users-page .staff-permission-modal .staff-permission-form {
+    display: grid;
+    min-height: 0;
 }
 
-.users-page .permission-switch-list {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+.users-page .staff-permission-modal .permission-switch-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
+    max-height: min(460px, calc(100dvh - 286px));
+    overflow-y: auto;
+    padding: 20px 24px;
 }
 
 .users-page .permission-switch {
@@ -183,24 +184,16 @@
     border-radius: var(--radius);
 }
 
-.users-page .permission-policy-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 18px;
-    padding-top: 18px;
-    border-top: 1px solid var(--line);
-}
-
-.users-page .permission-policy-footer > p {
+.users-page .permission-modal-note {
     margin: 0;
+    padding: 0 24px 16px;
     color: var(--muted);
     font-size: 13px;
     font-weight: 600;
 }
 
-.users-page .permission-policy-footer .form-actions {
-    flex: 0 0 auto;
+.users-page .permission-modal-actions {
+    padding-top: 16px;
 }
 
 .users-page .user-password-modal .temporary-password-output {
@@ -280,14 +273,6 @@
         gap: 5px;
     }
 
-    .users-page .permission-switch-list {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .users-page .permission-policy-footer {
-        align-items: stretch;
-        flex-direction: column;
-    }
 }
 
 @media (max-width: 560px) {
@@ -296,15 +281,12 @@
         padding-left: 14px;
     }
 
-    .users-page .users-page-header .header-actions,
-    .users-page .permission-policy-footer .form-actions {
+    .users-page .users-page-header .header-actions {
         grid-template-columns: 1fr;
     }
 
     .users-page .user-filter-card,
-    .users-page .user-account-work-panel,
-    .users-page .permission-section-header,
-    .users-page .staff-permission-form {
+    .users-page .user-account-work-panel {
         padding-right: 16px;
         padding-left: 16px;
     }
@@ -328,8 +310,22 @@
         border-left: 1px solid var(--line);
     }
 
-    .users-page .permission-switch-list,
+    .users-page .staff-permission-modal .permission-switch-list,
     .users-page .detail-list {
+        grid-template-columns: 1fr;
+    }
+
+    .users-page .staff-permission-modal .permission-switch-list {
+        padding-right: 16px;
+        padding-left: 16px;
+    }
+
+    .users-page .permission-modal-note {
+        padding-right: 16px;
+        padding-left: 16px;
+    }
+
+    .users-page .permission-modal-actions {
         grid-template-columns: 1fr;
     }
 

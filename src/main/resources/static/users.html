@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/admin.css?20260617_temp_password">
-    <link rel="stylesheet" href="/css/users.css?20260617_redesign">
+    <link rel="stylesheet" href="/css/users.css?20260618_staff_permission_modal">
     <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
 </head>
 <body class="has-collapsible-sidebar users-page">
@@ -32,7 +32,7 @@
                 <p class="page-description">작업공간 계정과 작업자 공통 업무 권한을 관리합니다.</p>
             </div>
             <div class="header-actions">
-                <button class="btn btn-primary" type="button" data-user-create-mode>사용자 등록</button>
+                <button class="btn btn-primary" type="button" data-open-staff-permission-modal>작업자 권한</button>
             </div>
         </header>
 
@@ -208,79 +208,86 @@
             </aside>
         </section>
 
-        <section class="panel-card staff-permission-panel user-permission-section" aria-labelledby="staff-permission-title">
-            <div class="panel-title-bar permission-section-header">
-                <div>
-                    <p class="panel-eyebrow">업체 공통 정책</p>
-                    <h2 id="staff-permission-title">작업자 공통 업무 권한</h2>
-                    <p>이 작업공간의 모든 작업자 계정에 동일하게 적용됩니다.</p>
-                </div>
-                <i class="badge badge-blue">작업자 공통</i>
-            </div>
-
-            <form class="staff-permission-form" action="#" method="post" data-staff-permission-form>
-                <div class="permission-switch-list">
-                    <label class="permission-switch">
-                        <input type="checkbox" name="staffPermission" value="STAFF_INBOUND" data-staff-permission-input checked>
-                        <span class="permission-switch-body">
-                            <strong>입고</strong>
-                            <small>입고 전표와 입고 대상 등록</small>
-                        </span>
-                        <span class="permission-switch-control" aria-hidden="true"></span>
-                    </label>
-                    <label class="permission-switch">
-                        <input type="checkbox" name="staffPermission" value="STAFF_INSPECTION" data-staff-permission-input checked>
-                        <span class="permission-switch-body">
-                            <strong>검수</strong>
-                            <small>검수 등록, 정정, 재검수 처리</small>
-                        </span>
-                        <span class="permission-switch-control" aria-hidden="true"></span>
-                    </label>
-                    <label class="permission-switch">
-                        <input type="checkbox" name="staffPermission" value="STAFF_OUTBOUND" data-staff-permission-input checked>
-                        <span class="permission-switch-body">
-                            <strong>출고</strong>
-                            <small>출고 전표와 출고 대상 등록</small>
-                        </span>
-                        <span class="permission-switch-control" aria-hidden="true"></span>
-                    </label>
-                    <label class="permission-switch">
-                        <input type="checkbox" name="staffPermission" value="STAFF_PART_CREATE" data-staff-permission-input checked>
-                        <span class="permission-switch-body">
-                            <strong>품목 관리</strong>
-                            <small>품목 등록, 수정, 사양 입력</small>
-                        </span>
-                        <span class="permission-switch-control" aria-hidden="true"></span>
-                    </label>
-                    <label class="permission-switch">
-                        <input type="checkbox" name="staffPermission" value="STAFF_CATEGORY_MANAGE" data-staff-permission-input checked>
-                        <span class="permission-switch-body">
-                            <strong>품목 분류</strong>
-                            <small>분류와 사양 항목 관리</small>
-                        </span>
-                        <span class="permission-switch-control" aria-hidden="true"></span>
-                    </label>
-                    <label class="permission-switch">
-                        <input type="checkbox" name="staffPermission" value="STAFF_PARTNER_MANAGE" data-staff-permission-input checked>
-                        <span class="permission-switch-body">
-                            <strong>거래처 관리</strong>
-                            <small>거래처 등록, 수정, 거래 상태 관리</small>
-                        </span>
-                        <span class="permission-switch-control" aria-hidden="true"></span>
-                    </label>
-                </div>
-
-                <div class="permission-policy-footer">
-                    <p>꺼진 업무는 작업자 메뉴와 해당 업무 API에서 함께 차단됩니다.</p>
-                    <div class="form-actions">
-                        <button class="btn btn-primary" type="submit">권한 저장</button>
-                        <button class="btn btn-secondary" type="reset">전체 허용</button>
-                    </div>
-                </div>
-            </form>
-        </section>
     </main>
 </div>
+
+<dialog class="part-modal staff-permission-modal" data-staff-permission-modal aria-labelledby="staff-permission-title">
+    <div class="part-modal-card">
+        <div class="part-modal-header">
+            <div>
+                <p class="page-kicker">업체 공통 정책</p>
+                <h2 id="staff-permission-title">작업자 공통 업무 권한</h2>
+                <p>이 작업공간의 모든 작업자 계정에 동일하게 적용됩니다.</p>
+            </div>
+            <button class="modal-close-button" type="button" data-close-staff-permission-modal aria-label="닫기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M6 6l12 12" />
+                    <path d="M18 6L6 18" />
+                </svg>
+            </button>
+        </div>
+
+        <form class="staff-permission-form" action="#" method="post" data-staff-permission-form>
+            <div class="permission-switch-list">
+                <label class="permission-switch">
+                    <input type="checkbox" name="staffPermission" value="STAFF_INBOUND" data-staff-permission-input checked>
+                    <span class="permission-switch-body">
+                        <strong>입고</strong>
+                        <small>입고 전표와 입고 대상 등록</small>
+                    </span>
+                    <span class="permission-switch-control" aria-hidden="true"></span>
+                </label>
+                <label class="permission-switch">
+                    <input type="checkbox" name="staffPermission" value="STAFF_INSPECTION" data-staff-permission-input checked>
+                    <span class="permission-switch-body">
+                        <strong>검수</strong>
+                        <small>검수 등록, 정정, 재검수 처리</small>
+                    </span>
+                    <span class="permission-switch-control" aria-hidden="true"></span>
+                </label>
+                <label class="permission-switch">
+                    <input type="checkbox" name="staffPermission" value="STAFF_OUTBOUND" data-staff-permission-input checked>
+                    <span class="permission-switch-body">
+                        <strong>출고</strong>
+                        <small>출고 전표와 출고 대상 등록</small>
+                    </span>
+                    <span class="permission-switch-control" aria-hidden="true"></span>
+                </label>
+                <label class="permission-switch">
+                    <input type="checkbox" name="staffPermission" value="STAFF_PART_CREATE" data-staff-permission-input checked>
+                    <span class="permission-switch-body">
+                        <strong>품목 관리</strong>
+                        <small>품목 등록, 수정, 사양 입력</small>
+                    </span>
+                    <span class="permission-switch-control" aria-hidden="true"></span>
+                </label>
+                <label class="permission-switch">
+                    <input type="checkbox" name="staffPermission" value="STAFF_CATEGORY_MANAGE" data-staff-permission-input checked>
+                    <span class="permission-switch-body">
+                        <strong>품목 분류</strong>
+                        <small>분류와 사양 항목 관리</small>
+                    </span>
+                    <span class="permission-switch-control" aria-hidden="true"></span>
+                </label>
+                <label class="permission-switch">
+                    <input type="checkbox" name="staffPermission" value="STAFF_PARTNER_MANAGE" data-staff-permission-input checked>
+                    <span class="permission-switch-body">
+                        <strong>거래처 관리</strong>
+                        <small>거래처 등록, 수정, 거래 상태 관리</small>
+                    </span>
+                    <span class="permission-switch-control" aria-hidden="true"></span>
+                </label>
+            </div>
+
+            <p class="permission-modal-note">꺼진 업무는 작업자 메뉴와 해당 업무 API에서 함께 차단됩니다.</p>
+            <div class="part-modal-actions permission-modal-actions">
+                <button class="btn btn-secondary" type="reset">전체 허용</button>
+                <button class="btn btn-secondary" type="button" data-close-staff-permission-modal>닫기</button>
+                <button class="btn btn-primary" type="submit">권한 저장</button>
+            </div>
+        </form>
+    </div>
+</dialog>
 
 <dialog class="part-modal confirm-modal user-password-modal" data-reset-password-modal aria-labelledby="reset-password-modal-title">
     <form class="part-modal-card" method="dialog">
@@ -333,6 +340,6 @@
     <script src="/js/workspace-layout.js?20260617_temp_password"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
 <script src="/js/pcs-common.js?20260611_common"></script>
-<script src="/js/users.js?20260617_redesign"></script>
+<script src="/js/users.js?20260618_staff_permission_modal"></script>
 </body>
 </html>
