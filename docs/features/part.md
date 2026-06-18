@@ -60,6 +60,7 @@ selectedOptionId
 - 검수 상태, 등급, 판매 상태는 개별 품목 기준으로 관리한다.
 - 품목 마스터와 개별 품목의 `active` 의미는 `docs/ai/pcs-status-lifecycle-rules.md` 기준을 따른다.
 - 현재 품목 관리 화면에서는 품목 마스터 사용 중지 기능을 노출하지 않는다.
+- 품목 관리 화면 헤더 오른쪽에는 품목 분류 관리 화면으로 이동하는 `품목 분류` 버튼을 둔다.
 - 품목 검색은 `keyword`, `categoryId`, `active`, `page`, `size`, `limit` 조건을 지원하고 기본 `active=true`로 조회한다.
 - `grade = DEFECTIVE`인 개별 품목은 판매 가능 상태가 될 수 없다.
 - 판매 상태 변경 시 `tb_part_status_history`를 저장한다.

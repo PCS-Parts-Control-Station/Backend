@@ -10,10 +10,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="/css/admin.css?20260618_sidebar_and_management">
-    <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
+
+
+
+    <link rel="stylesheet" href="/css/core/tokens.css?20260618_layers">
+    <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
+    <link rel="stylesheet" href="/css/layouts/workspace.css?20260618_layers">
+    <link rel="stylesheet" href="/css/components/components.css?20260618_layers">
+    <link rel="stylesheet" href="/css/pages/categories.css?20260618_layers">
 </head>
-<body class="has-collapsible-sidebar">
+<body class="has-collapsible-sidebar page-categories workspace-page">
 <div class="workspace-layout">
     <div data-workspace-sidebar data-active-route="categories"></div>
 
@@ -30,6 +36,9 @@
                 <p class="page-kicker">기준 정보 관리</p>
                 <h1>품목 분류 관리</h1>
                 <p class="page-description">CPU, RAM, GPU, SSD 등 품목 분류 기준과 입력받을 사양 항목을 관리합니다.</p>
+            </div>
+            <div class="header-actions">
+                <a class="btn btn-secondary" data-route="parts" data-staff-permission="STAFF_PART_CREATE">품목 관리</a>
             </div>
         </header>
 

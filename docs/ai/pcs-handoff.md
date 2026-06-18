@@ -133,7 +133,7 @@ tb_part_status_history
 
 ```text
 src/main/resources/static/categories.html
-src/main/resources/static/css/admin.css
+src/main/resources/static/css/pages/categories.css
 ```
 
 라우트:
@@ -158,10 +158,10 @@ src/main/resources/static/css/admin.css
 ```text
 src/main/resources/static/inbound.html
 src/main/resources/static/inbound-register.html
-src/main/resources/static/css/admin.css
-src/main/resources/static/css/workflow.css
-src/main/resources/static/css/pcs-toast.css
-src/main/resources/static/css/inbound.css
+src/main/resources/static/css/layouts/workspace.css
+src/main/resources/static/css/components/workflow.css
+src/main/resources/static/css/components/feedback.css
+src/main/resources/static/css/pages/inbound-register.css
 src/main/resources/static/js/pcs-ui.js
 src/main/resources/static/js/inbound-register.js
 ```
@@ -235,10 +235,10 @@ POST /api/workspaces/{companyCode}/stock/documents/inbounds
 
 ```text
 src/main/resources/static/inspection.html
-src/main/resources/static/css/inspection.css
+src/main/resources/static/css/pages/inspection.css
 src/main/resources/static/js/inspection.js
-src/main/resources/static/css/admin.css
-src/main/resources/static/css/workflow.css
+src/main/resources/static/css/layouts/workspace.css
+src/main/resources/static/css/components/workflow.css
 ```
 
 라우트:
@@ -296,23 +296,24 @@ API 설계 시 유의:
 
 ## 반응형 결정
 
-업무 화면은 `admin.css` 공통 반응형을 사용한다.
+업무 화면은 `layouts/workspace.css`의 공통 반응형을 사용한다.
 
 CSS 분리 기준:
 
 ```text
-admin.css: 업무 화면 공통 레이아웃, 사이드바, 헤더, 버튼, 카드, 기본 폼/테이블
-workflow.css: 입고/검수/출고/이력 오른쪽 업무 흐름 패널
-pcs-toast.css: 공통 토스트 메시지
-inbound.css: 입고 목록, 입고 등록, 부품 검색, 라인 추가, 새 부품 등록 모달
-inspection.css: 검수 관리 단계형 본문, 검수 대상, 일괄 검수 폼, 최근 검수 이력
+core/*: 공통 토큰과 기본 요소
+layouts/workspace.css: 업무 화면 공통 레이아웃과 사이드바
+components/components.css: 버튼, 카드, 폼, 목록, 모달
+components/workflow.css: 입고/검수/출고/이력 오른쪽 업무 흐름 패널
+components/feedback.css: 공통 토스트 메시지
+pages/inbound.css, pages/inbound-register.css: 입고 화면별 전용 규칙
+pages/inspection.css: 검수 화면 전용 규칙
 ```
 
 현재 기준:
 
 ```text
-1520px 초과: 좌측 사이드바 sticky 고정
-1520px 이하: 좌측 사이드바 오프캔버스, 햄버거 버튼 노출
+전체 폭: 좌측 사이드바 기본 닫힘 오프캔버스, 햄버거 버튼 노출
 1180px 이하: content-grid 1컬럼, 오른쪽 패널은 아래로 이동
 840px 이하: 헤더 액션/검색 폼 모바일 배치
 640px 이하: 입고 전표 목록은 요약 카드형 행
@@ -403,9 +404,9 @@ docs/ai/design/workflow-panel.md
 docs/ai/design/responsive-layout.md
 docs/sql/pcs-schema-ddl.sql
 src/main/java/com/pcs/web/controller/PageController.java
-src/main/resources/static/css/admin.css
-src/main/resources/static/css/inbound.css
-src/main/resources/static/css/inspection.css
+src/main/resources/static/css/layouts/workspace.css
+src/main/resources/static/css/pages/inbound.css
+src/main/resources/static/css/pages/inspection.css
 src/main/resources/static/inbound.html
 src/main/resources/static/inspection.html
 src/main/resources/static/js/inspection.js
@@ -459,7 +460,7 @@ Browser 또는 in-app browser 도구가 사용 가능한지 확인해줘.
 
 현재 검수 관리 화면은 아래 파일로 구성돼 있어.
 - src/main/resources/static/inspection.html
-- src/main/resources/static/css/inspection.css
+- src/main/resources/static/css/pages/inspection.css
 - src/main/resources/static/js/inspection.js
 
 현재 구조는 1. 검수할 전표 선택 -> 2. 부품별 검수 대상 -> 3. 검수 등록 -> 4. 최근 검수 이력이고,

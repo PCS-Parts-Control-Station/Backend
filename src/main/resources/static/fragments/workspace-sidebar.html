@@ -26,8 +26,11 @@
         <div class="sidebar-group">
             <div class="sidebar-group-title">관리</div>
 
-            <a data-route="parts" data-staff-permission="STAFF_PART_CREATE">품목 관리</a>
-            <a data-route="categories" data-staff-permission="STAFF_CATEGORY_MANAGE">품목 분류</a>
+            <a
+                    data-route="parts"
+                    data-staff-any-permissions="STAFF_PART_CREATE,STAFF_CATEGORY_MANAGE"
+                    data-staff-primary-permission="STAFF_PART_CREATE"
+                    data-staff-fallback-route="categories">품목 관리</a>
             <a data-route="inspection/templates" data-staff-permission="STAFF_INSPECTION">검수 템플릿</a>
             <a data-route="partners" data-staff-permission="STAFF_PARTNER_MANAGE">거래처 관리</a>
             <a data-route="users" data-allowed-roles="OWNER,ADMIN" hidden>사용자 관리</a>

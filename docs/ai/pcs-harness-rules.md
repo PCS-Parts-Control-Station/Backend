@@ -157,7 +157,7 @@ src/main/java/com/pcs/PcsApiApplication.java
 src/main/java/com/pcs/web/controller/PageController.java
 src/main/resources/application.yaml
 src/main/resources/static/main.html
-src/main/resources/static/css/main.css
+src/main/resources/static/css/pages/main.css
 src/main/resources/static/js/main.js
 ```
 

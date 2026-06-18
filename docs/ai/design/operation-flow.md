@@ -24,18 +24,21 @@
 CSS 기준:
 
 ```text
-admin.css
-workflow.css
-inbound.css
-pcs-toast.css
+core/tokens.css
+core/base.css
+layouts/workspace.css
+components/components.css
+components/workflow.css
+components/feedback.css
+pages/{page}.css
 ```
 
 기준:
 
-- 업무 화면 공통 레이아웃은 `admin.css`를 사용한다.
-- 오른쪽 업무 흐름 패널은 `workflow.css`를 사용한다.
-- 전표 등록의 본문 단계, 품목 검색, 입고 품목 목록, 빠른 등록 모달은 `inbound.css` 기준을 따른다.
-- 저장/오류 피드백에 토스트를 쓰면 `pcs-toast.css`를 함께 로드한다.
+- 업무 화면 공통 레이아웃은 `layouts/workspace.css`를 사용한다.
+- 오른쪽 업무 흐름 패널은 `components/workflow.css`를 사용한다.
+- 전표 등록의 본문 단계, 품목 검색, 입고 품목 목록, 빠른 등록 모달 중 재사용 구조는 공통 컴포넌트에, 화면 고유 규칙은 `pages/{page}.css`에 둔다.
+- 저장/오류 피드백에 토스트를 쓰면 `components/feedback.css`를 함께 로드한다.
 
 ```text
 workspace-layout

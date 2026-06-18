@@ -39,6 +39,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 
 - `docs/ai/pcs-design-system.md`
 - `docs/ai/design/design-md-rules.md`
+- CSS 파일 분리, 공통화, layer 작업이면 `docs/ai/design/css-architecture.md`
 - 화면 문구가 바뀌면 `docs/ai/pcs-terminology-rules.md`
 - 화면 유형에 맞는 `docs/ai/design/*.md` 문서 1~3개
 

@@ -25,7 +25,7 @@
 토스트 피드백을 쓰는 화면:
 
 ```html
-<link rel="stylesheet" href="/css/pcs-toast.css">
+<link rel="stylesheet" href="/css/components/feedback.css">
 <script src="/js/pcs-ui.js"></script>
 ```
 

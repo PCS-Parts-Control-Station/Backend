@@ -148,6 +148,14 @@ STAFF_INSPECTION
 STAFF_OUTBOUND
 ```
 
+품목 관련 메뉴 표시 규칙:
+
+- 사이드바에는 `품목 관리`만 표시하고 `품목 분류`를 별도 메뉴로 두지 않는다.
+- STAFF에게 `STAFF_PART_CREATE` 또는 `STAFF_CATEGORY_MANAGE` 중 하나라도 있으면 사이드바의 `품목 관리`를 표시한다.
+- `STAFF_PART_CREATE`가 있으면 사이드바의 `품목 관리`는 품목 관리 화면으로 이동한다.
+- `STAFF_PART_CREATE`는 없고 `STAFF_CATEGORY_MANAGE`만 있으면 같은 메뉴가 품목 분류 화면으로 이동한다.
+- 품목 관리 화면의 `품목 분류` 버튼은 `STAFF_CATEGORY_MANAGE`가 있을 때만 표시한다.
+
 ## 삭제 / 사용 중지 / 취소 기준
 
 권한만으로 삭제 가능 여부를 판단하지 않는다.

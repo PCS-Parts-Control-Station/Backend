@@ -23,6 +23,7 @@ docs/ai/design/public-pages.md
 docs/ai/design/workspace-layout.md
 docs/ai/design/responsive-layout.md
 docs/ai/design/design-md-rules.md
+docs/ai/design/css-architecture.md
 docs/ai/design/dashboard.md
 docs/ai/design/data-table.md
 docs/ai/design/form-panel.md
@@ -372,7 +373,7 @@ GET /favicon.ico -> /images/parts-control-station-icon.svg
 
 ```text
 src/main/resources/static/{page}.html
-src/main/resources/static/css/{page}.css
+src/main/resources/static/css/pages/{page}.css
 src/main/resources/static/js/{page}.js
 ```
 
@@ -380,10 +381,14 @@ src/main/resources/static/js/{page}.js
 
 ```text
 src/main/resources/static/{page}.html
-src/main/resources/static/css/admin.css
+src/main/resources/static/css/core/tokens.css
+src/main/resources/static/css/core/base.css
+src/main/resources/static/css/layouts/workspace.css
+src/main/resources/static/css/components/components.css
+src/main/resources/static/css/pages/{page}.css
 ```
 
-업무 화면은 `admin.css` 공통 레이아웃을 우선 사용한다. 개별 CSS는 해당 화면에만 필요한 복잡한 예외가 있을 때만 만든다. JS 파일은 실제 상호작용이나 API 연동이 있을 때만 만든다.
+업무 화면은 `design/css-architecture.md`의 레이어 구조를 사용한다. 모든 화면에 페이지 CSS를 두되 전용 규칙은 최소화하고, 재사용 가능한 규칙은 공통 layout/components가 소유한다. JS 파일은 실제 상호작용이나 API 연동이 있을 때만 만든다.
 
 ## 디자인 변경 규칙
 

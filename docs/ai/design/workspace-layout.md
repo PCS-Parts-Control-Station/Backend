@@ -24,14 +24,18 @@
 
 ## CSS 사용 기준
 
-업무 관리 화면은 개별 CSS보다 `admin.css` 공통 레이아웃을 우선 사용한다.
+업무 관리 화면은 `css-architecture.md`의 공통 레이어와 페이지 CSS 구조를 사용한다.
 
 ```text
 src/main/resources/static/{page}.html
-src/main/resources/static/css/admin.css
+src/main/resources/static/css/core/tokens.css
+src/main/resources/static/css/core/base.css
+src/main/resources/static/css/layouts/workspace.css
+src/main/resources/static/css/components/components.css
+src/main/resources/static/css/pages/{page}.css
 ```
 
-개별 CSS는 해당 화면에만 필요한 복잡한 예외가 있을 때만 만든다. JS 파일은 실제 API 연동이나 화면 상호작용이 있을 때만 만든다.
+모든 화면은 대응하는 페이지 CSS를 가지며, 그 파일에는 해당 화면에서만 필요한 예외만 둔다. 자세한 소유권은 `css-architecture.md`를 따른다. JS 파일은 실제 API 연동이나 화면 상호작용이 있을 때만 만든다.
 
 ## 기본 구조
 
@@ -110,11 +114,12 @@ workspace-layout
 
 관리
 - 품목 관리
-- 품목 분류
 - 검수 템플릿
 - 거래처 관리
 - 사용자 관리
 ```
+
+품목 분류는 독립 사이드바 메뉴로 두지 않는다. `품목 관리` 화면 헤더 오른쪽의 `품목 분류` 버튼으로 진입하며, 품목 분류 화면에서는 사이드바의 `품목 관리`를 상위 메뉴로 active 표시한다.
 
 ## 업무 페이지 헤더
 
@@ -167,7 +172,7 @@ content-grid
 
 목록을 보면서 바로 추가하거나 수정하는 관리 화면은 이 구조를 우선 사용한다.
 
-좌측 목록과 오른쪽 패널을 동시에 쓰는 화면은 `has-collapsible-sidebar` 구조를 사용해 1520px 이하에서 사이드바를 접고 본문 폭을 우선 확보한다.
+좌측 목록과 오른쪽 패널을 동시에 쓰는 화면은 `has-collapsible-sidebar` 구조를 사용하고, 사이드바는 모든 화면에서 기본 닫힘인 오프캔버스로 동작해 본문 폭을 우선 확보한다.
 
 업무 흐름 맥락이 중요한 화면은 오른쪽 `side-panel`에 등록 폼 대신 `workflow-panel.md` 기준의 업무 흐름 보조 패널을 둘 수 있다.
 
@@ -177,8 +182,7 @@ content-grid
 
 요약:
 
-- 넓은 화면에서는 좌측 사이드바를 sticky로 고정 표시한다.
-- 중간 폭 이하에서는 좌측 사이드바를 오프캔버스로 접고 햄버거 버튼을 노출한다.
+- 모든 화면에서 좌측 사이드바를 기본 닫힘인 오프캔버스로 사용하고 햄버거 버튼을 노출한다.
 - 햄버거 메뉴는 왼쪽 슬라이드, 배경 blur/dim, 오버레이 클릭 닫기, `Escape` 닫기를 지원한다.
 - 좁은 화면에서는 `content-grid`를 1컬럼으로 전환해 오른쪽 패널을 본문 아래에 둔다.
 - 모바일 폭에서는 헤더 액션, 검색 폼, 목록 행을 모바일 배치로 전환한다.
