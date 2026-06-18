@@ -108,12 +108,44 @@ function Test-Java17VersionOutput {
     return $VersionOutput -match 'version "17\.|version "18\.|version "19\.|version "2[0-9]\.'
 }
 
+function Test-IsWindowsHost {
+    if (Get-Variable -Name IsWindows -Scope Global -ErrorAction SilentlyContinue) {
+        return $IsWindows
+    }
+
+    return $env:OS -eq "Windows_NT"
+}
+
+function Get-JavaExecutablePath {
+    param(
+        [string] $JavaHome
+    )
+
+    if ([string]::IsNullOrWhiteSpace($JavaHome)) {
+        return $null
+    }
+
+    $candidates = @(
+        (Join-Path $JavaHome "bin/java"),
+        (Join-Path $JavaHome "bin/java.exe")
+    )
+
+    foreach ($candidate in $candidates) {
+        if (Test-Path $candidate) {
+            return $candidate
+        }
+    }
+
+    return $null
+}
+
 function Get-JavaVersionOutput {
     param(
         [string] $JavaCommand
     )
 
-    return (cmd /c "`"$JavaCommand`" -version 2>&1") -join "`n"
+    $output = & $JavaCommand "-version" 2>&1
+    return ($output | ForEach-Object { $_.ToString() }) -join "`n"
 }
 
 function Resolve-Java17Home {
@@ -123,24 +155,43 @@ function Resolve-Java17Home {
         $candidates.Add($env:JAVA_HOME) | Out-Null
     }
 
-    foreach ($root in @(
+    $candidateRoots = @(
         "C:\Program Files\Java",
         "C:\Program Files\Eclipse Adoptium",
         "C:\Program Files\Microsoft",
-        "C:\Program Files\Amazon Corretto"
-    )) {
+        "C:\Program Files\Amazon Corretto",
+        "/Library/Java/JavaVirtualMachines",
+        "/usr/lib/jvm",
+        "/opt/homebrew/opt/openjdk",
+        "/usr/local/opt/openjdk"
+    )
+
+    foreach ($root in $candidateRoots) {
         if (-not (Test-Path $root)) {
             continue
         }
 
-        Get-ChildItem -Path $root -Directory -ErrorAction SilentlyContinue |
-            Where-Object { $_.Name -match "17|18|19|2[0-9]" } |
-            ForEach-Object { $candidates.Add($_.FullName) | Out-Null }
+        if ($root -eq "/Library/Java/JavaVirtualMachines") {
+            Get-ChildItem -Path $root -Directory -ErrorAction SilentlyContinue |
+                Where-Object { $_.Name -match "17|18|19|2[0-9]" } |
+                ForEach-Object {
+                    $homePath = Join-Path $_.FullName "Contents/Home"
+                    if (Test-Path $homePath) {
+                        $candidates.Add($homePath) | Out-Null
+                    }
+                }
+        } else {
+            Get-ChildItem -Path $root -Directory -ErrorAction SilentlyContinue |
+                Where-Object { $_.Name -match "17|18|19|2[0-9]" } |
+                ForEach-Object { $candidates.Add($_.FullName) | Out-Null }
+
+            $candidates.Add($root) | Out-Null
+        }
     }
 
     foreach ($candidate in ($candidates | Select-Object -Unique)) {
-        $javaHomeCommand = Join-Path $candidate "bin\java.exe"
-        if (-not (Test-Path $javaHomeCommand)) {
+        $javaHomeCommand = Get-JavaExecutablePath $candidate
+        if (-not $javaHomeCommand -or -not (Test-Path $javaHomeCommand)) {
             continue
         }
 
@@ -158,8 +209,8 @@ function Resolve-Java17Home {
 
 function Ensure-JavaHome17 {
     if (-not [string]::IsNullOrWhiteSpace($env:JAVA_HOME)) {
-        $javaHomeCommand = Join-Path $env:JAVA_HOME "bin\java.exe"
-        if (Test-Path $javaHomeCommand) {
+        $javaHomeCommand = Get-JavaExecutablePath $env:JAVA_HOME
+        if ($javaHomeCommand -and (Test-Path $javaHomeCommand)) {
             try {
                 $javaHomeVersionOutput = Get-JavaVersionOutput $javaHomeCommand
                 if (Test-Java17VersionOutput $javaHomeVersionOutput) {
@@ -180,17 +231,56 @@ function Ensure-JavaHome17 {
     return $false
 }
 
+function Get-GradleWrapperPath {
+    $preferred = if (Test-IsWindowsHost) { "gradlew.bat" } else { "gradlew" }
+    $fallback = if (Test-IsWindowsHost) { "gradlew" } else { "gradlew.bat" }
+
+    $preferredPath = Join-Path $ProjectRoot $preferred
+    if (Test-Path $preferredPath) {
+        return $preferredPath
+    }
+
+    $fallbackPath = Join-Path $ProjectRoot $fallback
+    if (Test-Path $fallbackPath) {
+        return $fallbackPath
+    }
+
+    return $null
+}
+
+function Invoke-GradleWrapper {
+    param(
+        [string[]] $Arguments
+    )
+
+    $gradleWrapper = Get-GradleWrapperPath
+    if (-not $gradleWrapper) {
+        throw "Gradle Wrapper was not found."
+    }
+
+    if ((Test-IsWindowsHost) -or $gradleWrapper.EndsWith(".bat")) {
+        & $gradleWrapper @Arguments
+        return
+    }
+
+    & sh $gradleWrapper @Arguments
+}
+
 function Get-ProjectTextFiles {
     Get-ChildItem -Path $ProjectRoot -Recurse -File |
         Where-Object {
-            $path = $_.FullName
-            $path -notmatch "\\.git\\" -and
-            $path -notmatch "\\.gradle\\" -and
-            $path -notmatch "\\build\\" -and
-            $path -notmatch "\\out\\" -and
-            $path -notmatch "\\docs\\" -and
-            $path -notmatch "\\harness\\" -and
-            $path -notmatch "\\harness\\reports\\"
+            $path = Normalize-HarnessPath $_.FullName
+            $root = Normalize-HarnessPath $ProjectRoot
+            if ($path.StartsWith($root)) {
+                $path = $path.Substring($root.Length).TrimStart("/")
+            }
+
+            $path -notmatch '(^|/)\.git(/|$)' -and
+            $path -notmatch '(^|/)\.gradle(/|$)' -and
+            $path -notmatch '(^|/)build(/|$)' -and
+            $path -notmatch '(^|/)out(/|$)' -and
+            $path -notmatch '(^|/)docs(/|$)' -and
+            $path -notmatch '(^|/)harness(/|$)'
         }
 }
 
@@ -389,10 +479,10 @@ function Test-JavaVersion {
     }
 
     if (-not [string]::IsNullOrWhiteSpace($env:JAVA_HOME)) {
-        $javaHomeCommand = Join-Path $env:JAVA_HOME "bin\java.exe"
-        if (-not (Test-Path $javaHomeCommand)) {
+        $javaHomeCommand = Get-JavaExecutablePath $env:JAVA_HOME
+        if (-not $javaHomeCommand -or -not (Test-Path $javaHomeCommand)) {
             if (-not (Ensure-JavaHome17)) {
-                Add-Result "FAIL" "JAVA_HOME_COMMAND_REQUIRED" "JAVA_HOME does not point to a JDK with bin\java.exe: $env:JAVA_HOME" "Set JAVA_HOME to JDK 17 or later."
+                Add-Result "FAIL" "JAVA_HOME_COMMAND_REQUIRED" "JAVA_HOME does not point to a JDK with a java executable: $env:JAVA_HOME" "Set JAVA_HOME to JDK 17 or later."
             }
             return
         }
@@ -408,7 +498,7 @@ function Test-JavaVersion {
             }
         } catch {
             if (-not (Ensure-JavaHome17)) {
-                Add-Result "FAIL" "JAVA_HOME_VERSION_CHECK_FAILED" "Failed to execute JAVA_HOME bin\java.exe." "Set JAVA_HOME to a valid JDK 17 or later."
+                Add-Result "FAIL" "JAVA_HOME_VERSION_CHECK_FAILED" "Failed to execute JAVA_HOME java command." "Set JAVA_HOME to a valid JDK 17 or later."
             }
         }
     } elseif ($RunBuild -or $RunSwagger) {
@@ -1281,8 +1371,11 @@ function Find-MariaDbDriverJar {
     if (-not [string]::IsNullOrWhiteSpace($env:USERPROFILE)) {
         $roots.Add((Join-Path $env:USERPROFILE ".gradle/caches/modules-2/files-2.1/org.mariadb.jdbc/mariadb-java-client")) | Out-Null
     }
+    if (-not [string]::IsNullOrWhiteSpace($env:HOME)) {
+        $roots.Add((Join-Path $env:HOME ".gradle/caches/modules-2/files-2.1/org.mariadb.jdbc/mariadb-java-client")) | Out-Null
+    }
 
-    foreach ($root in $roots) {
+    foreach ($root in ($roots | Select-Object -Unique)) {
         if (-not (Test-Path $root)) {
             continue
         }
@@ -1306,15 +1399,15 @@ function Resolve-MariaDbDriverJar {
         return $driverJar
     }
 
-    $gradlew = Join-Path $ProjectRoot "gradlew.bat"
-    if (-not (Test-Path $gradlew)) {
-        Add-Result "FAIL" "DB_DRIVER_GRADLEW_MISSING" "MariaDB JDBC driver was not found and gradlew.bat is missing." "Restore Gradle Wrapper or download dependencies."
+    $gradlew = Get-GradleWrapperPath
+    if (-not $gradlew) {
+        Add-Result "FAIL" "DB_DRIVER_GRADLEW_MISSING" "MariaDB JDBC driver was not found and Gradle Wrapper is missing." "Restore Gradle Wrapper or download dependencies."
         return $null
     }
 
     Push-Location $ProjectRoot
     try {
-        & $gradlew "--quiet" "dependencies" "--configuration" "runtimeClasspath" | Out-Null
+        Invoke-GradleWrapper @("--quiet", "dependencies", "--configuration", "runtimeClasspath") | Out-Null
     } catch {
         Add-Result "FAIL" "DB_DRIVER_RESOLVE_FAILED" "Failed to resolve runtimeClasspath dependencies for MariaDB JDBC driver." "Run Gradle dependency resolution after configuring JDK 17."
         return $null
@@ -1324,7 +1417,7 @@ function Resolve-MariaDbDriverJar {
 
     $driverJar = Find-MariaDbDriverJar
     if (-not $driverJar) {
-        Add-Result "FAIL" "DB_DRIVER_NOT_FOUND" "MariaDB JDBC driver jar was not found in Gradle cache." "Run .\gradlew.bat dependencies --configuration runtimeClasspath or check build.gradle runtimeOnly dependency."
+        Add-Result "FAIL" "DB_DRIVER_NOT_FOUND" "MariaDB JDBC driver jar was not found in Gradle cache." "Run Gradle dependencies --configuration runtimeClasspath or check build.gradle runtimeOnly dependency."
         return $null
     }
 
@@ -2341,9 +2434,9 @@ function Invoke-DbChecks {
 }
 
 function Invoke-BuildCheck {
-    $gradlew = Join-Path $ProjectRoot "gradlew.bat"
-    if (-not (Test-Path $gradlew)) {
-        Add-Result "FAIL" "BUILD_GRADLEW_MISSING" "gradlew.bat is missing." "Restore Gradle Wrapper."
+    $gradlew = Get-GradleWrapperPath
+    if (-not $gradlew) {
+        Add-Result "FAIL" "BUILD_GRADLEW_MISSING" "Gradle Wrapper is missing." "Restore Gradle Wrapper."
         return
     }
 
@@ -2354,7 +2447,7 @@ function Invoke-BuildCheck {
 
     Push-Location $ProjectRoot
     try {
-        & $gradlew "compileJava" | Out-Host
+        Invoke-GradleWrapper @("compileJava") | Out-Host
         if ($LASTEXITCODE -ne 0) {
             Add-Result "FAIL" "COMPILE_JAVA" "compileJava failed." "Fix compile errors first."
         } else {
@@ -2376,9 +2469,9 @@ function Get-FreeTcpPort {
 }
 
 function Invoke-SwaggerSmokeCheck {
-    $gradlew = Join-Path $ProjectRoot "gradlew.bat"
-    if (-not (Test-Path $gradlew)) {
-        Add-Result "FAIL" "SWAGGER_GRADLEW_MISSING" "gradlew.bat is missing." "Restore Gradle Wrapper."
+    $gradlew = Get-GradleWrapperPath
+    if (-not $gradlew) {
+        Add-Result "FAIL" "SWAGGER_GRADLEW_MISSING" "Gradle Wrapper is missing." "Restore Gradle Wrapper."
         return
     }
 
@@ -2389,7 +2482,7 @@ function Invoke-SwaggerSmokeCheck {
 
     Push-Location $ProjectRoot
     try {
-        & $gradlew "bootJar" | Out-Host
+        Invoke-GradleWrapper @("bootJar") | Out-Host
         if ($LASTEXITCODE -ne 0) {
             Add-Result "FAIL" "SWAGGER_BOOT_JAR" "bootJar failed before Swagger smoke check." "Fix build errors first."
             return
@@ -2398,20 +2491,20 @@ function Invoke-SwaggerSmokeCheck {
         Pop-Location
     }
 
-    $jar = Get-ChildItem -Path (Join-Path $ProjectRoot "build\libs") -Filter "*.jar" -File |
+    $jar = Get-ChildItem -Path (Join-Path $ProjectRoot "build/libs") -Filter "*.jar" -File |
         Where-Object { $_.Name -notmatch "-plain\.jar$" } |
         Sort-Object LastWriteTime -Descending |
         Select-Object -First 1
 
     if (-not $jar) {
-        Add-Result "FAIL" "SWAGGER_BOOT_JAR_NOT_FOUND" "No executable bootJar artifact was found." "Run .\gradlew.bat bootJar and check build/libs."
+        Add-Result "FAIL" "SWAGGER_BOOT_JAR_NOT_FOUND" "No executable bootJar artifact was found." "Run Gradle bootJar and check build/libs."
         return
     }
 
     $javaCommand = "java"
     if (-not [string]::IsNullOrWhiteSpace($env:JAVA_HOME)) {
-        $javaHomeCommand = Join-Path $env:JAVA_HOME "bin\java.exe"
-        if (Test-Path $javaHomeCommand) {
+        $javaHomeCommand = Get-JavaExecutablePath $env:JAVA_HOME
+        if ($javaHomeCommand -and (Test-Path $javaHomeCommand)) {
             $javaCommand = $javaHomeCommand
         }
     }
@@ -2422,13 +2515,18 @@ function Invoke-SwaggerSmokeCheck {
     $process = $null
 
     try {
-        $process = Start-Process `
-            -FilePath $javaCommand `
-            -ArgumentList @("-jar", $jar.FullName, "--server.port=$port") `
-            -RedirectStandardOutput $stdoutPath `
-            -RedirectStandardError $stderrPath `
-            -WindowStyle Hidden `
-            -PassThru
+        $startProcessArgs = @{
+            FilePath = $javaCommand
+            ArgumentList = @("-jar", $jar.FullName, "--server.port=$port")
+            RedirectStandardOutput = $stdoutPath
+            RedirectStandardError = $stderrPath
+            PassThru = $true
+        }
+        if (Test-IsWindowsHost) {
+            $startProcessArgs.WindowStyle = "Hidden"
+        }
+
+        $process = Start-Process @startProcessArgs
 
         $apiDocsResponse = $null
         for ($attempt = 0; $attempt -lt 40; $attempt++) {

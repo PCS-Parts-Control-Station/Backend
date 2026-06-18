@@ -15,6 +15,7 @@ com.pcs.domain.stock
 | Method | API | 설명 |
 |---|---|---|
 | POST | `/api/workspaces/{companyCode}/stock/documents/inbounds` | 입고 전표 등록 |
+| GET | `/api/workspaces/{companyCode}/stock/outbound-candidates` | 출고 가능한 관리번호 목록 |
 | POST | `/api/workspaces/{companyCode}/stock/documents/outbounds` | 출고 전표 등록 |
 | POST | `/api/workspaces/{companyCode}/stock/documents/{documentId}/cancel` | 입출고 전표 취소 |
 | GET | `/api/workspaces/{companyCode}/stock/documents` | 입출고 전표 목록 |
@@ -103,10 +104,72 @@ src/main/resources/static/js/inbound-register.js
 
 입고 전표 상세 화면의 오른쪽 보조 패널은 품목별 상세 행을 길게 펼치기보다 품목별 수량 요약을 우선 보여준다. 관리번호 전체 목록은 상세 조회나 확장 영역에서 확인한다.
 
+## 출고 등록 화면
+
+출고 등록 화면은 고객 거래처와 출고 사유를 입력한 뒤, 출고 가능한 관리번호를 검색해 출고 대상에 추가하고 전표를 저장한다.
+
+화면 흐름:
+
+1. 전표 기본 정보 입력
+2. 출고 가능 관리번호 검색
+3. 품목 묶음별 관리번호 선택
+4. 출고 대상 목록 검토
+5. 저장 후 재고 차감과 이력 저장
+
+화면 문구 기준:
+
+- 사용자 화면에서는 `출고 대상 검색`, `출고 대상`, `관리번호 선택`, `출고 사유`를 사용한다.
+- 출고 등록은 품목 수량만 입력하지 않고 실제 출고할 `관리번호`를 선택한다.
+- 관리번호 목록은 품목 묶음을 먼저 보여주고, 묶음 안에서 개별 관리번호를 선택한다.
+- 출고 대상 목록은 품목별 수량과 선택된 관리번호를 함께 보여준다.
+
+출고 대상 조회:
+
+`GET /api/workspaces/{companyCode}/stock/outbound-candidates`
+
+Query:
+
+| 이름 | 설명 |
+|---|---|
+| `keyword` | 관리번호, 품목명, 모델명, 품목코드 검색 |
+| `categoryId` | 품목 분류 필터 |
+| `partId` | 특정 품목 필터 |
+| `grade` | `A`, `B`, `C` 등급 필터 |
+| `page` | 0부터 시작 |
+| `size` | 기본 20, 최대 100 |
+| `limit` | 기존 단순 목록 호환용 size 별칭 |
+
+출고 대상 조건:
+
+- `unit_status = IN_STOCK`
+- `inspection_status = COMPLETED`
+- `sales_status = AVAILABLE`
+- `grade != DEFECTIVE`
+- `active = true`
+
+출고 등록 요청:
+
+```json
+{
+  "partnerId": 2,
+  "reason": "판매 출고",
+  "lines": [
+    {
+      "partId": 10,
+      "unitIds": [101, 102],
+      "reason": "CPU 출고"
+    }
+  ]
+}
+```
+
+출고 전표번호는 서버가 `OUT-YYYYMMDD-RANDOM16` 형식으로 자동 발급한다.
+
 ## 주요 규칙
 
 - `tb_stock_document`는 거래처와 연결된 입출고 전표 헤더다.
 - 입고 전표번호는 서버가 `IN-YYYYMMDD-RANDOM16` 형식으로 자동 발급하고, 내부 정렬은 `document_id`를 사용한다.
+- 출고 전표번호는 서버가 `OUT-YYYYMMDD-RANDOM16` 형식으로 자동 발급하고, 내부 정렬은 `document_id`를 사용한다.
 - `tb_stock_movement`는 전표 안의 품목별 재고 변화 라인이다.
 - `tb_stock_movement_unit`은 재고 변화 라인에 포함된 개별 부품 목록이다.
 - 입출고 원본은 수정/삭제하지 않고 취소 이력으로 처리한다.
@@ -130,7 +193,6 @@ canceled_movement_id = 원본 movement_id
 입고 전표 취소 가능 조건:
 
 - 전표가 `CANCELED` 상태가 아니어야 한다.
-- 현재 입고 관리 화면에서는 `document_type = INBOUND` 전표만 취소한다.
 - 원본 입고 movement의 개별 부품이 모두 `unit_status = IN_STOCK`이어야 한다.
 - 원본 입고 movement의 개별 부품이 모두 `inspection_status = WAITING`이어야 한다.
 - 원본 입고 movement의 개별 부품이 모두 `sales_status = HOLD`이어야 한다.
@@ -146,6 +208,23 @@ canceled_movement_id = 원본 movement_id
 - 취소 movement unit 이력은 `before_unit_status = IN_STOCK`, `after_unit_status = CANCELED`로 저장한다.
 - 개별 부품은 `unit_status = CANCELED`, `active = false`로 변경한다.
 - `tb_part_stock.quantity`는 취소 수량만큼 차감한다.
+
+출고 전표 취소 가능 조건:
+
+- 전표가 `CANCELED` 상태가 아니어야 한다.
+- 원본 출고 movement의 개별 부품이 모두 `unit_status = OUTBOUND`이어야 한다.
+- 원본 출고 movement의 개별 부품이 모두 `active = true`여야 한다.
+
+출고 전표 취소 처리:
+
+- 원본 document의 `document_status`를 `CANCELED`로 변경한다.
+- 원본 movement의 `movement_status`를 `CANCELED`로 변경한다.
+- 원본 movement마다 `OUTBOUND_CANCEL` movement를 추가한다.
+- 취소 movement의 `before_quantity`, `after_quantity`를 저장한다.
+- 원본 movement에 연결된 개별 부품은 취소 movement에도 매핑한다.
+- 취소 movement unit 이력은 `before_unit_status = OUTBOUND`, `after_unit_status = IN_STOCK`으로 저장한다.
+- 개별 부품은 `unit_status = IN_STOCK`으로 되돌린다.
+- `tb_part_stock.quantity`는 취소 수량만큼 증가한다.
 
 ## 하네스 포인트
 

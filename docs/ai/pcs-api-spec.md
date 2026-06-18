@@ -349,6 +349,7 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&pag
 | Method | API | 설명 |
 |---|---|---|
 | POST | `/api/workspaces/{companyCode}/stock/documents/inbounds` | 입고 전표 등록 |
+| GET | `/api/workspaces/{companyCode}/stock/outbound-candidates` | 출고 가능한 관리번호 목록 |
 | POST | `/api/workspaces/{companyCode}/stock/documents/outbounds` | 출고 전표 등록 |
 | POST | `/api/workspaces/{companyCode}/stock/documents/{documentId}/cancel` | 입출고 전표 취소 |
 | GET | `/api/workspaces/{companyCode}/stock/documents` | 입출고 전표 목록 |
@@ -376,6 +377,55 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&pag
 
 입고 전표번호는 서버가 `IN-YYYYMMDD-RANDOM16` 형식으로 자동 발급한다.
 내부 정렬과 페이징 기준은 `documentId`를 사용한다.
+
+출고 대상 관리번호 조회 query:
+
+| 이름 | 설명 |
+|---|---|
+| `keyword` | 관리번호, 품목명, 모델명, 품목코드 검색 |
+| `categoryId` | 품목 분류 필터 |
+| `partId` | 특정 품목 필터 |
+| `grade` | `A`, `B`, `C` 등급 필터 |
+| `page` | 0부터 시작 |
+| `size` | 기본 20, 최대 100 |
+| `limit` | `size` 별칭 |
+
+출고 대상 조건은 `unitStatus = IN_STOCK`, `inspectionStatus = COMPLETED`, `salesStatus = AVAILABLE`, `grade != DEFECTIVE`, `active = true`이다.
+
+출고 대상 관리번호 응답 예시:
+
+```json
+{
+  "success": true,
+  "code": "COMMON-000",
+  "message": "요청이 정상 처리되었습니다.",
+  "data": {
+    "content": [
+      {
+        "unitId": 101,
+        "internalSerialNo": "CPU-I5-20260529-0001",
+        "partId": 10,
+        "partName": "Intel Core i5",
+        "modelName": "i5-12400",
+        "partCode": "CPU-I5",
+        "categoryId": 3,
+        "categoryName": "CPU",
+        "grade": "A",
+        "salesStatus": "AVAILABLE",
+        "inspectionStatus": "COMPLETED",
+        "unitStatus": "IN_STOCK"
+      }
+    ],
+    "page": 0,
+    "size": 20,
+    "totalElements": 1,
+    "totalPages": 1,
+    "hasPrevious": false,
+    "hasNext": false,
+    "summary": null
+  }
+}
+```
 
 입출고 전표 목록 query:
 
@@ -486,7 +536,6 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&pag
 ```json
 {
   "partnerId": 2,
-  "documentNo": "OUT-20260513-0001",
   "reason": "판매 출고",
   "lines": [
     {
@@ -497,6 +546,8 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&pag
   ]
 }
 ```
+
+출고 전표번호는 서버가 `OUT-YYYYMMDD-RANDOM16` 형식으로 자동 발급한다. 클라이언트는 실제 출고할 `unitIds`를 보내며, 서버는 저장 시점에 각 관리번호가 출고 가능한 상태인지 다시 검증한다.
 
 취소 요청 예시:
 
@@ -510,7 +561,7 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&pag
 {
   "success": true,
   "code": "COMMON-000",
-  "message": "입고 전표가 취소되었습니다.",
+  "message": "입출고 전표가 취소되었습니다.",
   "data": {
     "documentId": 100,
     "documentNo": "IN-20260529-23456789ABCDEFGH",
