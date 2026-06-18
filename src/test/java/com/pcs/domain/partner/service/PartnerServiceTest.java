@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -15,6 +16,7 @@ import com.pcs.domain.partner.type.PartnerType;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
+import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,11 +31,14 @@ class PartnerServiceTest {
     @Mock
     private PartnerMapper partnerMapper;
 
+    @Mock
+    private WorkspaceAccessValidator workspaceAccessValidator;
+
     private PartnerService partnerService;
 
     @BeforeEach
     void setUp() {
-        partnerService = new PartnerService(partnerMapper);
+        partnerService = new PartnerService(partnerMapper, workspaceAccessValidator);
     }
 
     @Test
@@ -53,7 +58,6 @@ class PartnerServiceTest {
         );
         SearchPartnerSummaryResponse summary = new SearchPartnerSummaryResponse(1, 1, 0, 1);
 
-        when(partnerMapper.isCompanyActive(companyId)).thenReturn(true);
         when(partnerMapper.countPartners(companyId, "용산", PartnerType.COMPANY, null, null)).thenReturn(1L);
         when(partnerMapper.searchPartners(companyId, "용산", PartnerType.COMPANY, null, null, 10, 0))
                 .thenReturn(List.of(partner));
@@ -83,7 +87,6 @@ class PartnerServiceTest {
         Long companyId = 1L;
         SearchPartnerSummaryResponse summary = new SearchPartnerSummaryResponse(0, 0, 0, 0);
 
-        when(partnerMapper.isCompanyActive(companyId)).thenReturn(true);
         when(partnerMapper.countPartners(companyId, null, null, PartnerRole.SUPPLIER, true)).thenReturn(0L);
         when(partnerMapper.summarizePartners(companyId, null, null, PartnerRole.SUPPLIER, true))
                 .thenReturn(summary);
@@ -108,7 +111,9 @@ class PartnerServiceTest {
     @Test
     void searchPartners_failsWhenCompanyInactive() {
         Long companyId = 1L;
-        when(partnerMapper.isCompanyActive(companyId)).thenReturn(false);
+        doThrow(new BusinessException(ErrorCode.COMPANY_INACTIVE))
+                .when(workspaceAccessValidator)
+                .validateCompanyActive(companyId);
 
         BusinessException exception = assertThrows(
                 BusinessException.class,

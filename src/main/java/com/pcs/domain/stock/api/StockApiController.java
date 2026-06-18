@@ -1,8 +1,12 @@
 package com.pcs.domain.stock.api;
 
+import com.pcs.domain.part.type.PartGrade;
 import com.pcs.domain.stock.dto.request.CreateInboundDocumentRequest;
+import com.pcs.domain.stock.dto.request.CreateOutboundDocumentRequest;
 import com.pcs.domain.stock.dto.response.CancelStockDocumentResponse;
 import com.pcs.domain.stock.dto.response.CreateInboundDocumentResponse;
+import com.pcs.domain.stock.dto.response.CreateOutboundDocumentResponse;
+import com.pcs.domain.stock.dto.response.SearchOutboundCandidateResponse;
 import com.pcs.domain.stock.dto.response.SearchStockDocumentResponse;
 import com.pcs.domain.stock.dto.response.SearchStockDocumentSummaryResponse;
 import com.pcs.domain.stock.dto.response.StockDocumentDetailResponse;
@@ -60,6 +64,32 @@ public class StockApiController {
         return ResponseEntity.ok(ApiResultDto.ok(response));
     }
 
+    @GetMapping("/workspaces/{companyCode}/stock/outbound-candidates")
+    public ResponseEntity<ApiResultDto<PageResultDto<SearchOutboundCandidateResponse, Void>>> searchOutboundCandidates(
+            @PathVariable String companyCode,
+            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Long partId,
+            @RequestParam(required = false) PartGrade grade,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) Integer limit
+    ) {
+        PageResultDto<SearchOutboundCandidateResponse, Void> response = stockFacade.searchOutboundCandidates(
+                authorizationHeader,
+                companyCode,
+                keyword,
+                categoryId,
+                partId,
+                grade,
+                page,
+                size,
+                limit
+        );
+        return ResponseEntity.ok(ApiResultDto.ok(response));
+    }
+
     @GetMapping("/workspaces/{companyCode}/stock/documents/{documentId}")
     public ResponseEntity<ApiResultDto<StockDocumentDetailResponse>> getDocument(
             @PathVariable String companyCode,
@@ -85,7 +115,7 @@ public class StockApiController {
                 companyCode,
                 documentId
         );
-        return ResponseEntity.ok(ApiResultDto.ok("입고 전표가 취소되었습니다.", response));
+        return ResponseEntity.ok(ApiResultDto.ok("입출고 전표가 취소되었습니다.", response));
     }
 
     @PostMapping("/workspaces/{companyCode}/stock/documents/inbounds")
@@ -101,5 +131,20 @@ public class StockApiController {
         );
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResultDto.ok("입고 전표가 등록되었습니다.", response));
+    }
+
+    @PostMapping("/workspaces/{companyCode}/stock/documents/outbounds")
+    public ResponseEntity<ApiResultDto<CreateOutboundDocumentResponse>> createOutboundDocument(
+            @PathVariable String companyCode,
+            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader,
+            @Valid @RequestBody CreateOutboundDocumentRequest request
+    ) {
+        CreateOutboundDocumentResponse response = stockFacade.createOutboundDocument(
+                authorizationHeader,
+                companyCode,
+                request
+        );
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResultDto.ok("출고 전표가 등록되었습니다.", response));
     }
 }

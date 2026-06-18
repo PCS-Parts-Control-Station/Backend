@@ -1,0 +1,500 @@
+(() => {
+    const PAGE_SIZE = 20;
+
+    const form = document.querySelector("#outbound-form");
+    const partnerSelect = document.querySelector("[data-partner-select]");
+    const partnerMessage = document.querySelector("[data-partner-message]");
+    const keywordInput = document.querySelector("[data-candidate-keyword]");
+    const categoryFilter = document.querySelector("[data-category-filter]");
+    const gradeFilter = document.querySelector("[data-grade-filter]");
+    const searchButton = document.querySelector("[data-candidate-search]");
+    const resetSearchButton = document.querySelector("[data-candidate-reset]");
+    const candidateTable = document.querySelector("[data-candidate-table]");
+    const candidateEmpty = document.querySelector("[data-candidate-empty]");
+    const candidateSummary = document.querySelector("[data-candidate-summary]");
+    const pagination = document.querySelector("[data-candidate-pagination]");
+    const pageInfo = pagination?.querySelector("[data-page-info]");
+    const prevButton = pagination?.querySelector("[data-page-prev]");
+    const nextButton = pagination?.querySelector("[data-page-next]");
+    const selectedList = document.querySelector("[data-selected-list]");
+    const selectedEmpty = document.querySelector("[data-selected-empty]");
+    const selectedCount = document.querySelector("[data-selected-count]");
+    const clearSelectionButton = document.querySelector("[data-clear-selection]");
+    const submitMessage = document.querySelector("[data-submit-message]");
+    const resetFormButton = document.querySelector("[data-reset-form]");
+
+    if (!form || !candidateTable || !selectedList || !window.PcsApi || !window.PcsPagination) {
+        return;
+    }
+
+    let currentPage = 0;
+    let selectedUnits = new Map();
+    let latestCandidates = [];
+
+    const getCompanyCode = () => {
+        const match = window.location.pathname.match(/^\/w\/([^/]+)/);
+        return match ? decodeURIComponent(match[1]) : "";
+    };
+
+    const apiBase = () => `/api/workspaces/${encodeURIComponent(getCompanyCode())}`;
+
+    const apiOptions = () => ({
+        authRedirect: true,
+        loginCompanyCode: getCompanyCode(),
+    });
+
+    const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (letter) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#039;",
+    }[letter]));
+
+    const normalizeListData = (data) => {
+        if (Array.isArray(data)) {
+            return data;
+        }
+        return Array.isArray(data?.content) ? data.content : [];
+    };
+
+    const partTitle = (item) => item?.partName || "-";
+
+    const partMeta = (item) => {
+        const values = [
+            item?.modelName,
+            item?.categoryName,
+            item?.manufacturer,
+        ].filter(Boolean);
+        return values.length ? values.join(" / ") : "-";
+    };
+
+    const gradeLabel = (grade) => {
+        if (!grade || grade === "NONE") {
+            return "미정";
+        }
+        if (grade === "DEFECTIVE") {
+            return "불량";
+        }
+        return grade;
+    };
+
+    const gradeClass = (grade) => {
+        if (grade === "A") return "grade-a";
+        if (grade === "B") return "grade-b";
+        if (grade === "C") return "grade-c";
+        return "";
+    };
+
+    const setPartnerMessage = (message, type = "info") => {
+        if (!partnerMessage) {
+            return;
+        }
+        partnerMessage.textContent = message;
+        partnerMessage.classList.toggle("is-error", type === "error");
+    };
+
+    const setSubmitMessage = (message, isError = false) => {
+        if (!submitMessage) {
+            return;
+        }
+        submitMessage.textContent = message;
+        submitMessage.classList.toggle("is-error", isError);
+    };
+
+    const setLoading = (isLoading) => {
+        if (searchButton) {
+            searchButton.disabled = isLoading;
+            searchButton.textContent = isLoading ? "조회 중" : "검색";
+        }
+    };
+
+    const setSubmitDisabled = (disabled) => {
+        form.querySelectorAll('button[type="submit"]').forEach((button) => {
+            button.disabled = disabled;
+        });
+    };
+
+    const clearCandidateRows = () => {
+        candidateTable.querySelectorAll(".outbound-candidate-row:not(.table-head)").forEach((row) => row.remove());
+    };
+
+    const setCandidateMessage = (message) => {
+        clearCandidateRows();
+        const row = document.createElement("div");
+        row.className = "outbound-candidate-row empty-data-row";
+        row.setAttribute("role", "row");
+        row.innerHTML = `<span role="cell" data-label="안내">${escapeHtml(message)}</span>`;
+        candidateTable.append(row);
+    };
+
+    const updateSelectedCount = () => {
+        const count = selectedUnits.size;
+        if (selectedCount) {
+            selectedCount.textContent = `${count.toLocaleString("ko-KR")}개 선택`;
+        }
+        if (selectedEmpty) {
+            selectedEmpty.hidden = count > 0;
+        }
+    };
+
+    const selectedGroups = () => {
+        const groups = new Map();
+        selectedUnits.forEach((unit) => {
+            const key = String(unit.partId);
+            if (!groups.has(key)) {
+                groups.set(key, {
+                    partId: unit.partId,
+                    partName: unit.partName,
+                    meta: partMeta(unit),
+                    categoryName: unit.categoryName || "-",
+                    units: [],
+                    reason: "",
+                });
+            }
+            groups.get(key).units.push(unit);
+        });
+        return [...groups.values()];
+    };
+
+    const renderSelectedList = () => {
+        selectedList.querySelectorAll("[data-selected-group]").forEach((element) => element.remove());
+        const groups = selectedGroups();
+
+        groups.forEach((group) => {
+            const groupElement = document.createElement("section");
+            groupElement.className = "outbound-selected-group";
+            groupElement.dataset.selectedGroup = "";
+            groupElement.dataset.partId = group.partId;
+            groupElement.innerHTML = `
+                <div class="outbound-selected-group-header">
+                    <div>
+                        <strong>${escapeHtml(group.partName)}</strong>
+                        <small>${escapeHtml(group.meta)}</small>
+                    </div>
+                    <b>${group.units.length.toLocaleString("ko-KR")}개</b>
+                </div>
+                <div class="outbound-selected-units" aria-label="${escapeHtml(group.partName)} 선택 관리번호">
+                    ${group.units.map((unit) => `
+                        <span class="outbound-selected-unit">
+                            <code>${escapeHtml(unit.internalSerialNo)}</code>
+                            <button type="button" data-remove-unit="${unit.unitId}" aria-label="${escapeHtml(unit.internalSerialNo)} 제거">×</button>
+                        </span>
+                    `).join("")}
+                </div>
+                <label class="outbound-line-reason">
+                    <span>품목 사유</span>
+                    <input type="text" data-line-reason="${group.partId}" placeholder="품목별 출고 사유">
+                </label>
+            `;
+            selectedList.append(groupElement);
+        });
+
+        updateSelectedCount();
+    };
+
+    const syncCandidateSelectionState = () => {
+        candidateTable.querySelectorAll("[data-unit-id]").forEach((row) => {
+            const selected = selectedUnits.has(Number(row.dataset.unitId));
+            row.classList.toggle("is-selected", selected);
+            row.setAttribute("aria-selected", String(selected));
+            const label = row.querySelector("[data-select-label]");
+            if (label) {
+                label.textContent = selected ? "선택됨" : "선택";
+            }
+        });
+    };
+
+    const toggleUnit = (unit) => {
+        const unitId = Number(unit.unitId);
+        if (selectedUnits.has(unitId)) {
+            selectedUnits.delete(unitId);
+        } else {
+            selectedUnits.set(unitId, unit);
+        }
+        renderSelectedList();
+        syncCandidateSelectionState();
+    };
+
+    const createCandidateRow = (item) => {
+        const row = document.createElement("div");
+        row.className = "outbound-candidate-row";
+        row.dataset.unitId = item.unitId;
+        row.setAttribute("role", "row");
+        row.setAttribute("tabindex", "0");
+        row.setAttribute("aria-selected", selectedUnits.has(Number(item.unitId)) ? "true" : "false");
+        row.innerHTML = `
+            <code role="cell" data-label="관리번호">${escapeHtml(item.internalSerialNo)}</code>
+            <span role="cell" data-label="품목">
+                <strong>${escapeHtml(partTitle(item))}</strong>
+                <small>${escapeHtml(partMeta(item))}</small>
+            </span>
+            <span role="cell" data-label="분류">${escapeHtml(item.categoryName || "-")}</span>
+            <span role="cell" data-label="등급">
+                <i class="outbound-badge ${gradeClass(item.grade)}">${escapeHtml(gradeLabel(item.grade))}</i>
+            </span>
+            <button class="outbound-candidate-select" type="button" data-select-label>선택</button>
+        `;
+
+        row.addEventListener("click", (event) => {
+            event.preventDefault();
+            toggleUnit(item);
+        });
+        row.addEventListener("keydown", (event) => {
+            if (event.key !== "Enter" && event.key !== " ") {
+                return;
+            }
+            event.preventDefault();
+            toggleUnit(item);
+        });
+        return row;
+    };
+
+    const renderCandidates = (items, pageData) => {
+        clearCandidateRows();
+        latestCandidates = items;
+
+        if (candidateSummary) {
+            candidateSummary.textContent = `${pageData.totalElements.toLocaleString("ko-KR")}개`;
+        }
+
+        if (!items.length) {
+            setCandidateMessage("출고 가능한 관리번호가 없습니다.");
+            return;
+        }
+
+        items.forEach((item) => candidateTable.append(createCandidateRow(item)));
+        syncCandidateSelectionState();
+    };
+
+    const updatePagination = (pageData) => {
+        window.PcsPagination.updateControls({
+            pageData,
+            container: pagination,
+            info: pageInfo,
+            prevButton,
+            nextButton,
+        });
+    };
+
+    const loadCandidates = async (page = 0, options = {}) => {
+        const companyCode = getCompanyCode();
+        if (!companyCode) {
+            setCandidateMessage("업체 주소가 올바르지 않습니다.");
+            return;
+        }
+
+        const params = window.PcsPagination.buildParams({
+            page,
+            size: PAGE_SIZE,
+            extraParams: {
+                keyword: keywordInput?.value.trim(),
+                categoryId: categoryFilter?.value,
+                grade: gradeFilter?.value,
+            },
+        });
+
+        const preserveScroll = options.preserveScroll === true;
+
+        const execute = async () => {
+            try {
+                setLoading(true);
+                if (!preserveScroll) {
+                    setCandidateMessage("출고 대상을 불러오는 중입니다.");
+                }
+                const data = await window.PcsApi.getData(`${apiBase()}/stock/outbound-candidates?${params.toString()}`, apiOptions());
+                const pageData = window.PcsPagination.normalizePageData(data, PAGE_SIZE);
+                currentPage = pageData.page;
+                renderCandidates(pageData.content, pageData);
+                updatePagination(pageData);
+            } catch (error) {
+                setCandidateMessage(error?.message || "출고 대상을 불러오지 못했습니다.");
+                updatePagination({
+                    totalElements: 0,
+                    totalPages: 0,
+                    page: 0,
+                    hasPrevious: false,
+                    hasNext: false,
+                });
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (preserveScroll) {
+            await window.PcsPagination.withPreservedScroll(execute);
+            return;
+        }
+
+        await execute();
+    };
+
+    const loadCategories = async () => {
+        if (!categoryFilter) {
+            return;
+        }
+        categoryFilter.disabled = true;
+        try {
+            const data = await window.PcsApi.getData(`${apiBase()}/categories?size=100`, apiOptions());
+            const categories = normalizeListData(data);
+            categoryFilter.innerHTML = '<option value="">전체 분류</option>';
+            categories.forEach((category) => {
+                categoryFilter.append(new Option(category.categoryName || "-", String(category.categoryId)));
+            });
+        } catch (error) {
+            categoryFilter.innerHTML = '<option value="">분류 조회 실패</option>';
+        } finally {
+            categoryFilter.disabled = false;
+        }
+    };
+
+    const loadPartners = async () => {
+        if (!partnerSelect) {
+            return;
+        }
+        partnerSelect.disabled = true;
+        setPartnerMessage("거래처를 불러오는 중입니다.");
+
+        try {
+            const params = new URLSearchParams({
+                active: "true",
+                limit: "100",
+            });
+            const data = await window.PcsApi.getData(`${apiBase()}/partners?${params.toString()}`, apiOptions());
+            const partners = normalizeListData(data).filter((partner) => {
+                const role = partner.partnerRole || "";
+                return role === "CUSTOMER" || role === "BOTH";
+            });
+
+            partnerSelect.innerHTML = '<option value="">출고 거래처 선택</option>';
+            partners.forEach((partner) => {
+                partnerSelect.append(new Option(partner.partnerName || "-", String(partner.partnerId)));
+            });
+            partnerSelect.disabled = partners.length === 0;
+            setPartnerMessage(partners.length ? "" : "선택 가능한 출고 거래처가 없습니다.", partners.length ? "info" : "error");
+        } catch (error) {
+            partnerSelect.innerHTML = '<option value="">거래처 조회 실패</option>';
+            partnerSelect.disabled = true;
+            setPartnerMessage(error?.message || "거래처를 불러오지 못했습니다.", "error");
+        }
+    };
+
+    const buildPayload = () => {
+        const groups = selectedGroups();
+        return {
+            partnerId: Number(partnerSelect?.value),
+            reason: form.elements.reason.value.trim() || null,
+            lines: groups.map((group) => ({
+                partId: Number(group.partId),
+                unitIds: group.units.map((unit) => Number(unit.unitId)),
+                reason: selectedList.querySelector(`[data-line-reason="${group.partId}"]`)?.value.trim() || null,
+            })),
+        };
+    };
+
+    const validatePayload = (payload) => {
+        if (!payload.partnerId) {
+            return "출고 거래처를 선택해 주세요.";
+        }
+        if (!payload.lines.length) {
+            return "출고할 관리번호를 선택해 주세요.";
+        }
+        return "";
+    };
+
+    const resetAll = () => {
+        selectedUnits = new Map();
+        form.reset();
+        setSubmitMessage("");
+        renderSelectedList();
+        syncCandidateSelectionState();
+    };
+
+    searchButton?.addEventListener("click", () => loadCandidates(0));
+    resetSearchButton?.addEventListener("click", () => {
+        if (keywordInput) keywordInput.value = "";
+        if (categoryFilter) categoryFilter.value = "";
+        if (gradeFilter) gradeFilter.value = "";
+        loadCandidates(0);
+    });
+    keywordInput?.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            loadCandidates(0);
+        }
+    });
+    categoryFilter?.addEventListener("change", () => loadCandidates(0));
+    gradeFilter?.addEventListener("change", () => loadCandidates(0));
+    prevButton?.addEventListener("click", () => loadCandidates(Math.max(0, currentPage - 1), { preserveScroll: true }));
+    nextButton?.addEventListener("click", () => loadCandidates(currentPage + 1, { preserveScroll: true }));
+    clearSelectionButton?.addEventListener("click", () => {
+        selectedUnits = new Map();
+        renderSelectedList();
+        syncCandidateSelectionState();
+    });
+    resetFormButton?.addEventListener("click", resetAll);
+
+    selectedList.addEventListener("click", (event) => {
+        const removeButton = event.target.closest("[data-remove-unit]");
+        if (!removeButton) {
+            return;
+        }
+        selectedUnits.delete(Number(removeButton.dataset.removeUnit));
+        renderSelectedList();
+        syncCandidateSelectionState();
+    });
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const payload = buildPayload();
+        const validationMessage = validatePayload(payload);
+        if (validationMessage) {
+            setSubmitMessage(validationMessage, true);
+            return;
+        }
+
+        try {
+            setSubmitDisabled(true);
+            setSubmitMessage("출고 전표를 저장하는 중입니다.");
+            const result = await window.PcsApi.request(`${apiBase()}/stock/documents/outbounds`, {
+                method: "POST",
+                body: payload,
+                ...apiOptions(),
+            });
+            const data = result?.data;
+            setSubmitMessage(`출고 전표 ${data?.documentNo || ""} 저장 완료 · ${data?.outboundUnitCount || payload.lines.length}개 출고`);
+            selectedUnits = new Map();
+            renderSelectedList();
+            await loadCandidates(currentPage, { preserveScroll: true });
+        } catch (error) {
+            setSubmitMessage(error?.message || "출고 전표를 저장하지 못했습니다.", true);
+        } finally {
+            setSubmitDisabled(false);
+        }
+    });
+
+    const initialize = async () => {
+        const companyCode = getCompanyCode();
+        if (!companyCode) {
+            setCandidateMessage("업체 주소가 올바르지 않습니다.");
+            return;
+        }
+
+        try {
+            if (window.PcsApi.validateWorkspacePublic) {
+                const valid = await window.PcsApi.validateWorkspacePublic(companyCode);
+                if (!valid) {
+                    return;
+                }
+            }
+            await Promise.all([loadPartners(), loadCategories()]);
+            renderSelectedList();
+            await loadCandidates(0);
+        } catch (error) {
+            setCandidateMessage(error?.message || "화면을 초기화하지 못했습니다.");
+        }
+    };
+
+    initialize();
+})();
