@@ -20,11 +20,14 @@ import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.security.PcsPrincipal;
 import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class MemberFacade {
+
+    private static final Logger log = LoggerFactory.getLogger(MemberFacade.class);
 
     private final MemberService memberService;
     private final AuthService authService;
@@ -97,7 +100,6 @@ public class MemberFacade {
         return memberService.updateMember(checkedPrincipal.companyId(), checkedPrincipal.role(), memberId, request);
     }
 
-    @Transactional
     public TemporaryPasswordResponse issueTemporaryPassword(
             PcsPrincipal principal,
             String pathCompanyCode,
@@ -109,7 +111,7 @@ public class MemberFacade {
                 checkedPrincipal.role(),
                 memberId
         );
-        authService.revokeMemberRefreshTokens(checkedPrincipal.companyId(), memberId);
+        revokeMemberRefreshTokensBestEffort(checkedPrincipal.companyId(), memberId);
         return response;
     }
 
@@ -152,7 +154,6 @@ public class MemberFacade {
         return toMypageResponse(account);
     }
 
-    @Transactional
     public MypageResponse changeMypagePassword(
             PcsPrincipal principal,
             String pathCompanyCode,
@@ -164,8 +165,21 @@ public class MemberFacade {
                 checkedPrincipal.memberId(),
                 request
         );
-        authService.revokeMemberRefreshTokens(checkedPrincipal.companyId(), checkedPrincipal.memberId());
+        revokeMemberRefreshTokensBestEffort(checkedPrincipal.companyId(), checkedPrincipal.memberId());
         return toMypageResponse(account);
+    }
+
+    private void revokeMemberRefreshTokensBestEffort(Long companyId, Long memberId) {
+        try {
+            authService.revokeMemberRefreshTokens(companyId, memberId);
+        } catch (RuntimeException exception) {
+            log.warn(
+                    "Failed to revoke member refresh tokens. companyId={}, memberId={}",
+                    companyId,
+                    memberId,
+                    exception
+            );
+        }
     }
 
     private MypageResponse toMypageResponse(MemberAccount account) {

@@ -1,6 +1,7 @@
 package com.pcs.domain.member.facade;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -72,6 +73,33 @@ class MemberFacadeTest {
     }
 
     @Test
+    void issueTemporaryPassword_returnsIssuedPasswordEvenWhenRefreshTokenRevocationFails() {
+        PcsPrincipal principal = new PcsPrincipal(
+                1L,
+                10L,
+                "bupc",
+                "owner",
+                MemberRole.OWNER,
+                Instant.now().plusSeconds(600)
+        );
+        TemporaryPasswordResponse expected = new TemporaryPasswordResponse(
+                "PCS-Ab3de5Fg7H",
+                LocalDateTime.now().plusDays(7)
+        );
+        when(workspaceAccessValidator.validateAuthenticatedWorkspace(principal, "bupc"))
+                .thenReturn(principal);
+        when(memberService.issueTemporaryPassword(10L, MemberRole.OWNER, 20L)).thenReturn(expected);
+        doThrow(new IllegalStateException("token revoke failed"))
+                .when(authService)
+                .revokeMemberRefreshTokens(10L, 20L);
+
+        TemporaryPasswordResponse actual = memberFacade.issueTemporaryPassword(principal, "bupc", 20L);
+
+        assertSame(expected, actual);
+        verify(authService).revokeMemberRefreshTokens(10L, 20L);
+    }
+
+    @Test
     void changeMypagePassword_revokesCurrentMemberRefreshTokens() {
         PcsPrincipal principal = new PcsPrincipal(
                 1L,
@@ -100,6 +128,45 @@ class MemberFacadeTest {
                 .thenReturn(principal);
         when(memberService.changeMyPassword(10L, 1L, request)).thenReturn(account);
         when(staffPermissionService.findEnabledPermissions(10L, MemberRole.STAFF)).thenReturn(List.of());
+
+        MypageResponse response = memberFacade.changeMypagePassword(principal, "bupc", request);
+
+        assertSame(MemberRole.STAFF, response.role());
+        verify(authService).revokeMemberRefreshTokens(10L, 1L);
+    }
+
+    @Test
+    void changeMypagePassword_returnsChangedAccountEvenWhenRefreshTokenRevocationFails() {
+        PcsPrincipal principal = new PcsPrincipal(
+                1L,
+                10L,
+                "bupc",
+                "staff01",
+                MemberRole.STAFF,
+                Instant.now().plusSeconds(600)
+        );
+        ChangeMypagePasswordRequest request = new ChangeMypagePasswordRequest(
+                "temporary-password",
+                "new-password",
+                "new-password"
+        );
+        MemberAccount account = new MemberAccount();
+        account.setCompanyId(10L);
+        account.setCompanyCode("bupc");
+        account.setMemberId(1L);
+        account.setLoginId("staff01");
+        account.setName("작업자");
+        account.setRole(MemberRole.STAFF);
+        account.setPasswordStatus(com.pcs.domain.member.type.PasswordStatus.ACTIVE);
+        account.setActive(true);
+
+        when(workspaceAccessValidator.validateAuthenticatedWorkspace(principal, "bupc"))
+                .thenReturn(principal);
+        when(memberService.changeMyPassword(10L, 1L, request)).thenReturn(account);
+        when(staffPermissionService.findEnabledPermissions(10L, MemberRole.STAFF)).thenReturn(List.of());
+        doThrow(new IllegalStateException("token revoke failed"))
+                .when(authService)
+                .revokeMemberRefreshTokens(10L, 1L);
 
         MypageResponse response = memberFacade.changeMypagePassword(principal, "bupc", request);
 
