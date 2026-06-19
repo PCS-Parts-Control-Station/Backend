@@ -1,0 +1,19 @@
+@layer page {
+.badge-unavailable {
+    border-color: rgba(100, 116, 139, 0.22);
+    background: var(--gray-soft);
+    color: var(--gray);
+}
+
+.optional-fields-body {
+    display: grid;
+    gap: 14px;
+    padding: 12px;
+    border-top: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.86);
+}
+
+.optional-fields:not([open]) .optional-fields-body {
+    display: none;
+}
+}

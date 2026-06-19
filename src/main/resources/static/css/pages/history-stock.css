@@ -1,0 +1,5 @@
+@layer page {
+.page-history-stock .content-grid {
+    grid-template-columns: 1fr;
+}
+}

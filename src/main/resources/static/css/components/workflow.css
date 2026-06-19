@@ -1,0 +1,182 @@
+@layer workflow {
+.process-panel {
+    overflow: hidden;
+}
+
+.workflow-list,
+.sub-process-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.workflow-list {
+    display: grid;
+    gap: 0;
+    margin-top: 18px;
+}
+
+.workflow-step {
+    position: relative;
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    gap: 12px;
+    padding-bottom: 18px;
+    color: var(--muted);
+}
+
+.workflow-step:last-child {
+    padding-bottom: 0;
+}
+
+.workflow-step::before {
+    content: "";
+    position: absolute;
+    top: 18px;
+    bottom: 0;
+    left: 6px;
+    width: 1px;
+    background: var(--line);
+}
+
+.workflow-step:last-child::before {
+    display: none;
+}
+
+.process-dot {
+    position: relative;
+    z-index: 1;
+    width: 13px;
+    height: 13px;
+    margin-top: 4px;
+    border: 2px solid var(--line-strong);
+    border-radius: 999px;
+    background: var(--surface);
+}
+
+.workflow-step.active .process-dot {
+    border-color: rgba(22, 163, 74, 0.24);
+    background: var(--green);
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.26);
+    animation: pulseDot 2.4s ease-out infinite;
+}
+
+.workflow-step strong {
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.workflow-step p {
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+.workflow-step.active > div > strong {
+    color: var(--navy);
+    font-size: 15px;
+}
+
+.workflow-step.active > div > p {
+    color: var(--text);
+}
+
+.sub-process-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+}
+
+.sub-process-list li {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+}
+
+.sub-process-list li > span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--cyan);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.sub-process-list strong {
+    color: var(--ink);
+    font-size: 13px;
+}
+
+.sub-process-list p {
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+@keyframes pulseDot {
+    0% {
+        box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.28);
+    }
+
+    70% {
+        box-shadow: 0 0 0 8px rgba(22, 163, 74, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+.workflow-step.active .process-dot {
+        animation: none;
+    }
+}
+
+.page-icon-document {
+    border-color: rgba(37, 99, 235, 0.16);
+    background: var(--cyan-soft);
+}
+
+[data-inbound-panel="guide"] {
+    gap: 18px;
+}
+
+.field-message.is-error {
+    color: var(--danger, #b42318);
+}
+
+@media (max-width: 640px) {
+.part-modal {
+        width: calc(100vw - 24px);
+    }
+
+.part-modal-header,
+.part-modal-actions {
+        padding-inline: 16px;
+    }
+
+.part-modal-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+}
+
+@keyframes inboundLoadingSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+}

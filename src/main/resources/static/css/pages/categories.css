@@ -1,0 +1,154 @@
+@layer page {
+.data-row.simple-management-data-row {
+    grid-template-columns: minmax(160px, 0.9fr) minmax(220px, 1.35fr) 88px 92px;
+}
+
+.data-row.simple-management-data-row.is-selectable {
+    cursor: pointer;
+    transition: background 140ms ease, box-shadow 140ms ease;
+}
+
+.data-row.simple-management-data-row.is-selectable:hover {
+    background: var(--cyan-soft);
+}
+
+.data-row.simple-management-data-row.is-selectable:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.18);
+    outline-offset: -3px;
+}
+
+.data-row.simple-management-data-row.is-selected {
+    background: #f0f7ff;
+    box-shadow: inset 3px 0 0 var(--cyan);
+}
+
+.spec-summary-list {
+    display: grid;
+    gap: 8px;
+}
+
+.spec-summary-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: start;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+}
+
+.spec-summary-card strong {
+    display: block;
+    color: var(--navy);
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.spec-summary-card small {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.spec-summary-actions {
+    display: inline-flex;
+    gap: 6px;
+}
+
+.spec-summary-actions button {
+    min-height: 28px;
+    padding: 0 8px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.spec-summary-actions button:hover {
+    border-color: var(--cyan);
+    background: var(--cyan-soft);
+    color: var(--cyan-dark);
+}
+
+.spec-summary-actions button[data-remove-spec]:hover {
+    border-color: var(--red);
+    background: var(--red-soft);
+    color: var(--red);
+}
+
+.spec-add-button {
+    justify-self: start;
+}
+
+.spec-detail-block {
+    display: grid;
+    gap: 10px;
+    margin: 16px 0 18px;
+}
+
+.spec-detail-block h3 {
+    margin: 0;
+    color: var(--navy);
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.spec-detail-list {
+    display: grid;
+    gap: 8px;
+    max-height: 420px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.spec-detail-list p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.spec-detail-item {
+    display: grid;
+    gap: 5px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+}
+
+.spec-detail-item strong {
+    color: var(--navy);
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.spec-detail-item small {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+@media (max-width: 840px) {
+.data-row.simple-management-data-row {
+        grid-template-columns: 1fr;
+    }
+
+.data-row.simple-management-data-row span[role="cell"]:not([data-label]):nth-child(3)::before {
+        content: "부품 수";
+    }
+
+.data-row.simple-management-data-row span[role="cell"]:not([data-label]):nth-child(4)::before {
+        content: "수정일";
+    }
+}
+}
