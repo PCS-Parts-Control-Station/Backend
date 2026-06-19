@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="PCS 출고 관리 화면입니다. 판매 가능한 관리번호를 선택해 출고 전표를 등록합니다.">
+    <meta name="description" content="PCS 출고 관리 화면입니다. 출고 전표를 조회하고 상세와 취소 상태를 확인합니다.">
     <title>PCS | 출고 관리</title>
     <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,13 +12,13 @@
     <link rel="stylesheet" href="/css/admin.css?20260611_side_panel_400">
     <link rel="stylesheet" href="/css/workflow.css?20260522_split">
     <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
-    <link rel="stylesheet" href="/css/outbound.css?20260618_2">
+    <link rel="stylesheet" href="/css/outbound.css?20260619_detail_badge_align">
 </head>
 <body class="has-collapsible-sidebar">
 <div class="workspace-layout">
     <div data-workspace-sidebar data-active-route="outbound"></div>
 
-    <main class="workspace-main outbound-page">
+    <main class="workspace-main outbound-page outbound-management-page">
         <header class="workspace-header">
             <button class="menu-toggle" type="button" data-sidebar-toggle aria-controls="workspace-sidebar" aria-expanded="false" aria-label="메뉴 열기">
                 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -40,205 +40,200 @@
                 <div>
                     <p class="page-kicker">재고 입출고 관리</p>
                     <h1>출고 관리</h1>
-                    <p class="page-description">판매 가능한 관리번호를 선택해 출고 전표를 생성합니다.</p>
+                    <p class="page-description">출고 전표를 조회하고 상세와 취소 상태를 확인합니다.</p>
                 </div>
             </div>
             <div class="header-actions">
-                <a class="btn btn-secondary" data-route="history/stock">입출고 이력</a>
                 <a class="btn btn-secondary" data-route="inbound">입고 관리</a>
+                <a class="btn btn-primary" data-route="outbound/new">출고 등록</a>
             </div>
         </header>
 
         <section class="content-grid">
             <div class="content-main">
-                <!-- API: POST /api/workspaces/{companyCode}/stock/documents/outbounds -->
-                <form class="operation-flow-form outbound-form" id="outbound-form" action="#" method="post">
-                    <section class="table-card operation-step-card outbound-step-card" aria-labelledby="outbound-basic-title">
-                        <div class="table-header">
-                            <div>
-                                <h2 id="outbound-basic-title">
-                                    <span class="section-step" aria-hidden="true">1</span>
-                                    <span>전표 기본 정보</span>
-                                </h2>
-                                <p>출고 거래처와 전표 사유를 입력합니다.</p>
-                            </div>
-                            <span class="badge badge-pending">작성 중</span>
-                        </div>
-                        <div class="outbound-basic-grid">
-                            <label>
-                                <span>거래처</span>
-                                <select name="partnerId" required data-partner-select>
-                                    <option value="">거래처를 불러오는 중입니다</option>
-                                </select>
-                            </label>
-                            <label>
-                                <span>출고 사유</span>
-                                <input type="text" name="reason" placeholder="예: 판매 출고, 납품 출고">
-                            </label>
-                            <small class="field-message" data-partner-message role="status" aria-live="polite"></small>
-                        </div>
-                    </section>
+                <section class="filter-card document-filter-card outbound-document-filter-card" aria-labelledby="outbound-filter-title">
+                    <div>
+                        <h2 id="outbound-filter-title">출고 전표 검색</h2>
+                        <p>전표번호, 거래처, 품목명, 처리 상태로 출고 내역을 조회합니다.</p>
+                    </div>
+                    <!-- API: GET /api/workspaces/{companyCode}/stock/documents?documentType=OUTBOUND&keyword=&partnerId=&documentStatus= -->
+                    <form class="filter-form document-filter-form outbound-document-filter-form" action="#" method="get">
+                        <label>
+                            <span>검색어</span>
+                            <input type="search" name="keyword" placeholder="거래처, 품목명, 전표번호 검색">
+                        </label>
+                        <label>
+                            <span>거래처</span>
+                            <select name="partnerId" data-partner-filter>
+                                <option value="">전체 거래처</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>상태</span>
+                            <select name="documentStatus">
+                                <option value="">전체</option>
+                                <option value="COMPLETED">완료</option>
+                                <option value="CANCELED">취소</option>
+                            </select>
+                        </label>
+                        <button class="btn btn-primary" type="submit">검색</button>
+                    </form>
+                </section>
 
-                    <section class="table-card operation-step-card outbound-step-card" aria-labelledby="outbound-candidate-title">
-                        <div class="table-header">
-                            <div>
-                                <h2 id="outbound-candidate-title">
-                                    <span class="section-step" aria-hidden="true">2</span>
-                                    <span>출고 대상 검색</span>
-                                </h2>
-                                <p>검수 완료, 판매 가능 상태의 관리번호만 조회됩니다.</p>
-                            </div>
-                            <span class="line-count" data-candidate-summary>0개</span>
+                <div class="created-document-notice" data-created-notice role="status" aria-live="polite" hidden></div>
+
+                <section class="table-card" aria-labelledby="outbound-list-title">
+                    <div class="table-header inline-summary-header">
+                        <div>
+                            <h2 id="outbound-list-title">출고 전표 목록</h2>
+                            <p>출고 완료 또는 취소된 전표와 품목 수량입니다.</p>
                         </div>
-
-                        <!-- API: GET /api/workspaces/{companyCode}/stock/outbound-candidates?keyword=&categoryId=&grade=&page=&size= -->
-                        <div class="outbound-search-panel">
-                            <div class="outbound-search-form" aria-label="출고 대상 검색 조건">
-                                <label>
-                                    <span>검색어</span>
-                                    <input type="search" name="keyword" data-candidate-keyword placeholder="관리번호, 품목명, 모델명">
-                                </label>
-                                <label>
-                                    <span>품목 분류</span>
-                                    <select name="categoryId" data-category-filter>
-                                        <option value="">전체 분류</option>
-                                    </select>
-                                </label>
-                                <label>
-                                    <span>등급</span>
-                                    <select name="grade" data-grade-filter>
-                                        <option value="">전체 등급</option>
-                                        <option value="A">A</option>
-                                        <option value="B">B</option>
-                                        <option value="C">C</option>
-                                    </select>
-                                </label>
-                                <button class="btn btn-primary" type="button" data-candidate-search>검색</button>
-                                <button class="btn btn-secondary" type="button" data-candidate-reset>초기화</button>
-                            </div>
-
-                            <div class="outbound-candidate-table" role="table" aria-label="출고 가능 관리번호" data-candidate-table>
-                                <div class="outbound-candidate-row table-head" role="row">
-                                    <span role="columnheader">관리번호</span>
-                                    <span role="columnheader">품목</span>
-                                    <span role="columnheader">분류</span>
-                                    <span role="columnheader">등급</span>
-                                    <span role="columnheader">선택</span>
+                        <div class="list-summary-box" aria-label="출고 전표 목록 요약">
+                            <dl class="list-summary">
+                                <div>
+                                    <dt>전표</dt>
+                                    <dd data-summary-documents>0</dd>
                                 </div>
-                                <div class="outbound-candidate-row empty-data-row" role="row" data-candidate-empty>
-                                    <span role="cell" data-label="안내">출고 대상을 불러오는 중입니다.</span>
+                                <div>
+                                    <dt>수량</dt>
+                                    <dd data-summary-quantity>0</dd>
                                 </div>
-                            </div>
-                            <div class="pagination-bar outbound-pagination" data-candidate-pagination hidden>
-                                <p data-page-info>0건</p>
-                                <div class="pagination-actions">
-                                    <button type="button" data-page-prev>이전</button>
-                                    <button type="button" data-page-next>다음</button>
+                                <div>
+                                    <dt>완료</dt>
+                                    <dd data-summary-completed>0</dd>
                                 </div>
-                            </div>
+                                <div>
+                                    <dt>취소</dt>
+                                    <dd data-summary-canceled>0</dd>
+                                </div>
+                            </dl>
                         </div>
-                    </section>
+                    </div>
 
-                    <section class="table-card operation-step-card outbound-step-card" aria-labelledby="outbound-selected-title">
-                        <div class="table-header outbound-selected-header">
-                            <div>
-                                <h2 id="outbound-selected-title">
-                                    <span class="section-step" aria-hidden="true">3</span>
-                                    <span>출고 대상</span>
-                                </h2>
-                                <p>선택한 관리번호를 품목별로 확인합니다.</p>
-                            </div>
-                            <div class="outbound-selected-actions">
-                                <span class="line-count" data-selected-count>0개 선택</span>
-                                <button class="btn btn-secondary btn-compact" type="button" data-clear-selection>선택 취소</button>
-                            </div>
+                    <div class="data-table document-data-table" role="table" aria-label="출고 전표 목록">
+                        <div class="data-row document-data-row table-head" role="row">
+                            <span role="columnheader">전표번호</span>
+                            <span role="columnheader">출고 내용</span>
+                            <span role="columnheader">수량</span>
+                            <span role="columnheader">상태</span>
+                            <span role="columnheader">출고일</span>
+                            <span role="columnheader">관리</span>
                         </div>
-                        <div class="outbound-selected-list" data-selected-list>
-                            <p class="line-empty-state" data-selected-empty>출고할 관리번호를 선택해 주세요.</p>
+                        <div class="data-row document-data-row empty-data-row" role="row" data-outbound-empty hidden>
+                            <span role="cell" data-label="안내">출고 전표 목록을 불러오는 중입니다.</span>
                         </div>
-                    </section>
-
-                    <section class="table-card operation-step-card outbound-step-card" aria-labelledby="outbound-submit-title">
-                        <div class="submit-panel outbound-submit-panel">
-                            <div>
-                                <h2 id="outbound-submit-title">
-                                    <span class="section-step" aria-hidden="true">4</span>
-                                    <span>출고 저장</span>
-                                </h2>
-                                <p>저장하면 출고 전표가 생성되고 선택한 관리번호는 출고 상태로 변경됩니다.</p>
-                                <p class="submit-message" data-submit-message role="status" aria-live="polite"></p>
-                            </div>
-                            <div class="form-actions">
-                                <button class="btn btn-secondary" type="button" data-reset-form>초기화</button>
-                                <button class="btn btn-primary" type="submit">출고 저장</button>
-                            </div>
+                    </div>
+                    <div class="pagination-bar" data-outbound-pagination hidden>
+                        <p data-page-info>0건</p>
+                        <div class="pagination-actions">
+                            <button type="button" data-page-prev>이전</button>
+                            <button type="button" data-page-next>다음</button>
                         </div>
-                    </section>
-                </form>
+                    </div>
+                </section>
             </div>
 
-            <aside class="side-panel" aria-labelledby="outbound-guide-title">
-                <div class="panel-card process-panel">
-                    <h2 id="outbound-guide-title">출고 흐름</h2>
-                    <p>판매 가능한 관리번호를 전표로 묶어 출고합니다.</p>
-                    <ol class="workflow-list" aria-label="출고 등록 업무 흐름">
-                        <li class="workflow-step active">
-                            <span class="process-dot" aria-hidden="true"></span>
-                            <div>
-                                <strong>출고</strong>
-                                <p>거래처와 관리번호를 선택해 전표를 생성합니다.</p>
-                                <ol class="sub-process-list" aria-label="출고 등록 세부 흐름">
-                                    <li>
-                                        <span>1</span>
-                                        <div>
-                                            <strong>거래처</strong>
-                                            <p>출고 거래처를 선택합니다.</p>
-                                        </div>
-                                    </li>
-                                    <li>
-                                        <span>2</span>
-                                        <div>
-                                            <strong>대상 검색</strong>
-                                            <p>판매 가능한 관리번호를 찾습니다.</p>
-                                        </div>
-                                    </li>
-                                    <li>
-                                        <span>3</span>
-                                        <div>
-                                            <strong>대상 확인</strong>
-                                            <p>출고할 관리번호를 검토합니다.</p>
-                                        </div>
-                                    </li>
-                                    <li>
-                                        <span>4</span>
-                                        <div>
-                                            <strong>전표 저장</strong>
-                                            <p>출고 전표와 이동 기록을 남깁니다.</p>
-                                        </div>
-                                    </li>
-                                </ol>
-                            </div>
-                        </li>
-                    </ol>
-                </div>
+            <aside class="document-detail-drawer" data-outbound-detail-drawer aria-labelledby="outbound-detail-title" aria-hidden="true" tabindex="-1">
+                <div class="panel-card document-detail-panel">
+                    <div class="panel-title-bar">
+                        <div>
+                            <h2 id="outbound-detail-title">출고 전표 상세</h2>
+                            <p data-detail-subtitle>전표를 선택해 주세요.</p>
+                        </div>
+                        <button class="panel-link-button" type="button" data-close-detail-panel>닫기</button>
+                    </div>
 
-                <div class="panel-card muted-panel">
-                    <h2>출고 기준</h2>
-                    <ul>
-                        <li>검수 완료, 판매 가능 관리번호만 출고 가능</li>
-                        <li>출고 후 재고 수량과 관리번호 상태가 함께 변경</li>
-                        <li>오류가 있으면 전표 취소로 이력을 보존</li>
-                    </ul>
+                    <div class="document-detail-card">
+                        <strong data-detail-document-no>-</strong>
+                        <div class="detail-badge-row">
+                            <em class="badge badge-active" data-detail-status>-</em>
+                        </div>
+                    </div>
+
+                    <dl class="detail-list">
+                        <div>
+                            <dt>거래처</dt>
+                            <dd data-detail-partner>-</dd>
+                        </div>
+                        <div>
+                            <dt>출고일</dt>
+                            <dd data-detail-created-at>-</dd>
+                        </div>
+                        <div>
+                            <dt>처리자</dt>
+                            <dd data-detail-processed-by>-</dd>
+                        </div>
+                        <div>
+                            <dt>출고 사유</dt>
+                            <dd data-detail-reason>-</dd>
+                        </div>
+                        <div>
+                            <dt>취소 가능</dt>
+                            <dd data-detail-cancel-state>-</dd>
+                        </div>
+                    </dl>
+
+                    <div class="document-line-section">
+                        <div class="section-title-row">
+                            <h3>품목 요약</h3>
+                            <span data-detail-line-summary>-</span>
+                        </div>
+                        <div class="document-line-list" data-detail-lines>
+                            <p class="detail-empty-text">전표를 선택해 주세요.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn btn-secondary" type="button" data-close-detail-panel>상세 닫기</button>
+                        <button class="btn btn-danger" type="button" data-open-cancel-modal disabled>전표 취소</button>
+                    </div>
                 </div>
             </aside>
         </section>
     </main>
 </div>
 
+<dialog class="part-modal confirm-modal" data-cancel-modal aria-labelledby="cancel-modal-title">
+    <form class="part-modal-card" method="dialog">
+        <div class="part-modal-header">
+            <div>
+                <p class="page-kicker">출고 전표 취소</p>
+                <h2 id="cancel-modal-title">전표를 취소할까요?</h2>
+                <p>취소 후 원본 전표와 출고 이력은 보존되고, 출고된 관리번호 상태만 되돌립니다.</p>
+            </div>
+            <button class="modal-close-button" type="button" data-close-cancel-modal aria-label="닫기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M6 6l12 12" />
+                    <path d="M18 6 6 18" />
+                </svg>
+            </button>
+        </div>
+        <dl class="confirm-summary">
+            <div>
+                <dt>전표번호</dt>
+                <dd data-cancel-document-no>-</dd>
+            </div>
+            <div>
+                <dt>거래처</dt>
+                <dd data-cancel-partner>-</dd>
+            </div>
+            <div>
+                <dt>출고 수량</dt>
+                <dd data-cancel-quantity>-</dd>
+            </div>
+        </dl>
+        <p class="field-message is-error modal-message" data-cancel-message role="status" aria-live="polite" hidden></p>
+        <div class="part-modal-actions">
+            <button class="btn btn-secondary" type="button" data-close-cancel-modal>닫기</button>
+            <button class="btn btn-danger" type="button" data-confirm-cancel>전표 취소</button>
+        </div>
+    </form>
+</dialog>
+
 <script src="/js/pcs-api.js?20260526_1"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
 <script src="/js/workspace-layout.js?20260610_sidebar_collapse"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/outbound.js?20260618_2"></script>
+<script src="/js/outbound.js?20260619_non_modal_drawer"></script>
 </body>
 </html>
