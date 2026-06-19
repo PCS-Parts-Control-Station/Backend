@@ -14,8 +14,10 @@
 
     const STAFF_ROUTE_PERMISSIONS = {
         inbound: "STAFF_INBOUND",
+        "inbound/new": "STAFF_INBOUND",
         inspection: "STAFF_INSPECTION",
         outbound: "STAFF_OUTBOUND",
+        "outbound/new": "STAFF_OUTBOUND",
         parts: "STAFF_PART_CREATE",
         categories: "STAFF_CATEGORY_MANAGE",
         "inspection/templates": "STAFF_INSPECTION",
@@ -82,8 +84,12 @@
 
         document.querySelectorAll(".sidebar-nav [data-route]").forEach((link) => {
             const route = link.dataset.route;
+            const routeRoot = route.split("/")[0];
+            const activeRoot = activeRoute.split("/")[0];
             const isActive = route === activeRoute || 
-                             (route === "inbound" && currentPath.includes("/inbound/"));
+                             (routeRoot === activeRoot && ["inbound", "outbound"].includes(routeRoot)) ||
+                             (routeRoot === "inbound" && currentPath.includes("/inbound/")) ||
+                             (routeRoot === "outbound" && currentPath.includes("/outbound/"));
             link.classList.toggle("active", isActive);
             if (isActive) {
                 link.setAttribute("aria-current", "page");
