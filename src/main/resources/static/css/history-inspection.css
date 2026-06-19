@@ -10,10 +10,6 @@
     gap: 20px;
 }
 
-body.history-detail-open {
-    overflow: hidden;
-}
-
 .history-template-link {
     border-color: transparent;
     background: transparent;
@@ -122,8 +118,7 @@ body.history-detail-open {
 }
 
 .history-section-card[hidden],
-.history-detail-panel[hidden],
-.history-detail-overlay[hidden] {
+.history-detail-panel[hidden] {
     display: none;
 }
 
@@ -542,13 +537,6 @@ body.history-detail-open {
     border-color: rgba(37, 99, 235, 0.2);
     background: var(--blue-soft);
     color: var(--blue);
-}
-
-.history-detail-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 60;
-    background: rgba(15, 23, 42, 0.36);
 }
 
 .history-detail-panel {

@@ -22,7 +22,6 @@
     const unitRefine = document.querySelector("[data-history-unit-refine]");
     const resultFilterSelect = document.querySelector("[data-history-result-filter]");
     const gradeFilterSelect = document.querySelector("[data-history-grade-filter]");
-    const detailOverlay = document.querySelector("[data-history-detail-overlay]");
     const detailPanel = document.querySelector("[data-history-detail-panel]");
     const detailCloseButton = document.querySelector("[data-history-detail-close]");
     const detailPanelTitle = document.querySelector("#history-detail-panel-title");
@@ -303,31 +302,24 @@
     };
 
     const closeDetailPanel = ({ restoreFocus = true } = {}) => {
-        if (!detailPanel || !detailOverlay || !detailPanelOpen) {
+        if (!detailPanel || !detailPanelOpen) {
             return;
         }
         detailPanelOpen = false;
         detailPanel.hidden = true;
-        detailOverlay.hidden = true;
-        document.body.classList.remove("history-detail-open");
         if (restoreFocus && lastDetailTrigger) {
             lastDetailTrigger.focus();
         }
     };
 
     const openDetailPanel = (triggerElement) => {
-        if (!detailPanel || !detailOverlay) {
+        if (!detailPanel) {
             return;
         }
         lastDetailTrigger = triggerElement || lastDetailTrigger;
         detailPanelOpen = true;
         detailPanel.hidden = false;
-        detailOverlay.hidden = false;
-        document.body.classList.add("history-detail-open");
         resetDetailPanelContent();
-        window.requestAnimationFrame(() => {
-            detailCloseButton?.focus();
-        });
     };
 
     const resetUnitSection = () => {
@@ -1054,7 +1046,6 @@
     });
 
     detailCloseButton?.addEventListener("click", () => closeDetailPanel());
-    detailOverlay?.addEventListener("click", () => closeDetailPanel());
 
     document.addEventListener("keydown", (event) => {
         if (event.key === "Escape" && detailPanelOpen) {
