@@ -349,6 +349,7 @@
               OR p.part_name LIKE CONCAT('%', #{keyword}, '%')
               OR p.model_name LIKE CONCAT('%', #{keyword}, '%')
               OR p.part_code LIKE CONCAT('%', #{keyword}, '%')
+              OR c.category_name LIKE CONCAT('%', #{keyword}, '%')
               OR EXISTS (
                   SELECT 1
                   FROM tb_stock_movement_unit muk
@@ -405,6 +406,8 @@
             i.unit_id,
             u.internal_serial_no,
             p.part_id,
+            p.category_id,
+            c.category_name,
             p.part_name,
             p.model_name,
             i.template_id,
@@ -422,6 +425,9 @@
         INNER JOIN tb_pc_part p
             ON p.company_id = u.company_id
            AND p.part_id = u.part_id
+        LEFT JOIN tb_part_category c
+            ON c.company_id = p.company_id
+           AND c.category_id = p.category_id
         LEFT JOIN tb_inspection_template t
             ON t.company_id = i.company_id
            AND t.template_id = i.template_id
@@ -438,6 +444,127 @@
         OFFSET #{offset}
     </select>
 
+    <sql id="historyDocumentWhere">
+        WHERE i.company_id = #{companyId}
+          AND d.document_type = 'INBOUND'
+          AND d.document_status = 'COMPLETED'
+          AND m.movement_type = 'INBOUND'
+          AND m.movement_status = 'COMPLETED'
+          AND m.canceled_movement_id IS NULL
+        <if test="partId != null">
+          AND u.part_id = #{partId}
+        </if>
+        <if test="inspectionType != null">
+          AND i.inspection_type = #{inspectionType}
+        </if>
+        <if test="result != null">
+          AND i.result = #{result}
+        </if>
+        <if test="grade != null">
+          AND i.grade = #{grade}
+        </if>
+        <if test="dateFrom != null">
+          AND i.inspected_at &gt;= #{dateFrom}
+        </if>
+        <if test="dateTo != null">
+          AND i.inspected_at &lt; #{dateTo}
+        </if>
+        <if test="keyword != null and keyword != ''">
+          AND (
+              d.document_no LIKE CONCAT('%', #{keyword}, '%')
+              OR u.internal_serial_no LIKE CONCAT('%', #{keyword}, '%')
+              OR p.part_name LIKE CONCAT('%', #{keyword}, '%')
+              OR p.model_name LIKE CONCAT('%', #{keyword}, '%')
+              OR p.part_code LIKE CONCAT('%', #{keyword}, '%')
+              OR c.category_name LIKE CONCAT('%', #{keyword}, '%')
+          )
+        </if>
+    </sql>
+
+    <sql id="historyDocumentBase">
+        SELECT
+            d.document_id,
+            d.document_no,
+            COALESCE(
+                CONCAT(
+                    SUBSTRING_INDEX(
+                        GROUP_CONCAT(
+                            DISTINCT CONCAT(
+                                p.part_name,
+                                CASE
+                                    WHEN p.model_name IS NULL OR p.model_name = '' THEN ''
+                                    ELSE CONCAT(' ', p.model_name)
+                                END
+                            )
+                            ORDER BY p.part_name, p.model_name
+                            SEPARATOR ','
+                        ),
+                        ',',
+                        1
+                    ),
+                    CASE
+                        WHEN COUNT(DISTINCT p.part_id) &gt; 1
+                        THEN CONCAT(' 외 ', COUNT(DISTINCT p.part_id) - 1, '개 품목')
+                        ELSE ''
+                    END
+                ),
+                '-'
+            ) AS part_summary,
+            COUNT(DISTINCT i.unit_id) AS unit_count,
+            COUNT(DISTINCT i.inspection_id) AS inspection_count,
+            COUNT(DISTINCT CASE WHEN i.result = 'FAIL' OR i.grade = 'DEFECTIVE' THEN i.inspection_id END) AS fail_count,
+            MAX(i.inspected_at) AS latest_inspected_at
+        FROM tb_inspection i
+        INNER JOIN tb_pc_part_unit u
+            ON u.company_id = i.company_id
+           AND u.unit_id = i.unit_id
+        INNER JOIN tb_pc_part p
+            ON p.company_id = u.company_id
+           AND p.part_id = u.part_id
+        LEFT JOIN tb_part_category c
+            ON c.company_id = p.company_id
+           AND c.category_id = p.category_id
+        INNER JOIN tb_stock_movement_unit mu
+            ON mu.unit_id = i.unit_id
+        INNER JOIN tb_stock_movement m
+            ON m.company_id = i.company_id
+           AND m.movement_id = mu.movement_id
+        INNER JOIN tb_stock_document d
+            ON d.company_id = m.company_id
+           AND d.document_id = m.document_id
+        <include refid="historyDocumentWhere" />
+        GROUP BY
+            d.document_id,
+            d.document_no
+    </sql>
+
+    <select id="searchHistoryDocuments" resultType="com.pcs.domain.inspection.dto.response.SearchInspectionHistoryDocumentResponse">
+        SELECT filtered.*
+        FROM (
+            <include refid="historyDocumentBase" />
+        ) filtered
+        ORDER BY filtered.latest_inspected_at DESC, filtered.document_id DESC
+        LIMIT #{size}
+        OFFSET #{offset}
+    </select>
+
+    <select id="countHistoryDocuments" resultType="long">
+        SELECT COUNT(*)
+        FROM (
+            <include refid="historyDocumentBase" />
+        ) filtered
+    </select>
+
+    <select id="summarizeHistoryDocuments" resultType="com.pcs.domain.inspection.dto.response.SearchInspectionHistoryDocumentSummaryResponse">
+        SELECT
+            COUNT(*) AS document_count,
+            COALESCE(SUM(filtered.inspection_count), 0) AS inspection_count,
+            COALESCE(SUM(filtered.fail_count), 0) AS fail_count
+        FROM (
+            <include refid="historyDocumentBase" />
+        ) filtered
+    </select>
+
     <select id="countHistories" resultType="long">
         SELECT COUNT(*)
         FROM tb_inspection i
@@ -447,6 +574,9 @@
         INNER JOIN tb_pc_part p
             ON p.company_id = u.company_id
            AND p.part_id = u.part_id
+        LEFT JOIN tb_part_category c
+            ON c.company_id = p.company_id
+           AND c.category_id = p.category_id
         <include refid="historyWhere" />
     </select>
 
@@ -465,6 +595,9 @@
         INNER JOIN tb_pc_part p
             ON p.company_id = u.company_id
            AND p.part_id = u.part_id
+        LEFT JOIN tb_part_category c
+            ON c.company_id = p.company_id
+           AND c.category_id = p.category_id
         <include refid="historyWhere" />
     </select>
 

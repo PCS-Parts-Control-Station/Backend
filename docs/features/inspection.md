@@ -2,9 +2,11 @@
 
 ## 목적
 
-검수 대상 조회, 최초 검수 등록, 검수 정정, 재검수, 검수 이력 조회를 담당한다.
+검수 대상 조회, 최초 검수 등록, 검수 정정, 재검수를 담당한다.
 
 검수 템플릿 관리는 같은 도메인 안의 하위 관리 기능이며, 상세 규칙은 `docs/features/inspection-template.md`를 따른다.
+
+검수 이력 조회 화면과 전표 단위 이력 조회 규칙은 `docs/features/inspection-history.md`를 따른다.
 
 ## 패키지
 
@@ -22,10 +24,6 @@ com.pcs.domain.inspection
 | POST | `/api/workspaces/{companyCode}/inspections/bulk` | 여러 관리번호 일괄 최초 검수 등록 |
 | POST | `/api/workspaces/{companyCode}/inspections/{inspectionId}/corrections` | 검수 정정 이력 생성 |
 | POST | `/api/workspaces/{companyCode}/inspections/{inspectionId}/reinspections` | 재검수 이력 생성 |
-| GET | `/api/workspaces/{companyCode}/inspections` | 검수 이력 목록. `keyword`, `documentId`, `unitId`, `partId`, `inspectionType`, `result`, `grade`, `dateFrom`, `dateTo`, `page`, `size`, `limit` 지원 |
-| GET | `/api/workspaces/{companyCode}/inspections/{inspectionId}` | 검수 이력 상세 |
-
-개별 부품 기준 검수 이력은 별도 URL을 두지 않고 `GET /api/workspaces/{companyCode}/inspections?unitId={unitId}`로 조회한다.
 
 ## 화면
 
@@ -50,22 +48,9 @@ src/main/resources/static/js/inspection.js
 
 3단계는 선택한 관리번호 개수와 검수 전 상태를 간결하게 보여준다. 단일 검수와 일괄 검수는 같은 검수 상태 배지 기준을 사용한다.
 
-4단계 검수 이력 상세는 목록 아래에 펼치지 않고 모달로 표시한다. 모달 첫 화면은 관리번호, 검수 유형/등급/결과, 전표/부품/처리자/메모, 항목별 결과를 보여주고, 하단에서 정정 등록과 재검수 등록을 시작한다.
+4단계 검수 이력 상세는 목록 아래에 펼치지 않고 모달로 표시한다. 이 모달은 검수 관리 화면 안에서 정정 등록과 재검수 등록으로 이어지는 작업 전환용이다. 모달 첫 화면은 관리번호, 검수 유형/등급/결과, 전표/부품/처리자/메모, 항목별 결과를 보여주고, 하단에서 정정 등록과 재검수 등록을 시작한다.
 
-검수 이력 상세 모달은 `docs/ai/design/modal-dialog.md`의 `조회 상세 모달`과 `작업 전환 모달` 기준을 따른다. 첫 화면은 읽기 전용 상세이고, 정정 등록 또는 재검수 등록 버튼을 누르면 같은 모달 안에서 입력 폼으로 전환한다.
-
-검수 이력 화면은 검수 등록 화면의 4단계와 별도 조회 화면을 함께 가진다. 별도 검수 이력 화면은 전표 단위 목록을 먼저 보여주고, 전표 선택 후 전표 상세 영역에서 품목 묶음과 관리번호 목록을 확인한다. 관리번호를 선택하면 개별 검수 이력 상세를 오른쪽 슬라이드 패널로 확인한다.
-
-검수 이력 화면 구조:
-
-1. 이력 검색
-2. 전표 목록
-3. 전표 상세
-   - 품목 묶음
-   - 관리번호 목록
-4. 관리번호 상세 슬라이드 패널
-
-검수 이력의 품목 묶음에는 품목명, 모델명, 품목 분류를 표시한다. API 응답에는 화면 fallback 문구에 의존하지 않도록 품목 분류명 또는 카테고리명을 포함해야 한다.
+전용 검수 이력 화면의 관리번호 상세 조회는 모달이 아니라 오른쪽 논블로킹 슬라이드 패널 기준을 따른다. 상세 조회만 반복하는 화면에서는 목록 행을 계속 바꿔 볼 수 있어야 하므로, 배경 오버레이나 외부 클릭 닫기를 사용하지 않는다.
 
 검수 등록 화면의 오른쪽 보조 패널은 1~4단계 진행 상태를 표시한다. 현재 사용자가 선택하거나 입력 중인 단계만 강조하고, 나머지는 회색 톤으로 낮춘다. 검수 이력 전용 화면은 처리 단계가 아니라 조회 화면이므로 오른쪽 업무 흐름 보조 패널을 강제하지 않는다.
 
@@ -120,5 +105,3 @@ src/main/resources/static/js/inspection.js
 - 선택형 항목은 해당 항목에 속한 선택지만 저장할 수 있다.
 - 정정 등록은 원본 검수 ID를 기준으로 신규 `CORRECTION` 이력을 생성한다.
 - 재검수 등록은 기준 이력이 정정/재검수여도 기존 `originalInspectionId`를 유지한다.
-- 검수 이력 목록은 필터, 기간, 페이징 값을 정규화해 조회한다.
-- 검수 이력 상세는 항목별 결과를 포함해 반환한다.

@@ -6,6 +6,8 @@ import com.pcs.domain.inspection.dto.request.CreateInspectionRevisionRequest;
 import com.pcs.domain.inspection.dto.response.CreateInspectionResponse;
 import com.pcs.domain.inspection.dto.response.InspectionHistoryDetailResponse;
 import com.pcs.domain.inspection.dto.response.InspectionWaitingDocumentDetailResponse;
+import com.pcs.domain.inspection.dto.response.SearchInspectionHistoryDocumentResponse;
+import com.pcs.domain.inspection.dto.response.SearchInspectionHistoryDocumentSummaryResponse;
 import com.pcs.domain.inspection.dto.response.SearchInspectionHistoryResponse;
 import com.pcs.domain.inspection.dto.response.SearchInspectionHistorySummaryResponse;
 import com.pcs.domain.inspection.dto.response.SearchWaitingInspectionDocumentResponse;
@@ -111,6 +113,39 @@ public class InspectionApiController {
         );
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResultDto.ok("선택한 관리번호의 검수 결과를 등록했습니다.", response));
+    }
+
+    @GetMapping("/workspaces/{companyCode}/inspections/history-documents")
+    public ResponseEntity<ApiResultDto<PageResultDto<SearchInspectionHistoryDocumentResponse, SearchInspectionHistoryDocumentSummaryResponse>>> searchHistoryDocuments(
+            @PathVariable String companyCode,
+            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long partId,
+            @RequestParam(required = false) InspectionType inspectionType,
+            @RequestParam(required = false) InspectionResult result,
+            @RequestParam(required = false) PartGrade grade,
+            @RequestParam(required = false) LocalDate dateFrom,
+            @RequestParam(required = false) LocalDate dateTo,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) Integer limit
+    ) {
+        PageResultDto<SearchInspectionHistoryDocumentResponse, SearchInspectionHistoryDocumentSummaryResponse> response =
+                inspectionFacade.searchHistoryDocuments(
+                        authorizationHeader,
+                        companyCode,
+                        keyword,
+                        partId,
+                        inspectionType,
+                        result,
+                        grade,
+                        dateFrom,
+                        dateTo,
+                        page,
+                        size,
+                        limit
+                );
+        return ResponseEntity.ok(ApiResultDto.ok(response));
     }
 
     @GetMapping("/workspaces/{companyCode}/inspections")

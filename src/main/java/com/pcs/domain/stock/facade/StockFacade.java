@@ -1,8 +1,12 @@
 package com.pcs.domain.stock.facade;
 
+import com.pcs.domain.part.type.PartGrade;
 import com.pcs.domain.stock.dto.request.CreateInboundDocumentRequest;
+import com.pcs.domain.stock.dto.request.CreateOutboundDocumentRequest;
 import com.pcs.domain.stock.dto.response.CancelStockDocumentResponse;
 import com.pcs.domain.stock.dto.response.CreateInboundDocumentResponse;
+import com.pcs.domain.stock.dto.response.CreateOutboundDocumentResponse;
+import com.pcs.domain.stock.dto.response.SearchOutboundCandidateResponse;
 import com.pcs.domain.stock.dto.response.SearchStockDocumentResponse;
 import com.pcs.domain.stock.dto.response.SearchStockDocumentSummaryResponse;
 import com.pcs.domain.stock.dto.response.StockDocumentDetailResponse;
@@ -56,6 +60,31 @@ public class StockFacade {
         );
     }
 
+    public PageResultDto<SearchOutboundCandidateResponse, Void> searchOutboundCandidates(
+            String authorizationHeader,
+            String pathCompanyCode,
+            String keyword,
+            Long categoryId,
+            Long partId,
+            PartGrade grade,
+            Integer page,
+            Integer size,
+            Integer limit
+    ) {
+        JwtClaims claims = jwtTokenProvider.parseAccessToken(extractBearerToken(authorizationHeader));
+        validateWorkspace(pathCompanyCode, claims.companyCode());
+        return stockService.searchOutboundCandidates(
+                claims.companyId(),
+                keyword,
+                categoryId,
+                partId,
+                grade,
+                page,
+                size,
+                limit
+        );
+    }
+
     public StockDocumentDetailResponse getDocument(
             String authorizationHeader,
             String pathCompanyCode,
@@ -74,7 +103,7 @@ public class StockFacade {
     ) {
         JwtClaims claims = jwtTokenProvider.parseAccessToken(extractBearerToken(authorizationHeader));
         validateWorkspace(pathCompanyCode, claims.companyCode());
-        return stockService.cancelInboundDocument(claims.companyId(), claims.memberId(), documentId);
+        return stockService.cancelDocument(claims.companyId(), claims.memberId(), documentId);
     }
 
     @Transactional
@@ -88,6 +117,22 @@ public class StockFacade {
 
         try {
             return stockService.createInboundDocument(claims.companyId(), claims.memberId(), request);
+        } catch (DuplicateKeyException exception) {
+            throw mapDuplicateKeyException(exception);
+        }
+    }
+
+    @Transactional
+    public CreateOutboundDocumentResponse createOutboundDocument(
+            String authorizationHeader,
+            String pathCompanyCode,
+            CreateOutboundDocumentRequest request
+    ) {
+        JwtClaims claims = jwtTokenProvider.parseAccessToken(extractBearerToken(authorizationHeader));
+        validateWorkspace(pathCompanyCode, claims.companyCode());
+
+        try {
+            return stockService.createOutboundDocument(claims.companyId(), claims.memberId(), request);
         } catch (DuplicateKeyException exception) {
             throw mapDuplicateKeyException(exception);
         }

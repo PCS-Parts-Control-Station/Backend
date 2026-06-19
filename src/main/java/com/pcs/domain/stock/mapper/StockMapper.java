@@ -1,6 +1,8 @@
 package com.pcs.domain.stock.mapper;
 
+import com.pcs.domain.part.type.PartGrade;
 import com.pcs.domain.part.type.UnitStatus;
+import com.pcs.domain.stock.dto.response.SearchOutboundCandidateResponse;
 import com.pcs.domain.stock.dto.response.SearchStockDocumentResponse;
 import com.pcs.domain.stock.dto.response.SearchStockDocumentSummaryResponse;
 import com.pcs.domain.stock.dto.response.StockDocumentDetailRow;
@@ -61,6 +63,30 @@ public interface StockMapper {
             @Param("documentStatus") StockDocumentStatus documentStatus
     );
 
+    List<SearchOutboundCandidateResponse> searchOutboundCandidates(
+            @Param("companyId") Long companyId,
+            @Param("keyword") String keyword,
+            @Param("categoryId") Long categoryId,
+            @Param("partId") Long partId,
+            @Param("grade") PartGrade grade,
+            @Param("size") int size,
+            @Param("offset") int offset
+    );
+
+    long countOutboundCandidates(
+            @Param("companyId") Long companyId,
+            @Param("keyword") String keyword,
+            @Param("categoryId") Long categoryId,
+            @Param("partId") Long partId,
+            @Param("grade") PartGrade grade
+    );
+
+    List<SearchOutboundCandidateResponse> findOutboundCandidateUnitsForUpdate(
+            @Param("companyId") Long companyId,
+            @Param("partId") Long partId,
+            @Param("unitIds") List<Long> unitIds
+    );
+
     StockDocumentDetailRow findDocumentDetail(
             @Param("companyId") Long companyId,
             @Param("documentId") Long documentId
@@ -81,6 +107,11 @@ public interface StockMapper {
             @Param("documentId") Long documentId
     );
 
+    List<StockDocumentLineRow> findOriginalOutboundMovementsForUpdate(
+            @Param("companyId") Long companyId,
+            @Param("documentId") Long documentId
+    );
+
     List<StockDocumentUnitResponse> findDocumentUnits(
             @Param("companyId") Long companyId,
             @Param("documentId") Long documentId
@@ -91,6 +122,11 @@ public interface StockMapper {
     );
 
     int countInvalidInboundCancelUnits(
+            @Param("companyId") Long companyId,
+            @Param("documentId") Long documentId
+    );
+
+    int countInvalidOutboundCancelUnits(
             @Param("companyId") Long companyId,
             @Param("documentId") Long documentId
     );
@@ -150,6 +186,16 @@ public interface StockMapper {
     );
 
     void updatePartUnitStatusForInboundCancel(
+            @Param("companyId") Long companyId,
+            @Param("unitId") Long unitId
+    );
+
+    void updatePartUnitStatusForOutbound(
+            @Param("companyId") Long companyId,
+            @Param("unitId") Long unitId
+    );
+
+    void updatePartUnitStatusForOutboundCancel(
             @Param("companyId") Long companyId,
             @Param("unitId") Long unitId
     );

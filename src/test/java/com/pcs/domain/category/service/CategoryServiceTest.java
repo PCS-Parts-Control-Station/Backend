@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -23,9 +24,11 @@ import com.pcs.domain.category.entity.PartCategory;
 import com.pcs.domain.category.entity.PartSpecDefinition;
 import com.pcs.domain.category.entity.PartSpecOption;
 import com.pcs.domain.category.mapper.CategoryMapper;
+import com.pcs.domain.category.mapper.PartSpecMapper;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
+import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,11 +44,17 @@ class CategoryServiceTest {
     @Mock
     private CategoryMapper categoryMapper;
 
+    @Mock
+    private PartSpecMapper partSpecMapper;
+
+    @Mock
+    private WorkspaceAccessValidator workspaceAccessValidator;
+
     private CategoryService categoryService;
 
     @BeforeEach
     void setUp() {
-        categoryService = new CategoryService(categoryMapper);
+        categoryService = new CategoryService(categoryMapper, partSpecMapper, workspaceAccessValidator);
     }
 
     @Test
@@ -59,7 +68,6 @@ class CategoryServiceTest {
                 LocalDateTime.of(2026, 6, 4, 10, 0)
         );
 
-        when(categoryMapper.isCompanyActive(companyId)).thenReturn(true);
         when(categoryMapper.countCategories(companyId, "GPU")).thenReturn(1L);
         when(categoryMapper.searchCategories(companyId, "GPU", 10, 20))
                 .thenReturn(List.of(category));
@@ -84,7 +92,6 @@ class CategoryServiceTest {
     void searchCategories_usesLimitAsSizeAliasAndCapsToMax() {
         Long companyId = 1L;
 
-        when(categoryMapper.isCompanyActive(companyId)).thenReturn(true);
         when(categoryMapper.countCategories(companyId, null)).thenReturn(0L);
 
         PageResultDto<SearchCategoryResponse, Void> response = categoryService.searchCategories(
@@ -104,7 +111,9 @@ class CategoryServiceTest {
     @Test
     void searchCategories_failsWhenCompanyInactive() {
         Long companyId = 1L;
-        when(categoryMapper.isCompanyActive(companyId)).thenReturn(false);
+        doThrow(new BusinessException(ErrorCode.COMPANY_INACTIVE))
+                .when(workspaceAccessValidator)
+                .validateCompanyActive(companyId);
 
         BusinessException exception = assertThrows(
                 BusinessException.class,
@@ -139,7 +148,6 @@ class CategoryServiceTest {
                 )
         );
 
-        when(categoryMapper.isCompanyActive(companyId)).thenReturn(true);
         when(categoryMapper.existsByName(companyId, "RAM", null)).thenReturn(false);
         doAnswer(invocation -> {
             PartCategory category = invocation.getArgument(0);
@@ -159,11 +167,11 @@ class CategoryServiceTest {
                 0L,
                 LocalDateTime.of(2026, 6, 5, 10, 0)
         ));
-        when(categoryMapper.findSpecDefinitions(companyId, 10L)).thenReturn(List.of(
+        when(partSpecMapper.findDefinitionsByCategory(companyId, 10L)).thenReturn(List.of(
                 new CategorySpecDefinitionRow(101L, 10L, "spec_1", "용량", "NUMBER", "GB", true, true, 0, true),
                 new CategorySpecDefinitionRow(102L, 10L, "spec_2", "세대", "SELECT", null, false, true, 1, true)
         ));
-        when(categoryMapper.findSpecOptions(List.of(101L, 102L))).thenReturn(List.of(
+        when(partSpecMapper.findOptionsByDefinitionIds(List.of(101L, 102L))).thenReturn(List.of(
                 new CategorySpecOptionResponse(201L, 102L, "DDR4", "DDR4", 0, true),
                 new CategorySpecOptionResponse(202L, 102L, "DDR5", "DDR5", 1, true)
         ));
@@ -190,7 +198,6 @@ class CategoryServiceTest {
         category.setDescription("메모리");
         UpdateCategoryRequest request = new UpdateCategoryRequest("Memory", "메모리 부품", null);
 
-        when(categoryMapper.isCompanyActive(companyId)).thenReturn(true);
         when(categoryMapper.findById(companyId, categoryId)).thenReturn(category);
         when(categoryMapper.countPartsByCategory(companyId, categoryId)).thenReturn(3L);
         when(categoryMapper.existsByName(companyId, "Memory", categoryId)).thenReturn(false);
@@ -201,7 +208,7 @@ class CategoryServiceTest {
                 3L,
                 LocalDateTime.of(2026, 6, 5, 11, 0)
         ));
-        when(categoryMapper.findSpecDefinitions(companyId, categoryId)).thenReturn(List.of());
+        when(partSpecMapper.findDefinitionsByCategory(companyId, categoryId)).thenReturn(List.of());
 
         CategoryDetailResponse response = categoryService.updateCategory(companyId, categoryId, request, memberId);
 
@@ -228,7 +235,6 @@ class CategoryServiceTest {
                 List.of(new CategorySpecDefinitionRequest(null, "클럭", "NUMBER", "MHz", false, true, 0, List.of()))
         );
 
-        when(categoryMapper.isCompanyActive(companyId)).thenReturn(true);
         when(categoryMapper.findById(companyId, categoryId)).thenReturn(category);
         when(categoryMapper.countPartsByCategory(companyId, categoryId)).thenReturn(0L);
         when(categoryMapper.existsByName(companyId, "RAM", categoryId)).thenReturn(false);
@@ -244,10 +250,10 @@ class CategoryServiceTest {
                 0L,
                 LocalDateTime.of(2026, 6, 5, 12, 0)
         ));
-        when(categoryMapper.findSpecDefinitions(companyId, categoryId)).thenReturn(List.of(
+        when(partSpecMapper.findDefinitionsByCategory(companyId, categoryId)).thenReturn(List.of(
                 new CategorySpecDefinitionRow(301L, categoryId, "spec_1", "클럭", "NUMBER", "MHz", false, true, 0, true)
         ));
-        when(categoryMapper.findSpecOptions(List.of(301L))).thenReturn(List.of());
+        when(partSpecMapper.findOptionsByDefinitionIds(List.of(301L))).thenReturn(List.of());
 
         CategoryDetailResponse response = categoryService.updateCategory(companyId, categoryId, request, memberId);
 
@@ -274,7 +280,6 @@ class CategoryServiceTest {
                 List.of(new CategorySpecDefinitionRequest(null, "클럭", "NUMBER", "MHz", false, true, 0, List.of()))
         );
 
-        when(categoryMapper.isCompanyActive(companyId)).thenReturn(true);
         when(categoryMapper.findById(companyId, categoryId)).thenReturn(category);
         when(categoryMapper.countPartsByCategory(companyId, categoryId)).thenReturn(2L);
 
@@ -297,7 +302,6 @@ class CategoryServiceTest {
         category.setCompanyId(companyId);
         category.setCategoryId(categoryId);
 
-        when(categoryMapper.isCompanyActive(companyId)).thenReturn(true);
         when(categoryMapper.findById(companyId, categoryId)).thenReturn(category);
         when(categoryMapper.countPartsByCategory(companyId, categoryId)).thenReturn(0L);
 
@@ -318,7 +322,6 @@ class CategoryServiceTest {
         category.setCompanyId(companyId);
         category.setCategoryId(categoryId);
 
-        when(categoryMapper.isCompanyActive(companyId)).thenReturn(true);
         when(categoryMapper.findById(companyId, categoryId)).thenReturn(category);
         when(categoryMapper.countPartsByCategory(companyId, categoryId)).thenReturn(2L);
 
@@ -336,7 +339,6 @@ class CategoryServiceTest {
         Long companyId = 1L;
         Long categoryId = 10L;
 
-        when(categoryMapper.isCompanyActive(companyId)).thenReturn(true);
         when(categoryMapper.findById(companyId, categoryId)).thenReturn(null);
 
         BusinessException exception = assertThrows(

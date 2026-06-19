@@ -2,13 +2,16 @@ package com.pcs.domain.part.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.pcs.domain.category.mapper.PartSpecMapper;
 import com.pcs.domain.part.dto.response.SearchPartResponse;
 import com.pcs.domain.part.mapper.PartMapper;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
+import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,17 +26,22 @@ class PartServiceTest {
     @Mock
     private PartMapper partMapper;
 
+    @Mock
+    private PartSpecMapper partSpecMapper;
+
+    @Mock
+    private WorkspaceAccessValidator workspaceAccessValidator;
+
     private PartService partService;
 
     @BeforeEach
     void setUp() {
-        partService = new PartService(partMapper);
+        partService = new PartService(partMapper, partSpecMapper, workspaceAccessValidator);
     }
 
     @Test
     void searchParts_usesDefaultActiveAndLimit() {
         Long companyId = 1L;
-        when(partMapper.isCompanyActive(companyId)).thenReturn(true);
         when(partMapper.countParts(companyId, "RTX", null, true)).thenReturn(1L);
         when(partMapper.searchParts(companyId, "RTX", null, true, 10, 0)).thenReturn(List.of(part()));
 
@@ -48,7 +56,6 @@ class PartServiceTest {
     @Test
     void searchParts_capsLimitToMax() {
         Long companyId = 1L;
-        when(partMapper.isCompanyActive(companyId)).thenReturn(true);
         when(partMapper.countParts(companyId, null, 3L, false)).thenReturn(1L);
         when(partMapper.searchParts(companyId, null, 3L, false, 100, 100)).thenReturn(List.of(part()));
 
@@ -60,7 +67,9 @@ class PartServiceTest {
     @Test
     void searchParts_failsWhenCompanyInactive() {
         Long companyId = 1L;
-        when(partMapper.isCompanyActive(companyId)).thenReturn(false);
+        doThrow(new BusinessException(ErrorCode.COMPANY_INACTIVE))
+                .when(workspaceAccessValidator)
+                .validateCompanyActive(companyId);
 
         BusinessException exception = assertThrows(
                 BusinessException.class,

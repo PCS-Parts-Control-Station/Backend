@@ -151,12 +151,12 @@ class StockFacadeTest {
         );
 
         when(jwtTokenProvider.parseAccessToken("token")).thenReturn(claims(1L, 10L, "acme"));
-        when(stockService.cancelInboundDocument(1L, 10L, 500L)).thenReturn(expected);
+        when(stockService.cancelDocument(1L, 10L, 500L)).thenReturn(expected);
 
         CancelStockDocumentResponse response = stockFacade.cancelDocument("Bearer token", "acme", 500L);
 
         assertSame(expected, response);
-        verify(stockService).cancelInboundDocument(1L, 10L, 500L);
+        verify(stockService).cancelDocument(1L, 10L, 500L);
     }
 
     @Test
