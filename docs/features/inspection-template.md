@@ -34,9 +34,12 @@ com.pcs.domain.inspection
 
 ```text
 src/main/resources/static/inspection-templates.html
-src/main/resources/static/css/inspection-templates.css
+src/main/resources/static/css/components/management-page.css
+src/main/resources/static/css/pages/inspection-templates.css
 src/main/resources/static/js/inspection-templates.js
 ```
+
+화면 전체 구성은 `docs/ai/design/management-page.md`를 따른다. 공통 관리 화면과 하위 항목 편집 스타일은 `management-page.css`가 소유하고, 검수 템플릿 전용 CSS에는 목록 열과 모바일 셀 배치만 둔다.
 
 화면은 서버 Model을 받지 않고 JS가 `/api/workspaces/{companyCode}/**` API를 호출한다.
 
@@ -54,11 +57,7 @@ src/main/resources/static/js/inspection-templates.js
 
 항목을 선택하면 오른쪽 패널은 `선택형 항목 설정`에 집중한다. `inputType = SELECT`가 아닌 항목은 선택지 설정 대신 선택지가 필요 없다는 짧은 안내만 보여준다.
 
-반응형 기준:
-
-- 넓은 화면에서는 항목 목록과 선택형 항목 설정을 좌우로 배치한다.
-- 중간 폭 이하에서는 오른쪽 패널이 잘리지 않도록 한 컬럼 흐름으로 전환한다.
-- 항목 카드 안의 입력 방식/사용 상태 배지는 이름 영역을 침범하지 않아야 한다.
+반응형과 항목 편집 상태 표현은 `management-page.md`와 `responsive-layout.md`를 따른다.
 
 ## 주요 규칙
 

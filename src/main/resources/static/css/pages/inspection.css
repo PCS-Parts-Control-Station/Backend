@@ -882,24 +882,8 @@
     display: none;
 }
 
-.section-title-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-}
-
-.section-title-row h3 {
-    margin: 0;
-    color: var(--navy);
-    font-size: 17px;
-    font-weight: 800;
-}
-
 .section-title-row span {
-    color: var(--muted);
     font-size: 14px;
-    font-weight: 800;
 }
 
 .inspection-target-card .section-title-row span {

@@ -147,24 +147,8 @@
     gap: 10px;
 }
 
-.section-title-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-}
-
 .section-title-row h3 {
-    margin: 0;
-    color: var(--navy);
     font-size: 15px;
-    font-weight: 800;
-}
-
-.section-title-row span {
-    color: var(--muted);
-    font-size: 12px;
-    font-weight: 800;
 }
 
 .document-line-list {

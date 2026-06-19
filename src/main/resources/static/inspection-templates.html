@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
     <link rel="stylesheet" href="/css/layouts/workspace.css?20260618_layers">
     <link rel="stylesheet" href="/css/components/components.css?20260618_layers">
+    <link rel="stylesheet" href="/css/components/management-page.css?20260619_management">
     <link rel="stylesheet" href="/css/pages/inspection-templates.css?20260618_layers">
 </head>
 <body class="has-collapsible-sidebar inspection-template-page page-inspection-templates workspace-page">
@@ -47,7 +48,7 @@
                         <p>템플릿명, 분류, 사용 상태로 검수 양식을 찾습니다.</p>
                     </div>
                     <!-- API: GET /api/workspaces/{companyCode}/inspection-templates?keyword=&categoryId=&active=&page=&size= -->
-                    <form class="filter-form inspection-template-filter-form" action="#" method="get" autocomplete="off" data-template-filter-form>
+                    <form class="filter-form management-filter-form-compact" action="#" method="get" autocomplete="off" data-template-filter-form>
                         <label>
                             <span>검색어</span>
                             <input type="search" name="keyword" placeholder="예: 메모리 검수" autocomplete="off">
@@ -71,7 +72,7 @@
                 </section>
 
                 <section class="table-card" aria-labelledby="template-list-title">
-                    <div class="table-header inline-summary-header">
+                    <div class="table-header inline-summary-header management-summary-header">
                         <div>
                             <h2 id="template-list-title">검수 템플릿 목록</h2>
                             <p>검수 등록 폼에 표시될 양식 목록입니다.</p>
@@ -99,7 +100,7 @@
                     </div>
 
                     <div class="data-table" role="table" aria-label="검수 템플릿 목록" data-template-table>
-                        <div class="data-row inspection-template-row table-head" role="row">
+                        <div class="data-row management-data-row inspection-template-row table-head" role="row">
                             <span role="columnheader">템플릿</span>
                             <span role="columnheader">분류</span>
                             <span role="columnheader">버전</span>
@@ -107,13 +108,13 @@
                             <span role="columnheader">상태</span>
                             <span role="columnheader">수정일</span>
                         </div>
-                        <div class="data-row inspection-template-row empty-data-row" role="row" data-template-empty>
+                        <div class="data-row management-data-row inspection-template-row empty-data-row" role="row" data-template-empty>
                             <span role="cell" data-label="안내">검수 템플릿 목록을 불러오는 중입니다.</span>
                         </div>
                     </div>
                 </section>
 
-                <section class="table-card template-builder-card" aria-labelledby="template-builder-title" data-template-builder>
+                <section class="table-card management-editor-card" aria-labelledby="template-builder-title" data-template-builder>
                     <div class="table-header inline-summary-header">
                         <div>
                             <h2 id="template-builder-title">항목 구성</h2>
@@ -121,31 +122,31 @@
                         </div>
                     </div>
 
-                    <div class="template-builder-empty" data-template-builder-empty>
+                    <div class="management-editor-empty" data-template-builder-empty>
                         <strong>템플릿 선택 대기</strong>
                         <p>목록에서 템플릿을 선택하면 주요 검수 항목, 추가 검수 항목, 선택형 항목의 선택지를 관리할 수 있습니다.</p>
                     </div>
 
-                    <div class="template-builder-body" data-template-builder-body hidden>
-                        <div class="template-builder-layout">
-                            <section class="template-item-panel" aria-labelledby="template-items-title">
+                    <div class="management-editor-body" data-template-builder-body hidden>
+                        <div class="management-editor-layout">
+                            <section class="management-editor-list-panel" aria-labelledby="template-items-title">
                                 <div class="section-title-row">
                                     <h3 id="template-items-title">항목 목록</h3>
-                                    <div class="template-item-title-actions">
-                                        <span data-template-item-count>항목 0 · 선택지 0</span>
-                                        <button class="panel-link-button" type="button" data-template-item-reset hidden>항목 추가</button>
+                                    <div class="management-editor-title-actions">
+                                        <span class="management-editor-count" data-template-item-count>항목 0 · 선택지 0</span>
+                                        <button class="panel-link-button management-compact-action" type="button" data-template-item-reset hidden>항목 추가</button>
                                     </div>
                                 </div>
-                                <div class="template-item-list" data-template-item-list></div>
+                                <div class="management-editor-list" data-template-item-list></div>
                             </section>
 
-                            <section class="template-selected-panel" aria-labelledby="template-selected-title">
+                            <section class="management-editor-detail-panel" aria-labelledby="template-selected-title">
                                 <div class="section-title-row">
                                     <h3 id="template-selected-title">선택형 항목 설정</h3>
                                     <span data-selected-item-summary>항목 미선택</span>
                                 </div>
-                                <div class="template-selected-detail" data-selected-item-detail>
-                                    <div class="template-empty-note">왼쪽 목록에서 항목을 선택해 주세요.</div>
+                                <div class="management-editor-selected-detail" data-selected-item-detail>
+                                    <div class="management-editor-empty-note">왼쪽 목록에서 항목을 선택해 주세요.</div>
                                 </div>
                             </section>
                         </div>
@@ -193,7 +194,7 @@
                                 <h2>템플릿 상세</h2>
                                 <p>선택한 템플릿의 기본 정보를 확인합니다.</p>
                             </div>
-                            <button class="panel-link-button" type="button" data-template-create-mode>새 템플릿</button>
+                            <button class="panel-link-button management-compact-action" type="button" data-template-create-mode>새 템플릿</button>
                         </div>
 
                         <div class="side-detail-card">
@@ -240,7 +241,7 @@
                                 <h2>템플릿 수정</h2>
                                 <p>템플릿 기본 정보를 수정합니다.</p>
                             </div>
-                            <button class="panel-link-button" type="button" data-template-create-mode>새 템플릿</button>
+                            <button class="panel-link-button management-compact-action" type="button" data-template-create-mode>새 템플릿</button>
                         </div>
 
                         <!-- API: PATCH /api/workspaces/{companyCode}/inspection-templates/{templateId} -->
@@ -316,8 +317,8 @@
         </div>
     </div>
 </dialog>
-<dialog class="part-modal template-item-modal" data-template-item-modal aria-labelledby="template-item-modal-title">
-    <div class="part-modal-card template-item-modal-card">
+<dialog class="part-modal" data-template-item-modal aria-labelledby="template-item-modal-title">
+    <div class="part-modal-card management-editor-modal-card">
         <div class="part-modal-header">
             <div>
                 <p class="page-kicker">검수 항목</p>
@@ -332,12 +333,12 @@
             </button>
         </div>
         <!-- API: POST /api/workspaces/{companyCode}/inspection-templates/{templateId}/items -->
-        <form class="template-inline-form" action="#" method="post" autocomplete="off" data-template-item-form>
+        <form class="management-editor-form" action="#" method="post" autocomplete="off" data-template-item-form>
             <label>
                 <span>항목명</span>
                 <input type="text" name="itemName" placeholder="예: 팬 동작" required>
             </label>
-            <div class="template-inline-grid">
+            <div class="management-editor-form-grid">
                 <label>
                     <span>항목 구분</span>
                     <select name="itemGroup" required>
@@ -355,12 +356,12 @@
                     </select>
                 </label>
             </div>
-            <details class="template-advanced-fields" data-template-advanced-fields>
+            <details class="management-editor-advanced-fields" data-template-advanced-fields>
                 <summary>
                     <span>고급 설정</span>
                     <em data-template-advanced-summary>등급 영향 낮음 · 별도 조치 없음</em>
                 </summary>
-                <div class="template-inline-grid template-advanced-body">
+                <div class="management-editor-form-grid management-editor-advanced-body">
                     <label>
                         <span>등급 영향</span>
                         <select name="gradeImpact" required>
@@ -384,8 +385,8 @@
                 <input type="checkbox" name="required">
                 <span>필수 항목</span>
             </label>
-            <div class="part-modal-actions template-item-modal-actions">
-                <button class="panel-link-button" type="button" data-template-item-active-toggle hidden>항목 중지</button>
+            <div class="part-modal-actions management-editor-modal-actions">
+                <button class="panel-link-button management-editor-active-toggle" type="button" data-template-item-active-toggle hidden>항목 중지</button>
                 <button class="btn btn-secondary" type="button" data-close-template-item-modal>취소</button>
                 <button class="btn btn-primary" type="submit" data-template-item-submit>항목 추가</button>
             </div>

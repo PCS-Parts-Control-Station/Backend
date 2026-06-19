@@ -16,6 +16,25 @@
 - 로그인 후 업무 관리 화면
 - 목록, 등록, 상세, 이력 화면
 
+## 디자인 변경 필수 원칙
+
+화면 디자인, HTML 구조, CSS를 수정하는 모든 작업은 아래를 먼저 수행한다.
+
+1. 이 문서와 `design/design-md-rules.md`, `design/css-architecture.md`를 현재 파일 기준으로 다시 읽는다.
+2. 화면 유형에 맞는 `design/*.md`를 선택해 읽는다.
+3. 페이지 전용 MD와 페이지 CSS보다 기존 공통 MD와 공통 CSS로 표현할 수 있는지 먼저 확인한다.
+4. 재사용 가능한 규칙은 현재 사용 화면이 하나뿐이어도 의미 기반 공통 규칙으로 올린다.
+5. 페이지 전용 파일에는 데이터 열 구성, 도메인 전용 필드 배치, 업무 규칙처럼 공통화할 수 없는 차이만 남긴다.
+
+페이지 전용 MD와 CSS는 화면의 주 디자인 소유자가 아니다. 공통 규칙을 참조하고 최소 예외만 소유한다.
+
+디자인 작업 완료 기준:
+
+- 새 디자인 선언을 페이지 파일에 추가하기 전에 공통 소유 위치를 검토했다.
+- 수정한 페이지 MD/CSS 전체에서 기존 공통 규칙과 중복되는 내용도 함께 제거했다.
+- 공통화한 규칙을 같은 유형의 다른 화면에 적용하거나 최소 2개 대표 화면에서 충돌 여부를 확인했다.
+- 페이지 전용으로 남긴 규칙은 공통화할 수 없는 이유를 코드 구조와 문서에서 설명할 수 있다.
+
 ## 하위 디자인 문서
 
 ```text
@@ -25,6 +44,7 @@ docs/ai/design/responsive-layout.md
 docs/ai/design/design-md-rules.md
 docs/ai/design/css-architecture.md
 docs/ai/design/dashboard.md
+docs/ai/design/management-page.md
 docs/ai/design/data-table.md
 docs/ai/design/form-panel.md
 docs/ai/design/modal-dialog.md
@@ -41,6 +61,7 @@ docs/ai/design/history-timeline.md
 - `workspace-layout.md`: 로그인 후 좌측 사이드바 기반 업무 화면 공통 레이아웃
 - `responsive-layout.md`: 업무 화면 반응형, 햄버거 사이드바, 테이블 모바일 전환
 - `dashboard.md`: 운영 현황, 통계, 우선 처리 목록
+- `management-page.md`: 검색·목록·오른쪽 패널·하위 항목 편집을 조합한 관리형 화면
 - `data-table.md`: 검색/필터/목록/요약 테이블
 - `form-panel.md`: 오른쪽 등록/수정 패널, 보조 메모 패널
 - `modal-dialog.md`: 등록/수정 모달, 저장 확인 모달, 토스트 구분 기준
