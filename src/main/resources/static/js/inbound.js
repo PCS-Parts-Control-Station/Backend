@@ -18,7 +18,7 @@
     const summaryQuantity = document.querySelector("[data-summary-quantity]");
     const summaryWaiting = document.querySelector("[data-summary-waiting]");
     const summaryCanceled = document.querySelector("[data-summary-canceled]");
-    const panelViews = document.querySelectorAll("[data-inbound-panel]");
+    const detailDrawer = document.querySelector("[data-inbound-detail-drawer]");
     const detailFields = {
         subtitle: document.querySelector("[data-detail-subtitle]"),
         documentNo: document.querySelector("[data-detail-document-no]"),
@@ -50,6 +50,7 @@
     let selectedDocumentId = null;
     let currentDetail = null;
     let cancelTarget = null;
+    let lastDetailTrigger = null;
 
     const getCompanyCode = () => {
         const segments = window.location.pathname.split("/").filter(Boolean);
@@ -116,12 +117,24 @@
 
     const numberText = (value) => Number(value || 0).toLocaleString("ko-KR");
 
-    const setPanelMode = (mode) => {
-        panelViews.forEach((panel) => {
-            const isActive = panel.dataset.inboundPanel === mode;
-            panel.hidden = !isActive;
-            panel.classList.toggle("is-active", isActive);
-        });
+    const setDetailDrawerOpen = (isOpen) => {
+        detailDrawer?.classList.toggle("is-open", isOpen);
+        detailDrawer?.setAttribute("aria-hidden", String(!isOpen));
+    };
+
+    const openDetailDrawer = (trigger = null) => {
+        if (trigger instanceof HTMLElement) {
+            lastDetailTrigger = trigger;
+        }
+        setDetailDrawerOpen(true);
+    };
+
+    const closeDetailDrawer = (options = {}) => {
+        const restoreFocus = options.restoreFocus !== false;
+        setDetailDrawerOpen(false);
+        if (restoreFocus && lastDetailTrigger?.isConnected) {
+            lastDetailTrigger.focus({ preventScroll: true });
+        }
     };
 
     const getCompanyApiBase = () => {
@@ -261,6 +274,7 @@
         row.className = `data-row document-data-row${isCreated ? " is-created" : ""}${isSelected ? " is-selected" : ""}`;
         row.setAttribute("role", "row");
         row.setAttribute("tabindex", "0");
+        row.setAttribute("aria-selected", String(Boolean(isSelected)));
         row.dataset.documentId = String(stockDocument.documentId);
         row.innerHTML = `
             <strong role="cell" data-label="전표번호">${escapeHtml(stockDocument.documentNo)}</strong>
@@ -296,7 +310,7 @@
         if (!documents.length) {
             selectedDocumentId = null;
             currentDetail = null;
-            setPanelMode("guide");
+            closeDetailDrawer({ restoreFocus: false });
             setEmptyMessage("조회된 입고 전표가 없습니다.");
             updatePagination(data);
             return;
@@ -407,10 +421,10 @@
         updateSelectedRows();
     };
 
-    const setDetailLoading = (message) => {
-        selectedDocumentId = null;
+    const setDetailLoading = (message, documentId = null) => {
+        selectedDocumentId = documentId;
         currentDetail = null;
-        setPanelMode("detail");
+        openDetailDrawer();
         if (detailFields.subtitle) detailFields.subtitle.textContent = message;
         if (detailFields.documentNo) detailFields.documentNo.textContent = "-";
         setDetailStatus("COMPLETED");
@@ -422,18 +436,21 @@
         if (detailFields.lineSummary) detailFields.lineSummary.textContent = "-";
         if (detailFields.lines) detailFields.lines.innerHTML = `<p class="detail-empty-text">${escapeHtml(message)}</p>`;
         if (openCancelModalButton) openCancelModalButton.disabled = true;
+        updateSelectedRows();
     };
 
-    const loadDocumentDetail = async (documentId) => {
+    const loadDocumentDetail = async (documentId, options = {}) => {
         const companyCode = getCompanyCode();
         const apiBase = getCompanyApiBase();
+        if (options.trigger instanceof HTMLElement) {
+            lastDetailTrigger = options.trigger;
+        }
         if (!apiBase || !window.PcsApi) {
-            setDetailLoading("입고 전표 상세를 불러오지 못했습니다.");
+            setDetailLoading("입고 전표 상세를 불러오지 못했습니다.", documentId);
             return;
         }
 
-        setDetailLoading("입고 전표 상세를 불러오는 중입니다.");
-        selectedDocumentId = documentId;
+        setDetailLoading("입고 전표 상세를 불러오는 중입니다.", documentId);
         try {
             const detail = await window.PcsApi.getData(`${apiBase}/stock/documents/${encodeURIComponent(documentId)}`, {
                 authRedirect: true,
@@ -448,7 +465,7 @@
     const closeDetailPanel = () => {
         selectedDocumentId = null;
         currentDetail = null;
-        setPanelMode("guide");
+        closeDetailDrawer();
         updateSelectedRows();
     };
 
@@ -570,7 +587,7 @@
         if (!preserveDetail) {
             selectedDocumentId = null;
             currentDetail = null;
-            setPanelMode("guide");
+            closeDetailDrawer({ restoreFocus: false });
         }
         setEmptyMessage("입고 전표 목록을 불러오는 중입니다.");
 
@@ -622,7 +639,8 @@
     inboundTable?.addEventListener("click", (event) => {
         const detailButton = event.target.closest("[data-document-detail]");
         if (detailButton) {
-            loadDocumentDetail(detailButton.dataset.documentDetail);
+            event.stopPropagation();
+            loadDocumentDetail(detailButton.dataset.documentDetail, { trigger: detailButton });
             return;
         }
 
@@ -634,7 +652,7 @@
 
         const row = event.target.closest("[data-document-id]");
         if (row) {
-            loadDocumentDetail(row.dataset.documentId);
+            loadDocumentDetail(row.dataset.documentId, { trigger: row });
         }
     });
 
@@ -647,11 +665,18 @@
             return;
         }
         event.preventDefault();
-        loadDocumentDetail(row.dataset.documentId);
+        loadDocumentDetail(row.dataset.documentId, { trigger: row });
     });
 
     closeDetailButtons.forEach((button) => {
         button.addEventListener("click", closeDetailPanel);
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape" || !detailDrawer?.classList.contains("is-open") || cancelModal?.open) {
+            return;
+        }
+        closeDetailPanel();
     });
 
     openCancelModalButton?.addEventListener("click", () => {
