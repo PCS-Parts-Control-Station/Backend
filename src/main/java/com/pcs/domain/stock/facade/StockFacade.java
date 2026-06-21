@@ -18,6 +18,7 @@ import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.jwt.JwtClaims;
 import com.pcs.global.jwt.JwtTokenProvider;
+import java.time.LocalDate;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +43,8 @@ public class StockFacade {
             String keyword,
             Long partnerId,
             StockDocumentStatus documentStatus,
+            LocalDate dateFrom,
+            LocalDate dateTo,
             Integer page,
             Integer size,
             Integer limit
@@ -54,6 +57,8 @@ public class StockFacade {
                 keyword,
                 partnerId,
                 documentStatus,
+                dateFrom,
+                dateTo,
                 page,
                 size,
                 limit

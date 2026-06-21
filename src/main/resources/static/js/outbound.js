@@ -384,7 +384,7 @@
         detailFields.lines.innerHTML = lines.map((line) => {
             const units = Array.isArray(line.units) ? line.units : [];
             return `
-                <details class="document-line-item outbound-detail-line" open>
+                <details class="document-line-item outbound-detail-line">
                     <summary>
                         <span>
                             <strong>${escapeHtml(line.partName || "-")}</strong>

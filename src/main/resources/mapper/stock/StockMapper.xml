@@ -54,6 +54,12 @@
         <if test="documentStatus != null">
           AND d.document_status = #{documentStatus}
         </if>
+        <if test="dateFrom != null">
+          AND DATE(d.created_at) <![CDATA[>=]]> #{dateFrom}
+        </if>
+        <if test="dateTo != null">
+          AND DATE(d.created_at) <![CDATA[<=]]> #{dateTo}
+        </if>
         <if test="keyword != null and keyword != ''">
           AND (
               d.document_no LIKE CONCAT('%', #{keyword}, '%')

@@ -11,12 +11,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/admin.css?20260611_side_panel_400">
     <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
+    <link rel="stylesheet" href="/css/history-stock.css?20260621_stock_history">
 </head>
 <body class="has-collapsible-sidebar">
 <div class="workspace-layout">
     <div data-workspace-sidebar data-active-route="history/stock"></div>
 
-    <main class="workspace-main">
+    <main class="workspace-main stock-history-page">
         <header class="workspace-header">
             <button class="menu-toggle" type="button" data-sidebar-toggle aria-controls="workspace-sidebar" aria-expanded="false" aria-label="메뉴 열기">
                 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -28,52 +29,77 @@
             <div>
                 <p class="page-kicker">이력</p>
                 <h1>입출고 이력</h1>
-                <p class="page-description">모든 입고와 출고 전표 기록을 시간순으로 확인합니다.</p>
+                <p class="page-description">입고, 출고, 취소 전표를 통합 조회합니다.</p>
+            </div>
+            <div class="header-actions">
+                <a class="btn btn-secondary" data-route="inbound">입고 관리</a>
+                <a class="btn btn-secondary" data-route="outbound">출고 관리</a>
             </div>
         </header>
 
-        <section class="content-grid" style="grid-template-columns: 1fr;">
+        <section class="content-grid stock-history-grid">
             <div class="content-main">
-                <section class="filter-card management-filter-card" aria-labelledby="filter-title">
-                    <div>
-                        <h2 id="filter-title">이력 검색</h2>
-                        <p>기간, 거래처명, 전표번호로 입출고 기록을 좁혀 봅니다.</p>
+                <section class="filter-card management-filter-card stock-history-filter-card" aria-labelledby="filter-title">
+                    <div class="stock-history-filter-heading">
+                        <div>
+                            <h2 id="filter-title">이력 검색</h2>
+                            <p>전표, 거래처, 품목, 기간으로 입출고 기록을 조회합니다.</p>
+                        </div>
+                        <p class="stock-history-summary" data-history-summary>전표 0건 · 수량 0개 · 취소 0건</p>
                     </div>
-                    <!-- API: GET /api/workspaces/{companyCode}/history/stock-documents?keyword=&startDate=&endDate=&page=&size= -->
-                    <form class="filter-form management-filter-form" action="#" method="get" autocomplete="off" data-history-filter-form>
-                        <label>
+                    <!-- API: GET /api/workspaces/{companyCode}/stock/documents?documentType=&keyword=&documentStatus=&dateFrom=&dateTo=&page=&size= -->
+                    <form class="filter-form management-filter-form stock-history-filter-form" action="#" method="get" autocomplete="off" data-history-filter-form>
+                        <label class="stock-history-keyword-field">
                             <span>검색어</span>
-                            <input type="search" name="keyword" placeholder="거래처명 또는 전표번호" autocomplete="off">
+                            <input type="search" name="keyword" placeholder="전표번호, 거래처, 품목명">
                         </label>
                         <label>
-                            <span>시작일</span>
-                            <input type="date" name="startDate">
+                            <span>구분</span>
+                            <select name="documentType">
+                                <option value="">전체</option>
+                                <option value="INBOUND">입고</option>
+                                <option value="OUTBOUND">출고</option>
+                            </select>
                         </label>
                         <label>
-                            <span>종료일</span>
-                            <input type="date" name="endDate">
+                            <span>상태</span>
+                            <select name="documentStatus">
+                                <option value="">전체</option>
+                                <option value="COMPLETED">완료</option>
+                                <option value="CANCELED">취소</option>
+                            </select>
                         </label>
-                        <button class="btn btn-primary" type="submit">검색</button>
+                        <fieldset class="stock-history-date-range">
+                            <legend>기간</legend>
+                            <input type="date" name="dateFrom" aria-label="시작일">
+                            <span aria-hidden="true">~</span>
+                            <input type="date" name="dateTo" aria-label="종료일">
+                        </fieldset>
+                        <div class="stock-history-filter-actions">
+                            <button class="btn btn-primary" type="submit">검색</button>
+                            <button class="btn btn-secondary" type="button" data-history-filter-reset>초기화</button>
+                        </div>
                     </form>
                 </section>
 
-                <section class="table-card" aria-labelledby="history-list-title">
+                <section class="table-card stock-history-list-card" aria-labelledby="history-list-title">
                     <div class="table-header inline-summary-header">
                         <div>
-                            <h2 id="history-list-title">전표 이력</h2>
-                            <p>입고 및 출고 처리된 전체 내역입니다.</p>
+                            <h2 id="history-list-title">전표 목록</h2>
+                            <p>행을 선택하면 오른쪽에서 상세를 확인합니다.</p>
                         </div>
                     </div>
 
-                    <div class="data-table document-data-table" role="table" aria-label="입출고 이력" data-history-table>
-                        <div class="data-row document-data-row table-head" role="row">
+                    <div class="data-table document-data-table stock-history-table" role="table" aria-label="입출고 이력" data-history-table>
+                        <div class="data-row document-data-row stock-history-row table-head" role="row">
                             <span role="columnheader">구분</span>
                             <span role="columnheader">전표번호</span>
-                            <span role="columnheader">거래처</span>
-                            <span role="columnheader">처리자</span>
+                            <span role="columnheader">내용</span>
+                            <span role="columnheader">수량</span>
+                            <span role="columnheader">상태</span>
                             <span role="columnheader">처리일</span>
                         </div>
-                        <div class="data-row document-data-row empty-data-row" role="row" data-history-empty>
+                        <div class="data-row document-data-row empty-data-row" role="row" data-history-empty hidden>
                             <span role="cell" data-label="안내">이력을 불러오는 중입니다.</span>
                         </div>
                     </div>
@@ -86,6 +112,55 @@
                     </div>
                 </section>
             </div>
+
+            <aside class="document-detail-drawer stock-history-detail-drawer" data-history-detail-drawer aria-labelledby="history-detail-title" aria-hidden="true" tabindex="-1">
+                <div class="panel-card document-detail-panel">
+                    <div class="panel-title-bar">
+                        <div>
+                            <h2 id="history-detail-title">전표 상세</h2>
+                            <p data-detail-subtitle>전표를 선택해 주세요.</p>
+                        </div>
+                        <button class="panel-link-button" type="button" data-close-detail-panel>닫기</button>
+                    </div>
+
+                    <div class="document-detail-card">
+                        <strong data-detail-document-no>-</strong>
+                        <div class="detail-badge-row">
+                            <em class="badge badge-gray" data-detail-type>-</em>
+                            <em class="badge badge-active" data-detail-status>-</em>
+                        </div>
+                    </div>
+
+                    <dl class="detail-list">
+                        <div>
+                            <dt>거래처</dt>
+                            <dd data-detail-partner>-</dd>
+                        </div>
+                        <div>
+                            <dt>처리일</dt>
+                            <dd data-detail-created-at>-</dd>
+                        </div>
+                        <div>
+                            <dt>처리자</dt>
+                            <dd data-detail-processed-by>-</dd>
+                        </div>
+                        <div>
+                            <dt>사유</dt>
+                            <dd data-detail-reason>-</dd>
+                        </div>
+                    </dl>
+
+                    <div class="document-line-section">
+                        <div class="section-title-row">
+                            <h3>품목 요약</h3>
+                            <span data-detail-line-summary>-</span>
+                        </div>
+                        <div class="document-line-list" data-detail-lines>
+                            <p class="detail-empty-text">전표를 선택해 주세요.</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
         </section>
     </main>
 </div>
@@ -93,6 +168,6 @@
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
 <script src="/js/workspace-layout.js?20260617_temp_password"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/history-stock.js?20260604_history"></script>
+<script src="/js/history-stock.js?20260621_stock_history"></script>
 </body>
 </html>
