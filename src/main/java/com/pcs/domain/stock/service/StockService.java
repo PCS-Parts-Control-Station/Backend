@@ -67,6 +67,8 @@ public class StockService {
             String keyword,
             Long partnerId,
             StockDocumentStatus documentStatus,
+            LocalDate dateFrom,
+            LocalDate dateTo,
             Integer page,
             Integer size,
             Integer limit
@@ -84,7 +86,9 @@ public class StockService {
                 documentType,
                 normalizedKeyword,
                 partnerId,
-                documentStatus
+                documentStatus,
+                dateFrom,
+                dateTo
         );
         List<SearchStockDocumentResponse> items = totalElements == 0
                 ? List.of()
@@ -94,6 +98,8 @@ public class StockService {
                         normalizedKeyword,
                         partnerId,
                         documentStatus,
+                        dateFrom,
+                        dateTo,
                         normalizedSize,
                         offset
                 );
@@ -102,7 +108,9 @@ public class StockService {
                 documentType,
                 normalizedKeyword,
                 partnerId,
-                documentStatus
+                documentStatus,
+                dateFrom,
+                dateTo
         );
 
         return PageResultDto.of(items, normalizedPage, normalizedSize, totalElements, summary);

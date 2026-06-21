@@ -16,6 +16,7 @@ import com.pcs.domain.stock.type.StockDocumentType;
 import com.pcs.global.dto.ApiResultDto;
 import com.pcs.global.dto.PageResultDto;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -46,6 +47,8 @@ public class StockApiController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long partnerId,
             @RequestParam(required = false) StockDocumentStatus documentStatus,
+            @RequestParam(required = false) LocalDate dateFrom,
+            @RequestParam(required = false) LocalDate dateTo,
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
             @RequestParam(required = false) Integer limit
@@ -57,6 +60,8 @@ public class StockApiController {
                 keyword,
                 partnerId,
                 documentStatus,
+                dateFrom,
+                dateTo,
                 page,
                 size,
                 limit

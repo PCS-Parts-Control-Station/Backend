@@ -16,6 +16,7 @@ import com.pcs.domain.stock.entity.StockPartner;
 import com.pcs.domain.stock.type.MovementStatus;
 import com.pcs.domain.stock.type.StockDocumentStatus;
 import com.pcs.domain.stock.type.StockDocumentType;
+import java.time.LocalDate;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -43,6 +44,8 @@ public interface StockMapper {
             @Param("keyword") String keyword,
             @Param("partnerId") Long partnerId,
             @Param("documentStatus") StockDocumentStatus documentStatus,
+            @Param("dateFrom") LocalDate dateFrom,
+            @Param("dateTo") LocalDate dateTo,
             @Param("size") int size,
             @Param("offset") int offset
     );
@@ -52,7 +55,9 @@ public interface StockMapper {
             @Param("documentType") StockDocumentType documentType,
             @Param("keyword") String keyword,
             @Param("partnerId") Long partnerId,
-            @Param("documentStatus") StockDocumentStatus documentStatus
+            @Param("documentStatus") StockDocumentStatus documentStatus,
+            @Param("dateFrom") LocalDate dateFrom,
+            @Param("dateTo") LocalDate dateTo
     );
 
     SearchStockDocumentSummaryResponse summarizeDocuments(
@@ -60,7 +65,9 @@ public interface StockMapper {
             @Param("documentType") StockDocumentType documentType,
             @Param("keyword") String keyword,
             @Param("partnerId") Long partnerId,
-            @Param("documentStatus") StockDocumentStatus documentStatus
+            @Param("documentStatus") StockDocumentStatus documentStatus,
+            @Param("dateFrom") LocalDate dateFrom,
+            @Param("dateTo") LocalDate dateTo
     );
 
     List<SearchOutboundCandidateResponse> searchOutboundCandidates(
