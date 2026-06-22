@@ -81,7 +81,8 @@ public class AuthFacade {
                 session.getCompanyId(),
                 session.getCompanyCode(),
                 session.getLoginId(),
-                session.getRole()
+                session.getRole(),
+                session.getTokenFamilyId()
         );
         RefreshTokenResponse response = new RefreshTokenResponse(
                 accessToken,
@@ -104,19 +105,20 @@ public class AuthFacade {
     }
 
     private LoginIssueResult issueLoginResult(AuthMember member, String loginIp, String userAgent) {
-        String accessToken = jwtTokenProvider.createAccessToken(
-                member.getMemberId(),
-                member.getCompanyId(),
-                member.getCompanyCode(),
-                member.getLoginId(),
-                member.getRole()
-        );
         RefreshTokenIssueResult refreshToken = authService.issueRefreshToken(
                 member.getCompanyId(),
                 member.getMemberId(),
                 null,
                 loginIp,
                 userAgent
+        );
+        String accessToken = jwtTokenProvider.createAccessToken(
+                member.getMemberId(),
+                member.getCompanyId(),
+                member.getCompanyCode(),
+                member.getLoginId(),
+                member.getRole(),
+                refreshToken.tokenFamilyId()
         );
 
         LoginResponse response = new LoginResponse(

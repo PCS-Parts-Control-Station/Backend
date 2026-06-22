@@ -18,14 +18,14 @@ import com.pcs.global.dto.ApiResultDto;
 import com.pcs.global.dto.PageResultDto;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
-import org.springframework.http.HttpHeaders;
+import com.pcs.global.security.PcsPrincipal;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -43,7 +43,7 @@ public class InspectionApiController {
     @GetMapping("/workspaces/{companyCode}/inspections/waiting-documents")
     public ResponseEntity<ApiResultDto<PageResultDto<SearchWaitingInspectionDocumentResponse, SearchWaitingInspectionDocumentSummaryResponse>>> searchWaitingDocuments(
             @PathVariable String companyCode,
-            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader,
+            @AuthenticationPrincipal PcsPrincipal principal,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long partnerId,
             @RequestParam(required = false) String inspectionStatus,
@@ -55,7 +55,7 @@ public class InspectionApiController {
     ) {
         PageResultDto<SearchWaitingInspectionDocumentResponse, SearchWaitingInspectionDocumentSummaryResponse> response =
                 inspectionFacade.searchWaitingDocuments(
-                        authorizationHeader,
+                        principal,
                         companyCode,
                         keyword,
                         partnerId,
@@ -73,10 +73,10 @@ public class InspectionApiController {
     public ResponseEntity<ApiResultDto<InspectionWaitingDocumentDetailResponse>> getWaitingDocumentUnits(
             @PathVariable String companyCode,
             @PathVariable Long documentId,
-            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader
+            @AuthenticationPrincipal PcsPrincipal principal
     ) {
         InspectionWaitingDocumentDetailResponse response = inspectionFacade.getWaitingDocumentUnits(
-                authorizationHeader,
+                principal,
                 companyCode,
                 documentId
         );
@@ -86,11 +86,11 @@ public class InspectionApiController {
     @PostMapping("/workspaces/{companyCode}/inspections")
     public ResponseEntity<ApiResultDto<CreateInspectionResponse>> createInitialInspection(
             @PathVariable String companyCode,
-            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader,
+            @AuthenticationPrincipal PcsPrincipal principal,
             @Valid @RequestBody CreateInspectionRequest request
     ) {
         CreateInspectionResponse response = inspectionFacade.createInitialInspection(
-                authorizationHeader,
+                principal,
                 companyCode,
                 request
         );
@@ -101,11 +101,11 @@ public class InspectionApiController {
     @PostMapping("/workspaces/{companyCode}/inspections/bulk")
     public ResponseEntity<ApiResultDto<CreateInspectionResponse>> createBulkInitialInspection(
             @PathVariable String companyCode,
-            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader,
+            @AuthenticationPrincipal PcsPrincipal principal,
             @Valid @RequestBody CreateBulkInspectionRequest request
     ) {
         CreateInspectionResponse response = inspectionFacade.createBulkInitialInspection(
-                authorizationHeader,
+                principal,
                 companyCode,
                 request
         );
@@ -116,7 +116,7 @@ public class InspectionApiController {
     @GetMapping("/workspaces/{companyCode}/inspections")
     public ResponseEntity<ApiResultDto<PageResultDto<SearchInspectionHistoryResponse, SearchInspectionHistorySummaryResponse>>> searchHistories(
             @PathVariable String companyCode,
-            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader,
+            @AuthenticationPrincipal PcsPrincipal principal,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long documentId,
             @RequestParam(required = false) Long unitId,
@@ -132,7 +132,7 @@ public class InspectionApiController {
     ) {
         PageResultDto<SearchInspectionHistoryResponse, SearchInspectionHistorySummaryResponse> response =
                 inspectionFacade.searchHistories(
-                        authorizationHeader,
+                        principal,
                         companyCode,
                         keyword,
                         documentId,
@@ -154,10 +154,10 @@ public class InspectionApiController {
     public ResponseEntity<ApiResultDto<InspectionHistoryDetailResponse>> getHistoryDetail(
             @PathVariable String companyCode,
             @PathVariable Long inspectionId,
-            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader
+            @AuthenticationPrincipal PcsPrincipal principal
     ) {
         InspectionHistoryDetailResponse response = inspectionFacade.getHistoryDetail(
-                authorizationHeader,
+                principal,
                 companyCode,
                 inspectionId
         );
@@ -168,11 +168,11 @@ public class InspectionApiController {
     public ResponseEntity<ApiResultDto<CreateInspectionResponse>> createCorrection(
             @PathVariable String companyCode,
             @PathVariable Long inspectionId,
-            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader,
+            @AuthenticationPrincipal PcsPrincipal principal,
             @Valid @RequestBody CreateInspectionRevisionRequest request
     ) {
         CreateInspectionResponse response = inspectionFacade.createCorrection(
-                authorizationHeader,
+                principal,
                 companyCode,
                 inspectionId,
                 request
@@ -185,11 +185,11 @@ public class InspectionApiController {
     public ResponseEntity<ApiResultDto<CreateInspectionResponse>> createReinspection(
             @PathVariable String companyCode,
             @PathVariable Long inspectionId,
-            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader,
+            @AuthenticationPrincipal PcsPrincipal principal,
             @Valid @RequestBody CreateInspectionRevisionRequest request
     ) {
         CreateInspectionResponse response = inspectionFacade.createReinspection(
-                authorizationHeader,
+                principal,
                 companyCode,
                 inspectionId,
                 request

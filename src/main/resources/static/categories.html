@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="PCS 품목 분류 관리 화면입니다. 중고 PC 품목의 분류와 사양 항목을 등록하고 관리합니다.">
-    <title>PCS | 품목 분류 관리</title>
+    <meta name="description" content="PCS 품목 분류 화면입니다. 중고 PC 품목의 분류와 사양 항목을 등록하고 관리합니다.">
+    <title>PCS | 품목 분류</title>
     <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,9 +16,10 @@
     <link rel="stylesheet" href="/css/core/tokens.css?20260618_layers">
     <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
     <link rel="stylesheet" href="/css/layouts/workspace.css?20260618_layers">
-    <link rel="stylesheet" href="/css/components/components.css?20260618_layers">
+    <link rel="stylesheet" href="/css/components/components.css?20260619_md_alignment">
     <link rel="stylesheet" href="/css/components/management-page.css?20260619_management">
-    <link rel="stylesheet" href="/css/pages/categories.css?20260618_layers">
+    <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
+    <link rel="stylesheet" href="/css/pages/categories.css?20260619_md_alignment">
 </head>
 <body class="has-collapsible-sidebar page-categories workspace-page">
 <div class="workspace-layout">
@@ -35,7 +36,7 @@
             </button>
             <div>
                 <p class="page-kicker">기준 정보 관리</p>
-                <h1>품목 분류 관리</h1>
+                <h1>품목 분류</h1>
                 <p class="page-description">CPU, RAM, GPU, SSD 등 품목 분류 기준과 입력받을 사양 항목을 관리합니다.</p>
             </div>
             <div class="header-actions">
@@ -45,12 +46,12 @@
 
         <section class="content-grid">
             <div class="content-main">
-                <section class="filter-card" aria-labelledby="filter-title">
+                <section class="filter-card management-filter-card" aria-labelledby="filter-title">
                     <div>
                         <h2 id="filter-title">분류 검색</h2>
                         <p>분류명과 설명으로 목록을 좁혀 봅니다.</p>
                     </div>
-                    <form class="filter-form" action="#" method="get" autocomplete="off" data-category-filter-form>
+                    <form class="filter-form single-filter-form" action="#" method="get" autocomplete="off" data-category-filter-form>
                         <label>
                             <span>검색어</span>
                             <input type="search" name="keyword" placeholder="예: RAM" autocomplete="off">
@@ -67,14 +68,14 @@
                         </div>
                     </div>
 
-                    <div class="data-table" role="table" aria-label="품목 분류 목록" data-category-table>
-                        <div class="data-row simple-management-data-row table-head" role="row">
+                    <div class="data-table management-data-table" role="table" aria-label="품목 분류 목록" data-category-table>
+                        <div class="data-row management-data-row simple-management-data-row table-head" role="row">
                             <span role="columnheader">분류명</span>
                             <span role="columnheader">설명</span>
                             <span role="columnheader">품목 수</span>
                             <span role="columnheader">수정일</span>
                         </div>
-                        <div class="data-row simple-management-data-row empty-data-row" role="row" data-category-empty>
+                        <div class="data-row management-data-row simple-management-data-row empty-data-row" role="row" data-category-empty>
                             <span role="cell" data-label="안내">분류 목록을 불러오는 중입니다.</span>
                         </div>
                     </div>
@@ -105,10 +106,10 @@
                             </label>
                             <div class="optional-field-group">
                                 <span class="optional-field-label">사양 항목</span>
-                                <div class="spec-summary-list" data-create-spec-list>
+                                <div class="management-subitem-list" data-create-spec-list>
                                     <p class="spec-builder-empty" data-create-spec-empty>품목 등록 때 입력받을 사양 항목을 추가하세요.</p>
                                 </div>
-                                <button class="panel-link-button spec-add-button" type="button" data-open-spec-modal data-spec-owner="create">사양 항목 추가</button>
+                                <button class="panel-link-button management-subitem-add-button" type="button" data-open-spec-modal data-spec-owner="create">사양 항목 추가</button>
                             </div>
                             <p class="field-message is-error" data-category-create-message role="status" aria-live="polite"></p>
                             <div class="form-actions">
@@ -145,9 +146,9 @@
                             </div>
                         </dl>
 
-                        <div class="spec-detail-block">
+                        <div class="management-subitem-detail">
                             <h3>사양 항목</h3>
-                            <div class="spec-detail-list" data-detail-spec-list>
+                            <div class="management-subitem-detail-list" data-detail-spec-list>
                                 <p>등록된 사양 항목이 없습니다.</p>
                             </div>
                         </div>
@@ -178,10 +179,10 @@
                             </label>
                             <div class="optional-field-group">
                                 <span class="optional-field-label">사양 항목</span>
-                                <div class="spec-summary-list" data-edit-spec-list>
+                                <div class="management-subitem-list" data-edit-spec-list>
                                     <p class="spec-builder-empty" data-edit-spec-empty>등록된 사양 항목이 없습니다.</p>
                                 </div>
-                                <button class="panel-link-button spec-add-button" type="button" data-open-spec-modal data-spec-owner="edit">사양 항목 추가</button>
+                                <button class="panel-link-button management-subitem-add-button" type="button" data-open-spec-modal data-spec-owner="edit">사양 항목 추가</button>
                                 <p class="field-message" data-spec-edit-locked hidden>연결된 품목이 있는 분류는 사양 항목을 수정할 수 없습니다.</p>
                             </div>
                             <p class="field-message is-error" data-category-edit-message role="status" aria-live="polite"></p>
@@ -297,7 +298,7 @@
         </div>
     </form>
 </dialog>
-<script src="/js/pcs-api.js?20260617_temp_password"></script>
+<script src="/js/pcs-api.js?20260619_md_alignment"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
 <script src="/js/workspace-layout.js?20260618_sidebar_breakpoint"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>

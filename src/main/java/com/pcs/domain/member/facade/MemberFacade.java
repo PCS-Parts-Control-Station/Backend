@@ -7,6 +7,7 @@ import com.pcs.domain.member.dto.request.UpdateMypageRequest;
 import com.pcs.domain.member.dto.request.UpdateStaffPermissionRequest;
 import com.pcs.domain.member.dto.request.UpdateMemberRequest;
 import com.pcs.domain.member.dto.response.MypageResponse;
+import com.pcs.domain.member.dto.response.CreateMemberResponse;
 import com.pcs.domain.member.dto.response.SearchMemberResponse;
 import com.pcs.domain.member.dto.response.SearchMemberSummaryResponse;
 import com.pcs.domain.member.dto.response.StaffPermissionSettingsResponse;
@@ -67,7 +68,7 @@ public class MemberFacade {
         );
     }
 
-    public SearchMemberResponse createMember(
+    public CreateMemberResponse createMember(
             PcsPrincipal principal,
             String pathCompanyCode,
             CreateMemberRequest request

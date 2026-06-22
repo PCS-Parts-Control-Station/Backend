@@ -26,7 +26,9 @@ com.pcs.domain.auth
 - access token은 API 인증에 사용한다.
 - access token은 JWT이며 `Authorization: Bearer {token}` 헤더로 전달한다.
 - access token 기본 만료 시간은 10분이다.
-- access token에는 `memberId`, `companyId`, `companyCode`, `loginId`, `role`, `tokenType`, `exp`를 담는다.
+- access token은 Spring Security Nimbus JWT 구현으로 HS256 서명·검증한다.
+- access token에는 표준 claim `iss`, `aud`, `sub`, `jti`, `iat`, `exp`와 업무 claim `memberId`, `companyId`, `companyCode`, `loginId`, `role`, `tokenType`, `sid`를 담는다.
+- `jti`는 Access Token별 UUID, `sid`는 연결된 refresh token family ID를 사용한다.
 - refresh token은 HttpOnly Cookie로 관리한다.
 - refresh token 원문은 DB에 저장하지 않고 SHA-256 해시만 저장한다.
 - refresh token cookie의 `Secure` 속성은 환경 설정으로 제어한다. 로컬 HTTP는 `false`, 운영 HTTPS는 `true`로 설정한다.
@@ -40,6 +42,9 @@ com.pcs.domain.auth
 - 임시 비밀번호 상태에서는 refresh token 재발급도 허용하지 않는다.
 - 비밀번호 초기화와 비밀번호 변경 시 해당 회원의 활성 refresh token을 모두 `ADMIN_REVOKED`로 폐기한다.
 - 로그인 실패가 반복되면 계정을 일정 시간 잠근다.
+- 로그인 API의 업체/아이디/비밀번호 불일치, 비활성 회사·사용자, 잠금 상태 응답은 모두 `AUTH_LOGIN_FAILED`로 통일하고 상세 원인은 서버 로그인 이력에만 남긴다.
+- 같은 업체 코드와 IP에서 최근 1분간 실패 이력이 30건 이상이면 계정 조회 전에 `AUTH_LOGIN_FAILED`로 차단한다.
+- 로그인 IP는 임의의 `X-Forwarded-For` 헤더를 직접 신뢰하지 않고 서버의 `remoteAddr`를 사용한다. 프록시 배포에서는 신뢰 프록시 범위를 제한한 컨테이너 설정으로 원격 주소를 전달한다.
 - 로그인 성공/실패는 `tb_auth_login_history`에 기록한다.
 - refresh token 재발급은 rotation 방식으로 처리한다. 재발급 성공 시 새 access token과 새 refresh token을 함께 발급하고, 기존 refresh token은 `ROTATED`로 폐기한다.
 - refresh token 만료는 `EXPIRED`, 회전된 토큰 재사용은 `REUSE_DETECTED`로 분리한다.
@@ -49,6 +54,13 @@ com.pcs.domain.auth
 - JWT 파싱과 `SecurityContext` 인증 객체 생성은 `global/security/JwtAuthenticationFilter`가 담당한다.
 - 인증이 필요한 Controller는 Authorization 헤더를 직접 파싱하지 않고 `@AuthenticationPrincipal PcsPrincipal`을 사용한다.
 - Security 인증 실패/권한 실패 응답도 `docs/ai/pcs-backend-common-rules.md` 기준의 JSON 형식으로 반환한다.
+
+## 파트1-1 배포 전환
+
+- 배포 전에 `docs/sql/pcs-auth-part1-1-alter.sql`을 실행한다.
+- 기존 활성 refresh token은 모두 `ADMIN_REVOKED`로 폐기하여 새 `sid` 세션으로 다시 로그인하게 한다.
+- 기존 형식 Access Token은 `iss`, `aud`, `jti`, `sid` 검증을 통과하지 못하므로 배포 후 즉시 사용할 수 없다.
+- 기존 `TEMPORARY` 계정은 임시 비밀번호를 만료 처리한다. 관리자가 사용자 관리에서 난수 임시 비밀번호를 다시 발급해야 한다.
 
 ## 기능 개발 시 인증 사용 규칙
 
@@ -102,12 +114,12 @@ pcsRefreshToken={token}; HttpOnly; SameSite=Strict; Path=/api/auth
 
 ## 예외와 응답 코드
 
-- 업체 코드/아이디/비밀번호 불일치: `AUTH_LOGIN_FAILED`
+- 로그인 업체/계정/비밀번호/활성/잠금 상태 실패: `AUTH_LOGIN_FAILED`
 - access token 없음: `AUTH_REQUIRED`
 - access token 위조 또는 형식 오류: `AUTH_TOKEN_INVALID`
 - access token 또는 refresh token 만료: `AUTH_TOKEN_EXPIRED`
-- 비활성 회사: `COMPANY_INACTIVE`
-- 비활성 사용자: `MEMBER_INACTIVE`
+- 로그인 이후 세션 검증 중 비활성 회사: `COMPANY_INACTIVE`
+- 로그인 이후 세션 검증 중 비활성 사용자: `MEMBER_INACTIVE`
 - 임시 비밀번호 만료: `MEMBER_TEMP_PASSWORD_EXPIRED`
 - 임시 비밀번호 변경 필요: `MEMBER_PASSWORD_CHANGE_REQUIRED`
 - URL 업체 코드와 JWT 업체 코드 불일치: `AUTH_WORKSPACE_MISMATCH`

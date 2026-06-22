@@ -1,9 +1,10 @@
 package com.pcs.domain.member.service;
 
-import com.pcs.domain.member.dto.request.CreateMemberRequest;
 import com.pcs.domain.member.dto.request.ChangeMypagePasswordRequest;
+import com.pcs.domain.member.dto.request.CreateMemberRequest;
 import com.pcs.domain.member.dto.request.UpdateMypageRequest;
 import com.pcs.domain.member.dto.request.UpdateMemberRequest;
+import com.pcs.domain.member.dto.response.CreateMemberResponse;
 import com.pcs.domain.member.dto.response.SearchMemberResponse;
 import com.pcs.domain.member.dto.response.SearchMemberSummaryResponse;
 import com.pcs.domain.member.dto.response.TemporaryPasswordResponse;
@@ -107,7 +108,7 @@ public class MemberService {
     }
 
     @Transactional
-    public SearchMemberResponse createMember(
+    public CreateMemberResponse createMember(
             Long companyId,
             Long createdBy,
             MemberRole actorRole,
@@ -124,10 +125,11 @@ public class MemberService {
         }
 
         LocalDateTime expiresAt = LocalDateTime.now().plusDays(TEMP_PASSWORD_EXPIRE_DAYS);
+        String temporaryPassword = generateTemporaryPassword();
         Member member = new Member(
                 companyId,
                 loginId,
-                passwordEncoder.encode(loginId),
+                passwordEncoder.encode(temporaryPassword),
                 memberName,
                 request.role(),
                 null,
@@ -136,7 +138,11 @@ public class MemberService {
                 createdBy
         );
         memberMapper.insert(member);
-        return findManagedMember(companyId, actorRole, member.getMemberId());
+        return new CreateMemberResponse(
+                findManagedMember(companyId, actorRole, member.getMemberId()),
+                temporaryPassword,
+                expiresAt
+        );
     }
 
     public SearchMemberResponse getMember(Long companyId, MemberRole actorRole, Long memberId) {

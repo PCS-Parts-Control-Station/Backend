@@ -108,6 +108,10 @@
     align-items: end;
 }
 
+.single-filter-form {
+    grid-template-columns: minmax(0, 1fr) 76px;
+}
+
 .management-filter-card {
     grid-template-columns: 1fr;
     align-items: start;
@@ -901,6 +905,54 @@ label {
     white-space: nowrap;
 }
 
+.optional-fields-body {
+    display: grid;
+    gap: 14px;
+    padding: 12px;
+    border-top: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.86);
+}
+
+.optional-fields:not([open]) .optional-fields-body {
+    display: none;
+}
+
+.trigger-field-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-height: var(--control-height);
+    padding: 0 14px;
+    color: var(--ink);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    text-align: left;
+    cursor: pointer;
+}
+
+.trigger-field-button span {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--cyan);
+    font-size: 16px;
+    line-height: 1;
+}
+
+.trigger-field-button:hover {
+    border-color: rgba(37, 99, 235, 0.36);
+    background: var(--cyan-soft);
+}
+
 .spec-builder-section {
     display: grid;
     gap: 10px;
@@ -1071,6 +1123,25 @@ label {
 
 .data-row.management-data-row {
         grid-template-columns: 1fr;
+    }
+
+.management-data-table {
+        gap: 10px;
+        padding: 12px;
+        background: var(--surface-soft);
+    }
+
+.management-data-table .data-row.management-data-row:not(.table-head) {
+        gap: 12px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+    }
+
+.management-data-table .data-row.management-data-row.is-selected {
+        border-color: var(--cyan);
+        box-shadow: inset 3px 0 0 var(--cyan);
     }
 
 .data-row {

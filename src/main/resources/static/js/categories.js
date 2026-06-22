@@ -108,7 +108,7 @@
 
     const clearRows = () => window.PcsTable.clearRows(table);
     const setEmptyMessage = (message) => window.PcsTable.emptyRow(table, {
-        rowClassName: "data-row simple-management-data-row empty-data-row",
+        rowClassName: "data-row management-data-row simple-management-data-row empty-data-row",
         message
     });
     const createTextCell = window.PcsTable.textCell;
@@ -166,7 +166,7 @@
 
         specDefinitions.forEach((spec) => {
             const item = document.createElement("article");
-            item.className = "spec-detail-item";
+            item.className = "management-subitem-detail-item";
 
             const title = document.createElement("strong");
             title.textContent = spec.specName || "-";
@@ -216,7 +216,7 @@
 
         specs.forEach((spec, index) => {
             const item = document.createElement("article");
-            item.className = "spec-summary-card";
+            item.className = "management-subitem-card";
             item.dataset.specSummaryItem = "";
             item.dataset.specIndex = String(index);
             item.dataset.specOwner = owner;
@@ -238,7 +238,7 @@
 
             if (editable) {
                 const actions = document.createElement("div");
-                actions.className = "spec-summary-actions";
+                actions.className = "management-subitem-actions";
 
                 const editButton = document.createElement("button");
                 editButton.type = "button";
@@ -488,7 +488,7 @@
 
         items.forEach((category) => {
             const row = document.createElement("div");
-            row.className = "data-row simple-management-data-row is-selectable";
+            row.className = "data-row management-data-row simple-management-data-row is-selectable";
             row.setAttribute("role", "row");
             row.setAttribute("tabindex", "0");
             row.dataset.categoryId = String(category.categoryId);

@@ -1,8 +1,4 @@
 @layer page {
-.mypage-grid {
-    grid-template-columns: minmax(0, 1fr) 360px;
-}
-
 .mypage-account-card,
 .mypage-section {
     padding: 24px;
@@ -234,10 +230,6 @@
 }
 
 @media (max-width: 1180px) {
-.mypage-grid {
-        grid-template-columns: 1fr;
-    }
-
 .mypage-info-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         row-gap: 18px;

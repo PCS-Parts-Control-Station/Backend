@@ -12,8 +12,8 @@ import com.pcs.domain.stock.type.StockDocumentType;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
-import com.pcs.global.jwt.JwtClaims;
-import com.pcs.global.jwt.JwtTokenProvider;
+import com.pcs.global.security.PcsPrincipal;
+import com.pcs.global.workspace.WorkspaceAccessValidator;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,18 +21,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 public class StockFacade {
 
-    private static final String TOKEN_TYPE = "Bearer";
-
     private final StockService stockService;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final WorkspaceAccessValidator workspaceAccessValidator;
 
-    public StockFacade(StockService stockService, JwtTokenProvider jwtTokenProvider) {
+    public StockFacade(StockService stockService, WorkspaceAccessValidator workspaceAccessValidator) {
         this.stockService = stockService;
-        this.jwtTokenProvider = jwtTokenProvider;
+        this.workspaceAccessValidator = workspaceAccessValidator;
     }
 
     public PageResultDto<SearchStockDocumentResponse, SearchStockDocumentSummaryResponse> searchDocuments(
-            String authorizationHeader,
+            PcsPrincipal principal,
             String pathCompanyCode,
             StockDocumentType documentType,
             String keyword,
@@ -42,10 +40,9 @@ public class StockFacade {
             Integer size,
             Integer limit
     ) {
-        JwtClaims claims = jwtTokenProvider.parseAccessToken(extractBearerToken(authorizationHeader));
-        validateWorkspace(pathCompanyCode, claims.companyCode());
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
         return stockService.searchDocuments(
-                claims.companyId(),
+                checkedPrincipal.companyId(),
                 documentType,
                 keyword,
                 partnerId,
@@ -57,37 +54,42 @@ public class StockFacade {
     }
 
     public StockDocumentDetailResponse getDocument(
-            String authorizationHeader,
+            PcsPrincipal principal,
             String pathCompanyCode,
             Long documentId
     ) {
-        JwtClaims claims = jwtTokenProvider.parseAccessToken(extractBearerToken(authorizationHeader));
-        validateWorkspace(pathCompanyCode, claims.companyCode());
-        return stockService.getDocument(claims.companyId(), documentId);
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
+        return stockService.getDocument(checkedPrincipal.companyId(), documentId);
     }
 
     @Transactional
     public CancelStockDocumentResponse cancelDocument(
-            String authorizationHeader,
+            PcsPrincipal principal,
             String pathCompanyCode,
             Long documentId
     ) {
-        JwtClaims claims = jwtTokenProvider.parseAccessToken(extractBearerToken(authorizationHeader));
-        validateWorkspace(pathCompanyCode, claims.companyCode());
-        return stockService.cancelInboundDocument(claims.companyId(), claims.memberId(), documentId);
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
+        return stockService.cancelInboundDocument(
+                checkedPrincipal.companyId(),
+                checkedPrincipal.memberId(),
+                documentId
+        );
     }
 
     @Transactional
     public CreateInboundDocumentResponse createInboundDocument(
-            String authorizationHeader,
+            PcsPrincipal principal,
             String pathCompanyCode,
             CreateInboundDocumentRequest request
     ) {
-        JwtClaims claims = jwtTokenProvider.parseAccessToken(extractBearerToken(authorizationHeader));
-        validateWorkspace(pathCompanyCode, claims.companyCode());
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
 
         try {
-            return stockService.createInboundDocument(claims.companyId(), claims.memberId(), request);
+            return stockService.createInboundDocument(
+                    checkedPrincipal.companyId(),
+                    checkedPrincipal.memberId(),
+                    request
+            );
         } catch (DuplicateKeyException exception) {
             throw mapDuplicateKeyException(exception);
         }
@@ -110,23 +112,4 @@ public class StockFacade {
         return new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
     }
 
-    private void validateWorkspace(String pathCompanyCode, String tokenCompanyCode) {
-        if (pathCompanyCode == null || pathCompanyCode.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "업체 코드가 필요합니다.");
-        }
-        if (!tokenCompanyCode.equals(pathCompanyCode.trim().toLowerCase())) {
-            throw new BusinessException(ErrorCode.AUTH_WORKSPACE_MISMATCH);
-        }
-    }
-
-    private String extractBearerToken(String authorizationHeader) {
-        if (authorizationHeader == null || authorizationHeader.isBlank()) {
-            throw new BusinessException(ErrorCode.AUTH_REQUIRED);
-        }
-        String prefix = TOKEN_TYPE + " ";
-        if (!authorizationHeader.startsWith(prefix)) {
-            throw new BusinessException(ErrorCode.AUTH_TOKEN_INVALID);
-        }
-        return authorizationHeader.substring(prefix.length()).trim();
-    }
 }

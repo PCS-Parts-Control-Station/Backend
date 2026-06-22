@@ -2,8 +2,11 @@ package com.pcs.domain.auth.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.pcs.domain.auth.entity.AuthMember;
 import com.pcs.domain.auth.entity.AuthRefreshTokenSession;
 import com.pcs.domain.auth.mapper.AuthMapper;
 import com.pcs.domain.member.service.StaffPermissionService;
@@ -52,5 +55,57 @@ class AuthServiceTest {
         );
 
         assertEquals(ErrorCode.MEMBER_PASSWORD_CHANGE_REQUIRED, exception.getErrorCode());
+    }
+
+    @Test
+    void authenticateWorkspace_masksMissingAccountAndRunsDummyPasswordCheck() {
+        when(authMapper.countRecentLoginFailures(
+                org.mockito.ArgumentMatchers.eq("acme"),
+                org.mockito.ArgumentMatchers.eq("127.0.0.1"),
+                org.mockito.ArgumentMatchers.any(LocalDateTime.class)
+        )).thenReturn(0L);
+        when(authMapper.findLoginMember("acme", "missing")).thenReturn(null);
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> authService.authenticateWorkspace("acme", "missing", "password", "127.0.0.1", "test")
+        );
+
+        assertEquals(ErrorCode.AUTH_LOGIN_FAILED, exception.getErrorCode());
+        verify(passwordEncoder).matches(org.mockito.ArgumentMatchers.eq("password"), org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void authenticateWorkspace_masksLockedAccount() {
+        AuthMember member = org.mockito.Mockito.mock(AuthMember.class);
+        when(authMapper.findLoginMember("acme", "admin")).thenReturn(member);
+        when(member.getPasswordHash()).thenReturn("hash");
+        when(member.isCompanyActive()).thenReturn(true);
+        when(member.isActive()).thenReturn(true);
+        when(member.isLocked(org.mockito.ArgumentMatchers.any(LocalDateTime.class))).thenReturn(true);
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> authService.authenticateWorkspace("acme", "admin", "password", null, "test")
+        );
+
+        assertEquals(ErrorCode.AUTH_LOGIN_FAILED, exception.getErrorCode());
+    }
+
+    @Test
+    void authenticateWorkspace_rejectsIpRateLimitBeforeAccountLookup() {
+        when(authMapper.countRecentLoginFailures(
+                org.mockito.ArgumentMatchers.eq("acme"),
+                org.mockito.ArgumentMatchers.eq("127.0.0.1"),
+                org.mockito.ArgumentMatchers.any(LocalDateTime.class)
+        )).thenReturn(30L);
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> authService.authenticateWorkspace("acme", "admin", "password", "127.0.0.1", "test")
+        );
+
+        assertEquals(ErrorCode.AUTH_LOGIN_FAILED, exception.getErrorCode());
+        verify(authMapper, never()).findLoginMember("acme", "admin");
     }
 }

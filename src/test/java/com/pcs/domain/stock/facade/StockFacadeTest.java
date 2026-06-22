@@ -22,8 +22,9 @@ import com.pcs.domain.stock.type.StockDocumentType;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
-import com.pcs.global.jwt.JwtClaims;
-import com.pcs.global.jwt.JwtTokenProvider;
+import com.pcs.global.security.PcsPrincipal;
+import com.pcs.global.workspace.WorkspaceAccessValidator;
+import com.pcs.global.workspace.WorkspaceMapper;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,13 +42,13 @@ class StockFacadeTest {
     private StockService stockService;
 
     @Mock
-    private JwtTokenProvider jwtTokenProvider;
+    private WorkspaceMapper workspaceMapper;
 
     private StockFacade stockFacade;
 
     @BeforeEach
     void setUp() {
-        stockFacade = new StockFacade(stockService, jwtTokenProvider);
+        stockFacade = new StockFacade(stockService, new WorkspaceAccessValidator(workspaceMapper));
     }
 
     @Test
@@ -74,7 +75,6 @@ class StockFacadeTest {
         PageResultDto<SearchStockDocumentResponse, SearchStockDocumentSummaryResponse> expected =
                 PageResultDto.of(List.of(row), 0, 20, 1, summary);
 
-        when(jwtTokenProvider.parseAccessToken("token")).thenReturn(claims(1L, 10L, "acme"));
         when(stockService.searchDocuments(
                 1L,
                 StockDocumentType.INBOUND,
@@ -88,7 +88,7 @@ class StockFacadeTest {
 
         PageResultDto<SearchStockDocumentResponse, SearchStockDocumentSummaryResponse> response =
                 stockFacade.searchDocuments(
-                        "Bearer token",
+                        principal(1L, 10L, "acme"),
                         "acme",
                         StockDocumentType.INBOUND,
                         "RTX",
@@ -131,10 +131,9 @@ class StockFacadeTest {
                 List.<StockDocumentLineResponse>of()
         );
 
-        when(jwtTokenProvider.parseAccessToken("token")).thenReturn(claims(1L, 10L, "acme"));
         when(stockService.getDocument(1L, 500L)).thenReturn(expected);
 
-        StockDocumentDetailResponse response = stockFacade.getDocument("Bearer token", "acme", 500L);
+        StockDocumentDetailResponse response = stockFacade.getDocument(principal(1L, 10L, "acme"), "acme", 500L);
 
         assertSame(expected, response);
         verify(stockService).getDocument(1L, 500L);
@@ -150,10 +149,9 @@ class StockFacadeTest {
                 2
         );
 
-        when(jwtTokenProvider.parseAccessToken("token")).thenReturn(claims(1L, 10L, "acme"));
         when(stockService.cancelInboundDocument(1L, 10L, 500L)).thenReturn(expected);
 
-        CancelStockDocumentResponse response = stockFacade.cancelDocument("Bearer token", "acme", 500L);
+        CancelStockDocumentResponse response = stockFacade.cancelDocument(principal(1L, 10L, "acme"), "acme", 500L);
 
         assertSame(expected, response);
         verify(stockService).cancelInboundDocument(1L, 10L, 500L);
@@ -175,11 +173,10 @@ class StockFacadeTest {
                 2
         );
 
-        when(jwtTokenProvider.parseAccessToken("token")).thenReturn(claims(1L, 10L, "acme"));
         when(stockService.createInboundDocument(1L, 10L, request)).thenReturn(expected);
 
         CreateInboundDocumentResponse response = stockFacade.createInboundDocument(
-                "Bearer token",
+                principal(1L, 10L, "acme"),
                 "acme",
                 request
         );
@@ -211,11 +208,9 @@ class StockFacadeTest {
                 null,
                 List.of(new CreateInboundDocumentLineRequest(1000L, 1, null))
         );
-        when(jwtTokenProvider.parseAccessToken("token")).thenReturn(claims(1L, 10L, "acme"));
-
         BusinessException exception = assertThrows(
                 BusinessException.class,
-                () -> stockFacade.createInboundDocument("Bearer token", "other", request)
+                () -> stockFacade.createInboundDocument(principal(1L, 10L, "acme"), "other", request)
         );
 
         assertEquals(ErrorCode.AUTH_WORKSPACE_MISMATCH, exception.getErrorCode());
@@ -228,27 +223,25 @@ class StockFacadeTest {
                 null,
                 List.of(new CreateInboundDocumentLineRequest(1000L, 1, null))
         );
-        when(jwtTokenProvider.parseAccessToken("token")).thenReturn(claims(1L, 10L, "acme"));
         when(stockService.createInboundDocument(any(), any(), any())).thenThrow(
                 new DuplicateKeyException("duplicate", new RuntimeException("uk_stock_document_document_no"))
         );
 
         BusinessException exception = assertThrows(
                 BusinessException.class,
-                () -> stockFacade.createInboundDocument("Bearer token", "acme", request)
+                () -> stockFacade.createInboundDocument(principal(1L, 10L, "acme"), "acme", request)
         );
 
         assertEquals(ErrorCode.STOCK_DOCUMENT_NO_DUPLICATED, exception.getErrorCode());
     }
 
-    private JwtClaims claims(Long companyId, Long memberId, String companyCode) {
-        return new JwtClaims(
+    private PcsPrincipal principal(Long companyId, Long memberId, String companyCode) {
+        return new PcsPrincipal(
                 memberId,
                 companyId,
                 companyCode,
                 "admin",
                 MemberRole.ADMIN,
-                "ACCESS",
                 Instant.now().plusSeconds(1800)
         );
     }

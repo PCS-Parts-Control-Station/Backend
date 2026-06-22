@@ -50,6 +50,15 @@
         LIMIT 1
     </select>
 
+    <select id="countRecentLoginFailures" resultType="long">
+        SELECT COUNT(*)
+        FROM tb_auth_login_history
+        WHERE company_code_snapshot = #{companyCode}
+          AND login_ip = #{loginIp}
+          AND login_result != 'SUCCESS'
+          AND created_at &gt;= #{since}
+    </select>
+
     <update id="recordLoginFailure">
         UPDATE tb_member
         SET login_failed_count = login_failed_count + 1,

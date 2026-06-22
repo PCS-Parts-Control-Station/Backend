@@ -11,6 +11,8 @@ import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.security.PcsPrincipal;
+import com.pcs.global.workspace.WorkspaceAccessValidator;
+import com.pcs.global.workspace.WorkspaceMapper;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,12 +26,14 @@ class PartFacadeTest {
 
     @Mock
     private PartService partService;
+    @Mock
+    private WorkspaceMapper workspaceMapper;
 
     private PartFacade partFacade;
 
     @BeforeEach
     void setUp() {
-        partFacade = new PartFacade(partService);
+        partFacade = new PartFacade(partService, new WorkspaceAccessValidator(workspaceMapper));
     }
 
     @Test

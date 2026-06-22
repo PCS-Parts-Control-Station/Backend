@@ -142,7 +142,7 @@ workspace-header
 
 ```text
 기준 정보 관리
-품목 분류 관리
+품목 분류
 CPU, RAM, GPU, SSD 등 품목 분류 기준을 관리합니다.
 [운영 현황]
 ```

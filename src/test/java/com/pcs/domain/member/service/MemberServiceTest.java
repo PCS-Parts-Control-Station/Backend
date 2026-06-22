@@ -1,14 +1,19 @@
 package com.pcs.domain.member.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.pcs.domain.member.dto.request.CreateMemberRequest;
+import com.pcs.domain.member.dto.response.CreateMemberResponse;
 import com.pcs.domain.member.dto.response.SearchMemberResponse;
 import com.pcs.domain.member.dto.response.TemporaryPasswordResponse;
+import com.pcs.domain.member.entity.Member;
 import com.pcs.domain.member.mapper.MemberMapper;
 import com.pcs.domain.member.type.MemberRole;
 import com.pcs.domain.member.type.PasswordStatus;
@@ -81,6 +86,26 @@ class MemberServiceTest {
         );
 
         assertEquals(ErrorCode.MEMBER_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
+    void createMember_usesRandomOneTimePasswordInsteadOfLoginId() {
+        CreateMemberRequest request = new CreateMemberRequest("작업자", "staff01", MemberRole.STAFF);
+        when(memberMapper.existsByLoginId(1L, "staff01")).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("encoded-password");
+        doAnswer(invocation -> {
+            Member member = invocation.getArgument(0);
+            member.setMemberId(2L);
+            return null;
+        }).when(memberMapper).insert(org.mockito.ArgumentMatchers.any(Member.class));
+        when(memberMapper.findResponseById(1L, 2L)).thenReturn(targetMember());
+
+        CreateMemberResponse response = memberService.createMember(1L, 10L, MemberRole.OWNER, request);
+
+        assertTrue(response.temporaryPassword().startsWith("PCS-"));
+        assertNotEquals("staff01", response.temporaryPassword());
+        assertEquals(2L, response.member().memberId());
+        verify(passwordEncoder).encode(response.temporaryPassword());
     }
 
     private SearchMemberResponse targetMember() {
