@@ -6,6 +6,8 @@ import com.pcs.domain.inspection.dto.request.CreateInspectionRevisionRequest;
 import com.pcs.domain.inspection.dto.response.CreateInspectionResponse;
 import com.pcs.domain.inspection.dto.response.InspectionHistoryDetailResponse;
 import com.pcs.domain.inspection.dto.response.InspectionWaitingDocumentDetailResponse;
+import com.pcs.domain.inspection.dto.response.SearchInspectionHistoryDocumentResponse;
+import com.pcs.domain.inspection.dto.response.SearchInspectionHistoryDocumentSummaryResponse;
 import com.pcs.domain.inspection.dto.response.SearchInspectionHistoryResponse;
 import com.pcs.domain.inspection.dto.response.SearchInspectionHistorySummaryResponse;
 import com.pcs.domain.inspection.dto.response.SearchWaitingInspectionDocumentResponse;
@@ -149,6 +151,36 @@ public class InspectionFacade {
                 keyword,
                 documentId,
                 unitId,
+                partId,
+                inspectionType,
+                result,
+                grade,
+                dateFrom,
+                dateTo,
+                page,
+                size,
+                limit
+        );
+    }
+
+    public PageResultDto<SearchInspectionHistoryDocumentResponse, SearchInspectionHistoryDocumentSummaryResponse> searchHistoryDocuments(
+            PcsPrincipal principal,
+            String pathCompanyCode,
+            String keyword,
+            Long partId,
+            InspectionType inspectionType,
+            InspectionResult result,
+            PartGrade grade,
+            LocalDate dateFrom,
+            LocalDate dateTo,
+            Integer page,
+            Integer size,
+            Integer limit
+    ) {
+        PcsPrincipal checkedPrincipal = validatePrincipal(principal, pathCompanyCode);
+        return inspectionService.searchHistoryDocuments(
+                checkedPrincipal.companyId(),
+                keyword,
                 partId,
                 inspectionType,
                 result,

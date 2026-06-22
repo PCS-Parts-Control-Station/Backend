@@ -1,8 +1,12 @@
 package com.pcs.domain.stock.api;
 
+import com.pcs.domain.part.type.PartGrade;
 import com.pcs.domain.stock.dto.request.CreateInboundDocumentRequest;
+import com.pcs.domain.stock.dto.request.CreateOutboundDocumentRequest;
 import com.pcs.domain.stock.dto.response.CancelStockDocumentResponse;
 import com.pcs.domain.stock.dto.response.CreateInboundDocumentResponse;
+import com.pcs.domain.stock.dto.response.CreateOutboundDocumentResponse;
+import com.pcs.domain.stock.dto.response.SearchOutboundCandidateResponse;
 import com.pcs.domain.stock.dto.response.SearchStockDocumentResponse;
 import com.pcs.domain.stock.dto.response.SearchStockDocumentSummaryResponse;
 import com.pcs.domain.stock.dto.response.StockDocumentDetailResponse;
@@ -11,10 +15,11 @@ import com.pcs.domain.stock.type.StockDocumentStatus;
 import com.pcs.domain.stock.type.StockDocumentType;
 import com.pcs.global.dto.ApiResultDto;
 import com.pcs.global.dto.PageResultDto;
+import com.pcs.global.security.PcsPrincipal;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import com.pcs.global.security.PcsPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,6 +47,8 @@ public class StockApiController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long partnerId,
             @RequestParam(required = false) StockDocumentStatus documentStatus,
+            @RequestParam(required = false) LocalDate dateFrom,
+            @RequestParam(required = false) LocalDate dateTo,
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
             @RequestParam(required = false) Integer limit
@@ -53,6 +60,34 @@ public class StockApiController {
                 keyword,
                 partnerId,
                 documentStatus,
+                dateFrom,
+                dateTo,
+                page,
+                size,
+                limit
+        );
+        return ResponseEntity.ok(ApiResultDto.ok(response));
+    }
+
+    @GetMapping("/workspaces/{companyCode}/stock/outbound-candidates")
+    public ResponseEntity<ApiResultDto<PageResultDto<SearchOutboundCandidateResponse, Void>>> searchOutboundCandidates(
+            @PathVariable String companyCode,
+            @AuthenticationPrincipal PcsPrincipal principal,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Long partId,
+            @RequestParam(required = false) PartGrade grade,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) Integer limit
+    ) {
+        PageResultDto<SearchOutboundCandidateResponse, Void> response = stockFacade.searchOutboundCandidates(
+                principal,
+                companyCode,
+                keyword,
+                categoryId,
+                partId,
+                grade,
                 page,
                 size,
                 limit
@@ -85,7 +120,7 @@ public class StockApiController {
                 companyCode,
                 documentId
         );
-        return ResponseEntity.ok(ApiResultDto.ok("입고 전표가 취소되었습니다.", response));
+        return ResponseEntity.ok(ApiResultDto.ok("입출고 전표가 취소되었습니다.", response));
     }
 
     @PostMapping("/workspaces/{companyCode}/stock/documents/inbounds")
@@ -101,5 +136,20 @@ public class StockApiController {
         );
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResultDto.ok("입고 전표가 등록되었습니다.", response));
+    }
+
+    @PostMapping("/workspaces/{companyCode}/stock/documents/outbounds")
+    public ResponseEntity<ApiResultDto<CreateOutboundDocumentResponse>> createOutboundDocument(
+            @PathVariable String companyCode,
+            @AuthenticationPrincipal PcsPrincipal principal,
+            @Valid @RequestBody CreateOutboundDocumentRequest request
+    ) {
+        CreateOutboundDocumentResponse response = stockFacade.createOutboundDocument(
+                principal,
+                companyCode,
+                request
+        );
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResultDto.ok("출고 전표가 등록되었습니다.", response));
     }
 }

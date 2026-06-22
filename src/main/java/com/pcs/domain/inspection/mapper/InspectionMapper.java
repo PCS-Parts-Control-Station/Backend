@@ -6,6 +6,8 @@ import com.pcs.domain.inspection.dto.response.InspectionHistoryDetailRow;
 import com.pcs.domain.inspection.dto.response.InspectionItemResultResponse;
 import com.pcs.domain.inspection.dto.response.InspectionPartUnitRow;
 import com.pcs.domain.inspection.dto.response.InspectionTemplateOptionRow;
+import com.pcs.domain.inspection.dto.response.SearchInspectionHistoryDocumentResponse;
+import com.pcs.domain.inspection.dto.response.SearchInspectionHistoryDocumentSummaryResponse;
 import com.pcs.domain.inspection.dto.response.SearchInspectionHistoryResponse;
 import com.pcs.domain.inspection.dto.response.SearchInspectionHistorySummaryResponse;
 import com.pcs.domain.inspection.dto.response.SearchWaitingInspectionDocumentResponse;
@@ -89,6 +91,19 @@ public interface InspectionMapper {
             @Param("offset") int offset
     );
 
+    List<SearchInspectionHistoryDocumentResponse> searchHistoryDocuments(
+            @Param("companyId") Long companyId,
+            @Param("keyword") String keyword,
+            @Param("partId") Long partId,
+            @Param("inspectionType") InspectionType inspectionType,
+            @Param("result") InspectionResult result,
+            @Param("grade") PartGrade grade,
+            @Param("dateFrom") LocalDateTime dateFrom,
+            @Param("dateTo") LocalDateTime dateTo,
+            @Param("size") int size,
+            @Param("offset") int offset
+    );
+
     long countHistories(
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,
@@ -102,11 +117,33 @@ public interface InspectionMapper {
             @Param("dateTo") LocalDateTime dateTo
     );
 
+    long countHistoryDocuments(
+            @Param("companyId") Long companyId,
+            @Param("keyword") String keyword,
+            @Param("partId") Long partId,
+            @Param("inspectionType") InspectionType inspectionType,
+            @Param("result") InspectionResult result,
+            @Param("grade") PartGrade grade,
+            @Param("dateFrom") LocalDateTime dateFrom,
+            @Param("dateTo") LocalDateTime dateTo
+    );
+
     SearchInspectionHistorySummaryResponse summarizeHistories(
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,
             @Param("documentId") Long documentId,
             @Param("unitId") Long unitId,
+            @Param("partId") Long partId,
+            @Param("inspectionType") InspectionType inspectionType,
+            @Param("result") InspectionResult result,
+            @Param("grade") PartGrade grade,
+            @Param("dateFrom") LocalDateTime dateFrom,
+            @Param("dateTo") LocalDateTime dateTo
+    );
+
+    SearchInspectionHistoryDocumentSummaryResponse summarizeHistoryDocuments(
+            @Param("companyId") Long companyId,
+            @Param("keyword") String keyword,
             @Param("partId") Long partId,
             @Param("inspectionType") InspectionType inspectionType,
             @Param("result") InspectionResult result,

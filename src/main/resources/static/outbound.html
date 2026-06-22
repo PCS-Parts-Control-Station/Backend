@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="PCS 입고 관리 화면입니다. 입고 전표를 조회하고 상세, 품목 요약, 취소 가능 여부를 확인합니다.">
-    <title>PCS | 입고 관리</title>
+    <meta name="description" content="PCS 출고 관리 화면입니다. 출고 전표를 조회하고 상세와 취소 상태를 확인합니다.">
+    <title>PCS | 출고 관리</title>
     <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,13 +15,13 @@
     <link rel="stylesheet" href="/css/components/components.css?20260618_layers">
     <link rel="stylesheet" href="/css/components/workflow.css?20260618_layers">
     <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
-    <link rel="stylesheet" href="/css/pages/inbound.css?20260622_merge">
+    <link rel="stylesheet" href="/css/pages/outbound.css?20260622_merge">
 </head>
-<body class="has-collapsible-sidebar page-inbound workspace-page">
+<body class="has-collapsible-sidebar page-outbound workspace-page">
 <div class="workspace-layout">
-    <div data-workspace-sidebar data-active-route="inbound"></div>
+    <div data-workspace-sidebar data-active-route="outbound"></div>
 
-    <main class="workspace-main inbound-management-page">
+    <main class="workspace-main outbound-page outbound-management-page">
         <header class="workspace-header">
             <button class="menu-toggle" type="button" data-sidebar-toggle aria-controls="workspace-sidebar" aria-expanded="false" aria-label="메뉴 열기">
                 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -31,36 +31,36 @@
                 </svg>
             </button>
             <div class="page-title-row">
-                <span class="page-icon page-icon-document" aria-hidden="true">
+                <span class="page-icon page-icon-document outbound-page-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24" focusable="false">
                         <path d="M4 11.5 12 16l8-4.5" />
                         <path d="M4 7.5 12 12l8-4.5L12 3 4 7.5Z" />
                         <path d="M4 7.5v9L12 21l8-4.5v-9" />
-                        <path d="M12 3v9" />
-                        <path d="m9 9 3 3 3-3" />
+                        <path d="M12 12v9" />
+                        <path d="m15 8 3-3 3 3" />
                     </svg>
                 </span>
                 <div>
                     <p class="page-kicker">재고 입출고 관리</p>
-                    <h1>입고 관리</h1>
-                    <p class="page-description">입고 전표를 조회하고 상세와 취소 상태를 확인합니다.</p>
+                    <h1>출고 관리</h1>
+                    <p class="page-description">출고 전표를 조회하고 상세와 취소 상태를 확인합니다.</p>
                 </div>
             </div>
             <div class="header-actions">
-                <a class="btn btn-secondary" data-route="outbound">출고 관리</a>
-                <a class="btn btn-primary" data-route="inbound/new">입고 등록</a>
+                <a class="btn btn-secondary" data-route="inbound">입고 관리</a>
+                <a class="btn btn-primary" data-route="outbound/new">출고 등록</a>
             </div>
         </header>
 
         <section class="content-grid">
             <div class="content-main">
-                <section class="filter-card document-filter-card" aria-labelledby="inbound-filter-title">
+                <section class="filter-card document-filter-card outbound-document-filter-card" aria-labelledby="outbound-filter-title">
                     <div>
-                        <h2 id="inbound-filter-title">입고 전표 검색</h2>
-                        <p>전표번호, 거래처, 품목명, 처리 상태로 입고 내역을 좁혀 봅니다.</p>
+                        <h2 id="outbound-filter-title">출고 전표 검색</h2>
+                        <p>전표번호, 거래처, 품목명, 처리 상태로 출고 내역을 조회합니다.</p>
                     </div>
-                    <!-- API: GET /api/workspaces/{companyCode}/stock/documents?documentType=INBOUND&keyword=&partnerId=&documentStatus= -->
-                    <form class="filter-form document-filter-form" action="#" method="get">
+                    <!-- API: GET /api/workspaces/{companyCode}/stock/documents?documentType=OUTBOUND&keyword=&partnerId=&documentStatus= -->
+                    <form class="filter-form document-filter-form outbound-document-filter-form" action="#" method="get">
                         <label>
                             <span>검색어</span>
                             <input type="search" name="keyword" placeholder="거래처, 품목명, 전표번호 검색">
@@ -85,25 +85,25 @@
 
                 <div class="created-document-notice" data-created-notice role="status" aria-live="polite" hidden></div>
 
-                <section class="table-card" aria-labelledby="inbound-list-title">
+                <section class="table-card" aria-labelledby="outbound-list-title">
                     <div class="table-header inline-summary-header">
                         <div>
-                            <h2 id="inbound-list-title">입고 전표 목록</h2>
-                            <p>거래처별 입고 묶음과 품목별 관리번호 생성 현황입니다.</p>
+                            <h2 id="outbound-list-title">출고 전표 목록</h2>
+                            <p>출고 완료 또는 취소된 전표와 품목 수량입니다.</p>
                         </div>
-                        <div class="list-summary-box" aria-label="입고 전표 목록 요약">
+                        <div class="list-summary-box" aria-label="출고 전표 목록 요약">
                             <dl class="list-summary">
                                 <div>
                                     <dt>전표</dt>
                                     <dd data-summary-documents>0</dd>
                                 </div>
                                 <div>
-                                    <dt>품목</dt>
+                                    <dt>수량</dt>
                                     <dd data-summary-quantity>0</dd>
                                 </div>
                                 <div>
-                                    <dt>대기</dt>
-                                    <dd data-summary-waiting>0</dd>
+                                    <dt>완료</dt>
+                                    <dd data-summary-completed>0</dd>
                                 </div>
                                 <div>
                                     <dt>취소</dt>
@@ -113,20 +113,20 @@
                         </div>
                     </div>
 
-                    <div class="data-table document-data-table" role="table" aria-label="입고 전표 목록">
+                    <div class="data-table document-data-table" role="table" aria-label="출고 전표 목록">
                         <div class="data-row document-data-row table-head" role="row">
                             <span role="columnheader">전표번호</span>
-                            <span role="columnheader">입고 내용</span>
+                            <span role="columnheader">출고 내용</span>
                             <span role="columnheader">수량</span>
                             <span role="columnheader">상태</span>
-                            <span role="columnheader">입고일</span>
+                            <span role="columnheader">출고일</span>
                             <span role="columnheader">관리</span>
                         </div>
-                        <div class="data-row document-data-row empty-data-row" role="row" data-inbound-empty hidden>
-                            <span role="cell" data-label="안내">입고 전표 목록을 불러오는 중입니다.</span>
+                        <div class="data-row document-data-row empty-data-row" role="row" data-outbound-empty hidden>
+                            <span role="cell" data-label="안내">출고 전표 목록을 불러오는 중입니다.</span>
                         </div>
                     </div>
-                    <div class="pagination-bar" data-inbound-pagination hidden>
+                    <div class="pagination-bar" data-outbound-pagination hidden>
                         <p data-page-info>0건</p>
                         <div class="pagination-actions">
                             <button type="button" data-page-prev>이전</button>
@@ -136,11 +136,11 @@
                 </section>
             </div>
 
-            <aside class="document-detail-drawer" data-inbound-detail-drawer aria-labelledby="inbound-detail-title" aria-hidden="true" tabindex="-1">
+            <aside class="document-detail-drawer" data-outbound-detail-drawer aria-labelledby="outbound-detail-title" aria-hidden="true" tabindex="-1">
                 <div class="panel-card document-detail-panel">
                     <div class="panel-title-bar">
                         <div>
-                            <h2 id="inbound-detail-title">입고 전표 상세</h2>
+                            <h2 id="outbound-detail-title">출고 전표 상세</h2>
                             <p data-detail-subtitle>전표를 선택해 주세요.</p>
                         </div>
                         <button class="panel-link-button" type="button" data-close-detail-panel>닫기</button>
@@ -159,7 +159,7 @@
                             <dd data-detail-partner>-</dd>
                         </div>
                         <div>
-                            <dt>입고일</dt>
+                            <dt>출고일</dt>
                             <dd data-detail-created-at>-</dd>
                         </div>
                         <div>
@@ -167,7 +167,7 @@
                             <dd data-detail-processed-by>-</dd>
                         </div>
                         <div>
-                            <dt>입고 사유</dt>
+                            <dt>출고 사유</dt>
                             <dd data-detail-reason>-</dd>
                         </div>
                         <div>
@@ -200,9 +200,9 @@
     <form class="part-modal-card" method="dialog">
         <div class="part-modal-header">
             <div>
-                <p class="page-kicker">입고 전표 취소</p>
+                <p class="page-kicker">출고 전표 취소</p>
                 <h2 id="cancel-modal-title">전표를 취소할까요?</h2>
-                <p>취소 후 원본 전표와 재고 이력은 보존되고, 입고 재고만 되돌립니다.</p>
+                <p>취소 후 원본 전표와 출고 이력은 보존되고, 출고된 관리번호 상태만 되돌립니다.</p>
             </div>
             <button class="modal-close-button" type="button" data-close-cancel-modal aria-label="닫기">
                 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -221,22 +221,22 @@
                 <dd data-cancel-partner>-</dd>
             </div>
             <div>
-                <dt>품목 수량</dt>
+                <dt>출고 수량</dt>
                 <dd data-cancel-quantity>-</dd>
             </div>
         </dl>
         <p class="field-message is-error modal-message" data-cancel-message role="status" aria-live="polite" hidden></p>
         <div class="part-modal-actions">
-            <button class="btn btn-secondary" type="button" data-close-cancel-modal>취소</button>
+            <button class="btn btn-secondary" type="button" data-close-cancel-modal>닫기</button>
             <button class="btn btn-danger" type="button" data-confirm-cancel>전표 취소</button>
         </div>
     </form>
 </dialog>
 
-<script src="/js/pcs-api.js?20260617_temp_password"></script>
+<script src="/js/pcs-api.js?20260526_1"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
-<script src="/js/workspace-layout.js?20260618_sidebar_breakpoint"></script>
+<script src="/js/workspace-layout.js?20260610_sidebar_collapse"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/inbound.js?20260619_non_modal_drawer"></script>
+<script src="/js/outbound.js?20260619_non_modal_drawer"></script>
 </body>
 </html>

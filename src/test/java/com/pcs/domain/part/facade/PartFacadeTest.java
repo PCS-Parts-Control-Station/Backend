@@ -2,6 +2,7 @@ package com.pcs.domain.part.facade;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -12,7 +13,6 @@ import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.security.PcsPrincipal;
 import com.pcs.global.workspace.WorkspaceAccessValidator;
-import com.pcs.global.workspace.WorkspaceMapper;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,18 +27,19 @@ class PartFacadeTest {
     @Mock
     private PartService partService;
     @Mock
-    private WorkspaceMapper workspaceMapper;
+    private WorkspaceAccessValidator workspaceAccessValidator;
 
     private PartFacade partFacade;
 
     @BeforeEach
     void setUp() {
-        partFacade = new PartFacade(partService, new WorkspaceAccessValidator(workspaceMapper));
+        partFacade = new PartFacade(partService, workspaceAccessValidator);
     }
 
     @Test
     void searchParts_success() {
         PcsPrincipal principal = principal(1L, 10L, "acme");
+        when(workspaceAccessValidator.validateAuthenticatedWorkspace(principal, "acme")).thenReturn(principal);
         when(partService.searchParts(1L, "RTX", null, true, 0, 20, null))
                 .thenReturn(PageResultDto.of(List.of(), 0, 20, 0, null));
 
@@ -50,6 +51,10 @@ class PartFacadeTest {
 
     @Test
     void searchParts_failsWhenAuthorizationMissing() {
+        doThrow(new BusinessException(ErrorCode.AUTH_REQUIRED))
+                .when(workspaceAccessValidator)
+                .validateAuthenticatedWorkspace(null, "acme");
+
         BusinessException exception = assertThrows(
                 BusinessException.class,
                 () -> partFacade.searchParts(null, "acme", null, null, true, 0, 20, null)
@@ -61,6 +66,9 @@ class PartFacadeTest {
     @Test
     void searchParts_failsWhenWorkspaceMismatch() {
         PcsPrincipal principal = principal(1L, 10L, "acme");
+        doThrow(new BusinessException(ErrorCode.AUTH_WORKSPACE_MISMATCH))
+                .when(workspaceAccessValidator)
+                .validateAuthenticatedWorkspace(principal, "other");
 
         BusinessException exception = assertThrows(
                 BusinessException.class,

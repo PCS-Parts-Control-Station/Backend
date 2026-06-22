@@ -76,6 +76,16 @@ public class PageController {
         return "forward:/inbound-register.html";
     }
 
+    @GetMapping("/w/{companyCode}/outbound")
+    public String outbound() {
+        return "forward:/outbound.html";
+    }
+
+    @GetMapping("/w/{companyCode}/outbound/new")
+    public String outboundRegister() {
+        return "forward:/outbound-register.html";
+    }
+
     @GetMapping("/w/{companyCode}/inspection")
     public String inspection() {
         return "forward:/inspection.html";

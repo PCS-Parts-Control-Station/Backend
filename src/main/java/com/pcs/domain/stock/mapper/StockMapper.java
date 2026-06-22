@@ -1,6 +1,8 @@
 package com.pcs.domain.stock.mapper;
 
+import com.pcs.domain.part.type.PartGrade;
 import com.pcs.domain.part.type.UnitStatus;
+import com.pcs.domain.stock.dto.response.SearchOutboundCandidateResponse;
 import com.pcs.domain.stock.dto.response.SearchStockDocumentResponse;
 import com.pcs.domain.stock.dto.response.SearchStockDocumentSummaryResponse;
 import com.pcs.domain.stock.dto.response.StockDocumentDetailRow;
@@ -14,6 +16,7 @@ import com.pcs.domain.stock.entity.StockPartner;
 import com.pcs.domain.stock.type.MovementStatus;
 import com.pcs.domain.stock.type.StockDocumentStatus;
 import com.pcs.domain.stock.type.StockDocumentType;
+import java.time.LocalDate;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -41,6 +44,8 @@ public interface StockMapper {
             @Param("keyword") String keyword,
             @Param("partnerId") Long partnerId,
             @Param("documentStatus") StockDocumentStatus documentStatus,
+            @Param("dateFrom") LocalDate dateFrom,
+            @Param("dateTo") LocalDate dateTo,
             @Param("size") int size,
             @Param("offset") int offset
     );
@@ -50,7 +55,9 @@ public interface StockMapper {
             @Param("documentType") StockDocumentType documentType,
             @Param("keyword") String keyword,
             @Param("partnerId") Long partnerId,
-            @Param("documentStatus") StockDocumentStatus documentStatus
+            @Param("documentStatus") StockDocumentStatus documentStatus,
+            @Param("dateFrom") LocalDate dateFrom,
+            @Param("dateTo") LocalDate dateTo
     );
 
     SearchStockDocumentSummaryResponse summarizeDocuments(
@@ -58,7 +65,33 @@ public interface StockMapper {
             @Param("documentType") StockDocumentType documentType,
             @Param("keyword") String keyword,
             @Param("partnerId") Long partnerId,
-            @Param("documentStatus") StockDocumentStatus documentStatus
+            @Param("documentStatus") StockDocumentStatus documentStatus,
+            @Param("dateFrom") LocalDate dateFrom,
+            @Param("dateTo") LocalDate dateTo
+    );
+
+    List<SearchOutboundCandidateResponse> searchOutboundCandidates(
+            @Param("companyId") Long companyId,
+            @Param("keyword") String keyword,
+            @Param("categoryId") Long categoryId,
+            @Param("partId") Long partId,
+            @Param("grade") PartGrade grade,
+            @Param("size") int size,
+            @Param("offset") int offset
+    );
+
+    long countOutboundCandidates(
+            @Param("companyId") Long companyId,
+            @Param("keyword") String keyword,
+            @Param("categoryId") Long categoryId,
+            @Param("partId") Long partId,
+            @Param("grade") PartGrade grade
+    );
+
+    List<SearchOutboundCandidateResponse> findOutboundCandidateUnitsForUpdate(
+            @Param("companyId") Long companyId,
+            @Param("partId") Long partId,
+            @Param("unitIds") List<Long> unitIds
     );
 
     StockDocumentDetailRow findDocumentDetail(
@@ -81,6 +114,11 @@ public interface StockMapper {
             @Param("documentId") Long documentId
     );
 
+    List<StockDocumentLineRow> findOriginalOutboundMovementsForUpdate(
+            @Param("companyId") Long companyId,
+            @Param("documentId") Long documentId
+    );
+
     List<StockDocumentUnitResponse> findDocumentUnits(
             @Param("companyId") Long companyId,
             @Param("documentId") Long documentId
@@ -91,6 +129,11 @@ public interface StockMapper {
     );
 
     int countInvalidInboundCancelUnits(
+            @Param("companyId") Long companyId,
+            @Param("documentId") Long documentId
+    );
+
+    int countInvalidOutboundCancelUnits(
             @Param("companyId") Long companyId,
             @Param("documentId") Long documentId
     );
@@ -150,6 +193,16 @@ public interface StockMapper {
     );
 
     void updatePartUnitStatusForInboundCancel(
+            @Param("companyId") Long companyId,
+            @Param("unitId") Long unitId
+    );
+
+    void updatePartUnitStatusForOutbound(
+            @Param("companyId") Long companyId,
+            @Param("unitId") Long unitId
+    );
+
+    void updatePartUnitStatusForOutboundCancel(
             @Param("companyId") Long companyId,
             @Param("unitId") Long unitId
     );

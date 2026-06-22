@@ -15,6 +15,8 @@ public record InspectionHistoryDetailRow(
         Long unitId,
         String internalSerialNo,
         Long partId,
+        Long categoryId,
+        String categoryName,
         String partName,
         String modelName,
         Long templateId,

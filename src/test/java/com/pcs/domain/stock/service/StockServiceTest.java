@@ -21,8 +21,12 @@ import com.pcs.domain.part.type.SalesStatus;
 import com.pcs.domain.part.type.UnitStatus;
 import com.pcs.domain.stock.dto.request.CreateInboundDocumentLineRequest;
 import com.pcs.domain.stock.dto.request.CreateInboundDocumentRequest;
+import com.pcs.domain.stock.dto.request.CreateOutboundDocumentLineRequest;
+import com.pcs.domain.stock.dto.request.CreateOutboundDocumentRequest;
 import com.pcs.domain.stock.dto.response.CancelStockDocumentResponse;
 import com.pcs.domain.stock.dto.response.CreateInboundDocumentResponse;
+import com.pcs.domain.stock.dto.response.CreateOutboundDocumentResponse;
+import com.pcs.domain.stock.dto.response.SearchOutboundCandidateResponse;
 import com.pcs.domain.stock.dto.response.SearchStockDocumentResponse;
 import com.pcs.domain.stock.dto.response.SearchStockDocumentSummaryResponse;
 import com.pcs.domain.stock.dto.response.StockDocumentDetailResponse;
@@ -97,7 +101,9 @@ class StockServiceTest {
                 StockDocumentType.INBOUND,
                 "RTX",
                 100L,
-                StockDocumentStatus.COMPLETED
+                StockDocumentStatus.COMPLETED,
+                null,
+                null
         )).thenReturn(1L);
         when(stockMapper.searchDocuments(
                 companyId,
@@ -105,6 +111,8 @@ class StockServiceTest {
                 "RTX",
                 100L,
                 StockDocumentStatus.COMPLETED,
+                null,
+                null,
                 20,
                 0
         )).thenReturn(List.of(row));
@@ -113,7 +121,9 @@ class StockServiceTest {
                 StockDocumentType.INBOUND,
                 "RTX",
                 100L,
-                StockDocumentStatus.COMPLETED
+                StockDocumentStatus.COMPLETED,
+                null,
+                null
         )).thenReturn(summary);
 
         PageResultDto<SearchStockDocumentResponse, SearchStockDocumentSummaryResponse> response =
@@ -125,6 +135,8 @@ class StockServiceTest {
                         StockDocumentStatus.COMPLETED,
                         null,
                         null,
+                        null,
+                        null,
                         null
                 );
 
@@ -133,6 +145,139 @@ class StockServiceTest {
         assertEquals(row, response.content().get(0));
         assertEquals(summary, response.summary());
         assertEquals(20, response.size());
+    }
+
+    @Test
+    void searchDocuments_success_whenOutboundManagementFilter() {
+        Long companyId = 1L;
+        SearchStockDocumentResponse row = new SearchStockDocumentResponse(
+                600L,
+                "OUT-20260619-23456789ABCDEFGH",
+                StockDocumentType.OUTBOUND,
+                StockDocumentStatus.COMPLETED,
+                200L,
+                "서울 고객사",
+                "RAM DDR4 16GB",
+                1,
+                2,
+                "관리자",
+                LocalDateTime.of(2026, 6, 19, 10, 0)
+        );
+        SearchStockDocumentSummaryResponse summary = new SearchStockDocumentSummaryResponse(
+                1L,
+                2L,
+                0L,
+                2L
+        );
+        LocalDate dateFrom = LocalDate.of(2026, 6, 1);
+        LocalDate dateTo = LocalDate.of(2026, 6, 30);
+
+        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(stockMapper.countDocuments(
+                companyId,
+                StockDocumentType.OUTBOUND,
+                "RAM",
+                200L,
+                StockDocumentStatus.COMPLETED,
+                dateFrom,
+                dateTo
+        )).thenReturn(1L);
+        when(stockMapper.searchDocuments(
+                companyId,
+                StockDocumentType.OUTBOUND,
+                "RAM",
+                200L,
+                StockDocumentStatus.COMPLETED,
+                dateFrom,
+                dateTo,
+                10,
+                0
+        )).thenReturn(List.of(row));
+        when(stockMapper.summarizeDocuments(
+                companyId,
+                StockDocumentType.OUTBOUND,
+                "RAM",
+                200L,
+                StockDocumentStatus.COMPLETED,
+                dateFrom,
+                dateTo
+        )).thenReturn(summary);
+
+        PageResultDto<SearchStockDocumentResponse, SearchStockDocumentSummaryResponse> response =
+                stockService.searchDocuments(
+                        companyId,
+                        StockDocumentType.OUTBOUND,
+                        " RAM ",
+                        200L,
+                        StockDocumentStatus.COMPLETED,
+                        dateFrom,
+                        dateTo,
+                        0,
+                        10,
+                        null
+                );
+
+        assertEquals(1, response.totalElements());
+        assertEquals(row, response.content().get(0));
+        assertEquals(summary, response.summary());
+        assertEquals(10, response.size());
+    }
+
+    @Test
+    void searchOutboundCandidates_success() {
+        Long companyId = 1L;
+        SearchOutboundCandidateResponse row = new SearchOutboundCandidateResponse(
+                10000L,
+                "RAM-DDR4-16G-20260618-0001",
+                null,
+                1000L,
+                10L,
+                "RAM",
+                "RAM DDR4 16GB",
+                "PC4-25600",
+                "Samsung",
+                "RAM-DDR4-16G",
+                UnitStatus.IN_STOCK,
+                InspectionStatus.COMPLETED,
+                PartGrade.A,
+                SalesStatus.AVAILABLE
+        );
+
+        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(stockMapper.countOutboundCandidates(
+                companyId,
+                "RAM",
+                10L,
+                1000L,
+                PartGrade.A
+        )).thenReturn(1L);
+        when(stockMapper.searchOutboundCandidates(
+                companyId,
+                "RAM",
+                10L,
+                1000L,
+                PartGrade.A,
+                10,
+                20
+        )).thenReturn(List.of(row));
+
+        PageResultDto<SearchOutboundCandidateResponse, Void> response = stockService.searchOutboundCandidates(
+                companyId,
+                " RAM ",
+                10L,
+                1000L,
+                PartGrade.A,
+                2,
+                10,
+                null
+        );
+
+        assertEquals(1, response.totalElements());
+        assertEquals(1, response.content().size());
+        assertEquals(row, response.content().get(0));
+        assertEquals(2, response.page());
+        assertEquals(10, response.size());
+        assertEquals(1, response.totalPages());
     }
 
     @Test
@@ -248,6 +393,65 @@ class StockServiceTest {
         verify(stockMapper).insertMovementUnitStatusChange(901L, 10001L, UnitStatus.IN_STOCK, UnitStatus.CANCELED);
         verify(stockMapper).updatePartUnitStatusForInboundCancel(companyId, 10000L);
         verify(stockMapper).updatePartUnitStatusForInboundCancel(companyId, 10001L);
+        verify(stockMapper).updateDocumentMovementStatus(companyId, documentId, MovementStatus.CANCELED);
+        verify(stockMapper).updateDocumentStatus(companyId, documentId, StockDocumentStatus.CANCELED);
+    }
+
+    @Test
+    void cancelDocument_success_whenOutboundDocument() {
+        Long companyId = 1L;
+        Long memberId = 10L;
+        Long documentId = 600L;
+        StockDocumentDetailRow document = new StockDocumentDetailRow(
+                documentId,
+                "OUT-20260618-23456789ABCDEFGH",
+                StockDocumentType.OUTBOUND,
+                StockDocumentStatus.COMPLETED,
+                200L,
+                "서울 고객사",
+                "출고",
+                "관리자",
+                LocalDateTime.of(2026, 6, 18, 10, 0),
+                0,
+                0
+        );
+        StockDocumentLineRow movement = new StockDocumentLineRow(
+                950L,
+                1000L,
+                "RAM DDR4 16GB",
+                "PC4-25600",
+                "RAM-DDR4-16G",
+                MovementType.OUTBOUND,
+                MovementStatus.COMPLETED,
+                2,
+                5,
+                3,
+                "출고 라인"
+        );
+
+        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(stockMapper.findDocumentForUpdate(companyId, documentId)).thenReturn(document);
+        when(stockMapper.findOriginalOutboundMovementsForUpdate(companyId, documentId)).thenReturn(List.of(movement));
+        when(stockMapper.countInvalidOutboundCancelUnits(companyId, documentId)).thenReturn(0);
+        when(stockMapper.findPartStockQuantityForUpdate(companyId, 1000L)).thenReturn(3);
+        when(stockMapper.findMovementUnitIds(950L)).thenReturn(List.of(10000L, 10001L));
+        doAnswer(invocation -> {
+            StockMovement cancelMovement = invocation.getArgument(0);
+            cancelMovement.setMovementId(951L);
+            return null;
+        }).when(stockMapper).insertMovement(any(StockMovement.class));
+
+        CancelStockDocumentResponse response = stockService.cancelDocument(companyId, memberId, documentId);
+
+        assertEquals(documentId, response.documentId());
+        assertEquals(StockDocumentStatus.CANCELED, response.documentStatus());
+        assertEquals(1, response.canceledMovementCount());
+        assertEquals(2, response.canceledUnitCount());
+        verify(stockMapper).updatePartStockQuantity(companyId, 1000L, 5);
+        verify(stockMapper).insertMovementUnitStatusChange(951L, 10000L, UnitStatus.OUTBOUND, UnitStatus.IN_STOCK);
+        verify(stockMapper).insertMovementUnitStatusChange(951L, 10001L, UnitStatus.OUTBOUND, UnitStatus.IN_STOCK);
+        verify(stockMapper).updatePartUnitStatusForOutboundCancel(companyId, 10000L);
+        verify(stockMapper).updatePartUnitStatusForOutboundCancel(companyId, 10001L);
         verify(stockMapper).updateDocumentMovementStatus(companyId, documentId, MovementStatus.CANCELED);
         verify(stockMapper).updateDocumentStatus(companyId, documentId, StockDocumentStatus.CANCELED);
     }
@@ -452,6 +656,321 @@ class StockServiceTest {
         verify(stockMapper).updatePartStockQuantity(companyId, partId, 9);
         verify(stockMapper, times(2)).insertPartUnit(any(StockPartUnit.class));
         verify(stockMapper, times(2)).insertMovementUnit(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void createOutboundDocument_success_withSelectedUnits() {
+        Long companyId = 1L;
+        Long memberId = 10L;
+        Long partnerId = 200L;
+        Long partId = 1000L;
+
+        CreateOutboundDocumentRequest request = new CreateOutboundDocumentRequest(
+                partnerId,
+                "판매 출고",
+                List.of(new CreateOutboundDocumentLineRequest(
+                        partId,
+                        List.of(10000L, 10001L),
+                        "RAM 출고"
+                ))
+        );
+
+        StockPartner partner = new StockPartner();
+        partner.setPartnerId(partnerId);
+        partner.setPartnerRole(PartnerRole.CUSTOMER);
+        partner.setActive(true);
+
+        StockPart part = new StockPart();
+        part.setPartId(partId);
+        part.setPartCode("RAM-DDR4-16G");
+
+        SearchOutboundCandidateResponse firstUnit = new SearchOutboundCandidateResponse(
+                10000L,
+                "RAM-DDR4-16G-20260618-0001",
+                null,
+                partId,
+                10L,
+                "RAM",
+                "RAM DDR4 16GB",
+                "PC4-25600",
+                "Samsung",
+                "RAM-DDR4-16G",
+                UnitStatus.IN_STOCK,
+                InspectionStatus.COMPLETED,
+                PartGrade.A,
+                SalesStatus.AVAILABLE
+        );
+        SearchOutboundCandidateResponse secondUnit = new SearchOutboundCandidateResponse(
+                10001L,
+                "RAM-DDR4-16G-20260618-0002",
+                null,
+                partId,
+                10L,
+                "RAM",
+                "RAM DDR4 16GB",
+                "PC4-25600",
+                "Samsung",
+                "RAM-DDR4-16G",
+                UnitStatus.IN_STOCK,
+                InspectionStatus.COMPLETED,
+                PartGrade.A,
+                SalesStatus.AVAILABLE
+        );
+
+        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(stockMapper.findPartner(companyId, partnerId)).thenReturn(partner);
+        when(stockMapper.existsDocumentNo(anyString())).thenReturn(false);
+        when(stockMapper.findPart(companyId, partId)).thenReturn(part);
+        when(stockMapper.findPartStockQuantityForUpdate(companyId, partId)).thenReturn(5);
+        when(stockMapper.findOutboundCandidateUnitsForUpdate(
+                companyId,
+                partId,
+                List.of(10000L, 10001L)
+        )).thenReturn(List.of(firstUnit, secondUnit));
+
+        doAnswer(invocation -> {
+            StockDocument document = invocation.getArgument(0);
+            document.setDocumentId(600L);
+            return null;
+        }).when(stockMapper).insertDocument(any(StockDocument.class));
+
+        doAnswer(invocation -> {
+            StockMovement movement = invocation.getArgument(0);
+            movement.setMovementId(950L);
+            return null;
+        }).when(stockMapper).insertMovement(any(StockMovement.class));
+
+        CreateOutboundDocumentResponse response = stockService.createOutboundDocument(companyId, memberId, request);
+
+        String expectedDateToken = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+        assertEquals(600L, response.documentId());
+        assertTrue(response.documentNo().matches("OUT-" + expectedDateToken + "-[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{16}"));
+        assertEquals(partnerId, response.partnerId());
+        assertEquals(1, response.lineCount());
+        assertEquals(2, response.totalQuantity());
+        assertEquals(2, response.outboundUnitCount());
+
+        verify(stockMapper).updatePartStockQuantity(companyId, partId, 3);
+        verify(stockMapper).insertMovementUnitStatusChange(950L, 10000L, UnitStatus.IN_STOCK, UnitStatus.OUTBOUND);
+        verify(stockMapper).insertMovementUnitStatusChange(950L, 10001L, UnitStatus.IN_STOCK, UnitStatus.OUTBOUND);
+        verify(stockMapper).updatePartUnitStatusForOutbound(companyId, 10000L);
+        verify(stockMapper).updatePartUnitStatusForOutbound(companyId, 10001L);
+    }
+
+    @Test
+    void createOutboundDocument_fail_whenUnitIdsDuplicated() {
+        Long companyId = 1L;
+        Long memberId = 10L;
+        Long partnerId = 200L;
+
+        CreateOutboundDocumentRequest request = new CreateOutboundDocumentRequest(
+                partnerId,
+                null,
+                List.of(new CreateOutboundDocumentLineRequest(
+                        1000L,
+                        List.of(10000L, 10000L),
+                        null
+                ))
+        );
+
+        StockPartner partner = new StockPartner();
+        partner.setPartnerId(partnerId);
+        partner.setPartnerRole(PartnerRole.CUSTOMER);
+        partner.setActive(true);
+
+        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(stockMapper.findPartner(companyId, partnerId)).thenReturn(partner);
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> stockService.createOutboundDocument(companyId, memberId, request)
+        );
+
+        assertEquals(ErrorCode.INVALID_INPUT_VALUE, exception.getErrorCode());
+        verify(stockMapper, never()).insertDocument(any(StockDocument.class));
+    }
+
+    @Test
+    void createOutboundDocument_fail_whenPartnerRoleIsSupplier() {
+        Long companyId = 1L;
+        Long memberId = 10L;
+        Long partnerId = 200L;
+
+        CreateOutboundDocumentRequest request = new CreateOutboundDocumentRequest(
+                partnerId,
+                null,
+                List.of(new CreateOutboundDocumentLineRequest(
+                        1000L,
+                        List.of(10000L),
+                        null
+                ))
+        );
+
+        StockPartner partner = new StockPartner();
+        partner.setPartnerId(partnerId);
+        partner.setPartnerRole(PartnerRole.SUPPLIER);
+        partner.setActive(true);
+
+        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(stockMapper.findPartner(companyId, partnerId)).thenReturn(partner);
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> stockService.createOutboundDocument(companyId, memberId, request)
+        );
+
+        assertEquals(ErrorCode.PARTNER_INACTIVE, exception.getErrorCode());
+        verify(stockMapper, never()).insertDocument(any(StockDocument.class));
+    }
+
+    @Test
+    void createOutboundDocument_fail_whenStockQuantityNotEnough() {
+        Long companyId = 1L;
+        Long memberId = 10L;
+        Long partnerId = 200L;
+        Long partId = 1000L;
+
+        CreateOutboundDocumentRequest request = new CreateOutboundDocumentRequest(
+                partnerId,
+                "판매 출고",
+                List.of(new CreateOutboundDocumentLineRequest(
+                        partId,
+                        List.of(10000L, 10001L),
+                        null
+                ))
+        );
+
+        StockPartner partner = new StockPartner();
+        partner.setPartnerId(partnerId);
+        partner.setPartnerRole(PartnerRole.CUSTOMER);
+        partner.setActive(true);
+
+        StockPart part = new StockPart();
+        part.setPartId(partId);
+        part.setPartCode("RAM-DDR4-16G");
+
+        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(stockMapper.findPartner(companyId, partnerId)).thenReturn(partner);
+        when(stockMapper.existsDocumentNo(anyString())).thenReturn(false);
+        when(stockMapper.findPart(companyId, partId)).thenReturn(part);
+        when(stockMapper.findPartStockQuantityForUpdate(companyId, partId)).thenReturn(1);
+        doAnswer(invocation -> {
+            StockDocument document = invocation.getArgument(0);
+            document.setDocumentId(601L);
+            return null;
+        }).when(stockMapper).insertDocument(any(StockDocument.class));
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> stockService.createOutboundDocument(companyId, memberId, request)
+        );
+
+        assertEquals(ErrorCode.STOCK_NOT_ENOUGH, exception.getErrorCode());
+        verify(stockMapper, never()).insertMovement(any(StockMovement.class));
+        verify(stockMapper, never()).updatePartStockQuantity(anyLong(), anyLong(), anyInt());
+    }
+
+    @Test
+    void createOutboundDocument_fail_whenSelectedUnitIsNotOutboundCandidate() {
+        Long companyId = 1L;
+        Long memberId = 10L;
+        Long partnerId = 200L;
+        Long partId = 1000L;
+
+        CreateOutboundDocumentRequest request = new CreateOutboundDocumentRequest(
+                partnerId,
+                "판매 출고",
+                List.of(new CreateOutboundDocumentLineRequest(
+                        partId,
+                        List.of(10000L, 10001L),
+                        null
+                ))
+        );
+
+        StockPartner partner = new StockPartner();
+        partner.setPartnerId(partnerId);
+        partner.setPartnerRole(PartnerRole.CUSTOMER);
+        partner.setActive(true);
+
+        StockPart part = new StockPart();
+        part.setPartId(partId);
+        part.setPartCode("RAM-DDR4-16G");
+
+        SearchOutboundCandidateResponse candidate = new SearchOutboundCandidateResponse(
+                10000L,
+                "RAM-DDR4-16G-20260618-0001",
+                null,
+                partId,
+                10L,
+                "RAM",
+                "RAM DDR4 16GB",
+                "PC4-25600",
+                "Samsung",
+                "RAM-DDR4-16G",
+                UnitStatus.IN_STOCK,
+                InspectionStatus.COMPLETED,
+                PartGrade.A,
+                SalesStatus.AVAILABLE
+        );
+
+        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(stockMapper.findPartner(companyId, partnerId)).thenReturn(partner);
+        when(stockMapper.existsDocumentNo(anyString())).thenReturn(false);
+        when(stockMapper.findPart(companyId, partId)).thenReturn(part);
+        when(stockMapper.findPartStockQuantityForUpdate(companyId, partId)).thenReturn(2);
+        when(stockMapper.findOutboundCandidateUnitsForUpdate(
+                companyId,
+                partId,
+                List.of(10000L, 10001L)
+        )).thenReturn(List.of(candidate));
+        doAnswer(invocation -> {
+            StockDocument document = invocation.getArgument(0);
+            document.setDocumentId(602L);
+            return null;
+        }).when(stockMapper).insertDocument(any(StockDocument.class));
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> stockService.createOutboundDocument(companyId, memberId, request)
+        );
+
+        assertEquals(ErrorCode.STOCK_NOT_ENOUGH, exception.getErrorCode());
+        verify(stockMapper, never()).insertMovement(any(StockMovement.class));
+        verify(stockMapper, never()).updatePartStockQuantity(anyLong(), anyLong(), anyInt());
+    }
+
+    @Test
+    void createOutboundDocument_fail_whenDocumentNoRandomRetryExhausted() {
+        Long companyId = 1L;
+        Long memberId = 10L;
+        Long partnerId = 200L;
+
+        CreateOutboundDocumentRequest request = new CreateOutboundDocumentRequest(
+                partnerId,
+                null,
+                List.of(new CreateOutboundDocumentLineRequest(
+                        1000L,
+                        List.of(10000L),
+                        null
+                ))
+        );
+
+        StockPartner partner = new StockPartner();
+        partner.setPartnerId(partnerId);
+        partner.setPartnerRole(PartnerRole.BOTH);
+        partner.setActive(true);
+
+        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
+        when(stockMapper.findPartner(companyId, partnerId)).thenReturn(partner);
+        when(stockMapper.existsDocumentNo(anyString())).thenReturn(true);
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> stockService.createOutboundDocument(companyId, memberId, request)
+        );
+
+        assertEquals(ErrorCode.STOCK_DOCUMENT_NO_DUPLICATED, exception.getErrorCode());
+        verify(stockMapper, never()).insertDocument(any(StockDocument.class));
     }
 
     @Test

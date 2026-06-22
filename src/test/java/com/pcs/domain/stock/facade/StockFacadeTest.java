@@ -10,8 +10,11 @@ import static org.mockito.Mockito.when;
 import com.pcs.domain.member.type.MemberRole;
 import com.pcs.domain.stock.dto.request.CreateInboundDocumentLineRequest;
 import com.pcs.domain.stock.dto.request.CreateInboundDocumentRequest;
+import com.pcs.domain.stock.dto.request.CreateOutboundDocumentLineRequest;
+import com.pcs.domain.stock.dto.request.CreateOutboundDocumentRequest;
 import com.pcs.domain.stock.dto.response.CancelStockDocumentResponse;
 import com.pcs.domain.stock.dto.response.CreateInboundDocumentResponse;
+import com.pcs.domain.stock.dto.response.CreateOutboundDocumentResponse;
 import com.pcs.domain.stock.dto.response.SearchStockDocumentResponse;
 import com.pcs.domain.stock.dto.response.SearchStockDocumentSummaryResponse;
 import com.pcs.domain.stock.dto.response.StockDocumentDetailResponse;
@@ -26,6 +29,7 @@ import com.pcs.global.security.PcsPrincipal;
 import com.pcs.global.workspace.WorkspaceAccessValidator;
 import com.pcs.global.workspace.WorkspaceMapper;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -81,6 +85,8 @@ class StockFacadeTest {
                 "RTX",
                 100L,
                 StockDocumentStatus.COMPLETED,
+                null,
+                null,
                 0,
                 20,
                 null
@@ -94,6 +100,8 @@ class StockFacadeTest {
                         "RTX",
                         100L,
                         StockDocumentStatus.COMPLETED,
+                        null,
+                        null,
                         0,
                         20,
                         null
@@ -106,8 +114,79 @@ class StockFacadeTest {
                 "RTX",
                 100L,
                 StockDocumentStatus.COMPLETED,
+                null,
+                null,
                 0,
                 20,
+                null
+        );
+    }
+
+    @Test
+    void searchDocuments_success_whenOutboundManagementFilter() {
+        SearchStockDocumentResponse row = new SearchStockDocumentResponse(
+                600L,
+                "OUT-20260619-23456789ABCDEFGH",
+                StockDocumentType.OUTBOUND,
+                StockDocumentStatus.COMPLETED,
+                200L,
+                "서울 고객사",
+                "RAM DDR4 16GB",
+                1,
+                2,
+                "관리자",
+                LocalDateTime.of(2026, 6, 19, 10, 0)
+        );
+        SearchStockDocumentSummaryResponse summary = new SearchStockDocumentSummaryResponse(
+                1L,
+                2L,
+                0L,
+                2L
+        );
+        PageResultDto<SearchStockDocumentResponse, SearchStockDocumentSummaryResponse> expected =
+                PageResultDto.of(List.of(row), 0, 10, 1, summary);
+        LocalDate dateFrom = LocalDate.of(2026, 6, 1);
+        LocalDate dateTo = LocalDate.of(2026, 6, 30);
+
+        when(stockService.searchDocuments(
+                1L,
+                StockDocumentType.OUTBOUND,
+                "RAM",
+                200L,
+                StockDocumentStatus.COMPLETED,
+                dateFrom,
+                dateTo,
+                0,
+                10,
+                null
+        )).thenReturn(expected);
+
+        PageResultDto<SearchStockDocumentResponse, SearchStockDocumentSummaryResponse> response =
+                stockFacade.searchDocuments(
+                        principal(1L, 10L, "acme"),
+                        "acme",
+                        StockDocumentType.OUTBOUND,
+                        "RAM",
+                        200L,
+                        StockDocumentStatus.COMPLETED,
+                        dateFrom,
+                        dateTo,
+                        0,
+                        10,
+                        null
+                );
+
+        assertSame(expected, response);
+        verify(stockService).searchDocuments(
+                1L,
+                StockDocumentType.OUTBOUND,
+                "RAM",
+                200L,
+                StockDocumentStatus.COMPLETED,
+                dateFrom,
+                dateTo,
+                0,
+                10,
                 null
         );
     }
@@ -149,12 +228,12 @@ class StockFacadeTest {
                 2
         );
 
-        when(stockService.cancelInboundDocument(1L, 10L, 500L)).thenReturn(expected);
+        when(stockService.cancelDocument(1L, 10L, 500L)).thenReturn(expected);
 
         CancelStockDocumentResponse response = stockFacade.cancelDocument(principal(1L, 10L, "acme"), "acme", 500L);
 
         assertSame(expected, response);
-        verify(stockService).cancelInboundDocument(1L, 10L, 500L);
+        verify(stockService).cancelDocument(1L, 10L, 500L);
     }
 
     @Test
@@ -186,7 +265,35 @@ class StockFacadeTest {
     }
 
     @Test
-    void createInboundDocument_fail_whenAuthorizationMissing() {
+    void createOutboundDocument_success() {
+        CreateOutboundDocumentRequest request = new CreateOutboundDocumentRequest(
+                200L,
+                "판매 출고",
+                List.of(new CreateOutboundDocumentLineRequest(1000L, List.of(10000L, 10001L), "라인"))
+        );
+        CreateOutboundDocumentResponse expected = new CreateOutboundDocumentResponse(
+                2L,
+                "OUT-20260619-23456789ABCDEFGH",
+                200L,
+                1,
+                2,
+                2
+        );
+
+        when(stockService.createOutboundDocument(1L, 10L, request)).thenReturn(expected);
+
+        CreateOutboundDocumentResponse response = stockFacade.createOutboundDocument(
+                principal(1L, 10L, "acme"),
+                "acme",
+                request
+        );
+
+        assertSame(expected, response);
+        verify(stockService).createOutboundDocument(1L, 10L, request);
+    }
+
+    @Test
+    void createInboundDocument_fail_whenPrincipalMissing() {
         CreateInboundDocumentRequest request = new CreateInboundDocumentRequest(
                 100L,
                 null,
@@ -230,6 +337,25 @@ class StockFacadeTest {
         BusinessException exception = assertThrows(
                 BusinessException.class,
                 () -> stockFacade.createInboundDocument(principal(1L, 10L, "acme"), "acme", request)
+        );
+
+        assertEquals(ErrorCode.STOCK_DOCUMENT_NO_DUPLICATED, exception.getErrorCode());
+    }
+
+    @Test
+    void createOutboundDocument_mapsDuplicateDocumentNoException() {
+        CreateOutboundDocumentRequest request = new CreateOutboundDocumentRequest(
+                200L,
+                null,
+                List.of(new CreateOutboundDocumentLineRequest(1000L, List.of(10000L), null))
+        );
+        when(stockService.createOutboundDocument(any(), any(), any())).thenThrow(
+                new DuplicateKeyException("duplicate", new RuntimeException("uk_stock_document_company_document_no"))
+        );
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> stockFacade.createOutboundDocument(principal(1L, 10L, "acme"), "acme", request)
         );
 
         assertEquals(ErrorCode.STOCK_DOCUMENT_NO_DUPLICATED, exception.getErrorCode());

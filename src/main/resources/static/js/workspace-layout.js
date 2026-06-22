@@ -4,8 +4,9 @@
     const sidebarPlaceholder = document.querySelector("[data-workspace-sidebar]");
     const pageActiveRoute = sidebarPlaceholder?.dataset.activeRoute || "";
     const isCollapsibleSidebarPage = document.body.classList.contains("has-collapsible-sidebar");
+    const desktopSidebarQuery = window.matchMedia("(min-width: 1521px)");
 
-    if (isCollapsibleSidebarPage) {
+    if (isCollapsibleSidebarPage && !desktopSidebarQuery.matches) {
         document.body.classList.add("sidebar-collapsed");
     }
 
@@ -14,8 +15,10 @@
 
     const STAFF_ROUTE_PERMISSIONS = {
         inbound: "STAFF_INBOUND",
+        "inbound/new": "STAFF_INBOUND",
         inspection: "STAFF_INSPECTION",
         outbound: "STAFF_OUTBOUND",
+        "outbound/new": "STAFF_OUTBOUND",
         parts: "STAFF_PART_CREATE",
         categories: "STAFF_CATEGORY_MANAGE",
         "inspection/templates": "STAFF_INSPECTION",
@@ -106,8 +109,12 @@
 
         document.querySelectorAll(".sidebar-nav [data-route]").forEach((link) => {
             const route = link.dataset.route;
+            const routeRoot = route.split("/")[0];
+            const activeRoot = activeSidebarRoute.split("/")[0];
             const isActive = route === activeSidebarRoute ||
-                             (route === "inbound" && currentPath.includes("/inbound/"));
+                             (routeRoot === activeRoot && ["inbound", "outbound"].includes(routeRoot)) ||
+                             (routeRoot === "inbound" && currentPath.includes("/inbound/")) ||
+                             (routeRoot === "outbound" && currentPath.includes("/outbound/"));
             link.classList.toggle("active", isActive);
             if (isActive) {
                 link.setAttribute("aria-current", "page");
@@ -180,10 +187,14 @@
             return;
         }
 
+        const isDesktop = () => desktopSidebarQuery.matches;
+
         const syncToggleState = () => {
-            const isOpen = body.classList.contains("sidebar-open");
-            toggle.setAttribute("aria-expanded", String(isOpen));
-            toggle.setAttribute("aria-label", isOpen ? "메뉴 닫기" : "메뉴 열기");
+            const isExpanded = isDesktop()
+                ? !body.classList.contains("sidebar-collapsed")
+                : body.classList.contains("sidebar-open");
+            toggle.setAttribute("aria-expanded", String(isExpanded));
+            toggle.setAttribute("aria-label", isExpanded ? "메뉴 닫기" : "메뉴 열기");
         };
 
         const animateSidebar = () => {
@@ -205,7 +216,7 @@
             body.style.removeProperty("--sidebar-scrollbar-compensation");
         };
 
-        const closeMenu = (animate = true) => {
+        const closeMobileMenu = (animate = true) => {
             if (animate) {
                 animateSidebar();
             }
@@ -215,7 +226,7 @@
             syncToggleState();
         };
 
-        const openMenu = () => {
+        const openMobileMenu = () => {
             animateSidebar();
             lockPageScroll();
             body.classList.remove("sidebar-collapsed");
@@ -223,23 +234,38 @@
             syncToggleState();
         };
 
+        const applyViewportMode = () => {
+            body.classList.remove("sidebar-open");
+            unlockPageScroll();
+            body.classList.toggle("sidebar-collapsed", !isDesktop());
+            syncToggleState();
+        };
+
         toggle.addEventListener("click", () => {
-            if (body.classList.contains("sidebar-open")) {
-                closeMenu();
+            if (isDesktop()) {
+                animateSidebar();
+                body.classList.toggle("sidebar-collapsed");
+                syncToggleState();
                 return;
             }
-            openMenu();
+
+            if (body.classList.contains("sidebar-open")) {
+                closeMobileMenu();
+                return;
+            }
+            openMobileMenu();
         });
 
-        backdrop.addEventListener("click", () => closeMenu());
+        backdrop.addEventListener("click", () => closeMobileMenu());
 
         document.addEventListener("keydown", (event) => {
-            if (event.key === "Escape" && body.classList.contains("sidebar-open")) {
-                closeMenu();
+            if (event.key === "Escape" && !isDesktop() && body.classList.contains("sidebar-open")) {
+                closeMobileMenu();
             }
         });
 
-        closeMenu(false);
+        desktopSidebarQuery.addEventListener("change", applyViewportMode);
+        applyViewportMode();
     };
 
     const bindAccountActions = () => {

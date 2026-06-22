@@ -54,6 +54,12 @@
         <if test="documentStatus != null">
           AND d.document_status = #{documentStatus}
         </if>
+        <if test="dateFrom != null">
+          AND DATE(d.created_at) <![CDATA[>=]]> #{dateFrom}
+        </if>
+        <if test="dateTo != null">
+          AND DATE(d.created_at) <![CDATA[<=]]> #{dateTo}
+        </if>
         <if test="keyword != null and keyword != ''">
           AND (
               d.document_no LIKE CONCAT('%', #{keyword}, '%')
@@ -162,6 +168,114 @@
             <include refid="documentSearchWhere" />
             GROUP BY d.document_id, d.document_status
         ) filtered
+    </select>
+
+    <sql id="outboundCandidateWhere">
+        WHERE u.company_id = #{companyId}
+          AND u.active = TRUE
+          AND u.unit_status = 'IN_STOCK'
+          AND u.inspection_status = 'COMPLETED'
+          AND u.sales_status = 'AVAILABLE'
+          AND u.grade != 'DEFECTIVE'
+        <if test="categoryId != null">
+          AND p.category_id = #{categoryId}
+        </if>
+        <if test="partId != null">
+          AND p.part_id = #{partId}
+        </if>
+        <if test="grade != null">
+          AND u.grade = #{grade}
+        </if>
+        <if test="keyword != null and keyword != ''">
+          AND (
+              u.internal_serial_no LIKE CONCAT('%', #{keyword}, '%')
+              OR u.manufacturer_serial_no LIKE CONCAT('%', #{keyword}, '%')
+              OR p.part_name LIKE CONCAT('%', #{keyword}, '%')
+              OR p.model_name LIKE CONCAT('%', #{keyword}, '%')
+              OR p.manufacturer LIKE CONCAT('%', #{keyword}, '%')
+              OR p.part_code LIKE CONCAT('%', #{keyword}, '%')
+              OR c.category_name LIKE CONCAT('%', #{keyword}, '%')
+          )
+        </if>
+    </sql>
+
+    <select id="searchOutboundCandidates" resultType="com.pcs.domain.stock.dto.response.SearchOutboundCandidateResponse">
+        SELECT
+            u.unit_id,
+            u.internal_serial_no,
+            u.manufacturer_serial_no,
+            p.part_id,
+            p.category_id,
+            c.category_name,
+            p.part_name,
+            p.model_name,
+            p.manufacturer,
+            p.part_code,
+            u.unit_status,
+            u.inspection_status,
+            u.grade,
+            u.sales_status
+        FROM tb_pc_part_unit u
+        JOIN tb_pc_part p
+            ON p.company_id = u.company_id
+           AND p.part_id = u.part_id
+        JOIN tb_part_category c
+            ON c.company_id = p.company_id
+           AND c.category_id = p.category_id
+        <include refid="outboundCandidateWhere" />
+        ORDER BY u.updated_at DESC, u.unit_id DESC
+        LIMIT #{size}
+        OFFSET #{offset}
+    </select>
+
+    <select id="countOutboundCandidates" resultType="long">
+        SELECT COUNT(*)
+        FROM tb_pc_part_unit u
+        JOIN tb_pc_part p
+            ON p.company_id = u.company_id
+           AND p.part_id = u.part_id
+        JOIN tb_part_category c
+            ON c.company_id = p.company_id
+           AND c.category_id = p.category_id
+        <include refid="outboundCandidateWhere" />
+    </select>
+
+    <select id="findOutboundCandidateUnitsForUpdate" resultType="com.pcs.domain.stock.dto.response.SearchOutboundCandidateResponse">
+        SELECT
+            u.unit_id,
+            u.internal_serial_no,
+            u.manufacturer_serial_no,
+            p.part_id,
+            p.category_id,
+            c.category_name,
+            p.part_name,
+            p.model_name,
+            p.manufacturer,
+            p.part_code,
+            u.unit_status,
+            u.inspection_status,
+            u.grade,
+            u.sales_status
+        FROM tb_pc_part_unit u
+        JOIN tb_pc_part p
+            ON p.company_id = u.company_id
+           AND p.part_id = u.part_id
+        JOIN tb_part_category c
+            ON c.company_id = p.company_id
+           AND c.category_id = p.category_id
+        WHERE u.company_id = #{companyId}
+          AND u.part_id = #{partId}
+          AND u.unit_id IN
+          <foreach collection="unitIds" item="unitId" open="(" separator="," close=")">
+              #{unitId}
+          </foreach>
+          AND u.active = TRUE
+          AND u.unit_status = 'IN_STOCK'
+          AND u.inspection_status = 'COMPLETED'
+          AND u.sales_status = 'AVAILABLE'
+          AND u.grade != 'DEFECTIVE'
+        ORDER BY u.unit_id
+        FOR UPDATE
     </select>
 
     <sql id="documentDetailSelect">
@@ -279,6 +393,31 @@
         FOR UPDATE
     </select>
 
+    <select id="findOriginalOutboundMovementsForUpdate" resultType="com.pcs.domain.stock.dto.response.StockDocumentLineRow">
+        SELECT
+            m.movement_id,
+            m.part_id,
+            p.part_name,
+            p.model_name,
+            p.part_code,
+            m.movement_type,
+            m.movement_status,
+            m.quantity,
+            m.before_quantity,
+            m.after_quantity,
+            m.reason
+        FROM tb_stock_movement m
+        JOIN tb_pc_part p
+            ON p.company_id = m.company_id
+           AND p.part_id = m.part_id
+        WHERE m.company_id = #{companyId}
+          AND m.document_id = #{documentId}
+          AND m.movement_type = 'OUTBOUND'
+          AND m.canceled_movement_id IS NULL
+        ORDER BY m.movement_id
+        FOR UPDATE
+    </select>
+
     <select id="findDocumentUnits" resultType="com.pcs.domain.stock.dto.response.StockDocumentUnitResponse">
         SELECT
             m.movement_id,
@@ -327,6 +466,25 @@
               OR u.unit_status != 'IN_STOCK'
               OR u.inspection_status != 'WAITING'
               OR u.sales_status != 'HOLD'
+          )
+    </select>
+
+    <select id="countInvalidOutboundCancelUnits" resultType="int">
+        SELECT COUNT(*)
+        FROM tb_stock_movement m
+        JOIN tb_stock_movement_unit mu
+            ON mu.movement_id = m.movement_id
+        JOIN tb_pc_part_unit u
+            ON u.company_id = m.company_id
+           AND u.unit_id = mu.unit_id
+        WHERE m.company_id = #{companyId}
+          AND m.document_id = #{documentId}
+          AND m.movement_type = 'OUTBOUND'
+          AND m.canceled_movement_id IS NULL
+          AND (
+              m.movement_status != 'COMPLETED'
+              OR u.active != TRUE
+              OR u.unit_status != 'OUTBOUND'
           )
     </select>
 
@@ -494,6 +652,20 @@
         UPDATE tb_pc_part_unit
         SET unit_status = 'CANCELED',
             active = FALSE
+        WHERE company_id = #{companyId}
+          AND unit_id = #{unitId}
+    </update>
+
+    <update id="updatePartUnitStatusForOutbound">
+        UPDATE tb_pc_part_unit
+        SET unit_status = 'OUTBOUND'
+        WHERE company_id = #{companyId}
+          AND unit_id = #{unitId}
+    </update>
+
+    <update id="updatePartUnitStatusForOutboundCancel">
+        UPDATE tb_pc_part_unit
+        SET unit_status = 'IN_STOCK'
         WHERE company_id = #{companyId}
           AND unit_id = #{unitId}
     </update>

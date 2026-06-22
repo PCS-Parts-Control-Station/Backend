@@ -1,24 +1,23 @@
-﻿(() => {
+(() => {
     const PAGE_SIZE = 20;
 
     window.PcsUi?.consumeFlashToast();
 
-    const filterForm = document.querySelector(".document-filter-form");
+    const filterForm = document.querySelector(".outbound-document-filter-form");
     const searchButton = filterForm?.querySelector("button[type='submit']");
     const partnerFilter = document.querySelector("[data-partner-filter]");
-    const inboundTable = document.querySelector(".document-data-table");
-    const tableHead = inboundTable?.querySelector(".table-head");
-    const emptyRow = document.querySelector("[data-inbound-empty]");
-    const pagination = document.querySelector("[data-inbound-pagination]");
+    const outboundTable = document.querySelector(".document-data-table");
+    const emptyRow = document.querySelector("[data-outbound-empty]");
+    const pagination = document.querySelector("[data-outbound-pagination]");
     const pageInfo = document.querySelector("[data-page-info]");
     const prevButton = document.querySelector("[data-page-prev]");
     const nextButton = document.querySelector("[data-page-next]");
     const notice = document.querySelector("[data-created-notice]");
     const summaryDocuments = document.querySelector("[data-summary-documents]");
     const summaryQuantity = document.querySelector("[data-summary-quantity]");
-    const summaryWaiting = document.querySelector("[data-summary-waiting]");
+    const summaryCompleted = document.querySelector("[data-summary-completed]");
     const summaryCanceled = document.querySelector("[data-summary-canceled]");
-    const detailDrawer = document.querySelector("[data-inbound-detail-drawer]");
+    const detailDrawer = document.querySelector("[data-outbound-detail-drawer]");
     const detailFields = {
         subtitle: document.querySelector("[data-detail-subtitle]"),
         documentNo: document.querySelector("[data-detail-document-no]"),
@@ -42,8 +41,9 @@
         quantity: document.querySelector("[data-cancel-quantity]"),
         message: document.querySelector("[data-cancel-message]"),
     };
-    const createdInboundKey = "pcsCreatedInboundDocument";
-    let createdInbound = null;
+    const createdOutboundKey = "pcsCreatedOutboundDocument";
+
+    let createdOutbound = null;
     let currentDocuments = [];
     let currentPage = 0;
     let currentPageData = null;
@@ -52,12 +52,26 @@
     let cancelTarget = null;
     let lastDetailTrigger = null;
 
+    if (!filterForm || !outboundTable || !window.PcsApi) {
+        return;
+    }
+
     const getCompanyCode = () => {
         const segments = window.location.pathname.split("/").filter(Boolean);
         return segments[0] === "w" && segments[1] ? decodeURIComponent(segments[1]) : "";
     };
 
-    const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, (letter) => ({
+    const getCompanyApiBase = () => {
+        const companyCode = getCompanyCode();
+        return companyCode ? `/api/workspaces/${encodeURIComponent(companyCode)}` : "";
+    };
+
+    const apiOptions = () => ({
+        authRedirect: true,
+        loginCompanyCode: getCompanyCode(),
+    });
+
+    const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (letter) => ({
         "&": "&amp;",
         "<": "&lt;",
         ">": "&gt;",
@@ -65,18 +79,24 @@
         "'": "&#039;",
     }[letter]));
 
-    const normalizeListData = (data) => Array.isArray(data?.content) ? data.content : [];
+    const normalizeListData = (data) => {
+        if (Array.isArray(data)) {
+            return data;
+        }
+        return Array.isArray(data?.content) ? data.content : [];
+    };
 
     const normalizePageData = (data) => {
         if (window.PcsPagination) {
             return window.PcsPagination.normalizePageData(data, PAGE_SIZE);
         }
+        const content = normalizeListData(data);
         return {
-            content: normalizeListData(data),
+            content,
             page: 0,
             size: PAGE_SIZE,
-            totalElements: normalizeListData(data).length,
-            totalPages: normalizeListData(data).length ? 1 : 0,
+            totalElements: content.length,
+            totalPages: content.length ? 1 : 0,
             hasPrevious: false,
             hasNext: false,
             summary: data?.summary || null,
@@ -101,21 +121,33 @@
         return `${year}-${month}-${day}`;
     };
 
-    const documentStatusLabel = (status) => {
-        if (status === "CANCELED") {
-            return "취소";
-        }
-        return "완료";
-    };
-
-    const documentStatusClass = (status) => {
-        if (status === "CANCELED") {
-            return "badge-inactive";
-        }
-        return "badge-active";
-    };
-
     const numberText = (value) => Number(value || 0).toLocaleString("ko-KR");
+
+    const documentStatusLabel = (status) => status === "CANCELED" ? "취소" : "완료";
+
+    const documentStatusClass = (status) => status === "CANCELED" ? "badge-inactive" : "badge-active";
+
+    const unitStatusLabel = (status) => {
+        if (status === "IN_STOCK") return "보관";
+        if (status === "OUTBOUND") return "출고";
+        if (status === "DISPOSED") return "폐기";
+        if (status === "CANCELED") return "취소";
+        return status || "-";
+    };
+
+    const gradeLabel = (grade) => {
+        if (!grade || grade === "NONE") return "미정";
+        if (grade === "DEFECTIVE") return "불량";
+        return grade;
+    };
+
+    const gradeClass = (grade) => {
+        if (grade === "A") return "grade-a";
+        if (grade === "B") return "grade-b";
+        if (grade === "C") return "grade-c";
+        if (grade === "DEFECTIVE") return "grade-defective";
+        return "";
+    };
 
     const setDetailDrawerOpen = (isOpen) => {
         detailDrawer?.classList.toggle("is-open", isOpen);
@@ -135,14 +167,6 @@
         if (restoreFocus && lastDetailTrigger?.isConnected) {
             lastDetailTrigger.focus({ preventScroll: true });
         }
-    };
-
-    const getCompanyApiBase = () => {
-        const companyCode = getCompanyCode();
-        if (!companyCode) {
-            return "";
-        }
-        return `/api/workspaces/${encodeURIComponent(companyCode)}`;
     };
 
     const updatePagination = (pageData) => {
@@ -172,9 +196,8 @@
 
         partnerFilter.innerHTML = "";
         partnerFilter.append(new Option("전체 거래처", ""));
-
         partners.forEach((partner) => {
-            partnerFilter.append(new Option(partner.partnerName, String(partner.partnerId)));
+            partnerFilter.append(new Option(partner.partnerName || "-", String(partner.partnerId)));
         });
     };
 
@@ -182,95 +205,89 @@
         if (!partnerFilter) {
             return;
         }
-
-        const companyCode = getCompanyCode();
-        const api = window.PcsApi;
-
-        if (!companyCode || !api) {
-            partnerFilter.innerHTML = '<option value="">거래처를 불러오지 못했습니다</option>';
+        const apiBase = getCompanyApiBase();
+        if (!apiBase) {
+            partnerFilter.innerHTML = '<option value="">거래처 조회 실패</option>';
             partnerFilter.disabled = true;
             return;
         }
 
         partnerFilter.disabled = true;
-
         try {
             const params = new URLSearchParams({
-                partnerRole: "SUPPLIER",
                 active: "true",
                 limit: "100",
             });
-            const data = await api.getData(`/api/workspaces/${encodeURIComponent(companyCode)}/partners?${params.toString()}`, {
-                authRedirect: true,
-                loginCompanyCode: companyCode,
+            const data = await window.PcsApi.getData(`${apiBase}/partners?${params.toString()}`, apiOptions());
+            const partners = normalizeListData(data).filter((partner) => {
+                const role = partner.partnerRole || "";
+                return role === "CUSTOMER" || role === "BOTH";
             });
-            renderPartnerOptions(Array.isArray(data) ? data : data?.content || []);
+            renderPartnerOptions(partners);
             partnerFilter.disabled = false;
         } catch (error) {
-            partnerFilter.innerHTML = '<option value="">거래처를 불러오지 못했습니다</option>';
+            partnerFilter.innerHTML = '<option value="">거래처 조회 실패</option>';
             partnerFilter.disabled = true;
         }
     };
 
-    const consumeCreatedInbound = () => {
+    const consumeCreatedOutbound = () => {
         try {
-            const rawCreatedInbound = window.sessionStorage.getItem(createdInboundKey);
-            createdInbound = rawCreatedInbound ? JSON.parse(rawCreatedInbound) : null;
-            window.sessionStorage.removeItem(createdInboundKey);
+            const rawCreatedOutbound = window.sessionStorage.getItem(createdOutboundKey);
+            createdOutbound = rawCreatedOutbound ? JSON.parse(rawCreatedOutbound) : null;
+            window.sessionStorage.removeItem(createdOutboundKey);
         } catch (error) {
-            createdInbound = null;
+            createdOutbound = null;
             try {
-                window.sessionStorage.removeItem(createdInboundKey);
+                window.sessionStorage.removeItem(createdOutboundKey);
             } catch (storageError) {
                 // Ignore storage cleanup failures.
             }
         }
 
-        if (!createdInbound?.documentNo) {
+        if (!createdOutbound?.documentNo || !notice) {
             return;
         }
-
-        const documentNo = String(createdInbound.documentNo);
-
-        if (notice) {
-            notice.hidden = false;
-            notice.textContent = `입고 전표 ${documentNo} 가 등록되었습니다.`;
-        }
+        notice.hidden = false;
+        notice.textContent = `출고 전표 ${createdOutbound.documentNo} 가 등록되었습니다.`;
     };
 
     const clearDocumentRows = () => {
-        inboundTable?.querySelectorAll(".document-data-row:not(.table-head):not([data-inbound-empty])").forEach((row) => {
+        outboundTable.querySelectorAll(".document-data-row:not(.table-head):not([data-outbound-empty])").forEach((row) => {
             row.remove();
         });
     };
 
-    const setEmptyMessage = (message) => {
+    const setEmptyMessage = (message, options = {}) => {
         if (!emptyRow) {
             return;
         }
         emptyRow.hidden = false;
+        emptyRow.classList.toggle("is-loading", options.loading === true);
         emptyRow.querySelector("[role='cell']").textContent = message;
     };
 
     const hideEmptyMessage = () => {
         if (emptyRow) {
             emptyRow.hidden = true;
+            emptyRow.classList.remove("is-loading");
         }
     };
 
     const buildDocumentSubText = (stockDocument) => {
         const firstPartName = stockDocument.firstPartName || "-";
-        const lineCount = Number(stockDocument.lineCount) || 0;
+        const lineCount = Number(stockDocument.lineCount || 0);
         const extra = lineCount > 1 ? ` 외 ${lineCount - 1}종` : "";
         const processedByName = stockDocument.processedByName || "-";
         return `${firstPartName}${extra} · ${processedByName} 처리`;
     };
 
-    const createInboundRow = (stockDocument) => {
+    const createOutboundRow = (stockDocument) => {
         const row = document.createElement("div");
-        const isCreated = createdInbound?.documentNo && createdInbound.documentNo === stockDocument.documentNo;
+        const isCreated = createdOutbound?.documentNo && createdOutbound.documentNo === stockDocument.documentNo;
         const isCanceled = stockDocument.documentStatus === "CANCELED";
         const isSelected = selectedDocumentId && String(selectedDocumentId) === String(stockDocument.documentId);
+
         row.className = `data-row document-data-row${isCreated ? " is-created" : ""}${isSelected ? " is-selected" : ""}`;
         row.setAttribute("role", "row");
         row.setAttribute("tabindex", "0");
@@ -278,13 +295,13 @@
         row.dataset.documentId = String(stockDocument.documentId);
         row.innerHTML = `
             <strong role="cell" data-label="전표번호">${escapeHtml(stockDocument.documentNo)}</strong>
-            <span role="cell" class="cell-stack" data-label="입고 내용">
+            <span role="cell" class="cell-stack" data-label="출고 내용">
                 <b>${escapeHtml(stockDocument.partnerName || "-")}</b>
                 <small>${escapeHtml(buildDocumentSubText(stockDocument))}</small>
             </span>
-            <span role="cell" data-label="수량">${Number(stockDocument.totalQuantity || 0)}개</span>
+            <span role="cell" data-label="수량">${numberText(stockDocument.totalQuantity)}개</span>
             <span role="cell" data-label="상태"><em class="badge ${documentStatusClass(stockDocument.documentStatus)}">${documentStatusLabel(stockDocument.documentStatus)}</em></span>
-            <span role="cell" data-label="입고일">${formatDate(stockDocument.createdAt)}</span>
+            <span role="cell" data-label="출고일">${formatDate(stockDocument.createdAt)}</span>
             <span role="cell" class="row-actions" data-label="관리">
                 <button type="button" data-document-detail="${stockDocument.documentId}">상세</button>
                 <button type="button" data-document-cancel="${stockDocument.documentId}"${isCanceled ? " disabled" : ""}>${isCanceled ? "취소됨" : "취소"}</button>
@@ -295,14 +312,16 @@
 
     const updateSummary = (data) => {
         const summary = data?.summary || {};
-        if (summaryDocuments) summaryDocuments.textContent = String(summary.totalCount || 0);
-        if (summaryQuantity) summaryQuantity.textContent = String(summary.totalQuantity || 0);
-        if (summaryWaiting) summaryWaiting.textContent = String(summary.waitingQuantity || 0);
-        if (summaryCanceled) summaryCanceled.textContent = String(summary.canceledCount || 0);
+        const totalCount = Number(summary.totalCount || 0);
+        const canceledCount = Number(summary.canceledCount || 0);
+        if (summaryDocuments) summaryDocuments.textContent = numberText(totalCount);
+        if (summaryQuantity) summaryQuantity.textContent = numberText(summary.totalQuantity);
+        if (summaryCompleted) summaryCompleted.textContent = numberText(Math.max(0, totalCount - canceledCount));
+        if (summaryCanceled) summaryCanceled.textContent = numberText(canceledCount);
     };
 
     const renderDocuments = (data) => {
-        const documents = Array.isArray(data?.content) ? data.content : normalizeListData(data);
+        const documents = normalizeListData(data);
         currentDocuments = documents;
         clearDocumentRows();
         updateSummary(data);
@@ -311,29 +330,25 @@
             selectedDocumentId = null;
             currentDetail = null;
             closeDetailDrawer({ restoreFocus: false });
-            setEmptyMessage("조회된 입고 전표가 없습니다.");
+            setEmptyMessage("조회된 출고 전표가 없습니다.");
             updatePagination(data);
             return;
         }
 
         hideEmptyMessage();
         documents.forEach((stockDocument) => {
-            const row = createInboundRow(stockDocument);
+            const row = createOutboundRow(stockDocument);
             if (emptyRow) {
                 emptyRow.insertAdjacentElement("beforebegin", row);
             } else {
-                inboundTable.append(row);
+                outboundTable.append(row);
             }
         });
         updatePagination(data);
     };
 
-    const findDocumentSummary = (documentId) => {
-        return currentDocuments.find((stockDocument) => String(stockDocument.documentId) === String(documentId)) || null;
-    };
-
     const updateSelectedRows = () => {
-        inboundTable?.querySelectorAll("[data-document-id]").forEach((row) => {
+        outboundTable.querySelectorAll("[data-document-id]").forEach((row) => {
             const isSelected = selectedDocumentId && String(row.dataset.documentId) === String(selectedDocumentId);
             row.classList.toggle("is-selected", Boolean(isSelected));
             row.setAttribute("aria-selected", String(Boolean(isSelected)));
@@ -352,49 +367,42 @@
         if (!detailFields.lines) {
             return;
         }
+
         if (!lines?.length) {
-            detailFields.lines.innerHTML = '<p class="detail-empty-text">등록된 입고 품목이 없습니다.</p>';
+            detailFields.lines.innerHTML = '<p class="detail-empty-text">등록된 출고 품목이 없습니다.</p>';
             if (detailFields.lineSummary) {
                 detailFields.lineSummary.textContent = "0개 품목 · 총 0개";
             }
             return;
         }
 
-        const summary = lines.reduce((items, line) => {
-            const key = [
-                line.partId,
-                line.partName,
-                line.modelName,
-                line.partCode,
-            ].filter(Boolean).join("|");
-            const existing = items.get(key);
-            if (existing) {
-                existing.quantity += Number(line.quantity || 0);
-                return items;
-            }
-            items.set(key, {
-                partName: line.partName || "-",
-                modelName: line.modelName || line.partCode || "",
-                quantity: Number(line.quantity || 0),
-            });
-            return items;
-        }, new Map());
-
-        const summaryItems = Array.from(summary.values());
-        const totalQuantity = summaryItems.reduce((sum, item) => sum + item.quantity, 0);
+        const totalQuantity = lines.reduce((sum, line) => sum + Number(line.quantity || 0), 0);
         if (detailFields.lineSummary) {
-            detailFields.lineSummary.textContent = `${numberText(summaryItems.length)}개 품목 · 총 ${numberText(totalQuantity)}개`;
+            detailFields.lineSummary.textContent = `${numberText(lines.length)}개 품목 · 총 ${numberText(totalQuantity)}개`;
         }
 
-        detailFields.lines.innerHTML = summaryItems.map((item) => {
+        detailFields.lines.innerHTML = lines.map((line) => {
+            const units = Array.isArray(line.units) ? line.units : [];
             return `
-                <article class="document-line-item document-line-summary-item">
-                    <span>
-                        <strong>${escapeHtml(item.partName)}</strong>
-                        ${item.modelName ? `<small>${escapeHtml(item.modelName)}</small>` : ""}
-                    </span>
-                    <b>${numberText(item.quantity)}개</b>
-                </article>
+                <details class="document-line-item outbound-detail-line">
+                    <summary>
+                        <span>
+                            <strong>${escapeHtml(line.partName || "-")}</strong>
+                            ${line.modelName ? `<small>${escapeHtml(line.modelName)}</small>` : ""}
+                        </span>
+                        <b>${numberText(line.quantity)}개</b>
+                    </summary>
+                    ${line.reason ? `<p class="line-reason">${escapeHtml(line.reason)}</p>` : ""}
+                    <div class="unit-chip-list">
+                        ${units.length ? units.map((unit) => `
+                            <span class="unit-chip">
+                                <code>${escapeHtml(unit.internalSerialNo)}</code>
+                                <em class="outbound-badge ${gradeClass(unit.grade)}">${escapeHtml(gradeLabel(unit.grade))}</em>
+                                <small>${escapeHtml(unitStatusLabel(unit.unitStatus))}</small>
+                            </span>
+                        `).join("") : '<p class="detail-empty-text">관리번호가 없습니다.</p>'}
+                    </div>
+                </details>
             `;
         }).join("");
     };
@@ -411,8 +419,8 @@
         if (detailFields.reason) detailFields.reason.textContent = detail.reason || "-";
         if (detailFields.cancelState) {
             detailFields.cancelState.textContent = detail.cancelable === true
-                    ? "취소 가능"
-                    : detail.cancelBlockedReason || "취소할 수 없습니다.";
+                ? "취소 가능"
+                : detail.cancelBlockedReason || "취소할 수 없습니다.";
         }
         if (openCancelModalButton) {
             openCancelModalButton.disabled = detail.cancelable !== true;
@@ -440,25 +448,26 @@
     };
 
     const loadDocumentDetail = async (documentId, options = {}) => {
-        const companyCode = getCompanyCode();
         const apiBase = getCompanyApiBase();
         if (options.trigger instanceof HTMLElement) {
             lastDetailTrigger = options.trigger;
         }
-        if (!apiBase || !window.PcsApi) {
-            setDetailLoading("입고 전표 상세를 불러오지 못했습니다.", documentId);
-            return;
+        if (!apiBase) {
+            setDetailLoading("출고 전표 상세를 불러오지 못했습니다.", documentId);
+            return null;
         }
 
-        setDetailLoading("입고 전표 상세를 불러오는 중입니다.", documentId);
+        setDetailLoading("출고 전표 상세를 불러오는 중입니다.", documentId);
         try {
-            const detail = await window.PcsApi.getData(`${apiBase}/stock/documents/${encodeURIComponent(documentId)}`, {
-                authRedirect: true,
-                loginCompanyCode: companyCode,
-            });
+            const detail = await window.PcsApi.getData(`${apiBase}/stock/documents/${encodeURIComponent(documentId)}`, apiOptions());
             renderDocumentDetail(detail);
+            if (options.openCancelAfter === true) {
+                openCancelModal(detail);
+            }
+            return detail;
         } catch (error) {
-            setDetailLoading(error.message || "입고 전표 상세를 불러오지 못했습니다.");
+            setDetailLoading(error.message || "출고 전표 상세를 불러오지 못했습니다.", documentId);
+            return null;
         }
     };
 
@@ -493,8 +502,10 @@
         if (cancelFields.partner) cancelFields.partner.textContent = cancelTarget.partnerName || "-";
         if (cancelFields.quantity) cancelFields.quantity.textContent = `${numberText(cancelTarget.totalQuantity)}개`;
         setCancelMessage("");
-        confirmCancelButton.disabled = false;
-        confirmCancelButton.textContent = "전표 취소";
+        if (confirmCancelButton) {
+            confirmCancelButton.disabled = false;
+            confirmCancelButton.textContent = "전표 취소";
+        }
         cancelModal?.showModal();
     };
 
@@ -504,9 +515,8 @@
     };
 
     const cancelDocument = async () => {
-        const companyCode = getCompanyCode();
         const apiBase = getCompanyApiBase();
-        if (!cancelTarget?.documentId || !apiBase || !window.PcsApi) {
+        if (!cancelTarget?.documentId || !apiBase) {
             setCancelMessage("취소할 전표를 찾을 수 없습니다.");
             return;
         }
@@ -516,20 +526,19 @@
         try {
             await window.PcsApi.request(`${apiBase}/stock/documents/${encodeURIComponent(cancelTarget.documentId)}/cancel`, {
                 method: "POST",
-                authRedirect: true,
-                loginCompanyCode: companyCode,
+                ...apiOptions(),
             });
             closeCancelModal();
             window.PcsUi?.toast({
                 type: "success",
-                message: `입고 전표 ${cancelTarget.documentNo} 가 취소되었습니다.`,
+                message: `출고 전표 ${cancelTarget.documentNo} 가 취소되었습니다.`,
             });
             if (currentDetail?.documentId && String(currentDetail.documentId) === String(cancelTarget.documentId)) {
                 await loadDocumentDetail(cancelTarget.documentId);
             }
             await loadDocuments(currentPage, { preserveDetail: Boolean(currentDetail) });
         } catch (error) {
-            setCancelMessage(error.message || "입고 전표를 취소하지 못했습니다.");
+            setCancelMessage(error.message || "출고 전표를 취소하지 못했습니다.");
         } finally {
             confirmCancelButton.disabled = false;
             confirmCancelButton.textContent = "전표 취소";
@@ -543,42 +552,37 @@
                 size: PAGE_SIZE,
                 form: filterForm,
                 extraParams: {
-                    documentType: "INBOUND",
+                    documentType: "OUTBOUND",
                 },
             });
         }
+
         const params = new URLSearchParams({
-            documentType: "INBOUND",
+            documentType: "OUTBOUND",
             page: String(Math.max(0, page)),
             size: String(PAGE_SIZE),
         });
-        const keyword = filterForm?.elements.keyword?.value?.trim();
-        const partnerId = filterForm?.elements.partnerId?.value;
-        const documentStatus = filterForm?.elements.documentStatus?.value;
-
+        const keyword = filterForm.elements.keyword?.value?.trim();
+        const partnerId = filterForm.elements.partnerId?.value;
+        const documentStatus = filterForm.elements.documentStatus?.value;
         if (keyword) params.set("keyword", keyword);
         if (partnerId) params.set("partnerId", partnerId);
         if (documentStatus) params.set("documentStatus", documentStatus);
-
         return params;
     };
 
     const setLoading = (isLoading) => {
-        if (searchButton) {
-            searchButton.disabled = isLoading;
-            searchButton.textContent = isLoading ? "조회 중" : "검색";
+        if (!searchButton) {
+            return;
         }
+        searchButton.disabled = isLoading;
+        searchButton.textContent = isLoading ? "조회 중" : "검색";
     };
 
     const loadDocuments = async (page = 0, options = {}) => {
-        const companyCode = getCompanyCode();
-        const api = window.PcsApi;
-
-        if (!inboundTable || !tableHead) {
-            return;
-        }
-        if (!companyCode || !api) {
-            setEmptyMessage("입고 전표 목록을 불러오지 못했습니다.");
+        const apiBase = getCompanyApiBase();
+        if (!apiBase) {
+            setEmptyMessage("업체 주소가 올바르지 않습니다.");
             return;
         }
 
@@ -589,13 +593,10 @@
             currentDetail = null;
             closeDetailDrawer({ restoreFocus: false });
         }
-        setEmptyMessage("입고 전표 목록을 불러오는 중입니다.");
+        setEmptyMessage("출고 전표 목록을 불러오는 중입니다.", { loading: true });
 
         try {
-            const data = await api.getData(`/api/workspaces/${encodeURIComponent(companyCode)}/stock/documents?${buildDocumentParams(page).toString()}`, {
-                authRedirect: true,
-                loginCompanyCode: companyCode,
-            });
+            const data = await window.PcsApi.getData(`${apiBase}/stock/documents?${buildDocumentParams(page).toString()}`, apiOptions());
             const pageData = normalizePageData(data);
             currentPage = pageData.page;
             renderDocuments(pageData);
@@ -611,13 +612,13 @@
                 hasNext: false,
                 summary: null,
             });
-            setEmptyMessage(error.message || "입고 전표 목록을 불러오지 못했습니다.");
+            setEmptyMessage(error.message || "출고 전표 목록을 불러오지 못했습니다.");
         } finally {
             setLoading(false);
         }
     };
 
-    filterForm?.addEventListener("submit", (event) => {
+    filterForm.addEventListener("submit", (event) => {
         event.preventDefault();
         loadDocuments(0);
     });
@@ -636,7 +637,7 @@
         loadDocuments(currentPage + 1);
     });
 
-    inboundTable?.addEventListener("click", (event) => {
+    outboundTable.addEventListener("click", (event) => {
         const detailButton = event.target.closest("[data-document-detail]");
         if (detailButton) {
             event.stopPropagation();
@@ -646,7 +647,8 @@
 
         const cancelButton = event.target.closest("[data-document-cancel]");
         if (cancelButton) {
-            openCancelModal(findDocumentSummary(cancelButton.dataset.documentCancel));
+            event.stopPropagation();
+            loadDocumentDetail(cancelButton.dataset.documentCancel, { openCancelAfter: true });
             return;
         }
 
@@ -656,7 +658,7 @@
         }
     });
 
-    inboundTable?.addEventListener("keydown", (event) => {
+    outboundTable.addEventListener("keydown", (event) => {
         if (event.key !== "Enter" && event.key !== " ") {
             return;
         }
@@ -695,7 +697,27 @@
 
     confirmCancelButton?.addEventListener("click", cancelDocument);
 
-    consumeCreatedInbound();
-    loadPartnerFilter();
-    loadDocuments(0);
+    const initialize = async () => {
+        const companyCode = getCompanyCode();
+        if (!companyCode) {
+            setEmptyMessage("업체 주소가 올바르지 않습니다.");
+            return;
+        }
+
+        try {
+            if (window.PcsApi.validateWorkspacePublic) {
+                const valid = await window.PcsApi.validateWorkspacePublic(companyCode);
+                if (!valid) {
+                    return;
+                }
+            }
+            consumeCreatedOutbound();
+            await loadPartnerFilter();
+            await loadDocuments(0);
+        } catch (error) {
+            setEmptyMessage(error?.message || "화면을 초기화하지 못했습니다.");
+        }
+    };
+
+    initialize();
 })();

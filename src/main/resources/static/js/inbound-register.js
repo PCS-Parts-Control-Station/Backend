@@ -34,6 +34,8 @@
     const confirmReason = document.querySelector("[data-confirm-reason]");
     const confirmLineCount = document.querySelector("[data-confirm-line-count]");
     const confirmTotalQuantity = document.querySelector("[data-confirm-total-quantity]");
+    const registerStepSections = document.querySelectorAll("[data-inbound-register-step]");
+    const sideStepItems = document.querySelectorAll("[data-inbound-register-side-step]");
     const categoryLabels = {
         graphics: "그래픽카드",
         memory: "RAM",
@@ -43,6 +45,8 @@
     const CREATED_INBOUND_KEY = "pcsCreatedInboundDocument";
     let selectedPart = null;
     let pendingInbound = null;
+    let currentRegisterStep = "1";
+    let partSearchStarted = false;
 
     if (!inboundForm || !lineList || !lineCount || !partResults || !addButton) {
         return;
@@ -60,6 +64,52 @@
         "\"": "&quot;",
         "'": "&#039;",
     }[letter]));
+
+    const setCurrentRegisterStep = (step) => {
+        const nextStep = String(step || "1");
+        currentRegisterStep = nextStep;
+
+        registerStepSections.forEach((section) => {
+            const isCurrent = section.dataset.inboundRegisterStep === nextStep;
+            section.classList.toggle("is-active", isCurrent);
+        });
+
+        sideStepItems.forEach((item) => {
+            const isCurrent = item.dataset.inboundRegisterSideStep === nextStep;
+            item.classList.toggle("is-current", isCurrent);
+            if (isCurrent) {
+                item.setAttribute("aria-current", "step");
+            } else {
+                item.removeAttribute("aria-current");
+            }
+        });
+    };
+
+    const hasInboundLines = () => Boolean(lineList.querySelector("[data-line-entry]"));
+
+    const resolveCurrentRegisterStep = () => {
+        if (confirmModal?.open || pendingInbound) {
+            return "4";
+        }
+        if (hasInboundLines()) {
+            return "3";
+        }
+        if (partSearchStarted || keywordInput.value.trim() || categorySelect.value) {
+            return "2";
+        }
+        return "1";
+    };
+
+    const updateCurrentRegisterStep = (preferredStep = null) => {
+        setCurrentRegisterStep(preferredStep || resolveCurrentRegisterStep());
+    };
+
+    const bindRegisterStepTracking = () => {
+        if (!sideStepItems.length) {
+            return;
+        }
+        updateCurrentRegisterStep();
+    };
 
     const readPart = (option) => ({
         id: option.dataset.partId,
@@ -131,6 +181,9 @@
         });
         selectedName.textContent = selectedPart.name;
         selectedMeta.textContent = selectedPart.meta;
+        if (partSearchStarted) {
+            updateCurrentRegisterStep("2");
+        }
     };
 
     const clearSelectedPart = () => {
@@ -146,6 +199,7 @@
         selectedMeta.textContent = "검색 결과에서 품목을 선택하면 여기에 표시됩니다.";
         quantityInput.value = "1";
         reasonInput.value = "";
+        updateCurrentRegisterStep();
     };
 
     const serialPreview = (prefix, quantity) => {
@@ -177,7 +231,10 @@
             <em>${escapeHtml(categoryLabel || categoryLabels[category] || "기타")}</em>
             <b data-select-label>선택</b>
         `;
-        option.addEventListener("click", () => selectPart(option));
+        option.addEventListener("click", () => {
+            partSearchStarted = true;
+            selectPart(option);
+        });
         return option;
     };
 
@@ -249,12 +306,14 @@
             }
             existingLine.querySelector(".serial-preview").innerHTML = serialPreview(selectedPart.prefix, existingQuantity.value);
             refreshLineState();
+            updateCurrentRegisterStep("3");
             clearSelectedPart();
             return;
         }
 
         lineList.append(createLine(selectedPart, quantity, reason));
         refreshLineState();
+        updateCurrentRegisterStep("3");
         clearSelectedPart();
     };
 
@@ -319,6 +378,8 @@
     };
 
     const searchParts = async () => {
+        partSearchStarted = true;
+        updateCurrentRegisterStep("2");
         const companyCode = getCompanyCode();
         const api = window.PcsApi;
         const params = new URLSearchParams({
@@ -457,8 +518,10 @@
             if (!part?.partId) {
                 throw new Error("등록된 품목 정보를 확인할 수 없습니다.");
             }
+            partSearchStarted = true;
             appendAndSelectPart(part);
             setPartSearchMessage("새 품목을 등록하고 선택했습니다.");
+            updateCurrentRegisterStep("2");
             partModalForm.reset();
             setPartModalMessage("");
             partModal?.close();
@@ -592,18 +655,29 @@
     };
 
     partOptions.forEach((option) => {
-        option.addEventListener("click", () => selectPart(option));
+        option.addEventListener("click", () => {
+            partSearchStarted = true;
+            selectPart(option);
+        });
     });
 
     searchButton.addEventListener("click", searchParts);
-    keywordInput.addEventListener("input", filterParts);
+    keywordInput.addEventListener("input", () => {
+        partSearchStarted = true;
+        updateCurrentRegisterStep("2");
+        filterParts();
+    });
     keywordInput.addEventListener("keydown", (event) => {
         if (event.key === "Enter") {
             event.preventDefault();
             searchParts();
         }
     });
-    categorySelect.addEventListener("change", filterParts);
+    categorySelect.addEventListener("change", () => {
+        partSearchStarted = true;
+        updateCurrentRegisterStep("2");
+        filterParts();
+    });
     addButton.addEventListener("click", addLine);
 
     lineList.addEventListener("click", (event) => {
@@ -613,6 +687,7 @@
         }
         deleteButton.closest("[data-line-entry]").remove();
         refreshLineState();
+        updateCurrentRegisterStep();
     });
 
     lineList.addEventListener("input", (event) => {
@@ -622,7 +697,11 @@
         }
         const line = quantity.closest("[data-line-entry]");
         line.querySelector(".serial-preview").innerHTML = serialPreview(line.dataset.partPrefix, quantity.value);
+        updateCurrentRegisterStep("3");
     });
+
+    partnerSelect?.addEventListener("change", () => updateCurrentRegisterStep());
+    inboundForm.elements.reason?.addEventListener("input", () => updateCurrentRegisterStep());
 
     const setSubmitMessage = (message, isError = false) => {
         if (!submitMessage) {
@@ -760,6 +839,7 @@
         }
 
         pendingInbound = { companyCode, payload };
+        updateCurrentRegisterStep("4");
         renderConfirmSummary(inboundSummary(payload));
         if (confirmModal) {
             confirmModal.showModal();
@@ -780,12 +860,16 @@
     closeConfirmModalButtons.forEach((button) => {
         button.addEventListener("click", () => {
             confirmModal?.close();
+            pendingInbound = null;
+            updateCurrentRegisterStep();
         });
     });
 
     confirmModal?.addEventListener("click", (event) => {
         if (event.target === confirmModal) {
             confirmModal.close();
+            pendingInbound = null;
+            updateCurrentRegisterStep();
         }
     });
 
@@ -823,4 +907,5 @@
     loadCategories();
     loadPartners();
     refreshLineState();
+    bindRegisterStepTracking();
 })();

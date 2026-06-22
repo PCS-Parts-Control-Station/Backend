@@ -45,7 +45,10 @@ class JwtTokenProviderTest {
     void rejectsTamperedSignature() {
         JwtTokenProvider provider = provider("pcs-api");
         String token = provider.createAccessToken(10L, 1L, "acme", "admin", MemberRole.ADMIN, "session-1");
-        String tampered = token.substring(0, token.length() - 1) + (token.endsWith("a") ? "b" : "a");
+        String[] segments = token.split("\\.");
+        String signature = segments[2];
+        segments[2] = (signature.startsWith("a") ? "b" : "a") + signature.substring(1);
+        String tampered = String.join(".", segments);
 
         BusinessException exception = assertThrows(
                 BusinessException.class,

@@ -5,6 +5,78 @@
     min-width: 0;
 }
 
+.inbound-register-page .side-panel {
+    position: sticky;
+    top: 20px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.inbound-register-page [data-inbound-register-side-step] {
+    padding: 8px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    opacity: 0.62;
+    transition: background-color 160ms ease, border-color 160ms ease, opacity 160ms ease;
+}
+
+.inbound-register-page [data-inbound-register-side-step] > span,
+.inbound-register-page [data-inbound-register-side-step] strong,
+.inbound-register-page [data-inbound-register-side-step] p {
+    color: var(--muted);
+}
+
+.inbound-register-page [data-inbound-register-side-step].is-current {
+    border-color: rgba(37, 99, 235, 0.36);
+    background: rgba(239, 246, 255, 0.96);
+    box-shadow: inset 3px 0 0 var(--blue, #2563eb);
+    opacity: 1;
+}
+
+.inbound-register-page [data-inbound-register-side-step].is-current > span {
+    background: var(--blue, #2563eb);
+    color: #ffffff;
+    animation: inboundRegisterCurrentStepPulse 2.2s ease-out infinite;
+}
+
+.inbound-register-page [data-inbound-register-side-step].is-current strong {
+    color: var(--blue, #2563eb);
+}
+
+.inbound-register-page [data-inbound-register-side-step].is-current p {
+    color: var(--text);
+}
+
+.inbound-register-page [data-inbound-register-step] {
+    transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.inbound-register-page [data-inbound-register-step].is-active {
+    border-color: rgba(37, 99, 235, 0.28);
+    box-shadow: 0 14px 34px rgba(37, 99, 235, 0.1);
+}
+
+@keyframes inboundRegisterCurrentStepPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.3);
+    }
+
+    70% {
+        box-shadow: 0 0 0 7px rgba(37, 99, 235, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+.inbound-register-page [data-inbound-register-side-step].is-current > span {
+        animation: none;
+    }
+}
+
 .operation-step-card {
     overflow: hidden;
 }
@@ -433,6 +505,12 @@
 }
 
 @media (max-width: 1180px) {
+.inbound-register-page .side-panel {
+        position: static;
+        max-height: none;
+        overflow: visible;
+    }
+
 .has-collapsible-sidebar .operation-step-card .table-header {
         grid-template-columns: minmax(0, 1fr) auto;
     }

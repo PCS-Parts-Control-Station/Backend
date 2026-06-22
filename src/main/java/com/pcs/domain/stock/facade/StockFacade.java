@@ -1,8 +1,12 @@
 package com.pcs.domain.stock.facade;
 
+import com.pcs.domain.part.type.PartGrade;
 import com.pcs.domain.stock.dto.request.CreateInboundDocumentRequest;
+import com.pcs.domain.stock.dto.request.CreateOutboundDocumentRequest;
 import com.pcs.domain.stock.dto.response.CancelStockDocumentResponse;
 import com.pcs.domain.stock.dto.response.CreateInboundDocumentResponse;
+import com.pcs.domain.stock.dto.response.CreateOutboundDocumentResponse;
+import com.pcs.domain.stock.dto.response.SearchOutboundCandidateResponse;
 import com.pcs.domain.stock.dto.response.SearchStockDocumentResponse;
 import com.pcs.domain.stock.dto.response.SearchStockDocumentSummaryResponse;
 import com.pcs.domain.stock.dto.response.StockDocumentDetailResponse;
@@ -14,6 +18,7 @@ import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.security.PcsPrincipal;
 import com.pcs.global.workspace.WorkspaceAccessValidator;
+import java.time.LocalDate;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +41,8 @@ public class StockFacade {
             String keyword,
             Long partnerId,
             StockDocumentStatus documentStatus,
+            LocalDate dateFrom,
+            LocalDate dateTo,
             Integer page,
             Integer size,
             Integer limit
@@ -47,6 +54,32 @@ public class StockFacade {
                 keyword,
                 partnerId,
                 documentStatus,
+                dateFrom,
+                dateTo,
+                page,
+                size,
+                limit
+        );
+    }
+
+    public PageResultDto<SearchOutboundCandidateResponse, Void> searchOutboundCandidates(
+            PcsPrincipal principal,
+            String pathCompanyCode,
+            String keyword,
+            Long categoryId,
+            Long partId,
+            PartGrade grade,
+            Integer page,
+            Integer size,
+            Integer limit
+    ) {
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
+        return stockService.searchOutboundCandidates(
+                checkedPrincipal.companyId(),
+                keyword,
+                categoryId,
+                partId,
+                grade,
                 page,
                 size,
                 limit
@@ -69,7 +102,7 @@ public class StockFacade {
             Long documentId
     ) {
         PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
-        return stockService.cancelInboundDocument(
+        return stockService.cancelDocument(
                 checkedPrincipal.companyId(),
                 checkedPrincipal.memberId(),
                 documentId
@@ -86,6 +119,25 @@ public class StockFacade {
 
         try {
             return stockService.createInboundDocument(
+                    checkedPrincipal.companyId(),
+                    checkedPrincipal.memberId(),
+                    request
+            );
+        } catch (DuplicateKeyException exception) {
+            throw mapDuplicateKeyException(exception);
+        }
+    }
+
+    @Transactional
+    public CreateOutboundDocumentResponse createOutboundDocument(
+            PcsPrincipal principal,
+            String pathCompanyCode,
+            CreateOutboundDocumentRequest request
+    ) {
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
+
+        try {
+            return stockService.createOutboundDocument(
                     checkedPrincipal.companyId(),
                     checkedPrincipal.memberId(),
                     request
