@@ -1,0 +1,132 @@
+{
+  "dbChecks": [
+    "company",
+    "member",
+    "auth",
+    "partner",
+    "category",
+    "part",
+    "stock",
+    "inspection"
+  ],
+  "features": [
+    {
+      "name": "company",
+      "dbChecks": ["company", "member"],
+      "pathPatterns": [
+        "^src/main/java/com/pcs/domain/company/",
+        "^src/main/resources/mapper/company/",
+        "^docs/features/company(-db)?\\.md$",
+        "^src/main/resources/static/(company-register|company-complete)\\.html$",
+        "^src/main/resources/static/js/(company-register|company-complete)\\.js$",
+        "^src/main/resources/static/css/pages/(company-register|company-complete)\\.css$"
+      ]
+    },
+    {
+      "name": "member",
+      "dbChecks": ["member"],
+      "pathPatterns": [
+        "^src/main/java/com/pcs/domain/member/",
+        "^src/main/resources/mapper/member/",
+        "^docs/features/member(-db)?\\.md$",
+        "^src/main/resources/static/(users|mypage)\\.html$",
+        "^src/main/resources/static/js/(users|mypage)\\.js$",
+        "^src/main/resources/static/css/pages/(users|mypage)\\.css$"
+      ]
+    },
+    {
+      "name": "auth",
+      "dbChecks": ["auth", "member"],
+      "pathPatterns": [
+        "^src/main/java/com/pcs/domain/auth/",
+        "^src/main/java/com/pcs/global/(jwt|security|auth)/",
+        "^src/main/resources/mapper/auth/",
+        "^docs/features/auth(-db)?\\.md$",
+        "^src/main/resources/static/(login|workspace-login)\\.html$",
+        "^src/main/resources/static/js/(login|workspace-login|pcs-api)\\.js$",
+        "^src/main/resources/static/css/pages/(login|workspace-login)\\.css$",
+        "^docs/ai/pcs-auth-client-rules\\.md$"
+      ]
+    },
+    {
+      "name": "partner",
+      "dbChecks": ["partner"],
+      "pathPatterns": [
+        "^src/main/java/com/pcs/domain/partner/",
+        "^src/main/resources/mapper/partner/",
+        "^docs/features/partner(-db)?\\.md$",
+        "^src/main/resources/static/partners\\.html$",
+        "^src/main/resources/static/js/partners\\.js$",
+        "^src/main/resources/static/css/pages/partners\\.css$"
+      ]
+    },
+    {
+      "name": "category",
+      "dbChecks": ["category"],
+      "pathPatterns": [
+        "^src/main/java/com/pcs/domain/category/",
+        "^src/main/resources/mapper/category/",
+        "^docs/features/category(-db)?\\.md$",
+        "^src/main/resources/static/categories\\.html$",
+        "^src/main/resources/static/js/categories\\.js$",
+        "^src/main/resources/static/css/pages/categories\\.css$"
+      ]
+    },
+    {
+      "name": "part",
+      "dbChecks": ["part", "category"],
+      "pathPatterns": [
+        "^src/main/java/com/pcs/domain/part/",
+        "^src/main/resources/mapper/part/",
+        "^docs/features/part(-db)?\\.md$",
+        "^src/main/resources/static/parts\\.html$",
+        "^src/main/resources/static/js/parts\\.js$",
+        "^src/main/resources/static/css/pages/parts\\.css$"
+      ]
+    },
+    {
+      "name": "stock",
+      "dbChecks": ["stock", "part", "partner"],
+      "pathPatterns": [
+        "^src/main/java/com/pcs/domain/stock/",
+        "^src/main/resources/mapper/stock/",
+        "^docs/features/stock(-db)?\\.md$",
+        "^src/main/resources/static/(inbound|inbound-register|outbound|outbound-register|history-stock)\\.html$",
+        "^src/main/resources/static/js/(inbound|inbound-register|outbound|outbound-register|history-stock)\\.js$",
+        "^src/main/resources/static/css/pages/(inbound|inbound-register|outbound|outbound-register|history-stock)\\.css$"
+      ]
+    },
+    {
+      "name": "inspection",
+      "dbChecks": ["inspection", "part", "category"],
+      "pathPatterns": [
+        "^src/main/java/com/pcs/domain/inspection/",
+        "^src/main/resources/mapper/inspection/",
+        "^docs/features/inspection(-db|-history|-template)?\\.md$",
+        "^src/main/resources/static/(inspection|inspection-templates|history-inspection)\\.html$",
+        "^src/main/resources/static/js/(inspection|inspection-templates|history-inspection)\\.js$",
+        "^src/main/resources/static/css/pages/(inspection|inspection-templates|history-inspection)\\.css$"
+      ]
+    },
+    {
+      "name": "history",
+      "dbChecks": ["stock", "inspection"],
+      "pathPatterns": [
+        "^docs/features/history\\.md$",
+        "^src/main/resources/static/history-(stock|inspection)\\.html$",
+        "^src/main/resources/static/js/history-(stock|inspection)\\.js$",
+        "^src/main/resources/static/css/pages/history-(stock|inspection)\\.css$"
+      ]
+    },
+    {
+      "name": "dashboard",
+      "dbChecks": ["stock", "inspection", "part"],
+      "pathPatterns": [
+        "^docs/features/dashboard\\.md$",
+        "^src/main/resources/static/dashboard\\.html$",
+        "^src/main/resources/static/js/dashboard\\.js$",
+        "^src/main/resources/static/css/pages/dashboard\\.css$"
+      ]
+    }
+  ]
+}

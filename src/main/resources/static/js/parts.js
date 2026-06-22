@@ -9,6 +9,9 @@
     const nextButton = document.querySelector("[data-page-next]");
     const searchButton = filterForm?.querySelector("button[type='submit']");
     const panelViews = document.querySelectorAll("[data-part-panel]");
+    const detailDrawer = document.querySelector("[data-part-detail-drawer]");
+    const createDrawerButton = document.querySelector("[data-part-create-drawer]");
+    const closeDrawerButtons = document.querySelectorAll("[data-close-part-drawer]");
     const createForm = document.querySelector("[data-part-create-form]");
     const editForm = document.querySelector("[data-part-edit-form]");
     const specModal = document.querySelector("[data-part-spec-modal]");
@@ -60,6 +63,7 @@
     let currentPage = 0;
     let currentParts = [];
     let selectedPartId = null;
+    let lastDrawerTrigger = null;
     let categoryOptions = [];
     const categoryDetails = new Map();
     const detailStateByMode = {
@@ -288,12 +292,40 @@
         return cell;
     };
 
+    const setDrawerOpen = (isOpen) => {
+        detailDrawer?.classList.toggle("is-open", isOpen);
+        detailDrawer?.setAttribute("aria-hidden", String(!isOpen));
+        createDrawerButton?.setAttribute("aria-expanded", String(isOpen));
+    };
+
+    const openDrawer = (trigger = null) => {
+        if (trigger instanceof HTMLElement) {
+            lastDrawerTrigger = detailDrawer?.contains(trigger) ? createDrawerButton : trigger;
+        }
+        setDrawerOpen(true);
+    };
+
+    const closeDrawer = (options = {}) => {
+        selectedPartId = null;
+        setDrawerOpen(false);
+        updateSelectedRow();
+        if (options.restoreFocus !== false && lastDrawerTrigger?.isConnected) {
+            lastDrawerTrigger.focus({ preventScroll: true });
+        }
+    };
+
     const setPanelMode = (mode) => {
         panelViews.forEach((panel) => {
             const isActive = panel.dataset.partPanel === mode;
             panel.hidden = !isActive;
             panel.classList.toggle("is-active", isActive);
         });
+        const titleIds = {
+            create: "part-form-title",
+            detail: "part-detail-title",
+            edit: "part-edit-title"
+        };
+        detailDrawer?.setAttribute("aria-labelledby", titleIds[mode] || titleIds.create);
     };
 
     const getSelectedPart = () => {
@@ -437,8 +469,9 @@
         );
     };
 
-    const selectPart = async (partId) => {
+    const selectPart = async (partId, trigger = null) => {
         selectedPartId = partId;
+        openDrawer(trigger);
         const part = getSelectedPart();
         updateSelectedRow();
         if (part) {
@@ -458,7 +491,7 @@
         }
     };
 
-    const showCreatePanel = () => {
+    const showCreatePanel = (trigger = null, options = {}) => {
         selectedPartId = null;
         updateSelectedRow();
         createForm?.reset();
@@ -466,6 +499,9 @@
         detailStateByMode.create = createEmptyDetailState();
         updateDetailSummary("create");
         setPanelMode("create");
+        if (options.open !== false) {
+            openDrawer(trigger);
+        }
     };
 
     const renderSummary = (pageData) => {
@@ -489,7 +525,7 @@
 
         if (!items.length) {
             setEmptyMessage("조회된 품목이 없습니다.");
-            showCreatePanel();
+            showCreatePanel(null, { open: false });
             return;
         }
 
@@ -512,11 +548,11 @@
                     createQuantityCell("안전 재고", safeQuantity, "", lowStock)
             );
 
-            row.addEventListener("click", () => selectPart(part.partId));
+            row.addEventListener("click", () => selectPart(part.partId, row));
             row.addEventListener("keydown", (event) => {
                 if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
-                    selectPart(part.partId);
+                    selectPart(part.partId, row);
                 }
             });
 
@@ -527,7 +563,7 @@
             renderDetail(getSelectedPart());
             updateSelectedRow();
         } else {
-            showCreatePanel();
+            showCreatePanel(null, { open: false });
         }
     };
 
@@ -818,6 +854,10 @@
         }
 
         const preserveScroll = options.preserveScroll === true;
+        if (options.keepSelection !== true) {
+            selectedPartId = null;
+            closeDrawer({ restoreFocus: false });
+        }
         const fetchPage = async (targetPage) => {
             const params = buildParams(targetPage);
             const data = await window.PcsApi.getData(
@@ -843,10 +883,6 @@
             }
             currentPage = pageData.page;
 
-            if (options.keepSelection !== true) {
-                selectedPartId = null;
-            }
-
             renderRows(pageData.content);
             updatePagination(pageData);
             renderSummary(pageData);
@@ -868,7 +904,7 @@
                     content: [],
                     totalElements: 0
                 });
-                showCreatePanel();
+                showCreatePanel(null, { open: false });
             } finally {
                 setLoading(false);
             }
@@ -931,8 +967,16 @@
         closeCategoryPicker();
     });
 
+    createDrawerButton?.addEventListener("click", (event) => {
+        showCreatePanel(event.currentTarget);
+    });
+
     document.querySelectorAll("[data-part-create-mode]").forEach((button) => {
-        button.addEventListener("click", showCreatePanel);
+        button.addEventListener("click", (event) => showCreatePanel(event.currentTarget));
+    });
+
+    closeDrawerButtons.forEach((button) => {
+        button.addEventListener("click", () => closeDrawer());
     });
 
     document.querySelectorAll("[data-open-part-spec-modal]").forEach((button) => {
@@ -946,6 +990,17 @@
     specModal?.addEventListener("click", (event) => {
         if (event.target === specModal) {
             closeSpecModal();
+        }
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (
+            event.key === "Escape" &&
+            detailDrawer?.classList.contains("is-open") &&
+            !specModal?.open &&
+            !categoryPickerModal?.open
+        ) {
+            closeDrawer();
         }
     });
 
@@ -1023,6 +1078,13 @@
 
             selectedPartId = data?.partId || null;
             await loadParts(0, { keepSelection: true });
+            const createdPart = getSelectedPart();
+            if (createdPart) {
+                const createdDetail = await fetchPartDetail(createdPart.partId);
+                replaceCurrentPart(createdDetail);
+                renderDetail(createdDetail);
+                setPanelMode("detail");
+            }
             showToast("품목을 등록했습니다.", "success");
             createForm.reset();
         } catch (error) {

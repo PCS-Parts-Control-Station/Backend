@@ -2,7 +2,6 @@ param(
     [ValidateSet("bootstrap", "gate", "full")]
     [string] $Mode = "bootstrap",
 
-    [ValidateSet("none", "company", "member", "auth", "partner", "category", "part")]
     [string] $Feature = "none",
 
     [switch] $RunBuild,
@@ -11,7 +10,6 @@ param(
 
     [switch] $RunDb,
 
-    [ValidateSet("none", "company", "member", "auth", "partner", "category")]
     [string] $DbFeature = "none",
 
     [switch] $CheckPort,
@@ -31,8 +29,23 @@ $HarnessPath = Join-Path $ScriptDir "run-harness.ps1"
 $ReportDir = Join-Path $ScriptDir "reports"
 $LatestReportPath = Join-Path $ReportDir "latest.md"
 $AgentFeedbackPath = Join-Path $ReportDir "agent-failures.md"
+$FeatureRegistryPath = Join-Path $ScriptDir "config/features.json"
 
 New-Item -ItemType Directory -Force -Path $ReportDir | Out-Null
+
+if (-not (Test-Path $FeatureRegistryPath)) {
+    throw "Feature registry is missing: $FeatureRegistryPath"
+}
+
+$featureRegistry = Get-Content -Raw -Encoding UTF8 -Path $FeatureRegistryPath | ConvertFrom-Json
+$supportedFeatures = @($featureRegistry.features | ForEach-Object { $_.name })
+$supportedDbFeatures = @($featureRegistry.dbChecks)
+if ($Feature -ne "none" -and $supportedFeatures -notcontains $Feature) {
+    throw "Unsupported Feature: $Feature. Supported values: none, $($supportedFeatures -join ', ')"
+}
+if ($DbFeature -ne "none" -and $supportedDbFeatures -notcontains $DbFeature) {
+    throw "Unsupported DbFeature: $DbFeature. Supported values: none, $($supportedDbFeatures -join ', ')"
+}
 
 function Get-PowerShellRunner {
     $pwsh = Get-Command "pwsh" -ErrorAction SilentlyContinue

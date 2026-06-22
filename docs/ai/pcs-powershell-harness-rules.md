@@ -8,6 +8,7 @@
 - `harness/run-feedback-loop.ps1`
 - `harness/install-hooks.ps1`
 - `.codex/hooks/*.ps1`
+- `harness/config/features.json`을 읽는 PowerShell 코드
 - 앞으로 추가되는 하네스/검증/훅 관련 PowerShell 스크립트
 
 ## 핵심 원칙
@@ -84,6 +85,7 @@ C:\Program Files
 
 - `gradlew.bat` 존재 여부 자체를 검증하는 bootstrap 규칙
 - Windows 전용 어댑터 내부
+- `.codex/hooks.json`의 Windows용 얇은 실행 명령
 - 명시적으로 Windows 전용임을 문서화한 일회성 로컬 스크립트
 
 ## Gradle 실행 규칙
