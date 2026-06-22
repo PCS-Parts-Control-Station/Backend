@@ -1175,10 +1175,17 @@ function Test-AuthFeature {
     $jwtProvider = Join-Path $ProjectRoot "src/main/java/com/pcs/global/jwt/JwtTokenProvider.java"
     if (Test-Path $jwtProvider) {
         $jwtContent = Get-Content -Raw $jwtProvider
-        foreach ($pattern in @("HmacSHA256", "companyId", "companyCode", "memberId", "tokenType", "exp", "MessageDigest.isEqual", "SecretKeySpec", "DEFAULT_LOCAL_SECRET", "allowDefaultSecret")) {
+        foreach ($pattern in @("HmacSHA256", "companyId", "companyCode", "memberId", "tokenType", "exp", "SecretKeySpec", "DEFAULT_LOCAL_SECRET", "allowDefaultSecret")) {
             if ($jwtContent -notmatch $pattern) {
                 Add-Result "FAIL" "AUTH_JWT_PATTERN" "JwtTokenProvider is missing required JWT claim/signing pattern: $pattern" "Access token must include workspace/member claims and HS256 signature."
             }
+        }
+
+        $usesConstantTimeComparison = $jwtContent -match "MessageDigest\.isEqual"
+        $usesNimbusHs256Decoder = $jwtContent -match "NimbusJwtDecoder" -and
+                $jwtContent -match "\.macAlgorithm\(MacAlgorithm\.HS256\)"
+        if (-not $usesConstantTimeComparison -and -not $usesNimbusHs256Decoder) {
+            Add-Result "FAIL" "AUTH_JWT_SIGNATURE_VALIDATION" "JwtTokenProvider is missing an approved JWT signature verifier." "Use MessageDigest.isEqual for manual verification or NimbusJwtDecoder configured with HS256."
         }
     }
 
