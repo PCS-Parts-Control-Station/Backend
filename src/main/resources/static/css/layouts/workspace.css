@@ -242,13 +242,33 @@
     overflow-x: hidden;
 }
 
+.has-collapsible-sidebar.sidebar-open {
+    overflow: hidden;
+}
+
+.has-collapsible-sidebar.sidebar-scroll-locked {
+    padding-right: var(--sidebar-scrollbar-compensation, 0);
+}
+
 .has-collapsible-sidebar .workspace-layout {
-    grid-template-columns: 248px minmax(0, 1fr);
+    display: block;
 }
 
 .has-collapsible-sidebar .workspace-sidebar {
-    min-width: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 50;
+    width: min(280px, calc(100vw - 48px));
+    height: 100dvh;
     overflow-y: auto;
+    border-right: 1px solid var(--line);
+    border-bottom: 0;
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: 18px 0 40px rgba(15, 23, 42, 0.18);
+    visibility: hidden;
+    transform: translateX(-102%);
+    pointer-events: none;
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
@@ -258,17 +278,22 @@
 }
 
 .has-collapsible-sidebar.sidebar-animating .workspace-sidebar {
-    transition: transform 220ms ease, visibility 220ms ease;
+    transition: transform 220ms ease;
 }
 
-.has-collapsible-sidebar.sidebar-collapsed .workspace-layout {
-    grid-template-columns: 0 minmax(0, 1fr);
+.has-collapsible-sidebar.sidebar-open .workspace-sidebar {
+    visibility: visible;
+    transform: translateX(0);
+    pointer-events: auto;
 }
 
-.has-collapsible-sidebar.sidebar-collapsed .workspace-sidebar {
-    visibility: hidden;
-    transform: translateX(-100%);
-    pointer-events: none;
+.has-collapsible-sidebar.sidebar-open .sidebar-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.has-collapsible-sidebar .sidebar-backdrop {
+    display: block;
 }
 
 .workspace-header > div {

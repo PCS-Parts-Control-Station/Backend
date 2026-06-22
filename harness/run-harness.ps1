@@ -788,33 +788,37 @@ function Test-WorkspaceNavigation {
     }
 
     foreach ($pattern in @(
-        'const desktopSidebarQuery = window.matchMedia("(min-width: 1521px)")',
-        'if (isCollapsibleSidebarPage && !desktopSidebarQuery.matches)',
+        'if (isCollapsibleSidebarPage)',
         'document.body.classList.add("sidebar-collapsed")',
-        'body.classList.toggle("sidebar-collapsed", !isDesktop())',
-        'backdrop.addEventListener("click", () => closeMobileMenu())',
-        'event.key === "Escape"'
+        'const isOpen = body.classList.contains("sidebar-open")',
+        'backdrop.addEventListener("click", () => closeMenu())',
+        'event.key === "Escape"',
+        'closeMenu(false)'
     )) {
         if ($layoutScript -notmatch [regex]::Escape($pattern)) {
-            Add-Result "FAIL" "WORKSPACE_SIDEBAR_RESPONSIVE_INVALID" "workspace-layout.js is missing $pattern." "Keep the desktop sidebar sticky and use default-closed off-canvas behavior at 1520px or below."
+            Add-Result "FAIL" "WORKSPACE_SIDEBAR_AUTOCLOSE_INVALID" "workspace-layout.js is missing $pattern." "Keep the sidebar closed by default and close it through backdrop or Escape."
         }
     }
 
+    if ($layoutScript -match 'desktopSidebarQuery') {
+        Add-Result "FAIL" "WORKSPACE_SIDEBAR_BREAKPOINT_BEHAVIOR" "Sidebar behavior still changes at the desktop breakpoint." "Use the same default-closed off-canvas behavior at every viewport width."
+    }
+
     foreach ($pattern in @(
-        '.has-collapsible-sidebar.sidebar-collapsed .workspace-layout',
-        '@media (max-width: 1520px)',
+        '.has-collapsible-sidebar .workspace-layout',
+        'position: fixed',
         '.has-collapsible-sidebar.sidebar-open .workspace-sidebar'
     )) {
         if ($layoutStyle -notmatch [regex]::Escape($pattern)) {
-            Add-Result "FAIL" "WORKSPACE_SIDEBAR_BREAKPOINT_BEHAVIOR" "workspace.css is missing $pattern." "Preserve sticky desktop collapse and off-canvas behavior at 1520px or below."
+            Add-Result "FAIL" "WORKSPACE_SIDEBAR_BREAKPOINT_BEHAVIOR" "workspace.css is missing $pattern." "Use default-closed off-canvas behavior at every viewport width."
         }
     }
 
     if ($layoutStyle -notmatch [regex]::Escape('.has-collapsible-sidebar.sidebar-open .sidebar-backdrop')) {
-        Add-Result "FAIL" "WORKSPACE_SIDEBAR_BACKDROP_STYLE_MISSING" "The open sidebar backdrop style is missing." "Keep the backdrop available for the off-canvas viewport."
+        Add-Result "FAIL" "WORKSPACE_SIDEBAR_BACKDROP_STYLE_MISSING" "The open sidebar backdrop style is missing." "Keep the backdrop available at every viewport width."
     }
 
-    Add-Result "INFO" "WORKSPACE_NAVIGATION" "Workspace navigation and responsive sidebar checks completed."
+    Add-Result "INFO" "WORKSPACE_NAVIGATION" "Workspace navigation and default-closed sidebar checks completed."
 }
 
 function Test-FrontendCommonUtilityReuse {

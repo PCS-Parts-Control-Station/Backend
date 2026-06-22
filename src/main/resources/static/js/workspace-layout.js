@@ -4,9 +4,8 @@
     const sidebarPlaceholder = document.querySelector("[data-workspace-sidebar]");
     const pageActiveRoute = sidebarPlaceholder?.dataset.activeRoute || "";
     const isCollapsibleSidebarPage = document.body.classList.contains("has-collapsible-sidebar");
-    const desktopSidebarQuery = window.matchMedia("(min-width: 1521px)");
 
-    if (isCollapsibleSidebarPage && !desktopSidebarQuery.matches) {
+    if (isCollapsibleSidebarPage) {
         document.body.classList.add("sidebar-collapsed");
     }
 
@@ -187,14 +186,10 @@
             return;
         }
 
-        const isDesktop = () => desktopSidebarQuery.matches;
-
         const syncToggleState = () => {
-            const isExpanded = isDesktop()
-                ? !body.classList.contains("sidebar-collapsed")
-                : body.classList.contains("sidebar-open");
-            toggle.setAttribute("aria-expanded", String(isExpanded));
-            toggle.setAttribute("aria-label", isExpanded ? "메뉴 닫기" : "메뉴 열기");
+            const isOpen = body.classList.contains("sidebar-open");
+            toggle.setAttribute("aria-expanded", String(isOpen));
+            toggle.setAttribute("aria-label", isOpen ? "메뉴 닫기" : "메뉴 열기");
         };
 
         const animateSidebar = () => {
@@ -216,7 +211,7 @@
             body.style.removeProperty("--sidebar-scrollbar-compensation");
         };
 
-        const closeMobileMenu = (animate = true) => {
+        const closeMenu = (animate = true) => {
             if (animate) {
                 animateSidebar();
             }
@@ -226,7 +221,7 @@
             syncToggleState();
         };
 
-        const openMobileMenu = () => {
+        const openMenu = () => {
             animateSidebar();
             lockPageScroll();
             body.classList.remove("sidebar-collapsed");
@@ -234,38 +229,23 @@
             syncToggleState();
         };
 
-        const applyViewportMode = () => {
-            body.classList.remove("sidebar-open");
-            unlockPageScroll();
-            body.classList.toggle("sidebar-collapsed", !isDesktop());
-            syncToggleState();
-        };
-
         toggle.addEventListener("click", () => {
-            if (isDesktop()) {
-                animateSidebar();
-                body.classList.toggle("sidebar-collapsed");
-                syncToggleState();
-                return;
-            }
-
             if (body.classList.contains("sidebar-open")) {
-                closeMobileMenu();
+                closeMenu();
                 return;
             }
-            openMobileMenu();
+            openMenu();
         });
 
-        backdrop.addEventListener("click", () => closeMobileMenu());
+        backdrop.addEventListener("click", () => closeMenu());
 
         document.addEventListener("keydown", (event) => {
-            if (event.key === "Escape" && !isDesktop() && body.classList.contains("sidebar-open")) {
-                closeMobileMenu();
+            if (event.key === "Escape" && body.classList.contains("sidebar-open")) {
+                closeMenu();
             }
         });
 
-        desktopSidebarQuery.addEventListener("change", applyViewportMode);
-        applyViewportMode();
+        closeMenu(false);
     };
 
     const bindAccountActions = () => {

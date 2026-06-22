@@ -24,7 +24,7 @@
 1. 본문 영역과 오른쪽 패널이 겹치지 않아야 한다.
 2. 등록/처리 화면은 오른쪽 업무 흐름 보조 패널을 유지한다.
 3. 조회 중심 관리 화면은 목록 전체 너비를 우선하고, 상세는 오른쪽 슬라이드 패널로 연다.
-4. 중간 폭에서는 좌측 사이드바를 접어 본문 가용 폭을 확보한다.
+4. 좌측 사이드바는 기본 닫힘 오프캔버스로 두어 본문 가용 폭을 확보한다.
 5. 작은 화면에서는 테이블을 억지로 줄이지 않고 카드형 또는 가로 스크롤 패턴으로 전환한다.
 6. 햄버거 메뉴는 열림/닫힘 상태, 배경 오버레이, 키보드 닫기를 제공한다.
 
@@ -44,8 +44,8 @@
 기준:
 
 - 브레이크포인트는 viewport 기준으로 잡는다.
-- 실제 겹침이 발생하면 사이드바 축소를 먼저 고려한다.
-- 등록/처리 화면의 오른쪽 업무 흐름 보조 패널은 너무 일찍 아래로 내리기보다, 중간 폭에서는 사이드바를 접어 본문 폭을 확보한다.
+- 사이드바는 항상 본문 밖의 오프캔버스로 열어 본문 폭을 줄이지 않는다.
+- 등록/처리 화면의 오른쪽 업무 흐름 보조 패널은 너무 일찍 아래로 내리지 않는다.
 - 그래도 본문과 오른쪽 업무 흐름 보조 패널을 함께 두기 어렵다면 `1180px` 이하에서 1컬럼으로 전환한다.
 - 조회 중심 관리 화면의 상세 슬라이드 패널은 본문 그리드의 2컬럼 대상이 아니다.
 
@@ -70,7 +70,7 @@ workspace-layout
 
 ```text
 workspace-layout
-- workspace-sidebar: 248px sticky
+- workspace-sidebar: fixed off-canvas
 - workspace-main
   - workspace-header
   - content-main full width
@@ -79,17 +79,16 @@ workspace-layout
 
 기준:
 
-- `1520px` 초과에서 사이드바는 `position: sticky`, `height: 100vh`를 유지한다.
-- 햄버거 버튼은 보이며, 데스크톱에서는 오프캔버스가 아니라 본문 폭을 넓히는 접힘 상태를 제어한다.
-- 접힌 상태에서는 사이드바 영역을 0으로 줄이고 본문이 전체 폭을 사용한다.
-- `1520px` 이하에서는 사이드바를 닫힌 상태의 오프캔버스로 전환한다.
+- 사이드바는 화면 폭과 관계없이 `position: fixed`, `height: 100dvh`인 오프캔버스로 사용한다.
+- 초기 상태는 닫힘이며 본문은 항상 전체 폭을 사용한다.
+- 햄버거 버튼으로 열고, 배경 클릭 또는 `Escape` 키로 닫는다.
 - 등록/처리 화면의 `content-grid`는 `minmax(0, 1fr) 336px` 구조를 기본으로 한다.
 - 오른쪽 업무 흐름 `side-panel`은 336px 전후로 둔다.
 - 조회 중심 관리 화면은 목록 가독성을 위해 본문을 전체 너비로 사용한다.
 
 ## 사이드바 구조
 
-모든 화면에서 동일한 사이드바 마크업을 사용하고, 화면 폭에 따라 고정형과 오프캔버스를 전환한다.
+모든 화면에서 동일한 기본 닫힘 오프캔버스 구조를 사용한다.
 
 HTML 기준:
 
@@ -122,36 +121,34 @@ HTML 기준:
 CSS 기준:
 
 ```css
-@media (max-width: 1520px) {
-    .has-collapsible-sidebar .workspace-layout {
-        display: block;
-    }
+.has-collapsible-sidebar .workspace-layout {
+    display: block;
+}
 
-    .has-collapsible-sidebar .workspace-sidebar {
-        position: fixed;
-        z-index: 50;
-        width: min(280px, calc(100vw - 48px));
-        height: 100dvh;
-        transform: translateX(-102%);
-        transition: transform 220ms ease;
-    }
+.has-collapsible-sidebar .workspace-sidebar {
+    position: fixed;
+    z-index: 50;
+    width: min(280px, calc(100vw - 48px));
+    height: 100dvh;
+    transform: translateX(-102%);
+    transition: transform 220ms ease;
+}
 
-    .has-collapsible-sidebar.sidebar-open .workspace-sidebar {
-        transform: translateX(0);
-    }
+.has-collapsible-sidebar.sidebar-open .workspace-sidebar {
+    transform: translateX(0);
+}
 
-    .has-collapsible-sidebar .sidebar-backdrop {
-        display: block;
-    }
+.has-collapsible-sidebar .sidebar-backdrop {
+    display: block;
+}
 
-    .has-collapsible-sidebar.sidebar-open .sidebar-backdrop {
-        opacity: 1;
-        pointer-events: auto;
-    }
+.has-collapsible-sidebar.sidebar-open .sidebar-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+}
 
-    .has-collapsible-sidebar .menu-toggle {
-        display: inline-flex;
-    }
+.has-collapsible-sidebar .menu-toggle {
+    display: inline-flex;
 }
 ```
 
@@ -181,8 +178,7 @@ CSS 기준:
 
 ```text
 등록/처리 화면
-- 1520px 초과: 사이드바 고정형 + 본문 2컬럼
-- 1520px 이하: 사이드바 오프캔버스 + 본문 2컬럼 유지 가능
+- 전체 폭: 사이드바 기본 닫힘 오프캔버스 + 본문 2컬럼
 - 1180px 이하: 본문 1컬럼
 
 조회 중심 관리 화면
@@ -254,7 +250,7 @@ filter-form.document-filter-form
 
 기준:
 
-- `1520px 이하`라도 사이드바가 접히면 본문 폭이 충분하므로 한 줄 폼을 유지할 수 있다.
+- 사이드바가 기본 닫힘이므로 본문 폭이 충분하면 한 줄 폼을 유지할 수 있다.
 - 기본 검색 폼은 `840px 이하`에서 1열로 전환한다.
 - 모바일에서 입력창이 화면 밖으로 밀리면 개별 화면 클래스보다 공통 `filter-form` 전환 기준을 먼저 조정한다.
 - 필터가 4개 이상인 경우에도 검색어 입력칸은 우선 넓게 두고, 선택 필터와 검색 버튼은 중간 폭에서 줄어들 수 있는 고정 범위로 둔다.
