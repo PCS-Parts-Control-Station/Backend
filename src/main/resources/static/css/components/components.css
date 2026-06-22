@@ -737,6 +737,50 @@ label {
     min-width: 0;
 }
 
+.panel-title-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.management-detail-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 45;
+    width: min(520px, calc(100vw - 32px));
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(28px);
+    pointer-events: none;
+    transition: opacity 180ms ease, transform 180ms ease, visibility 0s linear 180ms;
+}
+
+.management-detail-drawer.is-open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+    pointer-events: auto;
+    transition-delay: 0s;
+}
+
+.management-detail-drawer-panel {
+    height: 100%;
+    overflow-y: auto;
+    border-radius: 0;
+    box-shadow: -16px 0 32px rgba(15, 23, 42, 0.14);
+}
+
+.management-detail-drawer .panel-title-bar {
+    align-items: flex-start;
+    margin: -8px -8px 20px;
+    padding: 0 0 18px;
+    border-bottom: 1px solid var(--line);
+}
+
 .panel-link-button {
     flex: 0 0 auto;
     min-height: 32px;
@@ -749,6 +793,12 @@ label {
     font-weight: 800;
     white-space: nowrap;
     cursor: pointer;
+}
+
+@media (max-width: 840px) {
+.management-detail-drawer {
+        width: 100vw;
+    }
 }
 
 .panel-link-button:hover {

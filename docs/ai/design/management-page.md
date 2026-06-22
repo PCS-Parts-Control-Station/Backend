@@ -40,6 +40,26 @@ content-grid
 - 기능별 `data-*` 속성과 API 이름은 도메인 이름을 유지하고, 시각 클래스에는 도메인 이름을 넣지 않는다.
 - 검수 템플릿에만 필요한 열 너비와 모바일 셀 노출 순서는 페이지 CSS에 남긴다.
 
+목록 전체 너비를 우선하는 품목 관리 화면은 아래 드로어 변형을 사용한다.
+
+```text
+workspace-header
+- 품목 분류
+- 품목 등록
+content-main full width
+- filter-card.management-filter-card
+- table-card
+management-detail-drawer
+- create / detail / edit mode
+- 운영 메모
+```
+
+- 최초 진입 시 드로어는 닫혀 있어야 한다.
+- 헤더의 등록 버튼은 등록 모드, 목록 행 선택은 상세 모드로 드로어를 연다.
+- 수정과 취소는 같은 드로어 안에서 상세/수정 모드를 전환한다.
+- 드로어의 위치, 폭, 그림자, 모바일 전환은 입출고 이력 드로어와 같은 `management-detail-drawer`를 사용한다.
+- 페이지 CSS는 목록 전체 너비와 도메인별 내부 배치만 소유한다.
+
 ## 공통 클래스
 
 기본 관리 화면:
@@ -55,6 +75,8 @@ panel-mode
 side-detail-card
 detail-badge-row
 detail-list
+management-detail-drawer
+management-detail-drawer-panel
 ```
 
 하위 항목 편집:
@@ -73,7 +95,7 @@ management-editor-advanced-fields
 management-editor-empty-note
 ```
 
-공통 클래스의 스타일은 `css/components/components.css`와 `css/components/management-page.css`가 소유한다. 페이지 CSS에서 동일한 선언을 복사하지 않는다.
+공통 클래스의 스타일은 `css/components/components.css`와 `css/components/management-page.css`가 소유한다. 드로어 셸은 `components.css`가 소유하며 페이지 CSS에서 동일한 선언을 복사하지 않는다.
 
 ## 요약과 둥근 요소
 

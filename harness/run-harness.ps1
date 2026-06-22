@@ -2,7 +2,6 @@ param(
     [ValidateSet("bootstrap", "gate", "full")]
     [string] $Mode = "bootstrap",
 
-    [ValidateSet("none", "company", "member", "auth", "partner", "category", "part")]
     [string] $Feature = "none",
 
     [switch] $FixGitignore,
@@ -13,7 +12,6 @@ param(
 
     [switch] $RunDb,
 
-    [ValidateSet("none", "company", "member", "auth", "partner", "category")]
     [string] $DbFeature = "none",
 
     [switch] $CheckPort,
@@ -31,14 +29,29 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = Resolve-Path (Join-Path $ScriptDir "..")
 $ReportDir = Join-Path $ScriptDir "reports"
 $ReportPath = Join-Path $ReportDir "latest.md"
+$FeatureRegistryPath = Join-Path $ScriptDir "config/features.json"
 
 New-Item -ItemType Directory -Force -Path $ReportDir | Out-Null
+
+if (-not (Test-Path $FeatureRegistryPath)) {
+    throw "Feature registry is missing: $FeatureRegistryPath"
+}
+
+$FeatureRegistry = Get-Content -Raw -Encoding UTF8 -Path $FeatureRegistryPath | ConvertFrom-Json
+$FeatureDefinitions = @($FeatureRegistry.features)
+$SupportedFeatureNames = @($FeatureDefinitions | ForEach-Object { $_.name })
+$SupportedDbFeatureNames = @($FeatureRegistry.dbChecks)
+
+if ($Feature -ne "none" -and $SupportedFeatureNames -notcontains $Feature) {
+    throw "Unsupported Feature: $Feature. Supported values: none, $($SupportedFeatureNames -join ', ')"
+}
+if ($DbFeature -ne "none" -and $SupportedDbFeatureNames -notcontains $DbFeature) {
+    throw "Unsupported DbFeature: $DbFeature. Supported values: none, $($SupportedDbFeatureNames -join ', ')"
+}
 
 $failures = New-Object System.Collections.Generic.List[object]
 $warnings = New-Object System.Collections.Generic.List[object]
 $infos = New-Object System.Collections.Generic.List[object]
-$SupportedFeatureNames = @("company", "member", "auth", "partner", "category", "part")
-$SupportedDbFeatureNames = @("company", "member", "auth", "partner", "category")
 $ForbiddenGitPathPatterns = @(
     '^\.env$',
     '^\.env\..+',
@@ -54,6 +67,7 @@ $ForbiddenGitPathPatterns = @(
     '(^|/).*\.tmp$',
     '^tmp/',
     '^harness/reports/(?!\.gitkeep$).+',
+    '^src/main/resources/static/[^/]+-preview\.html$',
     '(^|/)\.DS_Store$',
     '(^|/)Thumbs\.db$'
 )
@@ -335,6 +349,7 @@ function Ensure-GitignoreRules {
         "tmp/",
         "harness/reports/*",
         "!harness/reports/.gitkeep",
+        "src/main/resources/static/*-preview.html",
         ".DS_Store",
         "Thumbs.db"
     )
@@ -667,7 +682,10 @@ function Test-CssArchitecture {
         Add-Result "FAIL" "CSS_LEGACY_FLAT_FILES" "CSS files exist outside core/layouts/components/pages: $($legacyFlatCssFiles.Name -join ', ')" "Move each file to its owning CSS directory."
     }
 
-    $htmlFiles = @(Get-ChildItem -Path $staticRoot -Filter "*.html" -File -ErrorAction SilentlyContinue)
+    $htmlFiles = @(
+        Get-ChildItem -Path $staticRoot -Filter "*.html" -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -notlike "*-preview.html" }
+    )
     foreach ($htmlFile in $htmlFiles) {
         $pageName = $htmlFile.BaseName
         $content = Get-Content -Raw $htmlFile.FullName
@@ -736,13 +754,102 @@ function Test-CssArchitecture {
     Add-Result "INFO" "CSS_ARCHITECTURE" "Layered common and page CSS checks completed."
 }
 
+function Test-FeatureRegistry {
+    Test-PathRequired "harness/config/features.json" "FEATURE_REGISTRY_FILE" "Keep all feature path and DB dependency mappings in one registry."
+
+    $names = @($FeatureDefinitions | ForEach-Object { [string] $_.name })
+    $duplicateNames = @($names | Group-Object | Where-Object { $_.Count -gt 1 } | ForEach-Object { $_.Name })
+    if ($duplicateNames.Count -gt 0) {
+        Add-Result "FAIL" "FEATURE_REGISTRY_DUPLICATE" "Duplicate feature names: $($duplicateNames -join ', ')." "Keep each feature exactly once in harness/config/features.json."
+    }
+
+    foreach ($definition in $FeatureDefinitions) {
+        $name = [string] $definition.name
+        $patterns = @($definition.pathPatterns)
+        if ([string]::IsNullOrWhiteSpace($name) -or $patterns.Count -eq 0) {
+            Add-Result "FAIL" "FEATURE_REGISTRY_ENTRY_INVALID" "A feature registry entry is missing name or pathPatterns." "Complete every feature registry entry."
+            continue
+        }
+
+        foreach ($pattern in $patterns) {
+            try {
+                [void] [regex]::new([string] $pattern)
+            } catch {
+                Add-Result "FAIL" "FEATURE_REGISTRY_REGEX_INVALID" "Feature $name has invalid regex: $pattern." "Fix the path pattern in harness/config/features.json."
+            }
+        }
+
+        foreach ($dbCheck in @($definition.dbChecks)) {
+            if ($SupportedDbFeatureNames -notcontains $dbCheck) {
+                Add-Result "FAIL" "FEATURE_REGISTRY_DB_INVALID" "Feature $name references unsupported DB check: $dbCheck." "Add the DB checker or remove the reference."
+            }
+        }
+    }
+
+    Add-Result "INFO" "FEATURE_REGISTRY" "Feature registry checks completed for $($names.Count) features."
+}
+
+function Test-CodexHookConfiguration {
+    $hooksPath = Join-Path $ProjectRoot ".codex/hooks.json"
+    $stopHookPath = Join-Path $ProjectRoot ".codex/hooks/stop.ps1"
+    Test-PathRequired ".codex/hooks.json" "CODEX_HOOK_CONFIG" "Keep the shared project Stop hook configuration."
+    Test-PathRequired ".codex/hooks/stop.ps1" "CODEX_STOP_HOOK" "Keep the shared Stop hook adapter."
+
+    if (Test-Path $hooksPath) {
+        try {
+            $hooksConfig = Get-Content -Raw -Encoding UTF8 -Path $hooksPath | ConvertFrom-Json
+            $stopGroups = @($hooksConfig.hooks.Stop)
+            if ($stopGroups.Count -ne 1) {
+                Add-Result "FAIL" "CODEX_STOP_HOOK_COUNT" "Expected exactly one Stop hook group, found $($stopGroups.Count)." "Keep one deterministic PCS Stop validation hook."
+            }
+            $handlers = @($stopGroups | ForEach-Object { $_.hooks })
+            foreach ($handler in $handlers) {
+                if ($handler.type -ne "command") {
+                    Add-Result "FAIL" "CODEX_HOOK_TYPE_UNSUPPORTED" "Unsupported Codex hook type: $($handler.type)." "Use command hooks until Codex supports agent or prompt handlers."
+                }
+                if ([string]::IsNullOrWhiteSpace($handler.command) -or [string]::IsNullOrWhiteSpace($handler.commandWindows)) {
+                    Add-Result "FAIL" "CODEX_HOOK_CROSS_PLATFORM_COMMAND" "Stop hook must define command and commandWindows." "Keep macOS and Windows launch commands in hooks.json."
+                }
+                if ([int] $handler.timeout -le 0 -or [int] $handler.timeout -gt 600) {
+                    Add-Result "FAIL" "CODEX_HOOK_TIMEOUT" "Stop hook timeout must be between 1 and 600 seconds." "Use a bounded timeout for Stop validation."
+                }
+                $commands = "$($handler.command)`n$($handler.commandWindows)"
+                if ($commands -match '[A-Za-z]:\\') {
+                    Add-Result "FAIL" "CODEX_HOOK_ABSOLUTE_PATH" "Stop hook contains a Windows absolute path." "Resolve the hook from the Git root."
+                }
+            }
+        } catch {
+            Add-Result "FAIL" "CODEX_HOOK_JSON_INVALID" "Cannot parse .codex/hooks.json: $($_.Exception.Message)" "Fix the project hook JSON."
+        }
+    }
+
+    if (Test-Path $stopHookPath) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $stopHookPath
+        foreach ($pattern in @("run-feedback-loop.ps1", 'Mode = "gate"', "ChangedFilesPath", "TrackedFilesPath")) {
+            if ($content -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "CODEX_STOP_HOOK_CONTRACT" "stop.ps1 is missing required pattern: $pattern" "Keep the Stop hook as a thin gate-mode adapter."
+            }
+        }
+        foreach ($forbidden in @("-Mode full", "bootRun", "Stop-Process", "Start-Process")) {
+            if ($content -match [regex]::Escape($forbidden)) {
+                Add-Result "FAIL" "CODEX_STOP_HOOK_FORBIDDEN" "stop.ps1 contains forbidden behavior: $forbidden" "Do not run full regression or control the server from a Stop hook."
+            }
+        }
+    }
+
+    Add-Result "INFO" "CODEX_STOP_HOOK" "Codex Stop hook configuration checks completed."
+}
+
 function Test-WorkspaceNavigation {
     $fragmentPath = Join-Path $ProjectRoot "src/main/resources/static/fragments/workspace-sidebar.html"
     $partsPath = Join-Path $ProjectRoot "src/main/resources/static/parts.html"
+    $partsScriptPath = Join-Path $ProjectRoot "src/main/resources/static/js/parts.js"
+    $partsStylePath = Join-Path $ProjectRoot "src/main/resources/static/css/pages/parts.css"
+    $componentsStylePath = Join-Path $ProjectRoot "src/main/resources/static/css/components/components.css"
     $layoutScriptPath = Join-Path $ProjectRoot "src/main/resources/static/js/workspace-layout.js"
     $layoutStylePath = Join-Path $ProjectRoot "src/main/resources/static/css/layouts/workspace.css"
 
-    foreach ($requiredPath in @($fragmentPath, $partsPath, $layoutScriptPath, $layoutStylePath)) {
+    foreach ($requiredPath in @($fragmentPath, $partsPath, $partsScriptPath, $partsStylePath, $componentsStylePath, $layoutScriptPath, $layoutStylePath)) {
         if (-not (Test-Path $requiredPath)) {
             Add-Result "FAIL" "WORKSPACE_NAV_FILE_MISSING" "$requiredPath is missing." "Restore the common workspace navigation file."
             return
@@ -751,6 +858,9 @@ function Test-WorkspaceNavigation {
 
     $fragment = Get-Content -Raw -Encoding UTF8 -Path $fragmentPath
     $parts = Get-Content -Raw -Encoding UTF8 -Path $partsPath
+    $partsScript = Get-Content -Raw -Encoding UTF8 -Path $partsScriptPath
+    $partsStyle = Get-Content -Raw -Encoding UTF8 -Path $partsStylePath
+    $componentsStyle = Get-Content -Raw -Encoding UTF8 -Path $componentsStylePath
     $layoutScript = Get-Content -Raw -Encoding UTF8 -Path $layoutScriptPath
     $layoutStyle = Get-Content -Raw -Encoding UTF8 -Path $layoutStylePath
 
@@ -778,6 +888,18 @@ function Test-WorkspaceNavigation {
     }
 
     foreach ($pattern in @(
+        'data-part-create-drawer',
+        'data-part-detail-drawer',
+        'data-close-part-drawer',
+        'management-detail-drawer part-detail-drawer',
+        'parts-content-grid'
+    )) {
+        if ($parts -notmatch [regex]::Escape($pattern)) {
+            Add-Result "FAIL" "WORKSPACE_PART_DRAWER_MARKUP_INVALID" "parts.html is missing $pattern." "Move part create, detail, and edit modes into the management detail drawer."
+        }
+    }
+
+    foreach ($pattern in @(
         'getStaffAnyPermissions',
         'applyStaffFallbackRoute',
         'activeRoute === "categories" ? "parts" : activeRoute'
@@ -797,6 +919,36 @@ function Test-WorkspaceNavigation {
     )) {
         if ($layoutScript -notmatch [regex]::Escape($pattern)) {
             Add-Result "FAIL" "WORKSPACE_SIDEBAR_AUTOCLOSE_INVALID" "workspace-layout.js is missing $pattern." "Keep the sidebar closed by default and close it through backdrop or Escape."
+        }
+    }
+
+    if ($parts -match '<aside class="side-panel"') {
+        Add-Result "FAIL" "WORKSPACE_PART_DRAWER_INVALID" "parts.html still contains the legacy fixed side panel." "Move part create, detail, and edit modes into the management detail drawer."
+    }
+
+    foreach ($pattern in @(
+        'const setDrawerOpen',
+        'const openDrawer',
+        'const closeDrawer',
+        'event.key === "Escape"',
+        'selectPart(part.partId, row)'
+    )) {
+        if ($partsScript -notmatch [regex]::Escape($pattern)) {
+            Add-Result "FAIL" "WORKSPACE_PART_DRAWER_SCRIPT_INVALID" "parts.js is missing $pattern." "Preserve part drawer open, close, selection, and keyboard behavior."
+        }
+    }
+
+    if ($partsStyle -notmatch [regex]::Escape('.parts-content-grid')) {
+        Add-Result "FAIL" "WORKSPACE_PART_DRAWER_STYLE_INVALID" "parts.css is missing the full-width list layout." "Keep the part list full width when the drawer is closed."
+    }
+
+    foreach ($pattern in @(
+        '.management-detail-drawer',
+        '.management-detail-drawer.is-open',
+        '.management-detail-drawer-panel'
+    )) {
+        if ($componentsStyle -notmatch [regex]::Escape($pattern)) {
+            Add-Result "FAIL" "WORKSPACE_MANAGEMENT_DRAWER_STYLE_INVALID" "components.css is missing $pattern." "Use the shared stock-history drawer shell for management detail drawers."
         }
     }
 
@@ -939,64 +1091,32 @@ function Add-FeatureIfSupported {
     }
 }
 
-function Resolve-FeatureFromChangedPath {
+function Get-FeatureDefinition {
+    param(
+        [string] $FeatureName
+    )
+
+    return $FeatureDefinitions | Where-Object { $_.name -eq $FeatureName } | Select-Object -First 1
+}
+
+function Resolve-FeaturesFromChangedPath {
     param(
         [string] $Path
     )
 
     $path = Normalize-HarnessPath $Path
+    $resolved = New-Object System.Collections.Generic.List[string]
 
-    if ($path -match '^src/main/java/com/pcs/domain/company/' -or
-        $path -match '^src/main/resources/mapper/company/' -or
-        $path -match '^docs/features/company(-db)?\.md$' -or
-        $path -match '^src/main/resources/static/(company-register|company-complete)\.html$' -or
-        $path -match '^src/main/resources/static/js/(company-register|company-complete)\.js$') {
-        return "company"
+    foreach ($definition in $FeatureDefinitions) {
+        foreach ($pattern in @($definition.pathPatterns)) {
+            if ($path -match $pattern) {
+                $resolved.Add([string] $definition.name) | Out-Null
+                break
+            }
+        }
     }
 
-    if ($path -match '^src/main/java/com/pcs/domain/member/' -or
-        $path -match '^src/main/resources/mapper/member/' -or
-        $path -match '^docs/features/member(-db)?\.md$' -or
-        $path -match '^src/main/resources/static/(users|mypage)\.html$' -or
-        $path -match '^src/main/resources/static/js/(users|mypage)\.js$') {
-        return "member"
-    }
-
-    if ($path -match '^src/main/java/com/pcs/domain/auth/' -or
-        $path -match '^src/main/java/com/pcs/global/(jwt|security|auth)/' -or
-        $path -match '^src/main/resources/mapper/auth/' -or
-        $path -match '^docs/features/auth(-db)?\.md$' -or
-        $path -match '^src/main/resources/static/(login|workspace-login)\.html$' -or
-        $path -match '^src/main/resources/static/js/(login|workspace-login|pcs-api)\.js$' -or
-        $path -match '^docs/ai/pcs-auth-client-rules\.md$') {
-        return "auth"
-    }
-
-    if ($path -match '^src/main/java/com/pcs/domain/partner/' -or
-        $path -match '^src/main/resources/mapper/partner/' -or
-        $path -match '^docs/features/partner(-db)?\.md$' -or
-        $path -match '^src/main/resources/static/partners\.html$' -or
-        $path -match '^src/main/resources/static/js/partners\.js$') {
-        return "partner"
-    }
-
-    if ($path -match '^src/main/java/com/pcs/domain/category/' -or
-        $path -match '^src/main/resources/mapper/category/' -or
-        $path -match '^docs/features/category(-db)?\.md$' -or
-        $path -match '^src/main/resources/static/categories\.html$' -or
-        $path -match '^src/main/resources/static/js/categories\.js$') {
-        return "category"
-    }
-
-    if ($path -match '^src/main/java/com/pcs/domain/part/' -or
-        $path -match '^src/main/resources/mapper/part/' -or
-        $path -match '^docs/features/part(-db)?\.md$' -or
-        $path -match '^src/main/resources/static/parts\.html$' -or
-        $path -match '^src/main/resources/static/js/parts\.js$') {
-        return "part"
-    }
-
-    return $null
+    return $resolved.ToArray()
 }
 
 function Get-ChangedFilesForGate {
@@ -1028,8 +1148,9 @@ function Resolve-GateFeatures {
 
     $changedFiles = Get-ChangedFilesForGate
     foreach ($changedFile in $changedFiles) {
-        $resolvedFeature = Resolve-FeatureFromChangedPath $changedFile
-        Add-FeatureIfSupported $features $resolvedFeature
+        foreach ($resolvedFeature in @(Resolve-FeaturesFromChangedPath $changedFile)) {
+            Add-FeatureIfSupported $features $resolvedFeature
+        }
     }
 
     if ($features.Count -eq 0) {
@@ -1059,6 +1180,14 @@ function Invoke-FeatureChecks {
             Test-CategoryFeature
         } elseif ($selectedFeature -eq "part") {
             Test-PartFeature
+        } elseif ($selectedFeature -eq "stock") {
+            Test-StockFeature
+        } elseif ($selectedFeature -eq "inspection") {
+            Test-InspectionFeature
+        } elseif ($selectedFeature -eq "history") {
+            Test-HistoryFeature
+        } elseif ($selectedFeature -eq "dashboard") {
+            Test-DashboardFeature
         }
     }
 }
@@ -1565,6 +1694,147 @@ function Test-PartFeature {
     Add-Result "INFO" "PART_FEATURE" "Part feature checks completed."
 }
 
+function Test-StockFeature {
+    foreach ($required in @(
+        @("docs/features/stock.md", "STOCK_FEATURE_DOC"),
+        @("docs/features/stock-db.md", "STOCK_DB_DOC"),
+        @("src/main/java/com/pcs/domain/stock/api/StockApiController.java", "STOCK_API"),
+        @("src/main/java/com/pcs/domain/stock/facade/StockFacade.java", "STOCK_FACADE"),
+        @("src/main/java/com/pcs/domain/stock/service/StockService.java", "STOCK_SERVICE"),
+        @("src/main/java/com/pcs/domain/stock/mapper/StockMapper.java", "STOCK_MAPPER"),
+        @("src/main/resources/mapper/stock/StockMapper.xml", "STOCK_MAPPER_XML"),
+        @("src/test/java/com/pcs/domain/stock/service/StockServiceTest.java", "STOCK_SERVICE_TEST"),
+        @("src/test/java/com/pcs/domain/stock/facade/StockFacadeTest.java", "STOCK_FACADE_TEST")
+    )) {
+        Test-PathRequired $required[0] $required[1] "Keep the stock implementation aligned with docs/features/stock.md."
+    }
+
+    $controller = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/stock/api/StockApiController.java"
+    if (Test-Path $controller) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $controller
+        foreach ($pattern in @("@RestController", "@AuthenticationPrincipal", "ApiResultDto", "PageResultDto", "/stock/documents/inbounds", "/stock/documents/outbounds", "/stock/documents/{documentId}/cancel")) {
+            if ($content -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "STOCK_CONTROLLER_PATTERN" "StockApiController is missing required pattern: $pattern" "Keep inbound, outbound, cancel, and list APIs in StockApiController."
+            }
+        }
+    }
+
+    $facade = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/stock/facade/StockFacade.java"
+    if (Test-Path $facade) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $facade
+        foreach ($pattern in @("@Transactional", "createInboundDocument", "createOutboundDocument", "cancelDocument")) {
+            if ($content -notmatch $pattern) {
+                Add-Result "FAIL" "STOCK_TRANSACTION_PATTERN" "StockFacade is missing required transaction pattern: $pattern" "Keep stock-changing use cases transactional in StockFacade."
+            }
+        }
+    }
+
+    $mapperXml = Join-Path $ProjectRoot "src/main/resources/mapper/stock/StockMapper.xml"
+    if (Test-Path $mapperXml) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $mapperXml
+        foreach ($pattern in @("tb_stock_document", "tb_stock_movement", "tb_stock_movement_unit", "tb_pc_part_unit", "tb_part_stock", "company_id", "LIMIT", "OFFSET", "FOR UPDATE")) {
+            if ($content -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "STOCK_MAPPER_PATTERN" "StockMapper.xml is missing required SQL pattern: $pattern" "Keep stock persistence, company scope, paging, and locking rules."
+            }
+        }
+    }
+
+    Add-Result "INFO" "STOCK_FEATURE" "Stock feature checks completed."
+}
+
+function Test-InspectionFeature {
+    foreach ($required in @(
+        @("docs/features/inspection.md", "INSPECTION_FEATURE_DOC"),
+        @("docs/features/inspection-history.md", "INSPECTION_HISTORY_DOC"),
+        @("docs/features/inspection-template.md", "INSPECTION_TEMPLATE_DOC"),
+        @("docs/features/inspection-db.md", "INSPECTION_DB_DOC"),
+        @("src/main/java/com/pcs/domain/inspection/api/InspectionApiController.java", "INSPECTION_API"),
+        @("src/main/java/com/pcs/domain/inspection/api/InspectionTemplateApiController.java", "INSPECTION_TEMPLATE_API"),
+        @("src/main/java/com/pcs/domain/inspection/facade/InspectionFacade.java", "INSPECTION_FACADE"),
+        @("src/main/java/com/pcs/domain/inspection/service/InspectionService.java", "INSPECTION_SERVICE"),
+        @("src/main/java/com/pcs/domain/inspection/mapper/InspectionMapper.java", "INSPECTION_MAPPER"),
+        @("src/main/resources/mapper/inspection/InspectionMapper.xml", "INSPECTION_MAPPER_XML"),
+        @("src/test/java/com/pcs/domain/inspection/service/InspectionServiceTest.java", "INSPECTION_SERVICE_TEST"),
+        @("src/test/java/com/pcs/domain/inspection/service/InspectionTemplateServiceTest.java", "INSPECTION_TEMPLATE_SERVICE_TEST")
+    )) {
+        Test-PathRequired $required[0] $required[1] "Keep the inspection implementation aligned with its feature documents."
+    }
+
+    $facade = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/inspection/facade/InspectionFacade.java"
+    if (Test-Path $facade) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $facade
+        foreach ($pattern in @("@Transactional", "createBulkInitialInspection", "createCorrection", "createReinspection")) {
+            if ($content -notmatch $pattern) {
+                Add-Result "FAIL" "INSPECTION_TRANSACTION_PATTERN" "InspectionFacade is missing required transaction pattern: $pattern" "Keep inspection creation and revision use cases transactional."
+            }
+        }
+    }
+
+    $mapperXml = Join-Path $ProjectRoot "src/main/resources/mapper/inspection/InspectionMapper.xml"
+    if (Test-Path $mapperXml) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $mapperXml
+        foreach ($pattern in @("tb_inspection", "tb_inspection_item_result", "tb_part_status_history", "tb_pc_part_unit", "company_id", "LIMIT", "OFFSET")) {
+            if ($content -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "INSPECTION_MAPPER_PATTERN" "InspectionMapper.xml is missing required SQL pattern: $pattern" "Keep inspection history, status history, company scope, and paging rules."
+            }
+        }
+    }
+
+    Add-Result "INFO" "INSPECTION_FEATURE" "Inspection feature checks completed."
+}
+
+function Test-HistoryFeature {
+    foreach ($required in @(
+        @("docs/features/history.md", "HISTORY_FEATURE_DOC"),
+        @("src/main/resources/static/history-stock.html", "HISTORY_STOCK_HTML"),
+        @("src/main/resources/static/js/history-stock.js", "HISTORY_STOCK_JS"),
+        @("src/main/resources/static/history-inspection.html", "HISTORY_INSPECTION_HTML"),
+        @("src/main/resources/static/js/history-inspection.js", "HISTORY_INSPECTION_JS")
+    )) {
+        Test-PathRequired $required[0] $required[1] "Keep history pages connected to stock and inspection APIs."
+    }
+
+    $stockJs = Join-Path $ProjectRoot "src/main/resources/static/js/history-stock.js"
+    if (Test-Path $stockJs) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $stockJs
+        foreach ($pattern in @("window.PcsApi", "window.PcsPagination", "/stock/documents", "buildParams")) {
+            if ($content -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "HISTORY_STOCK_CLIENT_PATTERN" "history-stock.js is missing required pattern: $pattern" "Use the authenticated stock document API with server-side filters."
+            }
+        }
+    }
+
+    $inspectionJs = Join-Path $ProjectRoot "src/main/resources/static/js/history-inspection.js"
+    if (Test-Path $inspectionJs) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $inspectionJs
+        foreach ($pattern in @("window.PcsApi", "window.PcsPagination", "/inspections", "buildParams")) {
+            if ($content -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "HISTORY_INSPECTION_CLIENT_PATTERN" "history-inspection.js is missing required pattern: $pattern" "Use the authenticated inspection history API with server-side filters."
+            }
+        }
+    }
+
+    Add-Result "INFO" "HISTORY_FEATURE" "History feature checks completed."
+}
+
+function Test-DashboardFeature {
+    Test-PathRequired "docs/features/dashboard.md" "DASHBOARD_FEATURE_DOC" "Keep dashboard behavior documented."
+    Test-PathRequired "src/main/resources/static/dashboard.html" "DASHBOARD_HTML" "Keep the workspace dashboard page."
+    Test-PathRequired "src/main/resources/static/js/dashboard.js" "DASHBOARD_JS" "Keep dashboard client behavior in dashboard.js."
+
+    $dashboardJs = Join-Path $ProjectRoot "src/main/resources/static/js/dashboard.js"
+    if (Test-Path $dashboardJs) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $dashboardJs
+        foreach ($pattern in @("window.PcsApi", "/me")) {
+            if ($content -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "DASHBOARD_CLIENT_PATTERN" "dashboard.js is missing required pattern: $pattern" "Keep authenticated workspace context loading on the dashboard."
+            }
+        }
+    }
+
+    Add-Result "INFO" "DASHBOARD_FEATURE" "Dashboard feature checks completed."
+}
+
 function Get-DbConfig {
     $dbUrl = $env:DB_URL
     $dbUser = $env:DB_USER
@@ -1706,6 +1976,12 @@ public class PcsHarnessDbCheck {
                     checkPartnerDb();
                 } else if ("category".equals(normalized)) {
                     checkCategoryDb();
+                } else if ("part".equals(normalized)) {
+                    checkPartDb();
+                } else if ("stock".equals(normalized)) {
+                    checkStockDb();
+                } else if ("inspection".equals(normalized)) {
+                    checkInspectionDb();
                 } else {
                     fail("DB_CHECK_UNKNOWN", "Unknown DB check: " + normalized);
                 }
@@ -2236,6 +2512,124 @@ public class PcsHarnessDbCheck {
         }
     }
 
+    private static void checkPartDb() throws SQLException {
+        String[][] requiredColumns = {
+            {"tb_pc_part", "company_id"},
+            {"tb_pc_part", "category_id"},
+            {"tb_pc_part", "part_name"},
+            {"tb_pc_part", "model_name"},
+            {"tb_pc_part", "manufacturer"},
+            {"tb_pc_part", "part_code"},
+            {"tb_pc_part", "estimated_price"},
+            {"tb_pc_part", "safe_quantity"},
+            {"tb_part_spec_value", "company_id"},
+            {"tb_part_spec_value", "part_id"},
+            {"tb_part_spec_value", "spec_definition_id"},
+            {"tb_part_spec_value", "value_text"},
+            {"tb_part_spec_value", "value_number"},
+            {"tb_part_spec_value", "value_boolean"},
+            {"tb_part_spec_value", "selected_option_id"},
+            {"tb_pc_part_unit", "internal_serial_no"},
+            {"tb_pc_part_unit", "unit_status"},
+            {"tb_pc_part_unit", "inspection_status"},
+            {"tb_pc_part_unit", "sales_status"},
+            {"tb_part_stock", "company_id"},
+            {"tb_part_stock", "part_id"},
+            {"tb_part_stock", "quantity"}
+        };
+        for (String[] column : requiredColumns) {
+            requireColumn(column[0], column[1]);
+        }
+        requireConstraint("tb_pc_part", "uk_pc_part_company_code");
+        requireConstraint("tb_pc_part", "chk_pc_part_price");
+        requireConstraint("tb_pc_part", "chk_pc_part_safe_quantity");
+        requireConstraint("tb_part_spec_value", "uk_part_spec_value_part_definition");
+        requireConstraint("tb_pc_part_unit", "uk_pc_part_unit_internal_serial");
+        requireConstraint("tb_part_stock", "uk_part_stock_company_part");
+        requireConstraint("tb_part_stock", "chk_part_stock_quantity");
+        pass("PART_DB_STRUCTURE", "Part master, specification, unit, and stock structures are valid.");
+    }
+
+    private static void checkStockDb() throws SQLException {
+        String[][] requiredColumns = {
+            {"tb_stock_document", "company_id"},
+            {"tb_stock_document", "partner_id"},
+            {"tb_stock_document", "document_no"},
+            {"tb_stock_document", "document_type"},
+            {"tb_stock_document", "document_status"},
+            {"tb_stock_document", "processed_by"},
+            {"tb_stock_movement", "company_id"},
+            {"tb_stock_movement", "document_id"},
+            {"tb_stock_movement", "part_id"},
+            {"tb_stock_movement", "movement_type"},
+            {"tb_stock_movement", "movement_status"},
+            {"tb_stock_movement", "canceled_movement_id"},
+            {"tb_stock_movement", "quantity"},
+            {"tb_stock_movement", "before_quantity"},
+            {"tb_stock_movement", "after_quantity"},
+            {"tb_stock_movement_unit", "movement_id"},
+            {"tb_stock_movement_unit", "unit_id"},
+            {"tb_stock_movement_unit", "before_unit_status"},
+            {"tb_stock_movement_unit", "after_unit_status"}
+        };
+        for (String[] column : requiredColumns) {
+            requireColumn(column[0], column[1]);
+        }
+        requireEnumValue("tb_stock_document", "document_type", "INBOUND");
+        requireEnumValue("tb_stock_document", "document_type", "OUTBOUND");
+        requireEnumValue("tb_stock_document", "document_status", "CANCELED");
+        requireEnumValue("tb_stock_movement", "movement_type", "INBOUND_CANCEL");
+        requireEnumValue("tb_stock_movement", "movement_type", "OUTBOUND_CANCEL");
+        requireConstraint("tb_stock_document", "uk_stock_document_document_no");
+        requireConstraint("tb_stock_document", "uk_stock_document_company_document_id");
+        requireConstraint("tb_stock_movement", "uk_stock_movement_company_movement_id");
+        requireConstraint("tb_stock_movement", "chk_stock_movement_quantity");
+        requireConstraint("tb_stock_movement", "chk_stock_movement_before_after");
+        requireConstraint("tb_stock_movement_unit", "uk_stock_movement_unit");
+        pass("STOCK_DB_STRUCTURE", "Stock document, movement, unit, and quantity constraints are valid.");
+    }
+
+    private static void checkInspectionDb() throws SQLException {
+        String[][] requiredColumns = {
+            {"tb_inspection_template", "company_id"},
+            {"tb_inspection_template", "category_id"},
+            {"tb_inspection_template", "template_name"},
+            {"tb_inspection_template", "version"},
+            {"tb_inspection_template_item", "template_id"},
+            {"tb_inspection_template_item", "input_type"},
+            {"tb_inspection_template_item", "sort_order"},
+            {"tb_inspection_template_item_option", "item_id"},
+            {"tb_inspection_template_item_option", "option_value"},
+            {"tb_inspection", "company_id"},
+            {"tb_inspection", "unit_id"},
+            {"tb_inspection", "inspection_type"},
+            {"tb_inspection", "original_inspection_id"},
+            {"tb_inspection", "sales_status"},
+            {"tb_inspection", "result"},
+            {"tb_inspection", "grade"},
+            {"tb_inspection_item_result", "item_name_snapshot"},
+            {"tb_inspection_item_result", "selected_option_id"},
+            {"tb_inspection_item_result", "selected_option_label_snapshot"},
+            {"tb_part_status_history", "company_id"},
+            {"tb_part_status_history", "unit_id"},
+            {"tb_part_status_history", "changed_by"}
+        };
+        for (String[] column : requiredColumns) {
+            requireColumn(column[0], column[1]);
+        }
+        requireEnumValue("tb_inspection", "inspection_type", "INITIAL");
+        requireEnumValue("tb_inspection", "inspection_type", "CORRECTION");
+        requireEnumValue("tb_inspection", "inspection_type", "REINSPECTION");
+        requireEnumValue("tb_inspection", "grade", "DEFECTIVE");
+        requireConstraint("tb_inspection_template", "uk_inspection_template_version");
+        requireConstraint("tb_inspection_template", "chk_inspection_template_version");
+        requireConstraint("tb_inspection_template_item", "chk_inspection_template_item_sort_order");
+        requireConstraint("tb_inspection_template_item_option", "uk_inspection_template_item_option_value");
+        requireConstraint("tb_inspection", "uk_inspection_company_inspection_id");
+        requireConstraint("tb_inspection", "chk_inspection_original");
+        pass("INSPECTION_DB_STRUCTURE", "Inspection, template, result, and status-history structures are valid.");
+    }
+
     private static long insertCompany(String name, String code, String email, String phone, String businessNo) throws SQLException {
         String sql = "INSERT INTO tb_company (company_name, company_code, representative_email, representative_phone, business_registration_no, active) VALUES (?, ?, ?, ?, ?, TRUE)";
         try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -2659,10 +3053,18 @@ function Invoke-DbChecks {
 
     if ($RunDb -and $script:SelectedFeatures -and $script:SelectedFeatures.Count -gt 0) {
         foreach ($selectedFeature in $script:SelectedFeatures) {
-            if ($SupportedDbFeatureNames -contains $selectedFeature) {
-                $requestedChecks.Add($selectedFeature) | Out-Null
-            } else {
+            $definition = Get-FeatureDefinition $selectedFeature
+            $featureDbChecks = @($definition.dbChecks | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+            if ($featureDbChecks.Count -eq 0) {
                 Add-Result "INFO" "DB_FEATURE_NOT_IMPLEMENTED_$($selectedFeature.ToUpper())" "DB harness check is not implemented for feature: $selectedFeature." "Add a DB checker before requiring this feature in DB gate."
+                continue
+            }
+            foreach ($dbCheck in $featureDbChecks) {
+                if ($SupportedDbFeatureNames -contains $dbCheck) {
+                    $requestedChecks.Add([string] $dbCheck) | Out-Null
+                } else {
+                    Add-Result "FAIL" "DB_FEATURE_REGISTRY_INVALID" "Feature $selectedFeature references unsupported DB check: $dbCheck." "Fix harness/config/features.json."
+                }
             }
         }
     }
@@ -2892,6 +3294,8 @@ Test-ForbiddenAlways
 Test-NoFeatureCodeBeforeSpec
 Test-JavaScriptSyntax
 Test-CssArchitecture
+Test-FeatureRegistry
+Test-CodexHookConfiguration
 Test-WorkspaceNavigation
 Test-FrontendCommonUtilityReuse
 
