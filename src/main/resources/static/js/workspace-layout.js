@@ -40,12 +40,35 @@
         return new Set((session?.staffPermissions || []).map((permission) => normalizePermission(permission)));
     };
 
+    const getStaffAnyPermissions = (element) => {
+        return String(element.dataset.staffAnyPermissions || "")
+            .split(",")
+            .map((permission) => normalizePermission(permission))
+            .filter(Boolean);
+    };
+
     const isStaffPermissionAllowed = (element, role, staffPermissions) => {
         if (normalizeRole(role) !== "STAFF") {
             return true;
         }
         const requiredPermission = normalizePermission(element.dataset.staffPermission);
-        return !requiredPermission || staffPermissions.has(requiredPermission);
+        const anyPermissions = getStaffAnyPermissions(element);
+        const requiredAllowed = !requiredPermission || staffPermissions.has(requiredPermission);
+        const anyAllowed = anyPermissions.length === 0
+                || anyPermissions.some((permission) => staffPermissions.has(permission));
+        return requiredAllowed && anyAllowed;
+    };
+
+    const applyStaffFallbackRoute = (element, role, staffPermissions) => {
+        if (normalizeRole(role) !== "STAFF") {
+            return;
+        }
+        const primaryPermission = normalizePermission(element.dataset.staffPrimaryPermission);
+        const fallbackRoute = String(element.dataset.staffFallbackRoute || "").trim();
+        if (!primaryPermission || !fallbackRoute || staffPermissions.has(primaryPermission)) {
+            return;
+        }
+        element.href = `/w/${encodeURIComponent(companyCode)}/${fallbackRoute}`;
     };
 
     const getRouteStaffPermission = (route) => {
@@ -80,13 +103,14 @@
 
     const applyActiveRoute = () => {
         const activeRoute = getActiveRoute();
+        const activeSidebarRoute = activeRoute === "categories" ? "parts" : activeRoute;
         const currentPath = window.location.pathname;
 
         document.querySelectorAll(".sidebar-nav [data-route]").forEach((link) => {
             const route = link.dataset.route;
             const routeRoot = route.split("/")[0];
-            const activeRoot = activeRoute.split("/")[0];
-            const isActive = route === activeRoute || 
+            const activeRoot = activeSidebarRoute.split("/")[0];
+            const isActive = route === activeSidebarRoute ||
                              (routeRoot === activeRoot && ["inbound", "outbound"].includes(routeRoot)) ||
                              (routeRoot === "inbound" && currentPath.includes("/inbound/")) ||
                              (routeRoot === "outbound" && currentPath.includes("/outbound/"));
@@ -118,10 +142,13 @@
             return;
         }
 
-        document.querySelectorAll("[data-allowed-roles], [data-staff-permission]").forEach((element) => {
+        document.querySelectorAll("[data-allowed-roles], [data-staff-permission], [data-staff-any-permissions]").forEach((element) => {
             const allowed = isAllowedForRole(element, normalizedRole)
                     && isStaffPermissionAllowed(element, normalizedRole, staffPermissions);
             element.hidden = !allowed;
+            if (allowed) {
+                applyStaffFallbackRoute(element, normalizedRole, staffPermissions);
+            }
 
             const route = element.dataset.route;
             if (!allowed && route && (route === activeRoute || activeRoute.startsWith(`${route}/`))) {
@@ -219,7 +246,6 @@
         });
 
         closeMenu(false);
-        syncToggleState();
     };
 
     const bindAccountActions = () => {

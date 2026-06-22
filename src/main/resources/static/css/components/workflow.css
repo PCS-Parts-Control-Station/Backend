@@ -1,5 +1,4 @@
-/* Workflow helper panel for stock operation pages. */
-
+@layer workflow {
 .process-panel {
     overflow: hidden;
 }
@@ -141,7 +140,43 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .workflow-step.active .process-dot {
+.workflow-step.active .process-dot {
         animation: none;
     }
+}
+
+.page-icon-document {
+    border-color: rgba(37, 99, 235, 0.16);
+    background: var(--cyan-soft);
+}
+
+[data-inbound-panel="guide"] {
+    gap: 18px;
+}
+
+.field-message.is-error {
+    color: var(--danger, #b42318);
+}
+
+@media (max-width: 640px) {
+.part-modal {
+        width: calc(100vw - 24px);
+    }
+
+.part-modal-header,
+.part-modal-actions {
+        padding-inline: 16px;
+    }
+
+.part-modal-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+}
+
+@keyframes inboundLoadingSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
 }

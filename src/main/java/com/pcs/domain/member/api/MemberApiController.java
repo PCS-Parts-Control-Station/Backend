@@ -1,10 +1,11 @@
 package com.pcs.domain.member.api;
 
-import com.pcs.domain.member.dto.request.CreateMemberRequest;
 import com.pcs.domain.member.dto.request.ChangeMypagePasswordRequest;
+import com.pcs.domain.member.dto.request.CreateMemberRequest;
 import com.pcs.domain.member.dto.request.UpdateMypageRequest;
 import com.pcs.domain.member.dto.request.UpdateStaffPermissionRequest;
 import com.pcs.domain.member.dto.request.UpdateMemberRequest;
+import com.pcs.domain.member.dto.response.CreateMemberResponse;
 import com.pcs.domain.member.dto.response.MypageResponse;
 import com.pcs.domain.member.dto.response.SearchMemberResponse;
 import com.pcs.domain.member.dto.response.SearchMemberSummaryResponse;
@@ -16,6 +17,7 @@ import com.pcs.global.dto.ApiResultDto;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.security.PcsPrincipal;
 import jakarta.validation.Valid;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -61,14 +63,15 @@ public class MemberApiController {
     }
 
     @PostMapping("/workspaces/{companyCode}/users")
-    public ResponseEntity<ApiResultDto<SearchMemberResponse>> createMember(
+    public ResponseEntity<ApiResultDto<CreateMemberResponse>> createMember(
             @PathVariable String companyCode,
             @AuthenticationPrincipal PcsPrincipal principal,
             @Valid @RequestBody CreateMemberRequest request
     ) {
-        SearchMemberResponse response = memberFacade.createMember(principal, companyCode, request);
+        CreateMemberResponse response = memberFacade.createMember(principal, companyCode, request);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
+                .cacheControl(CacheControl.noStore())
                 .body(ApiResultDto.ok("사용자 등록이 완료되었습니다.", response));
     }
 
@@ -100,7 +103,9 @@ public class MemberApiController {
             @AuthenticationPrincipal PcsPrincipal principal
     ) {
         TemporaryPasswordResponse response = memberFacade.issueTemporaryPassword(principal, companyCode, memberId);
-        return ResponseEntity.ok(ApiResultDto.ok("임시 비밀번호가 발급되었습니다.", response));
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .body(ApiResultDto.ok("임시 비밀번호가 발급되었습니다.", response));
     }
 
     @GetMapping("/workspaces/{companyCode}/users/staff-permissions")

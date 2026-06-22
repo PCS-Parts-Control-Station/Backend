@@ -9,10 +9,19 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/admin.css?20260611_side_panel_400">
-    <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
+
+
+
+
+    <link rel="stylesheet" href="/css/core/tokens.css?20260618_layers">
+    <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
+    <link rel="stylesheet" href="/css/layouts/workspace.css?20260622_sidebar_autoclose">
+    <link rel="stylesheet" href="/css/components/components.css?20260619_md_alignment">
+    <link rel="stylesheet" href="/css/components/management-page.css?20260619_management">
+    <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
+    <link rel="stylesheet" href="/css/pages/parts.css?20260619_md_alignment">
 </head>
-<body class="has-collapsible-sidebar">
+<body class="has-collapsible-sidebar page-parts workspace-page">
 <div class="workspace-layout">
     <div data-workspace-sidebar data-active-route="parts"></div>
 
@@ -29,6 +38,9 @@
                 <p class="page-kicker">기준 정보 관리</p>
                 <h1>품목 관리</h1>
                 <p class="page-description">입고 때 선택할 품목명, 제조사 모델명, 현재 재고와 안전 재고를 함께 확인합니다.</p>
+            </div>
+            <div class="header-actions">
+                <a class="btn btn-secondary" data-route="categories" data-staff-permission="STAFF_CATEGORY_MANAGE">품목 분류</a>
             </div>
         </header>
 
@@ -57,7 +69,7 @@
                 </section>
 
                 <section class="table-card" aria-labelledby="part-list-title">
-                    <div class="table-header inline-summary-header">
+                    <div class="table-header inline-summary-header management-summary-header">
                         <div>
                             <h2 id="part-list-title">품목 목록</h2>
                             <p>입고 전표에서 선택할 품목 종류와 재고 기준입니다.</p>
@@ -80,7 +92,7 @@
                         </div>
                     </div>
 
-                    <div class="data-table" role="table" aria-label="품목 목록" data-part-table>
+                    <div class="data-table management-data-table" role="table" aria-label="품목 목록" data-part-table>
                         <div class="data-row management-data-row part-management-data-row table-head" role="row">
                             <span role="columnheader">품목명</span>
                             <span role="columnheader">제조사 / 제조사 모델명</span>
@@ -321,9 +333,9 @@
         </div>
     </div>
 </dialog>
-<script src="/js/pcs-api.js?20260617_temp_password"></script>
+<script src="/js/pcs-api.js?20260619_md_alignment"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
-<script src="/js/workspace-layout.js?20260617_temp_password"></script>
+<script src="/js/workspace-layout.js?20260622_sidebar_autoclose"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
 <script src="/js/pcs-common.js?20260610_common"></script>
 <script src="/js/parts.js?20260609_category_picker"></script>

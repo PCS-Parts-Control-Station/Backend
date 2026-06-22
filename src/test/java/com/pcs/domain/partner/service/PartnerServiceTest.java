@@ -30,7 +30,6 @@ class PartnerServiceTest {
 
     @Mock
     private PartnerMapper partnerMapper;
-
     @Mock
     private WorkspaceAccessValidator workspaceAccessValidator;
 
@@ -112,8 +111,7 @@ class PartnerServiceTest {
     void searchPartners_failsWhenCompanyInactive() {
         Long companyId = 1L;
         doThrow(new BusinessException(ErrorCode.COMPANY_INACTIVE))
-                .when(workspaceAccessValidator)
-                .validateCompanyActive(companyId);
+                .when(workspaceAccessValidator).validateCompanyActive(companyId);
 
         BusinessException exception = assertThrows(
                 BusinessException.class,

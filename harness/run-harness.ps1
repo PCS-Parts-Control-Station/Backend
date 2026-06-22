@@ -144,7 +144,19 @@ function Get-JavaVersionOutput {
         [string] $JavaCommand
     )
 
-    $output = & $JavaCommand "-version" 2>&1
+    $previousErrorActionPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = "Continue"
+        $output = & $JavaCommand "-version" 2>&1
+        $exitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+
+    if ($exitCode -ne 0) {
+        throw "Java version command failed with exit code $exitCode."
+    }
+
     return ($output | ForEach-Object { $_.ToString() }) -join "`n"
 }
 
@@ -531,7 +543,7 @@ function Test-BootstrapStructure {
     Test-PathRequired "src/main/java/com/pcs/web/controller/PageController.java" "PAGE_CONTROLLER" "Keep the page forward controller."
     Test-PathRequired "src/main/resources/application.yaml" "APPLICATION_YAML" "Keep application.yaml."
     Test-PathRequired "src/main/resources/static/main.html" "MAIN_HTML" "Keep the bootstrap main page."
-    Test-PathRequired "src/main/resources/static/css/main.css" "MAIN_CSS" "Keep CSS paired with main.html."
+    Test-PathRequired "src/main/resources/static/css/pages/main.css" "MAIN_CSS" "Keep page CSS paired with main.html."
     Test-PathRequired "src/main/resources/static/js/main.js" "MAIN_JS" "Keep JS paired with main.html."
 }
 
@@ -625,6 +637,188 @@ function Test-JavaScriptSyntax {
         }
     }
     Add-Result "INFO" "JS_SYNTAX" "JS syntax check passed."
+}
+
+function Test-CssArchitecture {
+    $staticRoot = Join-Path $ProjectRoot "src/main/resources/static"
+    $cssRoot = Join-Path $staticRoot "css"
+    $requiredCommonFiles = @(
+        "css/core/tokens.css",
+        "css/core/base.css",
+        "css/layouts/workspace.css",
+        "css/components/components.css",
+        "css/components/workflow.css",
+        "css/components/feedback.css"
+    )
+
+    foreach ($relativePath in $requiredCommonFiles) {
+        Test-PathRequired "src/main/resources/static/$relativePath" "CSS_ARCHITECTURE_FILE" "Keep the layered CSS architecture defined in docs/ai/design/css-architecture.md."
+    }
+
+    $legacyAdminCss = Join-Path $cssRoot "admin.css"
+    if (Test-Path $legacyAdminCss) {
+        Add-Result "FAIL" "CSS_LEGACY_ADMIN_FILE" "Legacy admin.css exists." "Move shared rules to core/layouts/components and page rules to pages, then remove admin.css."
+    } else {
+        Add-Result "INFO" "CSS_LEGACY_ADMIN_FILE" "Legacy admin.css is absent."
+    }
+
+    $legacyFlatCssFiles = @(Get-ChildItem -Path $cssRoot -Filter "*.css" -File -ErrorAction SilentlyContinue)
+    if ($legacyFlatCssFiles.Count -gt 0) {
+        Add-Result "FAIL" "CSS_LEGACY_FLAT_FILES" "CSS files exist outside core/layouts/components/pages: $($legacyFlatCssFiles.Name -join ', ')" "Move each file to its owning CSS directory."
+    }
+
+    $htmlFiles = @(Get-ChildItem -Path $staticRoot -Filter "*.html" -File -ErrorAction SilentlyContinue)
+    foreach ($htmlFile in $htmlFiles) {
+        $pageName = $htmlFile.BaseName
+        $content = Get-Content -Raw $htmlFile.FullName
+        $pageCssRelativePath = "css/pages/$pageName.css"
+        $pageCssPath = Join-Path $staticRoot $pageCssRelativePath
+
+        if (-not (Test-Path $pageCssPath)) {
+            Add-Result "FAIL" "CSS_PAGE_FILE_MISSING" "$($htmlFile.Name) has no matching pages/$pageName.css." "Create one page CSS file for every HTML page."
+        }
+        foreach ($requiredHref in @("/css/core/tokens.css", "/css/core/base.css", "/css/components/components.css", "/css/pages/$pageName.css")) {
+            if ($content -notmatch [regex]::Escape($requiredHref)) {
+                Add-Result "FAIL" "CSS_PAGE_LINK_MISSING" "$($htmlFile.Name) does not load $requiredHref." "Load common CSS in standard order and page CSS last."
+            }
+        }
+        $orderedHrefs = @("/css/core/tokens.css", "/css/core/base.css")
+        if ($content -match "workspace-page") {
+            $orderedHrefs += "/css/layouts/workspace.css"
+            if ($content -notmatch [regex]::Escape("/css/layouts/workspace.css")) {
+                Add-Result "FAIL" "CSS_WORKSPACE_LAYOUT_MISSING" "$($htmlFile.Name) is a workspace page without layouts/workspace.css." "Load the shared workspace layout before components."
+            }
+        }
+        $orderedHrefs += "/css/components/components.css"
+        if ($content -match [regex]::Escape("/css/components/workflow.css")) {
+            $orderedHrefs += "/css/components/workflow.css"
+        }
+        if ($content -match [regex]::Escape("/css/components/feedback.css")) {
+            $orderedHrefs += "/css/components/feedback.css"
+        }
+        $orderedHrefs += "/css/pages/$pageName.css"
+        $previousIndex = -1
+        foreach ($href in $orderedHrefs) {
+            $currentIndex = $content.IndexOf($href, [System.StringComparison]::Ordinal)
+            if ($currentIndex -lt $previousIndex) {
+                Add-Result "FAIL" "CSS_LINK_ORDER" "$($htmlFile.Name) loads $href out of order." "Load tokens, base, layout, components, optional shared CSS, then page CSS."
+                break
+            }
+            $previousIndex = $currentIndex
+        }
+        if ($content -match "/css/admin\.css") {
+            Add-Result "FAIL" "CSS_LEGACY_ADMIN_REFERENCE" "$($htmlFile.Name) still references admin.css." "Use the layered CSS files instead."
+        }
+        if ($content -notmatch "page-$([regex]::Escape($pageName))") {
+            Add-Result "FAIL" "CSS_PAGE_SCOPE_CLASS" "$($htmlFile.Name) body is missing page-$pageName." "Scope page-only rules with a page body class."
+        }
+        if ($content -match "\sstyle\s*=") {
+            Add-Result "FAIL" "CSS_STATIC_INLINE_STYLE" "$($htmlFile.Name) contains an inline style attribute." "Move static styles to the matching page CSS."
+        }
+    }
+
+    $cssFiles = @(Get-ChildItem -Path $cssRoot -Filter "*.css" -File -Recurse -ErrorAction SilentlyContinue)
+    foreach ($cssFile in $cssFiles) {
+        $content = Get-Content -Raw $cssFile.FullName
+        if ($content -notmatch "@layer") {
+            Add-Result "FAIL" "CSS_LAYER_MISSING" "$($cssFile.FullName) has rules outside the layer architecture." "Wrap CSS in its owning layer."
+        }
+        $importantMatches = @([regex]::Matches($content, "!important"))
+        $allowedHiddenImportant = $cssFile.Name -eq "base.css" -and $importantMatches.Count -eq 1 -and $content -match "\[hidden\]"
+        if ($importantMatches.Count -gt 0 -and -not $allowedHiddenImportant) {
+            Add-Result "FAIL" "CSS_IMPORTANT_FORBIDDEN" "$($cssFile.FullName) contains !important." "Resolve priority through layer ownership and scoped selectors."
+        }
+        if ($cssFile.Directory.Name -eq "pages" -and $content -notmatch "@layer\s+page") {
+            Add-Result "FAIL" "CSS_PAGE_LAYER_INVALID" "$($cssFile.FullName) is not owned by the page layer." "Wrap page-only styles in @layer page."
+        }
+    }
+
+    Add-Result "INFO" "CSS_ARCHITECTURE" "Layered common and page CSS checks completed."
+}
+
+function Test-WorkspaceNavigation {
+    $fragmentPath = Join-Path $ProjectRoot "src/main/resources/static/fragments/workspace-sidebar.html"
+    $partsPath = Join-Path $ProjectRoot "src/main/resources/static/parts.html"
+    $layoutScriptPath = Join-Path $ProjectRoot "src/main/resources/static/js/workspace-layout.js"
+    $layoutStylePath = Join-Path $ProjectRoot "src/main/resources/static/css/layouts/workspace.css"
+
+    foreach ($requiredPath in @($fragmentPath, $partsPath, $layoutScriptPath, $layoutStylePath)) {
+        if (-not (Test-Path $requiredPath)) {
+            Add-Result "FAIL" "WORKSPACE_NAV_FILE_MISSING" "$requiredPath is missing." "Restore the common workspace navigation file."
+            return
+        }
+    }
+
+    $fragment = Get-Content -Raw -Encoding UTF8 -Path $fragmentPath
+    $parts = Get-Content -Raw -Encoding UTF8 -Path $partsPath
+    $layoutScript = Get-Content -Raw -Encoding UTF8 -Path $layoutScriptPath
+    $layoutStyle = Get-Content -Raw -Encoding UTF8 -Path $layoutStylePath
+
+    if ($fragment -match 'data-route="categories"') {
+        Add-Result "FAIL" "WORKSPACE_CATEGORY_SIDEBAR_DUPLICATED" "The category route is exposed as an independent sidebar item." "Keep one item-management entry and expose categories from the parts page."
+    }
+
+    foreach ($pattern in @(
+        'data-route="parts"',
+        'data-staff-any-permissions="STAFF_PART_CREATE,STAFF_CATEGORY_MANAGE"',
+        'data-staff-fallback-route="categories"'
+    )) {
+        if ($fragment -notmatch [regex]::Escape($pattern)) {
+            Add-Result "FAIL" "WORKSPACE_PART_NAV_INVALID" "workspace-sidebar.html is missing $pattern." "Preserve the combined item-management navigation contract."
+        }
+    }
+
+    foreach ($pattern in @(
+        'data-route="categories"',
+        'data-staff-permission="STAFF_CATEGORY_MANAGE"'
+    )) {
+        if ($parts -notmatch [regex]::Escape($pattern)) {
+            Add-Result "FAIL" "WORKSPACE_CATEGORY_ENTRY_MISSING" "parts.html is missing $pattern." "Expose category management from the parts page header."
+        }
+    }
+
+    foreach ($pattern in @(
+        'getStaffAnyPermissions',
+        'applyStaffFallbackRoute',
+        'activeRoute === "categories" ? "parts" : activeRoute'
+    )) {
+        if ($layoutScript -notmatch [regex]::Escape($pattern)) {
+            Add-Result "FAIL" "WORKSPACE_NAV_SCRIPT_INVALID" "workspace-layout.js is missing $pattern." "Preserve permission fallback and parent active-state behavior."
+        }
+    }
+
+    foreach ($pattern in @(
+        'if (isCollapsibleSidebarPage)',
+        'document.body.classList.add("sidebar-collapsed")',
+        'const isOpen = body.classList.contains("sidebar-open")',
+        'backdrop.addEventListener("click", () => closeMenu())',
+        'event.key === "Escape"',
+        'closeMenu(false)'
+    )) {
+        if ($layoutScript -notmatch [regex]::Escape($pattern)) {
+            Add-Result "FAIL" "WORKSPACE_SIDEBAR_AUTOCLOSE_INVALID" "workspace-layout.js is missing $pattern." "Keep the sidebar closed by default and close it through backdrop or Escape."
+        }
+    }
+
+    if ($layoutScript -match 'desktopSidebarQuery') {
+        Add-Result "FAIL" "WORKSPACE_SIDEBAR_BREAKPOINT_BEHAVIOR" "Sidebar behavior still changes at the desktop breakpoint." "Use the same default-closed off-canvas behavior at every viewport width."
+    }
+
+    foreach ($pattern in @(
+        '.has-collapsible-sidebar .workspace-layout',
+        'position: fixed',
+        '.has-collapsible-sidebar.sidebar-open .workspace-sidebar'
+    )) {
+        if ($layoutStyle -notmatch [regex]::Escape($pattern)) {
+            Add-Result "FAIL" "WORKSPACE_SIDEBAR_BREAKPOINT_BEHAVIOR" "workspace.css is missing $pattern." "Use default-closed off-canvas behavior at every viewport width."
+        }
+    }
+
+    if ($layoutStyle -notmatch [regex]::Escape('.has-collapsible-sidebar.sidebar-open .sidebar-backdrop')) {
+        Add-Result "FAIL" "WORKSPACE_SIDEBAR_BACKDROP_STYLE_MISSING" "The open sidebar backdrop style is missing." "Keep the backdrop available at every viewport width."
+    }
+
+    Add-Result "INFO" "WORKSPACE_NAVIGATION" "Workspace navigation and default-closed sidebar checks completed."
 }
 
 function Test-FrontendCommonUtilityReuse {
@@ -1094,10 +1288,17 @@ function Test-AuthFeature {
     $jwtProvider = Join-Path $ProjectRoot "src/main/java/com/pcs/global/jwt/JwtTokenProvider.java"
     if (Test-Path $jwtProvider) {
         $jwtContent = Get-Content -Raw $jwtProvider
-        foreach ($pattern in @("HmacSHA256", "companyId", "companyCode", "memberId", "tokenType", "exp", "MessageDigest.isEqual", "SecretKeySpec", "DEFAULT_LOCAL_SECRET", "allowDefaultSecret")) {
+        foreach ($pattern in @("HmacSHA256", "companyId", "companyCode", "memberId", "tokenType", "exp", "SecretKeySpec", "DEFAULT_LOCAL_SECRET", "allowDefaultSecret")) {
             if ($jwtContent -notmatch $pattern) {
                 Add-Result "FAIL" "AUTH_JWT_PATTERN" "JwtTokenProvider is missing required JWT claim/signing pattern: $pattern" "Access token must include workspace/member claims and HS256 signature."
             }
+        }
+
+        $usesConstantTimeComparison = $jwtContent -match "MessageDigest\.isEqual"
+        $usesNimbusHs256Decoder = $jwtContent -match "NimbusJwtDecoder" -and
+                $jwtContent -match "\.macAlgorithm\(MacAlgorithm\.HS256\)"
+        if (-not $usesConstantTimeComparison -and -not $usesNimbusHs256Decoder) {
+            Add-Result "FAIL" "AUTH_JWT_SIGNATURE_VALIDATION" "JwtTokenProvider is missing an approved JWT signature verifier." "Use MessageDigest.isEqual for manual verification or NimbusJwtDecoder configured with HS256."
         }
     }
 
@@ -2690,6 +2891,8 @@ Test-ProjectSettings
 Test-ForbiddenAlways
 Test-NoFeatureCodeBeforeSpec
 Test-JavaScriptSyntax
+Test-CssArchitecture
+Test-WorkspaceNavigation
 Test-FrontendCommonUtilityReuse
 
 if ($CheckPort) {

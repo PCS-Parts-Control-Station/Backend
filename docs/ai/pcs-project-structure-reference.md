@@ -119,7 +119,7 @@ CSS와 JS 작성 기준은 화면 유형별 문서를 따른다.
 
 - 공개/진입 화면: `docs/ai/pcs-design-system.md`, `docs/ai/design/public-pages.md`
 - 로그인 후 업무 화면: `docs/ai/pcs-design-system.md`, `docs/ai/design/workspace-layout.md`
-- 업무 화면 CSS: `admin.css` 우선, 복잡한 예외가 있을 때만 개별 CSS
+- CSS 구조: `docs/ai/design/css-architecture.md`의 core/layout/components/pages 소유권과 layer 순서를 따른다.
 - 화면별 JS: 실제 API 연동이나 상호작용이 있을 때만 작성
 
 공통 JS:

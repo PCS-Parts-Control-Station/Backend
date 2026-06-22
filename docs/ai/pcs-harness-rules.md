@@ -157,7 +157,7 @@ src/main/java/com/pcs/PcsApiApplication.java
 src/main/java/com/pcs/web/controller/PageController.java
 src/main/resources/application.yaml
 src/main/resources/static/main.html
-src/main/resources/static/css/main.css
+src/main/resources/static/css/pages/main.css
 src/main/resources/static/js/main.js
 ```
 
@@ -174,6 +174,7 @@ src/main/resources/static/js/main.js
 - `.gitignore` 필수 규칙 확인
 - `domain/{feature}`가 있으면 `docs/features/{feature}.md`가 있어야 함
 - 인증 기능은 `docs/features/auth.md`와 `docs/ai/pcs-auth-client-rules.md` 기준을 유지함
+- JWT 서명 검사는 수동 구현의 `MessageDigest.isEqual` 또는 HS256으로 설정한 `NimbusJwtDecoder`를 허용함
 
 관리형 페이지 JS 공통 유틸 WARN 검사 대상:
 

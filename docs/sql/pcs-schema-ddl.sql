@@ -119,7 +119,8 @@ CREATE TABLE tb_auth_login_history (
     PRIMARY KEY (history_id),
     INDEX idx_auth_login_history_company_date (company_id, created_at),
     INDEX idx_auth_login_history_member_date (company_id, member_id, created_at),
-    INDEX idx_auth_login_history_login_id_date (login_id_snapshot, created_at)
+    INDEX idx_auth_login_history_login_id_date (login_id_snapshot, created_at),
+    INDEX idx_auth_login_history_company_ip_date (company_code_snapshot, login_ip, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE tb_company_staff_permission_disabled (

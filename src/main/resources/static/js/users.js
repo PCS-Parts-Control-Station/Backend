@@ -43,6 +43,8 @@
     const confirmPasswordButton = document.querySelector("[data-confirm-reset-password]");
     const copyTemporaryPasswordButton = document.querySelector("[data-copy-temp-password]");
     const passwordModalFields = {
+        title: document.querySelector("[data-password-modal-title]"),
+        description: document.querySelector("[data-password-modal-description]"),
         targetName: document.querySelector("[data-reset-password-target-name]"),
         tempPasswordContainer: document.querySelector("[data-temp-password-container]"),
         tempPasswordValue: document.querySelector("[data-temp-password-value]"),
@@ -545,6 +547,8 @@
             return;
         }
 
+        passwordModalFields.title.textContent = "임시 비밀번호를 발급할까요?";
+        passwordModalFields.description.textContent = "현재 비밀번호를 사용할 수 없게 되고 새 임시 비밀번호가 발급됩니다.";
         passwordModalFields.targetName.textContent = `${user.memberName} (${user.loginId})`;
         passwordModalFields.tempPasswordContainer.hidden = true;
         passwordModalFields.tempPasswordValue.textContent = "-";
@@ -554,6 +558,24 @@
         
         setPasswordModalMessage();
         confirmPasswordButton.hidden = false;
+        passwordModal.showModal();
+    };
+
+    const showCreatedTemporaryPassword = (created) => {
+        const user = created?.member;
+        if (!passwordModal || !user) {
+            return;
+        }
+        passwordModalFields.title.textContent = "사용자 등록이 완료되었습니다.";
+        passwordModalFields.description.textContent = "아래 임시 비밀번호를 지금 안전하게 전달해 주세요.";
+        passwordModalFields.targetName.textContent = `${user.memberName} (${user.loginId})`;
+        passwordModalFields.tempPasswordContainer.hidden = false;
+        passwordModalFields.tempPasswordValue.textContent = created.temporaryPassword || "-";
+        passwordModalFields.tempPasswordExpiryContainer.hidden = false;
+        passwordModalFields.tempPasswordExpiry.textContent = formatExpiry(created.expiresAt);
+        passwordModalFields.notice.hidden = false;
+        confirmPasswordButton.hidden = true;
+        setPasswordModalMessage();
         passwordModal.showModal();
     };
 
@@ -649,11 +671,12 @@
                 }
             );
 
-            selectedUserId = data.memberId;
+            selectedUserId = data.member.memberId;
             await loadUsers(0, { keepSelection: true });
             showToast("사용자를 등록했습니다.", "success");
             createForm.reset();
             configureRoleSelect(createForm.elements.role, { placeholderDisabled: true });
+            showCreatedTemporaryPassword(data);
         } catch (error) {
             showToast(error?.message || "사용자를 등록하지 못했습니다.", "error");
         } finally {

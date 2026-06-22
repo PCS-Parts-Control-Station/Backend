@@ -125,7 +125,7 @@
         setDetailBadge(
                 detailFields.active,
                 partner.active ? "거래 가능" : "거래 불가",
-                partner.active ? "badge-available" : "badge-unavailable"
+                partner.active ? "badge-available" : "badge-inactive"
         );
         detailFields.phone.textContent = partner.phone || "-";
         detailFields.email.textContent = partner.email || "-";
@@ -198,7 +198,7 @@
                 createBadgeCell(
                     "거래 상태",
                     partner.active ? "거래 가능" : "거래 불가",
-                    partner.active ? "badge-available" : "badge-unavailable"
+                    partner.active ? "badge-available" : "badge-inactive"
                 ),
                 createTextCell("연락처", partner.phone),
                 createTextCell("수정일", formatDate(partner.updatedAt))

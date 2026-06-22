@@ -1,3 +1,4 @@
+@layer page {
 .stock-history-page .workspace-header {
     align-items: flex-start;
 }
@@ -500,4 +501,5 @@
         justify-content: flex-start;
         text-align: left;
     }
+}
 }

@@ -15,16 +15,16 @@ import com.pcs.domain.stock.type.StockDocumentStatus;
 import com.pcs.domain.stock.type.StockDocumentType;
 import com.pcs.global.dto.ApiResultDto;
 import com.pcs.global.dto.PageResultDto;
+import com.pcs.global.security.PcsPrincipal;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -42,7 +42,7 @@ public class StockApiController {
     @GetMapping("/workspaces/{companyCode}/stock/documents")
     public ResponseEntity<ApiResultDto<PageResultDto<SearchStockDocumentResponse, SearchStockDocumentSummaryResponse>>> searchDocuments(
             @PathVariable String companyCode,
-            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader,
+            @AuthenticationPrincipal PcsPrincipal principal,
             @RequestParam(required = false) StockDocumentType documentType,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long partnerId,
@@ -54,7 +54,7 @@ public class StockApiController {
             @RequestParam(required = false) Integer limit
     ) {
         PageResultDto<SearchStockDocumentResponse, SearchStockDocumentSummaryResponse> response = stockFacade.searchDocuments(
-                authorizationHeader,
+                principal,
                 companyCode,
                 documentType,
                 keyword,
@@ -72,7 +72,7 @@ public class StockApiController {
     @GetMapping("/workspaces/{companyCode}/stock/outbound-candidates")
     public ResponseEntity<ApiResultDto<PageResultDto<SearchOutboundCandidateResponse, Void>>> searchOutboundCandidates(
             @PathVariable String companyCode,
-            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader,
+            @AuthenticationPrincipal PcsPrincipal principal,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long partId,
@@ -82,7 +82,7 @@ public class StockApiController {
             @RequestParam(required = false) Integer limit
     ) {
         PageResultDto<SearchOutboundCandidateResponse, Void> response = stockFacade.searchOutboundCandidates(
-                authorizationHeader,
+                principal,
                 companyCode,
                 keyword,
                 categoryId,
@@ -99,10 +99,10 @@ public class StockApiController {
     public ResponseEntity<ApiResultDto<StockDocumentDetailResponse>> getDocument(
             @PathVariable String companyCode,
             @PathVariable Long documentId,
-            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader
+            @AuthenticationPrincipal PcsPrincipal principal
     ) {
         StockDocumentDetailResponse response = stockFacade.getDocument(
-                authorizationHeader,
+                principal,
                 companyCode,
                 documentId
         );
@@ -113,10 +113,10 @@ public class StockApiController {
     public ResponseEntity<ApiResultDto<CancelStockDocumentResponse>> cancelDocument(
             @PathVariable String companyCode,
             @PathVariable Long documentId,
-            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader
+            @AuthenticationPrincipal PcsPrincipal principal
     ) {
         CancelStockDocumentResponse response = stockFacade.cancelDocument(
-                authorizationHeader,
+                principal,
                 companyCode,
                 documentId
         );
@@ -126,11 +126,11 @@ public class StockApiController {
     @PostMapping("/workspaces/{companyCode}/stock/documents/inbounds")
     public ResponseEntity<ApiResultDto<CreateInboundDocumentResponse>> createInboundDocument(
             @PathVariable String companyCode,
-            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader,
+            @AuthenticationPrincipal PcsPrincipal principal,
             @Valid @RequestBody CreateInboundDocumentRequest request
     ) {
         CreateInboundDocumentResponse response = stockFacade.createInboundDocument(
-                authorizationHeader,
+                principal,
                 companyCode,
                 request
         );
@@ -141,11 +141,11 @@ public class StockApiController {
     @PostMapping("/workspaces/{companyCode}/stock/documents/outbounds")
     public ResponseEntity<ApiResultDto<CreateOutboundDocumentResponse>> createOutboundDocument(
             @PathVariable String companyCode,
-            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader,
+            @AuthenticationPrincipal PcsPrincipal principal,
             @Valid @RequestBody CreateOutboundDocumentRequest request
     ) {
         CreateOutboundDocumentResponse response = stockFacade.createOutboundDocument(
-                authorizationHeader,
+                principal,
                 companyCode,
                 request
         );

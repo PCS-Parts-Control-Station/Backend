@@ -26,7 +26,6 @@ class PartFacadeTest {
 
     @Mock
     private PartService partService;
-
     @Mock
     private WorkspaceAccessValidator workspaceAccessValidator;
 

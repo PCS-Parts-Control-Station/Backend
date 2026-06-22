@@ -21,4 +21,6 @@ pcs:
     allow-default-secret: ${PCS_JWT_ALLOW_DEFAULT_SECRET:false}
     access-token-expiration-minutes: ${PCS_JWT_ACCESS_TOKEN_MINUTES:10}
     refresh-token-expiration-days: ${PCS_JWT_REFRESH_TOKEN_DAYS:14}
+    issuer: ${PCS_JWT_ISSUER:pcs}
+    audience: ${PCS_JWT_AUDIENCE:pcs-api}
     refresh-cookie-secure: ${PCS_JWT_REFRESH_COOKIE_SECURE:false}

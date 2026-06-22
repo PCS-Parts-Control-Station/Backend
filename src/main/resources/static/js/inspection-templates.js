@@ -379,7 +379,7 @@
     const setEmptyMessage = (message) => {
         clearRows();
         const row = document.createElement("div");
-        row.className = "data-row inspection-template-row empty-data-row";
+        row.className = "data-row management-data-row inspection-template-row empty-data-row";
         row.setAttribute("role", "row");
         row.append(createCell("안내", message));
         table.append(row);
@@ -700,7 +700,7 @@
 
         templates.forEach((template) => {
             const row = document.createElement("div");
-            row.className = "data-row inspection-template-row is-selectable";
+            row.className = "data-row management-data-row inspection-template-row is-selectable";
             row.setAttribute("role", "row");
             row.setAttribute("tabindex", "0");
             row.dataset.templateId = template.id;
@@ -1037,10 +1037,10 @@
 
     const renderItemOptions = (template, item) => {
         const wrap = document.createElement("div");
-        wrap.className = "template-option-strip";
+        wrap.className = "management-editor-option-strip";
 
         const header = document.createElement("div");
-        header.className = "template-option-strip-header";
+        header.className = "management-editor-option-strip-header";
         const title = document.createElement("strong");
         title.textContent = "선택지";
         const count = document.createElement("span");
@@ -1049,7 +1049,7 @@
         header.append(title, count);
 
         const values = document.createElement("div");
-        values.className = "template-option-values";
+        values.className = "management-editor-option-list";
         values.dataset.optionValues = item.id;
         values.addEventListener("dragover", (event) => {
             if (dragState?.type !== "option" || dragState.itemId !== item.id || isSorting) {
@@ -1071,14 +1071,14 @@
         });
         if (!item.options.length) {
             const empty = document.createElement("span");
-            empty.className = "template-empty-note";
+            empty.className = "management-editor-empty-note";
             empty.textContent = "등록된 선택지가 없습니다.";
             values.append(empty);
         } else {
             item.options.forEach((itemOption) => {
                 if (editingOptionId === itemOption.id) {
                     const form = document.createElement("form");
-                    form.className = "template-option-edit-form";
+                    form.className = "management-editor-option-edit-form";
                     form.setAttribute("action", "#");
                     form.setAttribute("method", "post");
 
@@ -1113,12 +1113,12 @@
                 }
 
                 const value = document.createElement("div");
-                value.className = `template-option-value ${itemOption.active ? "" : "is-inactive"}`;
+                value.className = `management-editor-option-value ${itemOption.active ? "" : "is-inactive"}`;
                 value.draggable = true;
                 value.dataset.optionId = itemOption.id;
 
                 const dragHandle = document.createElement("span");
-                dragHandle.className = "template-drag-handle";
+                dragHandle.className = "management-editor-drag-handle";
                 dragHandle.textContent = "⋮⋮";
                 dragHandle.title = "드래그해서 순서 변경";
                 dragHandle.setAttribute("aria-hidden", "true");
@@ -1129,7 +1129,7 @@
                 const status = createBadge(itemOption.active ? "사용 중" : "중지", itemOption.active ? "badge-available" : "badge-inactive");
 
                 const actions = document.createElement("div");
-                actions.className = "template-option-actions";
+                actions.className = "management-editor-option-actions";
 
                 const editButton = document.createElement("button");
                 editButton.className = "btn btn-secondary";
@@ -1190,12 +1190,12 @@
         }
 
         const editor = document.createElement("details");
-        editor.className = "template-option-editor";
+        editor.className = "management-editor-option-create";
         const summary = document.createElement("summary");
         summary.textContent = "선택지 추가";
 
         const form = document.createElement("form");
-        form.className = "template-option-inline-form";
+        form.className = "management-editor-option-create-form";
         form.setAttribute("action", "#");
         form.setAttribute("method", "post");
         form.setAttribute("autocomplete", "off");
@@ -1227,7 +1227,7 @@
 
     const renderItemCard = (template, item) => {
         const card = document.createElement("article");
-        card.className = `template-item-card ${item.active ? "" : "is-inactive"}`;
+        card.className = `management-editor-item-card ${item.active ? "" : "is-inactive"}`;
         card.classList.toggle("is-selected", item.id === String(selectedItemId));
         card.dataset.itemId = item.id;
         card.draggable = true;
@@ -1236,22 +1236,22 @@
         card.setAttribute("aria-pressed", String(item.id === String(selectedItemId)));
 
         const summary = document.createElement("div");
-        summary.className = "template-item-summary";
+        summary.className = "management-editor-item-summary";
 
         const dragHandle = document.createElement("span");
-        dragHandle.className = "template-drag-handle";
+        dragHandle.className = "management-editor-drag-handle";
         dragHandle.textContent = "⋮⋮";
         dragHandle.title = "드래그해서 순서 변경";
         dragHandle.setAttribute("aria-hidden", "true");
 
         const name = document.createElement("div");
-        name.className = "template-item-name";
+        name.className = "management-editor-item-name";
         const title = document.createElement("strong");
         title.textContent = item.itemName;
         name.append(title);
         if (item.required) {
             const requiredMark = document.createElement("span");
-            requiredMark.className = "template-required-mark";
+            requiredMark.className = "management-editor-required-mark";
             requiredMark.textContent = "*필수";
             name.append(requiredMark);
         }
@@ -1259,7 +1259,7 @@
         const typeBadge = createBadge(INPUT_TYPES[item.inputType], item.inputType === "SELECT" ? "badge-blue" : "badge-info");
         const activeBadge = createBadge(ACTIVE_LABELS[String(item.active)], item.active ? "badge-available" : "badge-inactive");
         const badges = document.createElement("div");
-        badges.className = "template-item-badges";
+        badges.className = "management-editor-item-badges";
         badges.append(typeBadge, activeBadge);
 
         summary.append(dragHandle, name, badges);
@@ -1323,7 +1323,7 @@
         if (!item) {
             selectedItemSummary.textContent = "항목 미선택";
             const empty = document.createElement("div");
-            empty.className = "template-empty-note";
+            empty.className = "management-editor-empty-note";
             empty.textContent = "왼쪽 목록에서 항목을 선택해 주세요.";
             selectedItemDetail.append(empty);
             return;
@@ -1332,29 +1332,29 @@
         selectedItemSummary.textContent = INPUT_TYPES[item.inputType];
 
         const head = document.createElement("div");
-        head.className = "template-selected-head";
+        head.className = "management-editor-selected-head";
         const title = document.createElement("strong");
         title.textContent = item.itemName;
         if (item.required) {
             const requiredMark = document.createElement("span");
-            requiredMark.className = "template-required-mark";
+            requiredMark.className = "management-editor-required-mark";
             requiredMark.textContent = "*필수";
             title.append(" ", requiredMark);
         }
         const badges = document.createElement("div");
-        badges.className = "template-selected-badges";
+        badges.className = "management-editor-selected-badges";
         badges.append(
             createBadge(INPUT_TYPES[item.inputType], item.inputType === "SELECT" ? "badge-blue" : "badge-info"),
             createBadge(ACTIVE_LABELS[String(item.active)], item.active ? "badge-available" : "badge-inactive")
         );
         const editButton = document.createElement("button");
-        editButton.className = "btn btn-secondary template-selected-edit-button";
+        editButton.className = "btn btn-secondary management-editor-selected-edit-button";
         editButton.type = "button";
         editButton.textContent = "항목 수정";
         editButton.addEventListener("click", () => openItemEditModal(item.id));
 
         const actions = document.createElement("div");
-        actions.className = "template-selected-head-actions";
+        actions.className = "management-editor-selected-head-actions";
         actions.append(badges, editButton);
         head.append(title, actions);
 
@@ -1365,7 +1365,7 @@
         }
 
         const note = document.createElement("div");
-        note.className = "template-empty-note";
+        note.className = "management-editor-empty-note";
         note.textContent = "선택지가 필요 없는 입력 방식입니다.";
         selectedItemDetail.append(note);
     };
@@ -1379,10 +1379,10 @@
         ["BASIC", "DETAIL"].forEach((groupKey) => {
             const groupItems = template.items.filter((item) => item.itemGroup === groupKey);
             const group = document.createElement("section");
-            group.className = "template-group";
+            group.className = "management-editor-group";
 
             const title = document.createElement("div");
-            title.className = "template-group-title";
+            title.className = "management-editor-group-title";
             const titleText = document.createElement("span");
             titleText.textContent = GROUPS[groupKey];
             const titleCount = document.createElement("em");
@@ -1392,12 +1392,12 @@
 
             if (!groupItems.length) {
                 const empty = document.createElement("div");
-                empty.className = "template-empty-note";
+                empty.className = "management-editor-empty-note";
                 empty.textContent = "등록된 항목이 없습니다.";
                 group.append(empty);
             } else {
                 const groupBody = document.createElement("div");
-                groupBody.className = "template-group-items";
+                groupBody.className = "management-editor-group-items";
                 groupBody.dataset.itemGroupItems = groupKey;
                 groupBody.addEventListener("dragover", (event) => {
                     if (dragState?.type !== "item" || dragState.groupKey !== groupKey || isSorting) {

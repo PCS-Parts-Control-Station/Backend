@@ -9,10 +9,19 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/admin.css?20260611_side_panel_400">
-    <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
+
+
+
+
+    <link rel="stylesheet" href="/css/core/tokens.css?20260618_layers">
+    <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
+    <link rel="stylesheet" href="/css/layouts/workspace.css?20260622_sidebar_autoclose">
+    <link rel="stylesheet" href="/css/components/components.css?20260619_md_alignment">
+    <link rel="stylesheet" href="/css/components/management-page.css?20260619_management">
+    <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
+    <link rel="stylesheet" href="/css/pages/partners.css?20260619_md_alignment">
 </head>
-<body class="has-collapsible-sidebar">
+<body class="has-collapsible-sidebar page-partners workspace-page">
 <div class="workspace-layout">
     <div data-workspace-sidebar data-active-route="partners"></div>
 
@@ -77,7 +86,7 @@
                 </section>
 
                 <section class="table-card" aria-labelledby="partner-list-title">
-                    <div class="table-header inline-summary-header">
+                    <div class="table-header inline-summary-header management-summary-header">
                         <div>
                             <h2 id="partner-list-title">거래처 목록</h2>
                             <p>입고/출고 전표에서 사용할 수 있는 거래처 목록입니다.</p>
@@ -117,7 +126,7 @@
                         - UpdatePartnerRequest(partnerName, partnerType, partnerRole, phone, email, address, memo)
                         - UpdatePartnerActiveRequest(active)
                     -->
-                    <div class="data-table" role="table" aria-label="거래처 목록" data-partner-table>
+                    <div class="data-table management-data-table" role="table" aria-label="거래처 목록" data-partner-table>
                         <div class="data-row management-data-row table-head" role="row">
                             <span role="columnheader">거래처명</span>
                             <span role="columnheader">유형</span>
@@ -178,19 +187,19 @@
                                 </summary>
                                 <div class="optional-fields-body">
                                     <label>
-                                        <span>연락처 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
+                                        <span>연락처 <em class="field-optional">선택</em></span>
                                         <input type="tel" name="phone" placeholder="예: 010-1234-5678" autocomplete="off">
                                     </label>
                                     <label>
-                                        <span>이메일 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
+                                        <span>이메일 <em class="field-optional">선택</em></span>
                                         <input type="email" name="email" placeholder="예: contact@example.com" autocomplete="new-password">
                                     </label>
                                     <label>
-                                        <span>주소 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
+                                        <span>주소 <em class="field-optional">선택</em></span>
                                         <input type="text" name="address" placeholder="예: 서울시 용산구" autocomplete="new-password">
                                     </label>
                                     <label>
-                                        <span>메모 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
+                                        <span>메모 <em class="field-optional">선택</em></span>
                                         <textarea name="memo" rows="3" placeholder="거래 조건, 주의사항 등" autocomplete="off"></textarea>
                                     </label>
                                     <label class="switch-row">
@@ -295,19 +304,19 @@
                                     </summary>
                                     <div class="optional-fields-body">
                                         <label>
-                                            <span>연락처 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
+                                            <span>연락처 <em class="field-optional">선택</em></span>
                                             <input type="tel" name="phone" autocomplete="off">
                                         </label>
                                         <label>
-                                            <span>이메일 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
+                                            <span>이메일 <em class="field-optional">선택</em></span>
                                             <input type="email" name="email" autocomplete="new-password">
                                         </label>
                                         <label>
-                                            <span>주소 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
+                                            <span>주소 <em class="field-optional">선택</em></span>
                                             <input type="text" name="address" autocomplete="new-password">
                                         </label>
                                         <label>
-                                            <span>메모 <em style="color: var(--subtle); font-size: 11px; font-style: normal;">선택</em></span>
+                                            <span>메모 <em class="field-optional">선택</em></span>
                                             <textarea name="memo" rows="3" autocomplete="off"></textarea>
                                         </label>
                                         <label class="switch-row">
@@ -338,9 +347,9 @@
         </section>
     </main>
 </div>
-<script src="/js/pcs-api.js?20260617_temp_password"></script>
+<script src="/js/pcs-api.js?20260619_md_alignment"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
-<script src="/js/workspace-layout.js?20260617_temp_password"></script>
+<script src="/js/workspace-layout.js?20260622_sidebar_autoclose"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
 <script src="/js/pcs-common.js?20260610_common"></script>
 <script src="/js/partners.js?20260602_default_active"></script>

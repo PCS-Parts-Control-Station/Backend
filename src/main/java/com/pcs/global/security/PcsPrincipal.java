@@ -14,8 +14,21 @@ public record PcsPrincipal(
         String companyCode,
         String loginId,
         MemberRole role,
+        String tokenId,
+        String sessionId,
         Instant tokenExpiresAt
 ) {
+
+    public PcsPrincipal(
+            Long memberId,
+            Long companyId,
+            String companyCode,
+            String loginId,
+            MemberRole role,
+            Instant tokenExpiresAt
+    ) {
+        this(memberId, companyId, companyCode, loginId, role, null, null, tokenExpiresAt);
+    }
 
     public static PcsPrincipal from(JwtClaims claims) {
         return new PcsPrincipal(
@@ -24,6 +37,8 @@ public record PcsPrincipal(
                 claims.companyCode(),
                 claims.loginId(),
                 claims.role(),
+                claims.tokenId(),
+                claims.sessionId(),
                 claims.expiresAt()
         );
     }

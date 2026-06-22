@@ -9,9 +9,17 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/admin.css?20260611_side_panel_400">
+
+
+
+
+    <link rel="stylesheet" href="/css/core/tokens.css?20260618_layers">
+    <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
+    <link rel="stylesheet" href="/css/layouts/workspace.css?20260622_sidebar_autoclose">
+    <link rel="stylesheet" href="/css/components/components.css?20260618_layers">
+    <link rel="stylesheet" href="/css/pages/dashboard.css?20260618_layers">
 </head>
-<body class="has-collapsible-sidebar">
+<body class="has-collapsible-sidebar page-dashboard workspace-page">
 <div class="workspace-layout">
     <div data-workspace-sidebar data-active-route="dashboard"></div>
 
@@ -96,17 +104,17 @@
                     <div>
                         <span>판매 가능</span>
                         <strong>62%</strong>
-                        <i style="--ratio: 62%"></i>
+                        <i class="ratio-fill-62"></i>
                     </div>
                     <div>
                         <span>판매 보류</span>
                         <strong>27%</strong>
-                        <i style="--ratio: 27%"></i>
+                        <i class="ratio-fill-27"></i>
                     </div>
                     <div>
                         <span>출고 차단</span>
                         <strong>11%</strong>
-                        <i style="--ratio: 11%"></i>
+                        <i class="ratio-fill-11"></i>
                     </div>
                 </div>
             </section>
@@ -114,6 +122,6 @@
     </main>
 </div>
 <script src="/js/pcs-api.js?20260617_temp_password"></script>
-<script src="/js/workspace-layout.js?20260617_temp_password"></script>
+<script src="/js/workspace-layout.js?20260622_sidebar_autoclose"></script>
 </body>
 </html>
