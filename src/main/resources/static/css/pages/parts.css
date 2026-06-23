@@ -8,12 +8,6 @@
     max-width: none;
 }
 
-.part-detail-drawer .management-detail-drawer-panel {
-    display: grid;
-    align-content: start;
-    gap: 18px;
-}
-
 .part-filter-form {
     grid-template-columns: minmax(280px, 1fr) minmax(140px, 180px) 76px;
 }

@@ -56,6 +56,12 @@ public interface AuthMapper {
 
     AuthRefreshTokenSession findRefreshTokenSession(String refreshTokenHash);
 
+    boolean existsActiveRefreshTokenFamily(
+            @Param("companyId") Long companyId,
+            @Param("memberId") Long memberId,
+            @Param("tokenFamilyId") String tokenFamilyId
+    );
+
     void revokeRefreshToken(
             @Param("tokenId") Long tokenId,
             @Param("revokedReason") RefreshTokenRevokedReason revokedReason,

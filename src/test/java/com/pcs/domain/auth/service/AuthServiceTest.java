@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import com.pcs.domain.auth.entity.AuthMember;
 import com.pcs.domain.auth.entity.AuthRefreshTokenSession;
 import com.pcs.domain.auth.mapper.AuthMapper;
+import com.pcs.domain.auth.type.RefreshTokenRevokedReason;
 import com.pcs.domain.member.service.StaffPermissionService;
 import com.pcs.domain.member.type.PasswordStatus;
 import com.pcs.global.error.ErrorCode;
@@ -107,5 +108,23 @@ class AuthServiceTest {
 
         assertEquals(ErrorCode.AUTH_LOGIN_FAILED, exception.getErrorCode());
         verify(authMapper, never()).findLoginMember("acme", "admin");
+    }
+
+    @Test
+    void revokeRefreshTokenFamilyByRawValue_revokesFamilyEvenWhenPresentedTokenWasRotated() {
+        when(authMapper.findRefreshTokenSession(org.mockito.ArgumentMatchers.anyString())).thenReturn(session);
+        when(session.getCompanyId()).thenReturn(10L);
+        when(session.getMemberId()).thenReturn(20L);
+        when(session.getTokenFamilyId()).thenReturn("family-1");
+
+        authService.revokeRefreshTokenFamilyByRawValue("rotated-refresh-token", RefreshTokenRevokedReason.LOGOUT);
+
+        verify(authMapper).revokeRefreshTokenFamily(
+                10L,
+                20L,
+                "family-1",
+                RefreshTokenRevokedReason.LOGOUT
+        );
+        verify(session, never()).isRevoked();
     }
 }

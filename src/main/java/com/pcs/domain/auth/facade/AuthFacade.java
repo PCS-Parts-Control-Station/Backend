@@ -94,7 +94,7 @@ public class AuthFacade {
 
     @Transactional
     public void logout(String rawRefreshToken) {
-        authService.revokeRefreshTokenByRawValue(rawRefreshToken, RefreshTokenRevokedReason.LOGOUT);
+        authService.revokeRefreshTokenFamilyByRawValue(rawRefreshToken, RefreshTokenRevokedReason.LOGOUT);
     }
 
     public SessionMeResponse findMe(PcsPrincipal principal, String companyCode) {

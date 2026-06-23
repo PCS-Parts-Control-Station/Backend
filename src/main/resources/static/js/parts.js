@@ -979,6 +979,12 @@
         button.addEventListener("click", () => closeDrawer());
     });
 
+    window.PcsDrawer?.bindOutsideClose({
+        drawer: detailDrawer,
+        close: closeDrawer,
+        keepOpenSelector: "[data-part-create-drawer], [data-part-id], [data-part-spec-modal], [data-category-picker-modal]"
+    });
+
     document.querySelectorAll("[data-open-part-spec-modal]").forEach((button) => {
         button.addEventListener("click", () => openSpecModal(button.dataset.openPartSpecModal));
     });

@@ -1,6 +1,7 @@
 package com.pcs.domain.member.facade;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -73,7 +74,7 @@ class MemberFacadeTest {
     }
 
     @Test
-    void issueTemporaryPassword_returnsIssuedPasswordEvenWhenRefreshTokenRevocationFails() {
+    void issueTemporaryPassword_failsWhenRefreshTokenRevocationFails() {
         PcsPrincipal principal = new PcsPrincipal(
                 1L,
                 10L,
@@ -93,9 +94,11 @@ class MemberFacadeTest {
                 .when(authService)
                 .revokeMemberRefreshTokens(10L, 20L);
 
-        TemporaryPasswordResponse actual = memberFacade.issueTemporaryPassword(principal, "bupc", 20L);
+        assertThrows(
+                IllegalStateException.class,
+                () -> memberFacade.issueTemporaryPassword(principal, "bupc", 20L)
+        );
 
-        assertSame(expected, actual);
         verify(authService).revokeMemberRefreshTokens(10L, 20L);
     }
 
@@ -136,7 +139,7 @@ class MemberFacadeTest {
     }
 
     @Test
-    void changeMypagePassword_returnsChangedAccountEvenWhenRefreshTokenRevocationFails() {
+    void changeMypagePassword_failsWhenRefreshTokenRevocationFails() {
         PcsPrincipal principal = new PcsPrincipal(
                 1L,
                 10L,
@@ -163,14 +166,15 @@ class MemberFacadeTest {
         when(workspaceAccessValidator.validateAuthenticatedWorkspace(principal, "bupc"))
                 .thenReturn(principal);
         when(memberService.changeMyPassword(10L, 1L, request)).thenReturn(account);
-        when(staffPermissionService.findEnabledPermissions(10L, MemberRole.STAFF)).thenReturn(List.of());
         doThrow(new IllegalStateException("token revoke failed"))
                 .when(authService)
                 .revokeMemberRefreshTokens(10L, 1L);
 
-        MypageResponse response = memberFacade.changeMypagePassword(principal, "bupc", request);
+        assertThrows(
+                IllegalStateException.class,
+                () -> memberFacade.changeMypagePassword(principal, "bupc", request)
+        );
 
-        assertSame(MemberRole.STAFF, response.role());
         verify(authService).revokeMemberRefreshTokens(10L, 1L);
     }
 }

@@ -250,7 +250,7 @@ SQL 참조 기준:
 - 인증 API 호출, access token 재발급: `src/main/resources/static/js/pcs-api.js`
 - 페이징 query, 응답 정규화, 스크롤 보존: `src/main/resources/static/js/pcs-pagination.js`
 - 토스트/공통 UI 피드백: `src/main/resources/static/js/pcs-ui.js`
-- 회사 코드 추출, 링크 갱신, 포맷, 공통 폼/테이블 유틸: `src/main/resources/static/js/pcs-common.js`
+- 회사 코드 추출, 링크 갱신, 포맷, 공통 폼/테이블/드로어 유틸: `src/main/resources/static/js/pcs-common.js`
 - 관리형 페이지의 검색/목록/등록/수정 JS 기준: `docs/ai/pcs-frontend-js-rules.md`
 
 사양 항목:

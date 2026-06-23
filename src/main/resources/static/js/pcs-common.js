@@ -109,6 +109,33 @@
         table.append(row);
     };
 
+    const bindOutsideClose = (options = {}) => {
+        const drawer = options.drawer;
+        const close = options.close;
+        const keepOpenSelector = options.keepOpenSelector || "";
+
+        if (!drawer || typeof close !== "function") {
+            return () => {};
+        }
+
+        const handleDocumentClick = (event) => {
+            const target = event.target;
+            if (
+                !drawer.classList.contains("is-open") ||
+                !(target instanceof Element) ||
+                drawer.contains(target) ||
+                (keepOpenSelector && target.closest(keepOpenSelector))
+            ) {
+                return;
+            }
+
+            close({ restoreFocus: false });
+        };
+
+        document.addEventListener("click", handleDocumentClick);
+        return () => document.removeEventListener("click", handleDocumentClick);
+    };
+
     window.PcsWorkspace = {
         getCompanyCode,
         updateWorkspaceLinks
@@ -128,5 +155,8 @@
         clearRows,
         textCell,
         emptyRow
+    };
+    window.PcsDrawer = {
+        bindOutsideClose
     };
 })(window);
