@@ -1,4 +1,13 @@
 @layer page {
+.categories-content-grid {
+    display: block;
+}
+
+.categories-content-grid .content-main {
+    width: 100%;
+    max-width: none;
+}
+
 .data-row.simple-management-data-row {
     grid-template-columns: minmax(160px, 0.9fr) minmax(220px, 1.35fr) 88px 92px;
 }
