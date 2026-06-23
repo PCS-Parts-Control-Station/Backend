@@ -204,6 +204,11 @@
         }
 
         try {
+            await window.PcsApi.getData(`/api/workspaces/${encodeURIComponent(companyCode)}/me`, {
+                authRedirect: true,
+                loginCompanyCode: companyCode
+            });
+
             const dashboard = await window.PcsApi.getData(`/api/workspaces/${encodeURIComponent(companyCode)}/dashboard`, {
                 authRedirect: true,
                 loginCompanyCode: companyCode
