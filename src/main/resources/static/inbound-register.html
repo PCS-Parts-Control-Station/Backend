@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="/css/admin.css?20260611_side_panel_400">
     <link rel="stylesheet" href="/css/workflow.css?20260522_split">
     <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
-    <link rel="stylesheet" href="/css/inbound.css?20260619_register_flow">
+    <link rel="stylesheet" href="/css/inbound.css?20260623_partner_modal">
 </head>
 <body class="has-collapsible-sidebar inbound-register-page">
 <div class="workspace-layout">
@@ -64,12 +64,17 @@
                             </div>
                         </div>
                         <div class="register-fields basic-fields">
-                            <label class="basic-partner-field">
+                            <div class="basic-partner-field partner-picker-field">
                                 <span>거래처</span>
-                                <select name="partnerId" required data-partner-select>
-                                    <option value="">거래처를 불러오는 중입니다</option>
-                                </select>
-                            </label>
+                                <input type="hidden" name="partnerId" data-partner-id>
+                                <button class="partner-picker-button" type="button" data-open-partner-modal>
+                                    <span class="partner-picker-label">선택</span>
+                                    <span class="partner-picker-value">
+                                        <strong data-selected-partner-name>거래처 선택</strong>
+                                        <small data-selected-partner-meta>거래처를 검색해 선택해 주세요.</small>
+                                    </span>
+                                </button>
+                            </div>
                             <label class="field-wide basic-reason-field">
                                 <span>입고 사유</span>
                                 <input type="text" name="reason" placeholder="입고 사유를 입력해 주세요" required>
@@ -241,6 +246,36 @@
     </main>
 </div>
 
+<dialog class="part-modal partner-modal" data-partner-modal aria-labelledby="partner-modal-title">
+    <div class="part-modal-card partner-modal-card">
+        <div class="part-modal-header">
+            <div>
+                <p class="page-kicker">거래처 선택</p>
+                <h2 id="partner-modal-title">거래처를 선택합니다.</h2>
+                <p>검색 후 목록에서 입고 전표에 사용할 거래처를 선택해 주세요.</p>
+            </div>
+            <button class="modal-close-button" type="button" data-close-partner-modal aria-label="닫기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M6 6l12 12" />
+                    <path d="M18 6 6 18" />
+                </svg>
+            </button>
+        </div>
+        <div class="partner-modal-body">
+            <div class="partner-modal-search">
+                <label>
+                    <span>거래처 검색</span>
+                    <input type="search" data-partner-search placeholder="예: 미래전자유통">
+                </label>
+            </div>
+            <div class="partner-modal-list" data-partner-list aria-live="polite"></div>
+        </div>
+        <div class="partner-modal-actions">
+            <button class="btn btn-secondary" type="button" data-close-partner-modal>닫기</button>
+        </div>
+    </div>
+</dialog>
+
 <dialog class="part-modal" data-part-modal aria-labelledby="part-modal-title">
     <form class="part-modal-card" method="dialog" data-part-modal-form>
         <div class="part-modal-header">
@@ -294,7 +329,7 @@
 <script src="/js/pcs-api.js?20260617_temp_password"></script>
 <script src="/js/workspace-layout.js?20260617_temp_password"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/inbound-register.js?20260619_register_flow"></script>
+<script src="/js/inbound-register.js?20260623_partner_modal"></script>
 
 </body>
 </html>

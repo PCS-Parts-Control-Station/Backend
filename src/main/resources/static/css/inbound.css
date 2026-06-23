@@ -14,6 +14,16 @@
     grid-template-columns: minmax(220px, 1fr) minmax(160px, 0.55fr) 130px auto;
 }
 
+.inbound-management-page .document-filter-form {
+    grid-template-columns: minmax(280px, 1fr) 220px 220px 180px;
+    align-items: end;
+}
+
+.inbound-management-page .document-filter-form > .btn {
+    width: 100%;
+    min-width: 180px;
+}
+
 .created-document-notice {
     margin-bottom: 16px;
     padding: 13px 16px;
@@ -207,10 +217,18 @@
     cursor: pointer;
 }
 
+.inbound-management-page .document-data-row {
+    padding-block: 10px;
+}
+
+.inbound-management-page .document-data-row.table-head {
+    padding-block: 12px;
+}
+
 .document-data-row > strong[role="cell"] {
     color: var(--navy);
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 800;
     letter-spacing: 0;
     line-height: 1.35;
@@ -273,18 +291,18 @@
 
 .cell-stack {
     display: grid;
-    gap: 3px;
+    gap: 2px;
 }
 
 .cell-stack b {
     color: var(--ink);
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 800;
 }
 
 .cell-stack small {
     color: var(--muted);
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
     line-height: 1.35;
 }
@@ -338,7 +356,8 @@
     padding: 20px;
 }
 
-.register-fields > label {
+.register-fields > label,
+.register-fields > .partner-picker-field {
     min-width: 0;
 }
 
@@ -369,6 +388,81 @@
 
 .basic-field-message {
     grid-column: 1 / -1;
+}
+
+.partner-picker-field {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+}
+
+.partner-picker-field > span {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.partner-picker-button {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+    min-height: var(--control-height);
+    padding: 0 16px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.partner-picker-button:hover,
+.partner-picker-button:focus-visible {
+    border-color: rgba(37, 99, 235, 0.38);
+    background: var(--blue-soft, #eff6ff);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    outline: none;
+}
+
+.partner-picker-button.is-selected {
+    border-color: rgba(37, 99, 235, 0.34);
+    background: #f8fbff;
+}
+
+.partner-picker-label {
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.partner-picker-value {
+    display: grid;
+    justify-items: end;
+    min-width: 0;
+}
+
+.partner-picker-value strong {
+    min-width: 0;
+    max-width: 100%;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.partner-picker-value small {
+    display: none;
+}
+
+.partner-picker-button.is-selected .partner-picker-value strong {
+    color: var(--blue, #2563eb);
 }
 
 .field-message {
@@ -606,7 +700,19 @@
 .line-entry-list {
     display: grid;
     gap: 14px;
+    max-height: 560px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 20px;
+}
+
+.line-entry-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.line-entry-list::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.62);
 }
 
 .line-empty-state {
@@ -854,32 +960,39 @@
 .serial-preview {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
     min-width: 0;
-    padding: 12px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    background: var(--surface-soft);
+    padding: 8px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
 }
 
 .serial-preview strong {
     color: var(--muted);
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 800;
 }
 
 .serial-preview span {
     display: inline-flex;
     align-items: center;
-    min-height: 28px;
-    padding: 0 9px;
-    border: 1px solid var(--line);
+    min-height: 22px;
+    padding: 0 7px;
+    border: 1px solid #e2e8f0;
     border-radius: 999px;
-    background: var(--surface);
-    color: var(--navy);
+    background: #ffffff;
+    color: #475569;
     font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-    font-size: 12px;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.serial-preview em {
+    color: var(--muted);
+    font-size: 11px;
+    font-style: normal;
     font-weight: 800;
 }
 
@@ -1010,6 +1123,149 @@
     border-top: 1px solid var(--line);
 }
 
+.partner-modal {
+    width: min(680px, calc(100vw - 32px));
+}
+
+.partner-modal-card {
+    max-height: min(720px, calc(100vh - 32px));
+    overflow: hidden;
+}
+
+.partner-modal .part-modal-header {
+    padding: 22px 24px 20px;
+}
+
+.partner-modal .part-modal-header h2 {
+    font-size: 25px;
+}
+
+.partner-modal .part-modal-header .page-kicker {
+    color: var(--blue, #2563eb);
+}
+
+.partner-modal-body {
+    display: grid;
+    gap: 10px;
+    padding: 20px;
+    border-bottom: 1px solid var(--line);
+    background: #f8fafc;
+    overflow: hidden;
+}
+
+.partner-modal-search {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
+
+.partner-modal-search label {
+    display: grid;
+    gap: 8px;
+}
+
+.partner-modal-search span {
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.partner-modal-search input {
+    height: 50px;
+    border-radius: 8px;
+    background: var(--surface);
+}
+
+.partner-modal-list {
+    display: grid;
+    gap: 8px;
+    max-height: 340px;
+    padding: 0 4px 0 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.partner-modal-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.partner-modal-list::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.62);
+}
+
+.partner-modal-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    align-items: center;
+    width: 100%;
+    min-height: 72px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    text-align: left;
+    cursor: pointer;
+}
+
+.partner-modal-row:hover,
+.partner-modal-row:focus-visible {
+    border-color: rgba(37, 99, 235, 0.5);
+    background: #f8fbff;
+    outline: none;
+}
+
+.partner-modal-row.is-selected {
+    border-color: var(--blue, #2563eb);
+    background: #eaf2ff;
+    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.06);
+}
+
+.partner-modal-row span {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+}
+
+.partner-modal-row strong,
+.partner-modal-row small {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.partner-modal-row strong {
+    color: var(--navy);
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.partner-modal-row small {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.partner-modal-empty {
+    margin: 0;
+    padding: 18px;
+    border: 1px dashed var(--line-strong);
+    border-radius: var(--radius);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+    text-align: center;
+}
+
+.partner-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 16px 20px 20px;
+    background: var(--surface);
+}
+
 .confirm-modal {
     width: min(520px, calc(100vw - 32px));
 }
@@ -1058,6 +1314,10 @@
     .has-collapsible-sidebar .document-filter-form {
         grid-template-columns: minmax(220px, 1fr) minmax(160px, 0.55fr) 130px auto;
     }
+
+    .has-collapsible-sidebar .inbound-management-page .document-filter-form {
+        grid-template-columns: minmax(260px, 1fr) 210px 210px 180px;
+    }
 }
 
 @media (max-width: 1280px) {
@@ -1072,6 +1332,17 @@
 
     .submit-panel {
         display: grid;
+    }
+
+    .has-collapsible-sidebar .inbound-management-page .document-filter-form {
+        grid-template-columns: 1fr;
+    }
+
+    .basic-fields {
+        grid-template-areas:
+            "partner"
+            "reason"
+            "partner-message";
     }
 }
 
@@ -1172,6 +1443,15 @@
     .part-modal-actions {
         display: grid;
         grid-template-columns: 1fr;
+    }
+
+    .partner-modal-search {
+        grid-template-columns: 1fr;
+        padding-inline: 16px;
+    }
+
+    .partner-modal-list {
+        padding-inline: 16px;
     }
 
     .confirm-summary div {
