@@ -4,6 +4,7 @@ import com.pcs.domain.part.dto.request.CreatePartRequest;
 import com.pcs.domain.part.dto.request.UpdatePartRequest;
 import com.pcs.domain.part.dto.response.PartDetailResponse;
 import com.pcs.domain.part.dto.response.SearchPartResponse;
+import com.pcs.domain.part.dto.response.SearchPartSummaryResponse;
 import com.pcs.domain.part.service.PartService;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.security.PcsPrincipal;
@@ -21,7 +22,7 @@ public class PartFacade {
         this.workspaceAccessValidator = workspaceAccessValidator;
     }
 
-    public PageResultDto<SearchPartResponse, Void> searchParts(
+    public PageResultDto<SearchPartResponse, SearchPartSummaryResponse> searchParts(
             PcsPrincipal principal,
             String pathCompanyCode,
             String keyword,

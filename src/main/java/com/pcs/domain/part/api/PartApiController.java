@@ -4,6 +4,7 @@ import com.pcs.domain.part.dto.request.CreatePartRequest;
 import com.pcs.domain.part.dto.request.UpdatePartRequest;
 import com.pcs.domain.part.dto.response.PartDetailResponse;
 import com.pcs.domain.part.dto.response.SearchPartResponse;
+import com.pcs.domain.part.dto.response.SearchPartSummaryResponse;
 import com.pcs.domain.part.facade.PartFacade;
 import com.pcs.global.dto.ApiResultDto;
 import com.pcs.global.dto.PageResultDto;
@@ -32,7 +33,7 @@ public class PartApiController {
     }
 
     @GetMapping("/workspaces/{companyCode}/parts")
-    public ResponseEntity<ApiResultDto<PageResultDto<SearchPartResponse, Void>>> searchParts(
+    public ResponseEntity<ApiResultDto<PageResultDto<SearchPartResponse, SearchPartSummaryResponse>>> searchParts(
             @PathVariable String companyCode,
             @AuthenticationPrincipal PcsPrincipal principal,
             @RequestParam(required = false) String keyword,
@@ -42,7 +43,7 @@ public class PartApiController {
             @RequestParam(required = false) Integer size,
             @RequestParam(required = false) Integer limit
     ) {
-        PageResultDto<SearchPartResponse, Void> response = partFacade.searchParts(
+        PageResultDto<SearchPartResponse, SearchPartSummaryResponse> response = partFacade.searchParts(
                 principal,
                 companyCode,
                 keyword,
