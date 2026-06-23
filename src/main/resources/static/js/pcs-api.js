@@ -13,6 +13,17 @@
     const PASSWORD_CHANGE_REQUIRED_CODE = 'MEMBER-005';
 
     let refreshPromise = null;
+    let accessToken = '';
+
+    const removeLegacyStoredAccessToken = () => {
+        try {
+            window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+        } catch (error) {
+            // localStorage may be unavailable in restrictive browser modes.
+        }
+    };
+
+    removeLegacyStoredAccessToken();
 
     class PcsApiError extends Error {
         constructor(message, details = {}) {
@@ -25,18 +36,20 @@
         }
     }
 
-    const getAccessToken = () => window.localStorage.getItem(ACCESS_TOKEN_KEY);
+    const getAccessToken = () => accessToken;
 
-    const setAccessToken = (accessToken) => {
-        if (!accessToken) {
-            window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+    const setAccessToken = (nextAccessToken) => {
+        removeLegacyStoredAccessToken();
+        if (!nextAccessToken) {
+            accessToken = '';
             return;
         }
-        window.localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+        accessToken = nextAccessToken;
     };
 
     const clearAccessToken = () => {
-        window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+        accessToken = '';
+        removeLegacyStoredAccessToken();
     };
 
     const isAuthError = (error) => {

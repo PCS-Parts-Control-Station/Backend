@@ -45,7 +45,7 @@
             </div>
         </header>
 
-        <section class="content-grid parts-content-grid">
+        <section class="content-grid management-drawer-grid parts-content-grid">
             <div class="content-main">
                 <section class="filter-card management-filter-card" aria-labelledby="filter-title">
                     <div>
@@ -150,7 +150,7 @@
                             <div class="optional-field-group">
                                 <span class="optional-field-label">상세입력</span>
                                 <button class="optional-fields trigger-field-button" type="button" data-open-part-spec-modal="create">
-                                    <small data-create-spec-summary>예상 단가, 안전 재고, 사양 항목</small>
+                                    <small data-create-spec-summary>안전 재고, 사양 항목</small>
                                     <span aria-hidden="true">+</span>
                                 </button>
                             </div>
@@ -201,10 +201,6 @@
                                 <dd data-detail-safe-quantity>-</dd>
                             </div>
                             <div>
-                                <dt>예상 단가</dt>
-                                <dd data-detail-estimated-price>-</dd>
-                            </div>
-                            <div>
                                 <dt>상세 사양</dt>
                                 <dd data-detail-specs>-</dd>
                             </div>
@@ -253,7 +249,7 @@
                             <div class="optional-field-group">
                                 <span class="optional-field-label">상세입력</span>
                                 <button class="optional-fields trigger-field-button" type="button" data-open-part-spec-modal="edit">
-                                    <small data-edit-spec-summary>예상 단가, 안전 재고, 사양 항목</small>
+                                    <small data-edit-spec-summary>안전 재고, 사양 항목</small>
                                     <span aria-hidden="true">+</span>
                                 </button>
                             </div>
@@ -294,10 +290,6 @@
                     <p class="spec-builder-empty">분류를 선택하면 입력할 사양 항목이 표시됩니다.</p>
                 </div>
             </div>
-            <label>
-                <span>예상 단가 <em class="field-optional">선택</em></span>
-                <input type="number" name="estimatedPrice" min="0" step="1000" placeholder="예: 180000">
-            </label>
             <label>
                 <span>안전 재고 <em class="field-optional">선택</em></span>
                 <input type="number" name="safeQuantity" min="0" step="1" placeholder="예: 3">
@@ -341,7 +333,7 @@
         </div>
     </div>
 </dialog>
-<script src="/js/pcs-api.js?20260619_md_alignment"></script>
+<script src="/js/pcs-api.js?20260623_memory_token"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
 <script src="/js/workspace-layout.js?20260622_sidebar_autoclose"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>

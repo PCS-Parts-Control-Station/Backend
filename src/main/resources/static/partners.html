@@ -39,9 +39,12 @@
                 <h1>거래처 관리</h1>
                 <p class="page-description">입고/출고에 사용하는 거래처를 등록하고, 유형과 역할별로 관리합니다.</p>
             </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" type="button" data-partner-create-drawer aria-controls="partner-detail-drawer" aria-expanded="false">거래처 등록</button>
+            </div>
         </header>
 
-        <section class="content-grid">
+        <section class="content-grid management-drawer-grid">
             <div class="content-main">
                 <section class="filter-card management-filter-card" aria-labelledby="filter-title">
                     <div>
@@ -149,11 +152,18 @@
                 </section>
             </div>
 
-            <aside class="side-panel" aria-labelledby="partner-form-title">
-                <div class="panel-card side-work-panel">
+            <aside class="management-detail-drawer partner-detail-drawer" id="partner-detail-drawer" data-partner-detail-drawer aria-labelledby="partner-form-title" aria-hidden="true" tabindex="-1">
+                <div class="panel-card management-detail-drawer-panel side-work-panel">
                     <div class="panel-mode is-active" data-partner-panel="create">
-                    <h2 id="partner-form-title">거래처 등록</h2>
-                    <p>입고/출고 전표에서 선택할 거래처 정보를 등록합니다.</p>
+                        <div class="panel-title-bar">
+                            <div>
+                                <h2 id="partner-form-title">거래처 등록</h2>
+                                <p>입고/출고 전표에서 선택할 거래처 정보를 등록합니다.</p>
+                            </div>
+                            <button class="panel-link-button" type="button" data-close-partner-drawer>닫기</button>
+                        </div>
+
+                        <div class="drawer-scroll-body">
                     <!-- API: POST /api/workspaces/{companyCode}/partners -->
                     <form class="category-form" action="#" method="post" autocomplete="off" data-partner-create-form>
                         <label>
@@ -214,6 +224,7 @@
                             <button class="btn btn-secondary" type="reset">초기화</button>
                         </div>
                     </form>
+                        </div>
                     </div>
 
                     <div class="panel-mode" data-partner-panel="detail" hidden>
@@ -225,6 +236,7 @@
                             <button class="panel-link-button" type="button" data-partner-create-mode>새 거래처 등록</button>
                         </div>
 
+                        <div class="drawer-scroll-body">
                         <div class="side-detail-card">
                             <strong data-detail-name>-</strong>
                             <div class="detail-badge-row">
@@ -260,6 +272,7 @@
                         <div class="form-actions">
                             <button class="btn btn-primary" type="button" data-partner-edit-mode>수정</button>
                         </div>
+                        </div>
                     </div>
 
                     <div class="panel-mode" data-partner-panel="edit" hidden>
@@ -271,6 +284,7 @@
                             <button class="panel-link-button" type="button" data-partner-create-mode>새 거래처 등록</button>
                         </div>
 
+                        <div class="drawer-scroll-body">
                         <!-- API: PATCH /api/workspaces/{companyCode}/partners/{partnerId} -->
                         <form class="category-form" action="#" method="post" autocomplete="off" data-partner-edit-form>
                             <label>
@@ -331,6 +345,7 @@
                                 <button class="btn btn-secondary" type="button" data-partner-detail-mode>취소</button>
                             </div>
                         </form>
+                        </div>
                     </div>
                 </div>
 
@@ -347,7 +362,7 @@
         </section>
     </main>
 </div>
-<script src="/js/pcs-api.js?20260619_md_alignment"></script>
+<script src="/js/pcs-api.js?20260623_memory_token"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
 <script src="/js/workspace-layout.js?20260622_sidebar_autoclose"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>

@@ -32,7 +32,6 @@ categoryId
 partName
 manufacturer
 modelName
-estimatedPrice
 safeQuantity
 specValues[]
 ```
@@ -53,7 +52,7 @@ selectedOptionId
 - 품목코드는 사용자가 입력하지 않고 서버가 자동 생성한다.
 - 품목코드는 분류, 제조사, 제조사 모델명, 입력된 사양값을 조합해 생성하고, 같은 업체 안에서 중복될 수 없다.
 - 품목 마스터는 모델 단위 정보만 가진다.
-- 상세입력은 예상 단가, 안전 재고, 분류별 사양 항목을 함께 입력한다.
+- 상세입력은 안전 재고와 분류별 사양 항목을 함께 입력한다.
 - 사양 항목은 해당 분류에 정의된 `tb_part_spec_definition` 기준만 입력할 수 있다.
 - `SELECT` 사양은 `tb_part_spec_option`에 존재하는 선택지만 저장할 수 있다.
 - 수정 시 기존 사양값은 삭제 후 현재 요청값으로 다시 저장한다.

@@ -37,13 +37,12 @@
 
     const number = (value) => Number(value || 0).toLocaleString("ko-KR");
 
-    const money = (value) => {
-        const amount = Number(value ?? 0);
-        if (!Number.isFinite(amount) || amount <= 0) {
-            return "0원";
-        }
-        return `${amount.toLocaleString("ko-KR")}원`;
-    };
+    const escapeHtml = (value) => String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
 
     const toast = (message, type = "info") => {
         window.PcsUi?.toast({
@@ -142,8 +141,10 @@
     };
     window.PcsFormat = {
         date,
-        number,
-        money
+        number
+    };
+    window.PcsHtml = {
+        escape: escapeHtml
     };
     window.PcsFeedback = {
         toast

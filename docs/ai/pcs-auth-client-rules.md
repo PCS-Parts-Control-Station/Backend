@@ -7,7 +7,9 @@
 
 ## 토큰 저장 기준
 
-- access token은 로그인 응답 JSON으로 받고 브라우저 `localStorage`에 저장한다.
+- access token은 로그인 응답 JSON으로 받고 `pcs-api.js`의 메모리 변수에만 저장한다.
+- access token을 `localStorage`, `sessionStorage`, Cookie, DOM 속성에 직접 저장하지 않는다.
+- 새로고침이나 새 탭으로 메모리 access token이 사라진 경우 첫 인증 API 요청에서 `/api/auth/refresh`를 호출해 복구한다.
 - refresh token은 JS에서 직접 다루지 않는다.
 - refresh token은 서버가 `HttpOnly Cookie`로 내려주고, 브라우저가 자동 전송한다.
 - refresh token 저장 정책은 `docs/features/auth.md`와 `docs/features/auth-db.md`를 따른다.
@@ -45,6 +47,7 @@ await fetch("/api/workspaces/pcs/partners", {
 - access token 만료 시 `/api/auth/refresh` 호출
 - 원 요청 1회 재시도
 - refresh 실패 시 로그인 화면 이동
+- legacy `localStorage` access token 제거
 
 위 흐름은 `pcs-api.js`가 공통 처리한다.
 

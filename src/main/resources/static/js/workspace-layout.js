@@ -281,7 +281,6 @@
                             "Accept": "application/json"
                         }
                     });
-                    window.localStorage.removeItem("pcsAccessToken");
                 }
             } finally {
                 window.location.href = `/w/${encodeURIComponent(companyCode)}`;

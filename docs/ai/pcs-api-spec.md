@@ -344,7 +344,6 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&pag
   "modelName": "Ventus 2X",
   "manufacturer": "MSI",
   "partCode": "VGA-RTX3060-MSI",
-  "estimatedPrice": 180000.00,
   "safeQuantity": 0,
   "currentStockQuantity": 3,
   "active": true
@@ -359,7 +358,6 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&pag
   "partName": "RTX 3060 Twin Edge",
   "modelName": "RTX 3060 Twin Edge",
   "manufacturer": "ZOTAC",
-  "estimatedPrice": 180000,
   "safeQuantity": 3,
   "specValues": []
 }

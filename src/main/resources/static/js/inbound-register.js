@@ -500,7 +500,6 @@
             partName: newPartNameInput.value.trim(),
             manufacturer: newPartManufacturerInput.value.trim(),
             modelName: newPartModelInput.value.trim(),
-            estimatedPrice: null,
             safeQuantity: Math.max(0, Number(newPartSafeQuantityInput.value) || 0),
             specValues: []
         };

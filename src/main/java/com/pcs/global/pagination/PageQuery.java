@@ -19,11 +19,20 @@ public record PageQuery(
         int normalizedSize = requestedSize == null || requestedSize < 1
                 ? defaultSize
                 : Math.min(requestedSize, MAX_SIZE);
+        int offset = safeOffset(normalizedPage, normalizedSize);
 
         return new PageQuery(
                 normalizedPage,
                 normalizedSize,
-                normalizedPage * normalizedSize
+                offset
         );
+    }
+
+    private static int safeOffset(int page, int size) {
+        long offset = (long) page * size;
+        if (offset > Integer.MAX_VALUE) {
+            return Integer.MAX_VALUE;
+        }
+        return (int) offset;
     }
 }

@@ -25,6 +25,7 @@ import com.pcs.domain.inspection.type.InspectionItemGroup;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
+import com.pcs.global.pagination.PageQuery;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,6 @@ import org.springframework.stereotype.Service;
 public class InspectionTemplateService {
 
     private static final int DEFAULT_SIZE = 20;
-    private static final int MAX_SIZE = 100;
     private static final int SORT_ORDER_STEP = 10;
 
     private final InspectionTemplateMapper inspectionTemplateMapper;
@@ -57,9 +57,7 @@ public class InspectionTemplateService {
     ) {
         validateCompanyActive(companyId);
         String normalizedKeyword = normalizeOptional(keyword);
-        int normalizedPage = normalizePage(page);
-        int normalizedSize = normalizeSize(size, limit);
-        int offset = normalizedPage * normalizedSize;
+        PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
 
         long totalElements = inspectionTemplateMapper.countTemplates(
                 companyId,
@@ -74,8 +72,8 @@ public class InspectionTemplateService {
                         normalizedKeyword,
                         categoryId,
                         active,
-                        normalizedSize,
-                        offset
+                        pageQuery.size(),
+                        pageQuery.offset()
                 );
         SearchInspectionTemplateSummaryResponse summary = inspectionTemplateMapper.summarizeTemplates(
                 companyId,
@@ -83,7 +81,7 @@ public class InspectionTemplateService {
                 categoryId,
                 active
         );
-        return PageResultDto.of(items, normalizedPage, normalizedSize, totalElements, summary);
+        return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, summary);
     }
 
     public InspectionTemplateDetailResponse getTemplate(Long companyId, Long templateId) {
@@ -504,21 +502,6 @@ public class InspectionTemplateService {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "정렬 순서는 0 이상이어야 합니다.");
         }
         return sortOrder;
-    }
-
-    private int normalizePage(Integer page) {
-        if (page == null || page < 0) {
-            return 0;
-        }
-        return page;
-    }
-
-    private int normalizeSize(Integer size, Integer limit) {
-        Integer requestedSize = size == null ? limit : size;
-        if (requestedSize == null || requestedSize < 1) {
-            return DEFAULT_SIZE;
-        }
-        return Math.min(requestedSize, MAX_SIZE);
     }
 
     private List<SortOrderUpdate> toSortOrderUpdates(List<Long> orderedIds) {

@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
-import java.math.BigDecimal;
 import java.util.List;
 
 public record UpdatePartRequest(
@@ -23,9 +22,6 @@ public record UpdatePartRequest(
         @NotBlank(message = "제조사 모델명을 입력해 주세요.")
         @Size(max = 150, message = "제조사 모델명은 150자 이하로 입력해 주세요.")
         String modelName,
-
-        @PositiveOrZero(message = "예상 단가는 0 이상이어야 합니다.")
-        BigDecimal estimatedPrice,
 
         @PositiveOrZero(message = "안전 재고는 0 이상이어야 합니다.")
         Integer safeQuantity,

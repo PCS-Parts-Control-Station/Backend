@@ -35,6 +35,8 @@
     const filterForm = document.querySelector("[data-template-filter-form]");
     const table = document.querySelector("[data-template-table]");
     const panelViews = document.querySelectorAll("[data-template-panel]");
+    const detailDrawer = document.querySelector("[data-template-detail-drawer]");
+    const createDrawerButton = document.querySelector("[data-template-create-drawer]");
     const createForm = document.querySelector("[data-template-create-form]");
     const editForm = document.querySelector("[data-template-edit-form]");
     const categoryPickerModal = document.querySelector("[data-template-category-picker-modal]");
@@ -102,6 +104,7 @@
     let selectedItemId = null;
     let editingItemId = null;
     let editingOptionId = null;
+    let lastDrawerTrigger = null;
     let dragState = null;
     let isSorting = false;
     let inputTypeConfirmResolver = null;
@@ -370,6 +373,31 @@
             panel.hidden = !isActive;
             panel.classList.toggle("is-active", isActive);
         });
+    };
+
+    const setDrawerOpen = (isOpen) => {
+        detailDrawer?.classList.toggle("is-open", isOpen);
+        detailDrawer?.setAttribute("aria-hidden", String(!isOpen));
+        createDrawerButton?.setAttribute("aria-expanded", String(isOpen));
+    };
+
+    const openDrawer = (trigger = null) => {
+        if (trigger instanceof HTMLElement) {
+            lastDrawerTrigger = detailDrawer?.contains(trigger) ? createDrawerButton : trigger;
+        }
+        setDrawerOpen(true);
+    };
+
+    const closeDrawer = (options = {}) => {
+        selectedTemplate = null;
+        selectedTemplateId = null;
+        selectedItemId = null;
+        setDrawerOpen(false);
+        renderBuilder();
+        updateSelectedRow();
+        if (options.restoreFocus !== false && lastDrawerTrigger?.isConnected) {
+            lastDrawerTrigger.focus({ preventScroll: true });
+        }
     };
 
     const clearRows = () => {
@@ -714,11 +742,11 @@
                 createCell("수정일", template.updatedAt)
             );
 
-            row.addEventListener("click", () => selectTemplate(template.id));
+            row.addEventListener("click", () => selectTemplate(template.id, row));
             row.addEventListener("keydown", (event) => {
                 if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
-                    selectTemplate(template.id);
+                    selectTemplate(template.id, row);
                 }
             });
 
@@ -754,7 +782,7 @@
         const nextSelectedId = templates.some((template) => template.id === preferred)
             ? preferred
             : templates[0].id;
-        await selectTemplate(nextSelectedId);
+        await selectTemplate(nextSelectedId, null, { open: false });
     };
 
     const loadTemplateDetail = async (templateId) => {
@@ -1453,10 +1481,13 @@
         renderItems(template);
     }
 
-    const selectTemplate = async (templateId) => {
+    const selectTemplate = async (templateId, trigger = null, options = {}) => {
         selectedTemplateId = String(templateId);
         editingItemId = null;
         editingOptionId = null;
+        if (options.open !== false) {
+            openDrawer(trigger);
+        }
         try {
             selectedTemplate = await loadTemplateDetail(templateId);
             if (!selectedTemplate.items.some((item) => item.id === String(selectedItemId))) {
@@ -1482,7 +1513,7 @@
         renderItems(template);
     };
 
-    const showCreatePanel = () => {
+    const showCreatePanel = (trigger = null, options = {}) => {
         selectedTemplate = null;
         selectedTemplateId = null;
         selectedItemId = null;
@@ -1496,6 +1527,9 @@
         renderBuilder();
         updateSelectedRow();
         setPanelMode("create");
+        if (options.open === true) {
+            openDrawer(trigger);
+        }
     };
 
     filterForm?.addEventListener("submit", async (event) => {
@@ -1508,7 +1542,15 @@
     });
 
     document.querySelectorAll("[data-template-create-mode]").forEach((button) => {
-        button.addEventListener("click", showCreatePanel);
+        button.addEventListener("click", (event) => showCreatePanel(event.currentTarget, { open: true }));
+    });
+
+    createDrawerButton?.addEventListener("click", (event) => {
+        showCreatePanel(event.currentTarget, { open: true });
+    });
+
+    document.querySelectorAll("[data-close-template-drawer]").forEach((button) => {
+        button.addEventListener("click", () => closeDrawer());
     });
 
     document.querySelector("[data-template-edit-mode]")?.addEventListener("click", () => {
@@ -1543,11 +1585,36 @@
     document.querySelector("[data-template-detail-mode]")?.addEventListener("click", () => {
         const template = getSelectedTemplate();
         if (!template) {
-            showCreatePanel();
+            showCreatePanel(null, { open: false });
             return;
         }
         renderDetail(template);
         setPanelMode("detail");
+    });
+
+    document.addEventListener("click", (event) => {
+        if (!detailDrawer?.classList.contains("is-open")) {
+            return;
+        }
+        const target = event.target;
+        if (!(target instanceof Element)) {
+            return;
+        }
+        if (
+            detailDrawer.contains(target) ||
+            target.closest("[data-template-create-drawer]") ||
+            target.closest("[data-template-id]") ||
+            target.closest("dialog")
+        ) {
+            return;
+        }
+        closeDrawer({ restoreFocus: false });
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && detailDrawer?.classList.contains("is-open")) {
+            closeDrawer();
+        }
     });
 
     document.querySelector("[data-template-active-toggle]")?.addEventListener("click", async () => {

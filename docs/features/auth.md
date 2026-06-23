@@ -26,6 +26,8 @@ com.pcs.domain.auth
 - access token은 API 인증에 사용한다.
 - access token은 JWT이며 `Authorization: Bearer {token}` 헤더로 전달한다.
 - access token 기본 만료 시간은 10분이다.
+- 브라우저의 access token은 `pcs-api.js` 메모리 변수에만 보관하고 `localStorage`에 저장하지 않는다.
+- 새로고침으로 access token 메모리 값이 사라지면 HttpOnly refresh cookie로 `/api/auth/refresh`를 호출해 다시 발급받는다.
 - access token은 Spring Security Nimbus JWT 구현으로 HS256 서명·검증한다.
 - access token에는 표준 claim `iss`, `aud`, `sub`, `jti`, `iat`, `exp`와 업무 claim `memberId`, `companyId`, `companyCode`, `loginId`, `role`, `tokenType`, `sid`를 담는다.
 - `jti`는 Access Token별 UUID, `sid`는 연결된 refresh token family ID를 사용한다.

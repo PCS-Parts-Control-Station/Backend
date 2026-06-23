@@ -25,7 +25,6 @@ manufacturer -> 제조사
 specDefinition -> 사양 항목
 specValue -> 사양값
 safeQuantity -> 안전 재고
-estimatedPrice -> 예상 단가
 partner -> 거래처
 active(partner) -> 거래 가능 여부
 ```

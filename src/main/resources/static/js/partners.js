@@ -39,6 +39,8 @@
     const summaryCustomer = document.querySelector("[data-summary-customer]");
     const summaryActive = document.querySelector("[data-summary-active]");
     const panelViews = document.querySelectorAll("[data-partner-panel]");
+    const detailDrawer = document.querySelector("[data-partner-detail-drawer]");
+    const createDrawerButton = document.querySelector("[data-partner-create-drawer]");
     const createForm = document.querySelector("[data-partner-create-form]");
     const editForm = document.querySelector("[data-partner-edit-form]");
     const detailFields = {
@@ -55,6 +57,7 @@
     let currentPage = 0;
     let currentPartners = [];
     let selectedPartnerId = null;
+    let lastDrawerTrigger = null;
 
     const getCompanyCode = window.PcsWorkspace.getCompanyCode;
     const updateWorkspaceLinks = window.PcsWorkspace.updateWorkspaceLinks;
@@ -85,6 +88,28 @@
             panel.hidden = !isActive;
             panel.classList.toggle("is-active", isActive);
         });
+    };
+
+    const setDrawerOpen = (isOpen) => {
+        detailDrawer?.classList.toggle("is-open", isOpen);
+        detailDrawer?.setAttribute("aria-hidden", String(!isOpen));
+        createDrawerButton?.setAttribute("aria-expanded", String(isOpen));
+    };
+
+    const openDrawer = (trigger = null) => {
+        if (trigger instanceof HTMLElement) {
+            lastDrawerTrigger = detailDrawer?.contains(trigger) ? createDrawerButton : trigger;
+        }
+        setDrawerOpen(true);
+    };
+
+    const closeDrawer = (options = {}) => {
+        selectedPartnerId = null;
+        setDrawerOpen(false);
+        updateSelectedRow();
+        if (options.restoreFocus !== false && lastDrawerTrigger?.isConnected) {
+            lastDrawerTrigger.focus({ preventScroll: true });
+        }
     };
 
     const getSelectedPartner = () => {
@@ -149,22 +174,26 @@
         editForm.elements.active.checked = partner.active === true;
     };
 
-    const selectPartner = (partnerId) => {
+    const selectPartner = (partnerId, trigger = null) => {
         selectedPartnerId = partnerId;
         const partner = getSelectedPartner();
         updateSelectedRow();
         if (!partner) {
             return;
         }
+        openDrawer(trigger);
         renderDetail(partner);
         setPanelMode("detail");
     };
 
-    const showCreatePanel = () => {
+    const showCreatePanel = (trigger = null, options = {}) => {
         selectedPartnerId = null;
         updateSelectedRow();
         createForm?.reset();
         setPanelMode("create");
+        if (options.open === true) {
+            openDrawer(trigger);
+        }
     };
 
     const renderRows = (items) => {
@@ -172,7 +201,7 @@
         currentPartners = items;
         if (!items.length) {
             setEmptyMessage("조회된 거래처가 없습니다.");
-            showCreatePanel();
+            showCreatePanel(null, { open: false });
             return;
         }
 
@@ -204,11 +233,11 @@
                 createTextCell("수정일", formatDate(partner.updatedAt))
             );
 
-            row.addEventListener("click", () => selectPartner(partner.partnerId));
+            row.addEventListener("click", () => selectPartner(partner.partnerId, row));
             row.addEventListener("keydown", (event) => {
                 if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
-                    selectPartner(partner.partnerId);
+                    selectPartner(partner.partnerId, row);
                 }
             });
 
@@ -219,7 +248,7 @@
             renderDetail(getSelectedPartner());
             updateSelectedRow();
         } else {
-            showCreatePanel();
+            showCreatePanel(null, { open: false });
         }
     };
 
@@ -324,7 +353,7 @@
                     hasPrevious: false,
                     hasNext: false
                 });
-                showCreatePanel();
+                showCreatePanel(null, { open: false });
             } finally {
                 setLoading(false);
             }
@@ -365,7 +394,15 @@
     });
 
     document.querySelectorAll("[data-partner-create-mode]").forEach((button) => {
-        button.addEventListener("click", showCreatePanel);
+        button.addEventListener("click", (event) => showCreatePanel(event.currentTarget, { open: true }));
+    });
+
+    createDrawerButton?.addEventListener("click", (event) => {
+        showCreatePanel(event.currentTarget, { open: true });
+    });
+
+    document.querySelectorAll("[data-close-partner-drawer]").forEach((button) => {
+        button.addEventListener("click", () => closeDrawer());
     });
 
     document.querySelector("[data-partner-edit-mode]")?.addEventListener("click", () => {
@@ -380,11 +417,35 @@
     document.querySelector("[data-partner-detail-mode]")?.addEventListener("click", () => {
         const partner = getSelectedPartner();
         if (!partner) {
-            showCreatePanel();
+            showCreatePanel(null, { open: false });
             return;
         }
         renderDetail(partner);
         setPanelMode("detail");
+    });
+
+    document.addEventListener("click", (event) => {
+        if (!detailDrawer?.classList.contains("is-open")) {
+            return;
+        }
+        const target = event.target;
+        if (!(target instanceof Element)) {
+            return;
+        }
+        if (
+            detailDrawer.contains(target) ||
+            target.closest("[data-partner-create-drawer]") ||
+            target.closest("[data-partner-id]")
+        ) {
+            return;
+        }
+        closeDrawer({ restoreFocus: false });
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && detailDrawer?.classList.contains("is-open")) {
+            closeDrawer();
+        }
     });
 
     createForm?.addEventListener("submit", async (event) => {

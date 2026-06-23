@@ -26,21 +26,20 @@ content-grid
     - table-header.inline-summary-header.management-summary-header
     - data-table
   - table-card.management-editor-card (필요한 화면만)
-- side-panel
-  - panel-card.side-work-panel
-    - create / detail / edit mode
-  - panel-card.muted-panel
+management-detail-drawer
+- panel-card.management-detail-drawer-panel.side-work-panel
+  - create / detail / edit mode
 ```
 
 기준:
 
 - 검색과 목록은 모든 관리형 페이지에서 같은 순서로 둔다.
-- 오른쪽 패널은 등록, 선택 상세, 수정 모드를 같은 자리에서 전환한다.
+- 오른쪽 드로어는 등록, 선택 상세, 수정 모드를 같은 자리에서 전환한다.
 - 하위 항목이나 선택지를 편집하는 화면만 `management-editor-card`를 목록 아래에 추가한다.
 - 기능별 `data-*` 속성과 API 이름은 도메인 이름을 유지하고, 시각 클래스에는 도메인 이름을 넣지 않는다.
 - 검수 템플릿에만 필요한 열 너비와 모바일 셀 노출 순서는 페이지 CSS에 남긴다.
 
-목록 전체 너비를 우선하는 품목 관리와 품목 분류 화면은 아래 드로어 변형을 사용한다.
+품목 관리, 품목 분류, 거래처 관리, 사용자 관리, 검수 템플릿처럼 목록 전체 너비를 우선하는 관리형 화면은 아래 드로어 구조를 사용한다.
 
 ```text
 workspace-header

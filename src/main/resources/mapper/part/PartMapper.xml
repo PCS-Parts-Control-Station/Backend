@@ -32,7 +32,6 @@
             p.model_name,
             p.manufacturer,
             p.part_code,
-            p.estimated_price,
             p.safe_quantity,
             COALESCE(s.quantity, 0) AS current_stock_quantity,
             p.active
@@ -68,7 +67,6 @@
             model_name,
             manufacturer,
             part_code,
-            estimated_price,
             safe_quantity,
             active
         FROM tb_pc_part
@@ -85,7 +83,6 @@
             p.model_name,
             p.manufacturer,
             p.part_code,
-            p.estimated_price,
             p.safe_quantity,
             COALESCE(s.quantity, 0) AS current_stock_quantity,
             p.active
@@ -128,7 +125,6 @@
             model_name,
             manufacturer,
             part_code,
-            estimated_price,
             safe_quantity,
             active,
             created_at,
@@ -141,7 +137,6 @@
             #{modelName},
             #{manufacturer},
             #{partCode},
-            #{estimatedPrice},
             #{safeQuantity},
             #{active},
             NOW(6),
@@ -157,7 +152,6 @@
             model_name = #{modelName},
             manufacturer = #{manufacturer},
             part_code = #{partCode},
-            estimated_price = #{estimatedPrice},
             safe_quantity = #{safeQuantity},
             updated_at = NOW(6)
         WHERE company_id = #{companyId}

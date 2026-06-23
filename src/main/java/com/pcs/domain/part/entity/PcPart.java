@@ -1,7 +1,5 @@
 package com.pcs.domain.part.entity;
 
-import java.math.BigDecimal;
-
 public class PcPart {
 
     private Long partId;
@@ -12,7 +10,6 @@ public class PcPart {
     private String modelName;
     private String manufacturer;
     private String partCode;
-    private BigDecimal estimatedPrice;
     private Integer safeQuantity;
     private Boolean active;
 
@@ -27,7 +24,6 @@ public class PcPart {
             String modelName,
             String manufacturer,
             String partCode,
-            BigDecimal estimatedPrice,
             Integer safeQuantity
     ) {
         this.companyId = companyId;
@@ -37,7 +33,6 @@ public class PcPart {
         this.modelName = modelName;
         this.manufacturer = manufacturer;
         this.partCode = partCode;
-        this.estimatedPrice = estimatedPrice;
         this.safeQuantity = safeQuantity;
         this.active = true;
     }
@@ -104,14 +99,6 @@ public class PcPart {
 
     public void setPartCode(String partCode) {
         this.partCode = partCode;
-    }
-
-    public BigDecimal getEstimatedPrice() {
-        return estimatedPrice;
-    }
-
-    public void setEstimatedPrice(BigDecimal estimatedPrice) {
-        this.estimatedPrice = estimatedPrice;
     }
 
     public Integer getSafeQuantity() {

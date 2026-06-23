@@ -1,8 +1,8 @@
-SET NAMES utf8mb4;
+﻿SET NAMES utf8mb4;
 USE pcs_db;
 
 -- Generated from docs/seed/pc-part-seed-candidates.csv
--- company_id 1 기준 seed입니다. estimated_price는 시장가 변동 때문에 0으로 둡니다.
+-- company_id 1 기준 seed입니다.
 -- 일부 필수 사양 중 CSV에 없는 값은 seed 표시용 추정 기본값을 사용했습니다.
 
 -- Execute this file as a whole. Running selected fragments can fail because session variables are reused.
@@ -688,8 +688,8 @@ WHERE d.company_id = @company_id
 -- 2. 품목 및 품목 사양값 seed
 -- CPU / Intel / Core i9-14900K
 SET @category_id := 1;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Core i9-14900K', 'BX8071514900K', 'Intel', 'CPU-INT-14900K', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Core i9-14900K', 'BX8071514900K', 'Intel', 'CPU-INT-14900K', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -744,8 +744,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU / Intel / Core i7-14700K
 SET @category_id := 1;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Core i7-14700K', 'BX8071514700K', 'Intel', 'CPU-INT-14700K', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Core i7-14700K', 'BX8071514700K', 'Intel', 'CPU-INT-14700K', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -800,8 +800,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU / Intel / Core i7-14700F
 SET @category_id := 1;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Core i7-14700F', 'BX8071514700F', 'Intel', 'CPU-INT-14700F', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Core i7-14700F', 'BX8071514700F', 'Intel', 'CPU-INT-14700F', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -856,8 +856,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU / Intel / Core i5-14600K
 SET @category_id := 1;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Core i5-14600K', 'BX8071514600K', 'Intel', 'CPU-INT-14600K', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Core i5-14600K', 'BX8071514600K', 'Intel', 'CPU-INT-14600K', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -912,8 +912,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU / Intel / Core i5-14500
 SET @category_id := 1;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Core i5-14500', 'BX8071514500', 'Intel', 'CPU-INT-14500', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Core i5-14500', 'BX8071514500', 'Intel', 'CPU-INT-14500', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -968,8 +968,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU / Intel / Core i5-14400F
 SET @category_id := 1;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Core i5-14400F', 'BX8071514400F', 'Intel', 'CPU-INT-14400F', 0.00, 5, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Core i5-14400F', 'BX8071514400F', 'Intel', 'CPU-INT-14400F', 5, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -1024,8 +1024,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU / Intel / Core i3-14100
 SET @category_id := 1;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Core i3-14100', 'BX8071514100', 'Intel', 'CPU-INT-14100', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Core i3-14100', 'BX8071514100', 'Intel', 'CPU-INT-14100', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -1080,8 +1080,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU / Intel / Core Ultra 7 265K
 SET @category_id := 1;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Core Ultra 7 265K', 'BX80768265K', 'Intel', 'CPU-INT-U7-265K', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Core Ultra 7 265K', 'BX80768265K', 'Intel', 'CPU-INT-U7-265K', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -1136,8 +1136,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU / Intel / Core Ultra 5 245K
 SET @category_id := 1;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Core Ultra 5 245K', 'BX80768245K', 'Intel', 'CPU-INT-U5-245K', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Core Ultra 5 245K', 'BX80768245K', 'Intel', 'CPU-INT-U5-245K', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -1192,8 +1192,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU / AMD / Ryzen 9 7950X
 SET @category_id := 1;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Ryzen 9 7950X', '100-100000514WOF', 'AMD', 'CPU-AMD-7950X', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Ryzen 9 7950X', '100-100000514WOF', 'AMD', 'CPU-AMD-7950X', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -1248,8 +1248,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU / AMD / Ryzen 9 7900X
 SET @category_id := 1;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Ryzen 9 7900X', '100-100000589WOF', 'AMD', 'CPU-AMD-7900X', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Ryzen 9 7900X', '100-100000589WOF', 'AMD', 'CPU-AMD-7900X', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -1304,8 +1304,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU / AMD / Ryzen 7 7800X3D
 SET @category_id := 1;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Ryzen 7 7800X3D', '100-100000910WOF', 'AMD', 'CPU-AMD-7800X3D', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Ryzen 7 7800X3D', '100-100000910WOF', 'AMD', 'CPU-AMD-7800X3D', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -1360,8 +1360,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU / AMD / Ryzen 7 7700
 SET @category_id := 1;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Ryzen 7 7700', '100-100000592BOX', 'AMD', 'CPU-AMD-7700', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Ryzen 7 7700', '100-100000592BOX', 'AMD', 'CPU-AMD-7700', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -1416,8 +1416,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU / AMD / Ryzen 5 7600
 SET @category_id := 1;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Ryzen 5 7600', '100-100001015BOX', 'AMD', 'CPU-AMD-7600', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Ryzen 5 7600', '100-100001015BOX', 'AMD', 'CPU-AMD-7600', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -1472,8 +1472,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU / AMD / Ryzen 5 7500F
 SET @category_id := 1;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Ryzen 5 7500F', '100-100000597MPK', 'AMD', 'CPU-AMD-7500F', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Ryzen 5 7500F', '100-100000597MPK', 'AMD', 'CPU-AMD-7500F', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -1528,8 +1528,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU / AMD / Ryzen 7 5700X3D
 SET @category_id := 1;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Ryzen 7 5700X3D', '100-100001503WOF', 'AMD', 'CPU-AMD-5700X3D', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Ryzen 7 5700X3D', '100-100001503WOF', 'AMD', 'CPU-AMD-5700X3D', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -1584,8 +1584,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU / AMD / Ryzen 5 5600
 SET @category_id := 1;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Ryzen 5 5600', '100-100000927BOX', 'AMD', 'CPU-AMD-5600', 0.00, 5, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Ryzen 5 5600', '100-100000927BOX', 'AMD', 'CPU-AMD-5600', 5, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -1640,8 +1640,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU / AMD / Ryzen 5 5600G
 SET @category_id := 1;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Ryzen 5 5600G', '100-100000252BOX', 'AMD', 'CPU-AMD-5600G', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Ryzen 5 5600G', '100-100000252BOX', 'AMD', 'CPU-AMD-5600G', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -1696,8 +1696,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU / AMD / Ryzen 7 9700X
 SET @category_id := 1;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Ryzen 7 9700X', '100-100001404WOF', 'AMD', 'CPU-AMD-9700X', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Ryzen 7 9700X', '100-100001404WOF', 'AMD', 'CPU-AMD-9700X', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -1752,8 +1752,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU / AMD / Ryzen 5 9600X
 SET @category_id := 1;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Ryzen 5 9600X', '100-100001405WOF', 'AMD', 'CPU-AMD-9600X', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Ryzen 5 9600X', '100-100001405WOF', 'AMD', 'CPU-AMD-9600X', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -1808,8 +1808,8 @@ WHERE @part_id IS NOT NULL
 
 -- 메인보드 / ASUS / PRIME B760M-K D4
 SET @category_id := 2;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'PRIME B760M-K D4', 'PRIME B760M-K D4', 'ASUS', 'MB-ASUS-B760M-K-D4', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'PRIME B760M-K D4', 'PRIME B760M-K D4', 'ASUS', 'MB-ASUS-B760M-K-D4', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -1883,8 +1883,8 @@ WHERE @part_id IS NOT NULL
 
 -- 메인보드 / ASUS / TUF GAMING B760M-PLUS WIFI
 SET @category_id := 2;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'TUF GAMING B760M-PLUS WIFI', 'TUF GAMING B760M-PLUS WIFI', 'ASUS', 'MB-ASUS-B760M-TUF-WIFI', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'TUF GAMING B760M-PLUS WIFI', 'TUF GAMING B760M-PLUS WIFI', 'ASUS', 'MB-ASUS-B760M-TUF-WIFI', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -1958,8 +1958,8 @@ WHERE @part_id IS NOT NULL
 
 -- 메인보드 / ASUS / ROG STRIX B650E-F GAMING WIFI
 SET @category_id := 2;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'ROG STRIX B650E-F GAMING WIFI', 'ROG STRIX B650E-F GAMING WIFI', 'ASUS', 'MB-ASUS-B650E-F-WIFI', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'ROG STRIX B650E-F GAMING WIFI', 'ROG STRIX B650E-F GAMING WIFI', 'ASUS', 'MB-ASUS-B650E-F-WIFI', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -2033,8 +2033,8 @@ WHERE @part_id IS NOT NULL
 
 -- 메인보드 / MSI / PRO B760M-A WIFI DDR4
 SET @category_id := 2;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'PRO B760M-A WIFI DDR4', 'PRO B760M-A WIFI DDR4', 'MSI', 'MB-MSI-B760M-A-WIFI-D4', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'PRO B760M-A WIFI DDR4', 'PRO B760M-A WIFI DDR4', 'MSI', 'MB-MSI-B760M-A-WIFI-D4', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -2108,8 +2108,8 @@ WHERE @part_id IS NOT NULL
 
 -- 메인보드 / MSI / MAG B650M MORTAR WIFI
 SET @category_id := 2;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'MAG B650M MORTAR WIFI', 'MAG B650M MORTAR WIFI', 'MSI', 'MB-MSI-B650M-MORTAR-WIFI', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'MAG B650M MORTAR WIFI', 'MAG B650M MORTAR WIFI', 'MSI', 'MB-MSI-B650M-MORTAR-WIFI', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -2183,8 +2183,8 @@ WHERE @part_id IS NOT NULL
 
 -- 메인보드 / MSI / B650M PROJECT ZERO
 SET @category_id := 2;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'B650M PROJECT ZERO', 'B650M PROJECT ZERO', 'MSI', 'MB-MSI-B650M-PROJECT-ZERO', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'B650M PROJECT ZERO', 'B650M PROJECT ZERO', 'MSI', 'MB-MSI-B650M-PROJECT-ZERO', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -2258,8 +2258,8 @@ WHERE @part_id IS NOT NULL
 
 -- 메인보드 / GIGABYTE / B760M AORUS ELITE AX
 SET @category_id := 2;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'B760M AORUS ELITE AX', 'B760M AORUS ELITE AX', 'GIGABYTE', 'MB-GB-B760M-AORUS-AX', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'B760M AORUS ELITE AX', 'B760M AORUS ELITE AX', 'GIGABYTE', 'MB-GB-B760M-AORUS-AX', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -2333,8 +2333,8 @@ WHERE @part_id IS NOT NULL
 
 -- 메인보드 / GIGABYTE / B650 AORUS ELITE AX V2
 SET @category_id := 2;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'B650 AORUS ELITE AX V2', 'B650 AORUS ELITE AX V2', 'GIGABYTE', 'MB-GB-B650-AORUS-AX-V2', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'B650 AORUS ELITE AX V2', 'B650 AORUS ELITE AX V2', 'GIGABYTE', 'MB-GB-B650-AORUS-AX-V2', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -2408,8 +2408,8 @@ WHERE @part_id IS NOT NULL
 
 -- 메인보드 / ASRock / B760M Pro RS/D4
 SET @category_id := 2;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'B760M Pro RS/D4', 'B760M Pro RS/D4', 'ASRock', 'MB-ASR-B760M-PRO-RS-D4', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'B760M Pro RS/D4', 'B760M Pro RS/D4', 'ASRock', 'MB-ASR-B760M-PRO-RS-D4', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -2483,8 +2483,8 @@ WHERE @part_id IS NOT NULL
 
 -- 메인보드 / ASRock / B650M Pro RS
 SET @category_id := 2;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'B650M Pro RS', 'B650M Pro RS', 'ASRock', 'MB-ASR-B650M-PRO-RS', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'B650M Pro RS', 'B650M Pro RS', 'ASRock', 'MB-ASR-B650M-PRO-RS', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -2558,8 +2558,8 @@ WHERE @part_id IS NOT NULL
 
 -- 메인보드 / ASRock / A520M-HDV
 SET @category_id := 2;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'A520M-HDV', 'A520M-HDV', 'ASRock', 'MB-ASR-A520M-HDV', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'A520M-HDV', 'A520M-HDV', 'ASRock', 'MB-ASR-A520M-HDV', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -2633,8 +2633,8 @@ WHERE @part_id IS NOT NULL
 
 -- 메인보드 / ASUS / PRIME A520M-K
 SET @category_id := 2;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'PRIME A520M-K', 'PRIME A520M-K', 'ASUS', 'MB-ASUS-A520M-K', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'PRIME A520M-K', 'PRIME A520M-K', 'ASUS', 'MB-ASUS-A520M-K', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -2708,8 +2708,8 @@ WHERE @part_id IS NOT NULL
 
 -- 메인보드 / MSI / A520M-A PRO
 SET @category_id := 2;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'A520M-A PRO', 'A520M-A PRO', 'MSI', 'MB-MSI-A520M-A-PRO', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'A520M-A PRO', 'A520M-A PRO', 'MSI', 'MB-MSI-A520M-A-PRO', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -2783,8 +2783,8 @@ WHERE @part_id IS NOT NULL
 
 -- 메인보드 / GIGABYTE / A520M K V2
 SET @category_id := 2;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'A520M K V2', 'A520M K V2', 'GIGABYTE', 'MB-GB-A520M-K-V2', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'A520M K V2', 'A520M K V2', 'GIGABYTE', 'MB-GB-A520M-K-V2', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -2858,8 +2858,8 @@ WHERE @part_id IS NOT NULL
 
 -- 메인보드 / ASUS / PRIME Z790-P WIFI
 SET @category_id := 2;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'PRIME Z790-P WIFI', 'PRIME Z790-P WIFI', 'ASUS', 'MB-ASUS-Z790-P-WIFI', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'PRIME Z790-P WIFI', 'PRIME Z790-P WIFI', 'ASUS', 'MB-ASUS-Z790-P-WIFI', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -2933,8 +2933,8 @@ WHERE @part_id IS NOT NULL
 
 -- 메인보드 / MSI / PRO Z790-A MAX WIFI
 SET @category_id := 2;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'PRO Z790-A MAX WIFI', 'PRO Z790-A MAX WIFI', 'MSI', 'MB-MSI-Z790-A-MAX-WIFI', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'PRO Z790-A MAX WIFI', 'PRO Z790-A MAX WIFI', 'MSI', 'MB-MSI-Z790-A-MAX-WIFI', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -3008,8 +3008,8 @@ WHERE @part_id IS NOT NULL
 
 -- 메인보드 / GIGABYTE / Z790 AORUS ELITE AX
 SET @category_id := 2;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Z790 AORUS ELITE AX', 'Z790 AORUS ELITE AX', 'GIGABYTE', 'MB-GB-Z790-AORUS-AX', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Z790 AORUS ELITE AX', 'Z790 AORUS ELITE AX', 'GIGABYTE', 'MB-GB-Z790-AORUS-AX', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -3083,8 +3083,8 @@ WHERE @part_id IS NOT NULL
 
 -- 메인보드 / ASRock / X670E Steel Legend
 SET @category_id := 2;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'X670E Steel Legend', 'X670E Steel Legend', 'ASRock', 'MB-ASR-X670E-STEEL', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'X670E Steel Legend', 'X670E Steel Legend', 'ASRock', 'MB-ASR-X670E-STEEL', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -3158,8 +3158,8 @@ WHERE @part_id IS NOT NULL
 
 -- 메인보드 / ASUS / PRIME B850-PLUS WIFI
 SET @category_id := 2;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'PRIME B850-PLUS WIFI', 'PRIME B850-PLUS WIFI', 'ASUS', 'MB-ASUS-B850-PLUS-WIFI', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'PRIME B850-PLUS WIFI', 'PRIME B850-PLUS WIFI', 'ASUS', 'MB-ASUS-B850-PLUS-WIFI', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -3233,8 +3233,8 @@ WHERE @part_id IS NOT NULL
 
 -- 메인보드 / MSI / MAG B850 TOMAHAWK WIFI
 SET @category_id := 2;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'MAG B850 TOMAHAWK WIFI', 'MAG B850 TOMAHAWK WIFI', 'MSI', 'MB-MSI-B850-TOMAHAWK-WIFI', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'MAG B850 TOMAHAWK WIFI', 'MAG B850 TOMAHAWK WIFI', 'MSI', 'MB-MSI-B850-TOMAHAWK-WIFI', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -3308,8 +3308,8 @@ WHERE @part_id IS NOT NULL
 
 -- RAM / Samsung / DDR5-5600 16GB
 SET @category_id := 3;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'DDR5-5600 16GB', 'M323R2GA3BB0-CWM', 'Samsung', 'RAM-SAM-DDR5-5600-16', 0.00, 8, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'DDR5-5600 16GB', 'M323R2GA3BB0-CWM', 'Samsung', 'RAM-SAM-DDR5-5600-16', 8, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -3372,8 +3372,8 @@ WHERE @part_id IS NOT NULL
 
 -- RAM / Samsung / DDR5-5600 32GB
 SET @category_id := 3;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'DDR5-5600 32GB', 'M323R4GA3BB0-CWM', 'Samsung', 'RAM-SAM-DDR5-5600-32', 0.00, 6, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'DDR5-5600 32GB', 'M323R4GA3BB0-CWM', 'Samsung', 'RAM-SAM-DDR5-5600-32', 6, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -3436,8 +3436,8 @@ WHERE @part_id IS NOT NULL
 
 -- RAM / Samsung / DDR4-3200 8GB
 SET @category_id := 3;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'DDR4-3200 8GB', 'M378A1K43EB2-CWE', 'Samsung', 'RAM-SAM-DDR4-3200-8', 0.00, 10, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'DDR4-3200 8GB', 'M378A1K43EB2-CWE', 'Samsung', 'RAM-SAM-DDR4-3200-8', 10, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -3500,8 +3500,8 @@ WHERE @part_id IS NOT NULL
 
 -- RAM / Samsung / DDR4-3200 16GB
 SET @category_id := 3;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'DDR4-3200 16GB', 'M378A2K43EB1-CWE', 'Samsung', 'RAM-SAM-DDR4-3200-16', 0.00, 8, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'DDR4-3200 16GB', 'M378A2K43EB1-CWE', 'Samsung', 'RAM-SAM-DDR4-3200-16', 8, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -3564,8 +3564,8 @@ WHERE @part_id IS NOT NULL
 
 -- RAM / SK hynix / DDR5-5600 16GB
 SET @category_id := 3;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'DDR5-5600 16GB', 'HMCG78AGBUA084N', 'SK hynix', 'RAM-HYN-DDR5-5600-16', 0.00, 5, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'DDR5-5600 16GB', 'HMCG78AGBUA084N', 'SK hynix', 'RAM-HYN-DDR5-5600-16', 5, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -3628,8 +3628,8 @@ WHERE @part_id IS NOT NULL
 
 -- RAM / SK hynix / DDR4-3200 8GB
 SET @category_id := 3;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'DDR4-3200 8GB', 'HMA81GU6DJR8N-XN', 'SK hynix', 'RAM-HYN-DDR4-3200-8', 0.00, 6, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'DDR4-3200 8GB', 'HMA81GU6DJR8N-XN', 'SK hynix', 'RAM-HYN-DDR4-3200-8', 6, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -3692,8 +3692,8 @@ WHERE @part_id IS NOT NULL
 
 -- RAM / Micron Crucial / DDR5-5600 16GB
 SET @category_id := 3;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'DDR5-5600 16GB', 'CT16G56C46U5', 'Micron Crucial', 'RAM-CRU-DDR5-5600-16', 0.00, 5, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'DDR5-5600 16GB', 'CT16G56C46U5', 'Micron Crucial', 'RAM-CRU-DDR5-5600-16', 5, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -3764,8 +3764,8 @@ WHERE @part_id IS NOT NULL
 
 -- RAM / Micron Crucial / DDR4-3200 16GB
 SET @category_id := 3;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'DDR4-3200 16GB', 'CT16G4DFRA32A', 'Micron Crucial', 'RAM-CRU-DDR4-3200-16', 0.00, 5, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'DDR4-3200 16GB', 'CT16G4DFRA32A', 'Micron Crucial', 'RAM-CRU-DDR4-3200-16', 5, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -3828,8 +3828,8 @@ WHERE @part_id IS NOT NULL
 
 -- RAM / TeamGroup / T-Force Delta RGB DDR5-6000 32GB
 SET @category_id := 3;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'T-Force Delta RGB DDR5-6000 32GB', 'FF3D532G6000HC38ADC01', 'TeamGroup', 'RAM-TG-DELTA-DDR5-6000-32', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'T-Force Delta RGB DDR5-6000 32GB', 'FF3D532G6000HC38ADC01', 'TeamGroup', 'RAM-TG-DELTA-DDR5-6000-32', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -3900,8 +3900,8 @@ WHERE @part_id IS NOT NULL
 
 -- RAM / G.SKILL / Trident Z5 RGB DDR5-6000 32GB
 SET @category_id := 3;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Trident Z5 RGB DDR5-6000 32GB', 'F5-6000J3038F16GX2-TZ5RK', 'G.SKILL', 'RAM-GSK-TZ5-DDR5-6000-32', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Trident Z5 RGB DDR5-6000 32GB', 'F5-6000J3038F16GX2-TZ5RK', 'G.SKILL', 'RAM-GSK-TZ5-DDR5-6000-32', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -3972,8 +3972,8 @@ WHERE @part_id IS NOT NULL
 
 -- RAM / G.SKILL / Ripjaws S5 DDR5-6000 32GB
 SET @category_id := 3;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Ripjaws S5 DDR5-6000 32GB', 'F5-6000J3238F16GX2-RS5K', 'G.SKILL', 'RAM-GSK-RS5-DDR5-6000-32', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Ripjaws S5 DDR5-6000 32GB', 'F5-6000J3238F16GX2-RS5K', 'G.SKILL', 'RAM-GSK-RS5-DDR5-6000-32', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -4044,8 +4044,8 @@ WHERE @part_id IS NOT NULL
 
 -- RAM / Corsair / Vengeance DDR5-5600 32GB
 SET @category_id := 3;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Vengeance DDR5-5600 32GB', 'CMK32GX5M2B5600C36', 'Corsair', 'RAM-COR-VEN-DDR5-5600-32', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Vengeance DDR5-5600 32GB', 'CMK32GX5M2B5600C36', 'Corsair', 'RAM-COR-VEN-DDR5-5600-32', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -4116,8 +4116,8 @@ WHERE @part_id IS NOT NULL
 
 -- RAM / Corsair / Vengeance RGB PRO DDR4-3600 16GB
 SET @category_id := 3;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Vengeance RGB PRO DDR4-3600 16GB', 'CMW16GX4M2D3600C18', 'Corsair', 'RAM-COR-RGBPRO-DDR4-3600-16', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Vengeance RGB PRO DDR4-3600 16GB', 'CMW16GX4M2D3600C18', 'Corsair', 'RAM-COR-RGBPRO-DDR4-3600-16', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -4188,8 +4188,8 @@ WHERE @part_id IS NOT NULL
 
 -- RAM / Kingston / FURY Beast DDR5-6000 32GB
 SET @category_id := 3;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'FURY Beast DDR5-6000 32GB', 'KF560C36BBEK2-32', 'Kingston', 'RAM-KIN-FURY-DDR5-6000-32', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'FURY Beast DDR5-6000 32GB', 'KF560C36BBEK2-32', 'Kingston', 'RAM-KIN-FURY-DDR5-6000-32', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -4260,8 +4260,8 @@ WHERE @part_id IS NOT NULL
 
 -- RAM / Kingston / FURY Beast DDR4-3200 16GB
 SET @category_id := 3;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'FURY Beast DDR4-3200 16GB', 'KF432C16BBK2-16', 'Kingston', 'RAM-KIN-FURY-DDR4-3200-16', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'FURY Beast DDR4-3200 16GB', 'KF432C16BBK2-16', 'Kingston', 'RAM-KIN-FURY-DDR4-3200-16', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -4332,8 +4332,8 @@ WHERE @part_id IS NOT NULL
 
 -- RAM / ADATA XPG / Lancer RGB DDR5-6000 32GB
 SET @category_id := 3;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Lancer RGB DDR5-6000 32GB', 'AX5U6000C4016G-DCLARBK', 'ADATA XPG', 'RAM-XPG-LANCER-DDR5-6000-32', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Lancer RGB DDR5-6000 32GB', 'AX5U6000C4016G-DCLARBK', 'ADATA XPG', 'RAM-XPG-LANCER-DDR5-6000-32', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -4404,8 +4404,8 @@ WHERE @part_id IS NOT NULL
 
 -- RAM / GeIL / EVO V DDR5-6000 32GB
 SET @category_id := 3;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'EVO V DDR5-6000 32GB', 'GOSG532GB6000C36ADC', 'GeIL', 'RAM-GEIL-EVOV-DDR5-6000-32', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'EVO V DDR5-6000 32GB', 'GOSG532GB6000C36ADC', 'GeIL', 'RAM-GEIL-EVOV-DDR5-6000-32', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -4476,8 +4476,8 @@ WHERE @part_id IS NOT NULL
 
 -- RAM / Patriot / Viper Steel DDR4-3200 16GB
 SET @category_id := 3;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Viper Steel DDR4-3200 16GB', 'PVS416G320C6K', 'Patriot', 'RAM-PAT-VIPER-DDR4-3200-16', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Viper Steel DDR4-3200 16GB', 'PVS416G320C6K', 'Patriot', 'RAM-PAT-VIPER-DDR4-3200-16', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -4540,8 +4540,8 @@ WHERE @part_id IS NOT NULL
 
 -- RAM / ESSENCORE KLEVV / DDR5-5600 16GB
 SET @category_id := 3;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'DDR5-5600 16GB', 'KD5AGUA80-56G460A', 'ESSENCORE KLEVV', 'RAM-KLEVV-DDR5-5600-16', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'DDR5-5600 16GB', 'KD5AGUA80-56G460A', 'ESSENCORE KLEVV', 'RAM-KLEVV-DDR5-5600-16', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -4604,8 +4604,8 @@ WHERE @part_id IS NOT NULL
 
 -- RAM / ESSENCORE KLEVV / DDR4-3200 16GB
 SET @category_id := 3;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'DDR4-3200 16GB', 'KD48GU880-32N220A', 'ESSENCORE KLEVV', 'RAM-KLEVV-DDR4-3200-16', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'DDR4-3200 16GB', 'KD48GU880-32N220A', 'ESSENCORE KLEVV', 'RAM-KLEVV-DDR4-3200-16', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -4668,8 +4668,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 / ASUS / Dual GeForce RTX 4060 O8G
 SET @category_id := 4;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Dual GeForce RTX 4060 O8G', 'DUAL-RTX4060-O8G', 'ASUS', 'GPU-ASUS-RTX4060-DUAL-8G', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Dual GeForce RTX 4060 O8G', 'DUAL-RTX4060-O8G', 'ASUS', 'GPU-ASUS-RTX4060-DUAL-8G', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -4733,8 +4733,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 / MSI / GeForce RTX 4060 VENTUS 2X BLACK OC 8GB
 SET @category_id := 4;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'GeForce RTX 4060 VENTUS 2X BLACK OC 8GB', 'RTX 4060 VENTUS 2X BLACK 8G OC', 'MSI', 'GPU-MSI-RTX4060-VENTUS-8G', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'GeForce RTX 4060 VENTUS 2X BLACK OC 8GB', 'RTX 4060 VENTUS 2X BLACK 8G OC', 'MSI', 'GPU-MSI-RTX4060-VENTUS-8G', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -4798,8 +4798,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 / GIGABYTE / GeForce RTX 4060 WINDFORCE OC 8GB
 SET @category_id := 4;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'GeForce RTX 4060 WINDFORCE OC 8GB', 'GV-N4060WF2OC-8GD', 'GIGABYTE', 'GPU-GB-RTX4060-WF-8G', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'GeForce RTX 4060 WINDFORCE OC 8GB', 'GV-N4060WF2OC-8GD', 'GIGABYTE', 'GPU-GB-RTX4060-WF-8G', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -4863,8 +4863,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 / ZOTAC / GAMING GeForce RTX 4060 Twin Edge OC 8GB
 SET @category_id := 4;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'GAMING GeForce RTX 4060 Twin Edge OC 8GB', 'ZT-D40600H-10M', 'ZOTAC', 'GPU-ZOTAC-RTX4060-TE-8G', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'GAMING GeForce RTX 4060 Twin Edge OC 8GB', 'ZT-D40600H-10M', 'ZOTAC', 'GPU-ZOTAC-RTX4060-TE-8G', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -4928,8 +4928,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 / ASUS / TUF Gaming GeForce RTX 4070 SUPER O12G
 SET @category_id := 4;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'TUF Gaming GeForce RTX 4070 SUPER O12G', 'TUF-RTX4070S-O12G-GAMING', 'ASUS', 'GPU-ASUS-RTX4070S-TUF-12G', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'TUF Gaming GeForce RTX 4070 SUPER O12G', 'TUF-RTX4070S-O12G-GAMING', 'ASUS', 'GPU-ASUS-RTX4070S-TUF-12G', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -4993,8 +4993,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 / MSI / GeForce RTX 4070 SUPER GAMING X SLIM 12GB
 SET @category_id := 4;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'GeForce RTX 4070 SUPER GAMING X SLIM 12GB', 'RTX 4070 SUPER 12G GAMING X SLIM', 'MSI', 'GPU-MSI-RTX4070S-GXSLIM-12G', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'GeForce RTX 4070 SUPER GAMING X SLIM 12GB', 'RTX 4070 SUPER 12G GAMING X SLIM', 'MSI', 'GPU-MSI-RTX4070S-GXSLIM-12G', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -5058,8 +5058,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 / GIGABYTE / GeForce RTX 4070 SUPER WINDFORCE OC 12GB
 SET @category_id := 4;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'GeForce RTX 4070 SUPER WINDFORCE OC 12GB', 'GV-N407SWF3OC-12GD', 'GIGABYTE', 'GPU-GB-RTX4070S-WF-12G', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'GeForce RTX 4070 SUPER WINDFORCE OC 12GB', 'GV-N407SWF3OC-12GD', 'GIGABYTE', 'GPU-GB-RTX4070S-WF-12G', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -5123,8 +5123,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 / ZOTAC / GAMING GeForce RTX 4070 SUPER Twin Edge OC 12GB
 SET @category_id := 4;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'GAMING GeForce RTX 4070 SUPER Twin Edge OC 12GB', 'ZT-D40720H-10M', 'ZOTAC', 'GPU-ZOTAC-RTX4070S-TE-12G', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'GAMING GeForce RTX 4070 SUPER Twin Edge OC 12GB', 'ZT-D40720H-10M', 'ZOTAC', 'GPU-ZOTAC-RTX4070S-TE-12G', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -5188,8 +5188,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 / ASUS / ProArt GeForce RTX 4080 SUPER OC 16GB
 SET @category_id := 4;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'ProArt GeForce RTX 4080 SUPER OC 16GB', 'PROART-RTX4080S-O16G', 'ASUS', 'GPU-ASUS-RTX4080S-PROART-16G', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'ProArt GeForce RTX 4080 SUPER OC 16GB', 'PROART-RTX4080S-O16G', 'ASUS', 'GPU-ASUS-RTX4080S-PROART-16G', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -5253,8 +5253,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 / MSI / GeForce RTX 4080 SUPER VENTUS 3X OC 16GB
 SET @category_id := 4;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'GeForce RTX 4080 SUPER VENTUS 3X OC 16GB', 'RTX 4080 SUPER 16G VENTUS 3X OC', 'MSI', 'GPU-MSI-RTX4080S-VENTUS-16G', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'GeForce RTX 4080 SUPER VENTUS 3X OC 16GB', 'RTX 4080 SUPER 16G VENTUS 3X OC', 'MSI', 'GPU-MSI-RTX4080S-VENTUS-16G', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -5318,8 +5318,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 / GIGABYTE / GeForce RTX 4080 SUPER GAMING OC 16GB
 SET @category_id := 4;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'GeForce RTX 4080 SUPER GAMING OC 16GB', 'GV-N408SGAMING OC-16GD', 'GIGABYTE', 'GPU-GB-RTX4080S-GAMING-16G', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'GeForce RTX 4080 SUPER GAMING OC 16GB', 'GV-N408SGAMING OC-16GD', 'GIGABYTE', 'GPU-GB-RTX4080S-GAMING-16G', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -5383,8 +5383,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 / SAPPHIRE / PULSE Radeon RX 7600 8GB
 SET @category_id := 4;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'PULSE Radeon RX 7600 8GB', '11324-01-20G', 'SAPPHIRE', 'GPU-SAP-RX7600-PULSE-8G', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'PULSE Radeon RX 7600 8GB', '11324-01-20G', 'SAPPHIRE', 'GPU-SAP-RX7600-PULSE-8G', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -5448,8 +5448,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 / ASRock / Radeon RX 7600 Challenger 8GB OC
 SET @category_id := 4;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Radeon RX 7600 Challenger 8GB OC', 'RX7600 CL 8GO', 'ASRock', 'GPU-ASR-RX7600-CHALLENGER-8G', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Radeon RX 7600 Challenger 8GB OC', 'RX7600 CL 8GO', 'ASRock', 'GPU-ASR-RX7600-CHALLENGER-8G', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -5513,8 +5513,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 / XFX / SPEEDSTER SWFT 210 Radeon RX 7600 8GB
 SET @category_id := 4;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'SPEEDSTER SWFT 210 Radeon RX 7600 8GB', 'RX-76PSWFTFY', 'XFX', 'GPU-XFX-RX7600-SWFT-8G', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'SPEEDSTER SWFT 210 Radeon RX 7600 8GB', 'RX-76PSWFTFY', 'XFX', 'GPU-XFX-RX7600-SWFT-8G', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -5578,8 +5578,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 / SAPPHIRE / PULSE Radeon RX 7800 XT 16GB
 SET @category_id := 4;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'PULSE Radeon RX 7800 XT 16GB', '11330-02-20G', 'SAPPHIRE', 'GPU-SAP-RX7800XT-PULSE-16G', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'PULSE Radeon RX 7800 XT 16GB', '11330-02-20G', 'SAPPHIRE', 'GPU-SAP-RX7800XT-PULSE-16G', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -5643,8 +5643,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 / PowerColor / Hellhound Radeon RX 7800 XT 16GB
 SET @category_id := 4;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Hellhound Radeon RX 7800 XT 16GB', 'RX 7800 XT 16G-L/OC', 'PowerColor', 'GPU-PWC-RX7800XT-HELLHOUND-16G', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Hellhound Radeon RX 7800 XT 16GB', 'RX 7800 XT 16G-L/OC', 'PowerColor', 'GPU-PWC-RX7800XT-HELLHOUND-16G', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -5708,8 +5708,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 / ASRock / Radeon RX 7900 GRE Challenger 16GB
 SET @category_id := 4;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Radeon RX 7900 GRE Challenger 16GB', 'RX7900GRE CL 16GO', 'ASRock', 'GPU-ASR-RX7900GRE-16G', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Radeon RX 7900 GRE Challenger 16GB', 'RX7900GRE CL 16GO', 'ASRock', 'GPU-ASR-RX7900GRE-16G', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -5773,8 +5773,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 / SAPPHIRE / NITRO+ Radeon RX 7900 XTX 24GB
 SET @category_id := 4;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'NITRO+ Radeon RX 7900 XTX 24GB', '11322-01-40G', 'SAPPHIRE', 'GPU-SAP-RX7900XTX-NITRO-24G', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'NITRO+ Radeon RX 7900 XTX 24GB', '11322-01-40G', 'SAPPHIRE', 'GPU-SAP-RX7900XTX-NITRO-24G', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -5838,8 +5838,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 / GALAX / GeForce RTX 3050 EX 6GB
 SET @category_id := 4;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'GeForce RTX 3050 EX 6GB', 'RTX3050 EX WHITE 6GB', 'GALAX', 'GPU-GALAX-RTX3050-EX-6G', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'GeForce RTX 3050 EX 6GB', 'RTX3050 EX WHITE 6GB', 'GALAX', 'GPU-GALAX-RTX3050-EX-6G', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -5903,8 +5903,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 / INNO3D / GeForce RTX 3060 TWIN X2 12GB
 SET @category_id := 4;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'GeForce RTX 3060 TWIN X2 12GB', 'N30602-12D6-119032AH', 'INNO3D', 'GPU-INNO3D-RTX3060-TWIN-12G', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'GeForce RTX 3060 TWIN X2 12GB', 'N30602-12D6-119032AH', 'INNO3D', 'GPU-INNO3D-RTX3060-TWIN-12G', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -5968,8 +5968,8 @@ WHERE @part_id IS NOT NULL
 
 -- SSD / Samsung / 990 PRO 1TB
 SET @category_id := 5;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, '990 PRO 1TB', 'MZ-V9P1T0BW', 'Samsung', 'SSD-SAM-990PRO-1T', 0.00, 5, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, '990 PRO 1TB', 'MZ-V9P1T0BW', 'Samsung', 'SSD-SAM-990PRO-1T', 5, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -6017,8 +6017,8 @@ WHERE @part_id IS NOT NULL
 
 -- SSD / Samsung / 990 EVO 1TB
 SET @category_id := 5;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, '990 EVO 1TB', 'MZ-V9E1T0BW', 'Samsung', 'SSD-SAM-990EVO-1T', 0.00, 5, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, '990 EVO 1TB', 'MZ-V9E1T0BW', 'Samsung', 'SSD-SAM-990EVO-1T', 5, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -6066,8 +6066,8 @@ WHERE @part_id IS NOT NULL
 
 -- SSD / Samsung / 980 PRO 1TB
 SET @category_id := 5;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, '980 PRO 1TB', 'MZ-V8P1T0BW', 'Samsung', 'SSD-SAM-980PRO-1T', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, '980 PRO 1TB', 'MZ-V8P1T0BW', 'Samsung', 'SSD-SAM-980PRO-1T', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -6115,8 +6115,8 @@ WHERE @part_id IS NOT NULL
 
 -- SSD / Samsung / 870 EVO 1TB
 SET @category_id := 5;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, '870 EVO 1TB', 'MZ-77E1T0BW', 'Samsung', 'SSD-SAM-870EVO-1T', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, '870 EVO 1TB', 'MZ-77E1T0BW', 'Samsung', 'SSD-SAM-870EVO-1T', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -6164,8 +6164,8 @@ WHERE @part_id IS NOT NULL
 
 -- SSD / SK hynix / Platinum P41 1TB
 SET @category_id := 5;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Platinum P41 1TB', 'SHPP41-1000GM-2', 'SK hynix', 'SSD-HYN-P41-1T', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Platinum P41 1TB', 'SHPP41-1000GM-2', 'SK hynix', 'SSD-HYN-P41-1T', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -6213,8 +6213,8 @@ WHERE @part_id IS NOT NULL
 
 -- SSD / SK hynix / Gold P31 1TB
 SET @category_id := 5;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Gold P31 1TB', 'SHGP31-1000GM-2', 'SK hynix', 'SSD-HYN-P31-1T', 0.00, 5, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Gold P31 1TB', 'SHGP31-1000GM-2', 'SK hynix', 'SSD-HYN-P31-1T', 5, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -6262,8 +6262,8 @@ WHERE @part_id IS NOT NULL
 
 -- SSD / Western Digital / WD_BLACK SN850X 1TB
 SET @category_id := 5;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'WD_BLACK SN850X 1TB', 'WDS100T2X0E', 'Western Digital', 'SSD-WD-SN850X-1T', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'WD_BLACK SN850X 1TB', 'WDS100T2X0E', 'Western Digital', 'SSD-WD-SN850X-1T', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -6311,8 +6311,8 @@ WHERE @part_id IS NOT NULL
 
 -- SSD / Western Digital / WD Blue SN580 1TB
 SET @category_id := 5;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'WD Blue SN580 1TB', 'WDS100T3B0E', 'Western Digital', 'SSD-WD-SN580-1T', 0.00, 5, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'WD Blue SN580 1TB', 'WDS100T3B0E', 'Western Digital', 'SSD-WD-SN580-1T', 5, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -6360,8 +6360,8 @@ WHERE @part_id IS NOT NULL
 
 -- SSD / Western Digital / WD Blue SA510 1TB
 SET @category_id := 5;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'WD Blue SA510 1TB', 'WDS100T3B0A', 'Western Digital', 'SSD-WD-SA510-1T', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'WD Blue SA510 1TB', 'WDS100T3B0A', 'Western Digital', 'SSD-WD-SA510-1T', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -6409,8 +6409,8 @@ WHERE @part_id IS NOT NULL
 
 -- SSD / Micron Crucial / P3 Plus 1TB
 SET @category_id := 5;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'P3 Plus 1TB', 'CT1000P3PSSD8', 'Micron Crucial', 'SSD-CRU-P3PLUS-1T', 0.00, 5, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'P3 Plus 1TB', 'CT1000P3PSSD8', 'Micron Crucial', 'SSD-CRU-P3PLUS-1T', 5, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -6458,8 +6458,8 @@ WHERE @part_id IS NOT NULL
 
 -- SSD / Micron Crucial / P5 Plus 1TB
 SET @category_id := 5;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'P5 Plus 1TB', 'CT1000P5PSSD8', 'Micron Crucial', 'SSD-CRU-P5PLUS-1T', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'P5 Plus 1TB', 'CT1000P5PSSD8', 'Micron Crucial', 'SSD-CRU-P5PLUS-1T', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -6507,8 +6507,8 @@ WHERE @part_id IS NOT NULL
 
 -- SSD / Micron Crucial / MX500 1TB
 SET @category_id := 5;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'MX500 1TB', 'CT1000MX500SSD1', 'Micron Crucial', 'SSD-CRU-MX500-1T', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'MX500 1TB', 'CT1000MX500SSD1', 'Micron Crucial', 'SSD-CRU-MX500-1T', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -6556,8 +6556,8 @@ WHERE @part_id IS NOT NULL
 
 -- SSD / Seagate / FireCuda 530 1TB
 SET @category_id := 5;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'FireCuda 530 1TB', 'ZP1000GM3A013', 'Seagate', 'SSD-SEA-FC530-1T', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'FireCuda 530 1TB', 'ZP1000GM3A013', 'Seagate', 'SSD-SEA-FC530-1T', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -6605,8 +6605,8 @@ WHERE @part_id IS NOT NULL
 
 -- SSD / Solidigm / P44 Pro 1TB
 SET @category_id := 5;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'P44 Pro 1TB', 'SSDPFKKW010X7X1', 'Solidigm', 'SSD-SOL-P44PRO-1T', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'P44 Pro 1TB', 'SSDPFKKW010X7X1', 'Solidigm', 'SSD-SOL-P44PRO-1T', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -6654,8 +6654,8 @@ WHERE @part_id IS NOT NULL
 
 -- SSD / Kingston / NV2 1TB
 SET @category_id := 5;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'NV2 1TB', 'SNV2S/1000G', 'Kingston', 'SSD-KIN-NV2-1T', 0.00, 5, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'NV2 1TB', 'SNV2S/1000G', 'Kingston', 'SSD-KIN-NV2-1T', 5, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -6703,8 +6703,8 @@ WHERE @part_id IS NOT NULL
 
 -- SSD / Kingston / KC3000 1TB
 SET @category_id := 5;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'KC3000 1TB', 'SKC3000S/1024G', 'Kingston', 'SSD-KIN-KC3000-1T', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'KC3000 1TB', 'SKC3000S/1024G', 'Kingston', 'SSD-KIN-KC3000-1T', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -6752,8 +6752,8 @@ WHERE @part_id IS NOT NULL
 
 -- SSD / ADATA XPG / S70 Blade 1TB
 SET @category_id := 5;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'S70 Blade 1TB', 'AGAMMIXS70B-1T-CS', 'ADATA XPG', 'SSD-XPG-S70B-1T', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'S70 Blade 1TB', 'AGAMMIXS70B-1T-CS', 'ADATA XPG', 'SSD-XPG-S70B-1T', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -6801,8 +6801,8 @@ WHERE @part_id IS NOT NULL
 
 -- SSD / TeamGroup / MP44L 1TB
 SET @category_id := 5;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'MP44L 1TB', 'TM8FPK001T0C101', 'TeamGroup', 'SSD-TG-MP44L-1T', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'MP44L 1TB', 'TM8FPK001T0C101', 'TeamGroup', 'SSD-TG-MP44L-1T', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -6850,8 +6850,8 @@ WHERE @part_id IS NOT NULL
 
 -- SSD / Lexar / NM790 1TB
 SET @category_id := 5;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'NM790 1TB', 'LNM790X001T-RNNNG', 'Lexar', 'SSD-LEX-NM790-1T', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'NM790 1TB', 'LNM790X001T-RNNNG', 'Lexar', 'SSD-LEX-NM790-1T', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -6899,8 +6899,8 @@ WHERE @part_id IS NOT NULL
 
 -- SSD / Kioxia / Exceria G2 1TB
 SET @category_id := 5;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Exceria G2 1TB', 'LRC20Z001TG8', 'Kioxia', 'SSD-KIO-G2-1T', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Exceria G2 1TB', 'LRC20Z001TG8', 'Kioxia', 'SSD-KIO-G2-1T', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -6948,8 +6948,8 @@ WHERE @part_id IS NOT NULL
 
 -- HDD / Seagate / BarraCuda 2TB
 SET @category_id := 6;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'BarraCuda 2TB', 'ST2000DM008', 'Seagate', 'HDD-SEA-BC-2T', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'BarraCuda 2TB', 'ST2000DM008', 'Seagate', 'HDD-SEA-BC-2T', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -7006,8 +7006,8 @@ WHERE @part_id IS NOT NULL
 
 -- HDD / Seagate / BarraCuda 4TB
 SET @category_id := 6;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'BarraCuda 4TB', 'ST4000DM004', 'Seagate', 'HDD-SEA-BC-4T', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'BarraCuda 4TB', 'ST4000DM004', 'Seagate', 'HDD-SEA-BC-4T', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -7064,8 +7064,8 @@ WHERE @part_id IS NOT NULL
 
 -- HDD / Seagate / IronWolf 4TB
 SET @category_id := 6;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'IronWolf 4TB', 'ST4000VN006', 'Seagate', 'HDD-SEA-IW-4T', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'IronWolf 4TB', 'ST4000VN006', 'Seagate', 'HDD-SEA-IW-4T', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -7114,8 +7114,8 @@ WHERE @part_id IS NOT NULL
 
 -- HDD / Seagate / IronWolf 8TB
 SET @category_id := 6;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'IronWolf 8TB', 'ST8000VN004', 'Seagate', 'HDD-SEA-IW-8T', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'IronWolf 8TB', 'ST8000VN004', 'Seagate', 'HDD-SEA-IW-8T', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -7164,8 +7164,8 @@ WHERE @part_id IS NOT NULL
 
 -- HDD / Seagate / SkyHawk 4TB
 SET @category_id := 6;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'SkyHawk 4TB', 'ST4000VX016', 'Seagate', 'HDD-SEA-SH-4T', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'SkyHawk 4TB', 'ST4000VX016', 'Seagate', 'HDD-SEA-SH-4T', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -7214,8 +7214,8 @@ WHERE @part_id IS NOT NULL
 
 -- HDD / Seagate / Exos X18 18TB
 SET @category_id := 6;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Exos X18 18TB', 'ST18000NM000J', 'Seagate', 'HDD-SEA-EXOS18-18T', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Exos X18 18TB', 'ST18000NM000J', 'Seagate', 'HDD-SEA-EXOS18-18T', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -7264,8 +7264,8 @@ WHERE @part_id IS NOT NULL
 
 -- HDD / Western Digital / WD Blue 1TB
 SET @category_id := 6;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'WD Blue 1TB', 'WD10EZEX', 'Western Digital', 'HDD-WD-BLUE-1T', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'WD Blue 1TB', 'WD10EZEX', 'Western Digital', 'HDD-WD-BLUE-1T', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -7322,8 +7322,8 @@ WHERE @part_id IS NOT NULL
 
 -- HDD / Western Digital / WD Blue 2TB
 SET @category_id := 6;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'WD Blue 2TB', 'WD20EZBX', 'Western Digital', 'HDD-WD-BLUE-2T', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'WD Blue 2TB', 'WD20EZBX', 'Western Digital', 'HDD-WD-BLUE-2T', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -7372,8 +7372,8 @@ WHERE @part_id IS NOT NULL
 
 -- HDD / Western Digital / WD Blue 4TB
 SET @category_id := 6;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'WD Blue 4TB', 'WD40EZAX', 'Western Digital', 'HDD-WD-BLUE-4T', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'WD Blue 4TB', 'WD40EZAX', 'Western Digital', 'HDD-WD-BLUE-4T', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -7422,8 +7422,8 @@ WHERE @part_id IS NOT NULL
 
 -- HDD / Western Digital / WD Red Plus 4TB
 SET @category_id := 6;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'WD Red Plus 4TB', 'WD40EFPX', 'Western Digital', 'HDD-WD-REDPLUS-4T', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'WD Red Plus 4TB', 'WD40EFPX', 'Western Digital', 'HDD-WD-REDPLUS-4T', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -7472,8 +7472,8 @@ WHERE @part_id IS NOT NULL
 
 -- HDD / Western Digital / WD Red Plus 8TB
 SET @category_id := 6;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'WD Red Plus 8TB', 'WD80EFPX', 'Western Digital', 'HDD-WD-REDPLUS-8T', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'WD Red Plus 8TB', 'WD80EFPX', 'Western Digital', 'HDD-WD-REDPLUS-8T', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -7522,8 +7522,8 @@ WHERE @part_id IS NOT NULL
 
 -- HDD / Western Digital / WD Purple 4TB
 SET @category_id := 6;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'WD Purple 4TB', 'WD43PURZ', 'Western Digital', 'HDD-WD-PURPLE-4T', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'WD Purple 4TB', 'WD43PURZ', 'Western Digital', 'HDD-WD-PURPLE-4T', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -7572,8 +7572,8 @@ WHERE @part_id IS NOT NULL
 
 -- HDD / Western Digital / WD Gold 10TB
 SET @category_id := 6;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'WD Gold 10TB', 'WD102KRYZ', 'Western Digital', 'HDD-WD-GOLD-10T', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'WD Gold 10TB', 'WD102KRYZ', 'Western Digital', 'HDD-WD-GOLD-10T', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -7622,8 +7622,8 @@ WHERE @part_id IS NOT NULL
 
 -- HDD / Toshiba / P300 2TB
 SET @category_id := 6;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'P300 2TB', 'HDWD120', 'Toshiba', 'HDD-TOS-P300-2T', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'P300 2TB', 'HDWD120', 'Toshiba', 'HDD-TOS-P300-2T', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -7680,8 +7680,8 @@ WHERE @part_id IS NOT NULL
 
 -- HDD / Toshiba / P300 4TB
 SET @category_id := 6;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'P300 4TB', 'HDWD240', 'Toshiba', 'HDD-TOS-P300-4T', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'P300 4TB', 'HDWD240', 'Toshiba', 'HDD-TOS-P300-4T', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -7730,8 +7730,8 @@ WHERE @part_id IS NOT NULL
 
 -- HDD / Toshiba / N300 4TB
 SET @category_id := 6;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'N300 4TB', 'HDWG440', 'Toshiba', 'HDD-TOS-N300-4T', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'N300 4TB', 'HDWG440', 'Toshiba', 'HDD-TOS-N300-4T', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -7780,8 +7780,8 @@ WHERE @part_id IS NOT NULL
 
 -- HDD / Toshiba / N300 8TB
 SET @category_id := 6;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'N300 8TB', 'HDWG480', 'Toshiba', 'HDD-TOS-N300-8T', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'N300 8TB', 'HDWG480', 'Toshiba', 'HDD-TOS-N300-8T', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -7830,8 +7830,8 @@ WHERE @part_id IS NOT NULL
 
 -- HDD / Toshiba / S300 4TB
 SET @category_id := 6;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'S300 4TB', 'HDWT840', 'Toshiba', 'HDD-TOS-S300-4T', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'S300 4TB', 'HDWT840', 'Toshiba', 'HDD-TOS-S300-4T', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -7880,8 +7880,8 @@ WHERE @part_id IS NOT NULL
 
 -- HDD / HGST / Ultrastar 7K6000 4TB
 SET @category_id := 6;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Ultrastar 7K6000 4TB', 'HUH728040ALE600', 'HGST', 'HDD-HGST-7K6000-4T', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Ultrastar 7K6000 4TB', 'HUH728040ALE600', 'HGST', 'HDD-HGST-7K6000-4T', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -7930,8 +7930,8 @@ WHERE @part_id IS NOT NULL
 
 -- HDD / Western Digital / WD_BLACK 4TB
 SET @category_id := 6;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'WD_BLACK 4TB', 'WD4005FZBX', 'Western Digital', 'HDD-WD-BLACK-4T', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'WD_BLACK 4TB', 'WD4005FZBX', 'Western Digital', 'HDD-WD-BLACK-4T', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -7980,8 +7980,8 @@ WHERE @part_id IS NOT NULL
 
 -- 파워 / Micronics / Classic II 600W 80PLUS 230V EU
 SET @category_id := 7;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Classic II 600W 80PLUS 230V EU', 'Classic II 600W', 'Micronics', 'PSU-MIC-CLASSIC2-600', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Classic II 600W 80PLUS 230V EU', 'Classic II 600W', 'Micronics', 'PSU-MIC-CLASSIC2-600', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -8030,8 +8030,8 @@ WHERE @part_id IS NOT NULL
 
 -- 파워 / Micronics / Classic II 700W 80PLUS 230V EU
 SET @category_id := 7;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Classic II 700W 80PLUS 230V EU', 'Classic II 700W', 'Micronics', 'PSU-MIC-CLASSIC2-700', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Classic II 700W 80PLUS 230V EU', 'Classic II 700W', 'Micronics', 'PSU-MIC-CLASSIC2-700', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -8080,8 +8080,8 @@ WHERE @part_id IS NOT NULL
 
 -- 파워 / Micronics / Classic II 750W 80PLUS GOLD 230V EU
 SET @category_id := 7;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Classic II 750W 80PLUS GOLD 230V EU', 'Classic II 750W GOLD', 'Micronics', 'PSU-MIC-CLASSIC2-750G', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Classic II 750W 80PLUS GOLD 230V EU', 'Classic II 750W GOLD', 'Micronics', 'PSU-MIC-CLASSIC2-750G', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -8130,8 +8130,8 @@ WHERE @part_id IS NOT NULL
 
 -- 파워 / FSP / HYDRO G PRO 750W 80PLUS Gold
 SET @category_id := 7;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'HYDRO G PRO 750W 80PLUS Gold', 'HG2-750', 'FSP', 'PSU-FSP-HGPRO-750', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'HYDRO G PRO 750W 80PLUS Gold', 'HG2-750', 'FSP', 'PSU-FSP-HGPRO-750', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -8180,8 +8180,8 @@ WHERE @part_id IS NOT NULL
 
 -- 파워 / FSP / HYDRO G PRO 850W 80PLUS Gold
 SET @category_id := 7;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'HYDRO G PRO 850W 80PLUS Gold', 'HG2-850', 'FSP', 'PSU-FSP-HGPRO-850', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'HYDRO G PRO 850W 80PLUS Gold', 'HG2-850', 'FSP', 'PSU-FSP-HGPRO-850', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -8230,8 +8230,8 @@ WHERE @part_id IS NOT NULL
 
 -- 파워 / Seasonic / FOCUS GX-750 ATX 3.0
 SET @category_id := 7;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'FOCUS GX-750 ATX 3.0', 'FOCUS GX-750', 'Seasonic', 'PSU-SEA-FOCUS-GX750', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'FOCUS GX-750 ATX 3.0', 'FOCUS GX-750', 'Seasonic', 'PSU-SEA-FOCUS-GX750', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -8280,8 +8280,8 @@ WHERE @part_id IS NOT NULL
 
 -- 파워 / Seasonic / FOCUS GX-850 ATX 3.0
 SET @category_id := 7;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'FOCUS GX-850 ATX 3.0', 'FOCUS GX-850', 'Seasonic', 'PSU-SEA-FOCUS-GX850', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'FOCUS GX-850 ATX 3.0', 'FOCUS GX-850', 'Seasonic', 'PSU-SEA-FOCUS-GX850', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -8330,8 +8330,8 @@ WHERE @part_id IS NOT NULL
 
 -- 파워 / SuperFlower / Leadex III Gold 750W
 SET @category_id := 7;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Leadex III Gold 750W', 'SF-750F14HG', 'SuperFlower', 'PSU-SF-LEADEX3-750', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Leadex III Gold 750W', 'SF-750F14HG', 'SuperFlower', 'PSU-SF-LEADEX3-750', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -8380,8 +8380,8 @@ WHERE @part_id IS NOT NULL
 
 -- 파워 / SuperFlower / Leadex VII Gold 850W ATX 3.0
 SET @category_id := 7;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Leadex VII Gold 850W ATX 3.0', 'SF-850F14XG', 'SuperFlower', 'PSU-SF-LEADEX7-850', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Leadex VII Gold 850W ATX 3.0', 'SF-850F14XG', 'SuperFlower', 'PSU-SF-LEADEX7-850', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -8430,8 +8430,8 @@ WHERE @part_id IS NOT NULL
 
 -- 파워 / Corsair / RM750e 80PLUS Gold
 SET @category_id := 7;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'RM750e 80PLUS Gold', 'CP-9020262', 'Corsair', 'PSU-COR-RM750E', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'RM750e 80PLUS Gold', 'CP-9020262', 'Corsair', 'PSU-COR-RM750E', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -8480,8 +8480,8 @@ WHERE @part_id IS NOT NULL
 
 -- 파워 / Corsair / RM850e 80PLUS Gold
 SET @category_id := 7;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'RM850e 80PLUS Gold', 'CP-9020263', 'Corsair', 'PSU-COR-RM850E', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'RM850e 80PLUS Gold', 'CP-9020263', 'Corsair', 'PSU-COR-RM850E', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -8530,8 +8530,8 @@ WHERE @part_id IS NOT NULL
 
 -- 파워 / Antec / NeoECO 850W 80PLUS Gold
 SET @category_id := 7;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'NeoECO 850W 80PLUS Gold', 'NeoECO 850W GOLD', 'Antec', 'PSU-ANT-NEOECO-850', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'NeoECO 850W 80PLUS Gold', 'NeoECO 850W GOLD', 'Antec', 'PSU-ANT-NEOECO-850', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -8580,8 +8580,8 @@ WHERE @part_id IS NOT NULL
 
 -- 파워 / Cooler Master / MWE GOLD 750 V2
 SET @category_id := 7;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'MWE GOLD 750 V2', 'MPE-7501-ACAAG', 'Cooler Master', 'PSU-CM-MWEGOLD-750V2', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'MWE GOLD 750 V2', 'MPE-7501-ACAAG', 'Cooler Master', 'PSU-CM-MWEGOLD-750V2', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -8630,8 +8630,8 @@ WHERE @part_id IS NOT NULL
 
 -- 파워 / Thermaltake / Toughpower GF A3 850W
 SET @category_id := 7;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Toughpower GF A3 850W', 'PS-TPD-0850FNFAGU-L', 'Thermaltake', 'PSU-TT-GFA3-850', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Toughpower GF A3 850W', 'PS-TPD-0850FNFAGU-L', 'Thermaltake', 'PSU-TT-GFA3-850', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -8680,8 +8680,8 @@ WHERE @part_id IS NOT NULL
 
 -- 파워 / MSI / MAG A750GL PCIE5
 SET @category_id := 7;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'MAG A750GL PCIE5', 'MAG A750GL PCIE5', 'MSI', 'PSU-MSI-A750GL', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'MAG A750GL PCIE5', 'MAG A750GL PCIE5', 'MSI', 'PSU-MSI-A750GL', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -8730,8 +8730,8 @@ WHERE @part_id IS NOT NULL
 
 -- 파워 / MSI / MAG A850GL PCIE5
 SET @category_id := 7;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'MAG A850GL PCIE5', 'MAG A850GL PCIE5', 'MSI', 'PSU-MSI-A850GL', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'MAG A850GL PCIE5', 'MAG A850GL PCIE5', 'MSI', 'PSU-MSI-A850GL', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -8780,8 +8780,8 @@ WHERE @part_id IS NOT NULL
 
 -- 파워 / darkFlash / UPMOST 850W 80PLUS Gold
 SET @category_id := 7;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'UPMOST 850W 80PLUS Gold', 'UPMOST 850G', 'darkFlash', 'PSU-DF-UPMOST-850G', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'UPMOST 850W 80PLUS Gold', 'UPMOST 850G', 'darkFlash', 'PSU-DF-UPMOST-850G', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -8830,8 +8830,8 @@ WHERE @part_id IS NOT NULL
 
 -- 파워 / EVGA / SuperNOVA 750 G6
 SET @category_id := 7;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'SuperNOVA 750 G6', '220-G6-0750-X1', 'EVGA', 'PSU-EVGA-G6-750', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'SuperNOVA 750 G6', '220-G6-0750-X1', 'EVGA', 'PSU-EVGA-G6-750', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -8880,8 +8880,8 @@ WHERE @part_id IS NOT NULL
 
 -- 파워 / be quiet! / Pure Power 12 M 750W
 SET @category_id := 7;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Pure Power 12 M 750W', 'BN504', 'be quiet!', 'PSU-BQ-PP12M-750', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Pure Power 12 M 750W', 'BN504', 'be quiet!', 'PSU-BQ-PP12M-750', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -8930,8 +8930,8 @@ WHERE @part_id IS NOT NULL
 
 -- 파워 / Enermax / REVOLUTION D.F. 850W
 SET @category_id := 7;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'REVOLUTION D.F. 850W', 'ERF850EWT', 'Enermax', 'PSU-ENR-RDF-850', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'REVOLUTION D.F. 850W', 'ERF850EWT', 'Enermax', 'PSU-ENR-RDF-850', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -8980,8 +8980,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이스 / darkFlash / DK1000 MESH
 SET @category_id := 8;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'DK1000 MESH', 'DK1000 MESH', 'darkFlash', 'CASE-DF-DK1000-MESH', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'DK1000 MESH', 'DK1000 MESH', 'darkFlash', 'CASE-DF-DK1000-MESH', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -9036,8 +9036,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이스 / darkFlash / DLX21 RGB MESH
 SET @category_id := 8;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'DLX21 RGB MESH', 'DLX21 RGB MESH', 'darkFlash', 'CASE-DF-DLX21-RGB', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'DLX21 RGB MESH', 'DLX21 RGB MESH', 'darkFlash', 'CASE-DF-DLX21-RGB', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -9092,8 +9092,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이스 / 3RSYS / L600 Quiet
 SET @category_id := 8;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'L600 Quiet', 'L600 Quiet', '3RSYS', 'CASE-3R-L600-Q', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'L600 Quiet', 'L600 Quiet', '3RSYS', 'CASE-3R-L600-Q', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -9148,8 +9148,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이스 / 3RSYS / S406 Quiet GI
 SET @category_id := 8;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'S406 Quiet GI', 'S406 Quiet GI', '3RSYS', 'CASE-3R-S406-QGI', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'S406 Quiet GI', 'S406 Quiet GI', '3RSYS', 'CASE-3R-S406-QGI', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -9204,8 +9204,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이스 / Micronics / Master M60 Mesh
 SET @category_id := 8;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Master M60 Mesh', 'Master M60 Mesh', 'Micronics', 'CASE-MIC-M60-MESH', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Master M60 Mesh', 'Master M60 Mesh', 'Micronics', 'CASE-MIC-M60-MESH', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -9260,8 +9260,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이스 / ABKO / NCORE G30 트루포스
 SET @category_id := 8;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'NCORE G30 트루포스', 'G30 TRUEFORCE', 'ABKO', 'CASE-ABKO-G30', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'NCORE G30 트루포스', 'G30 TRUEFORCE', 'ABKO', 'CASE-ABKO-G30', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -9316,8 +9316,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이스 / DAVEN / D6 MESH 강화유리
 SET @category_id := 8;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'D6 MESH 강화유리', 'D6 MESH', 'DAVEN', 'CASE-DAVEN-D6-MESH', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'D6 MESH 강화유리', 'D6 MESH', 'DAVEN', 'CASE-DAVEN-D6-MESH', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -9372,8 +9372,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이스 / Fractal Design / North
 SET @category_id := 8;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'North', 'North', 'Fractal Design', 'CASE-FD-NORTH', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'North', 'North', 'Fractal Design', 'CASE-FD-NORTH', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -9428,8 +9428,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이스 / Fractal Design / Meshify 2 Compact
 SET @category_id := 8;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Meshify 2 Compact', 'Meshify 2 Compact', 'Fractal Design', 'CASE-FD-MESHIFY2-C', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Meshify 2 Compact', 'Meshify 2 Compact', 'Fractal Design', 'CASE-FD-MESHIFY2-C', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -9484,8 +9484,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이스 / NZXT / H5 Flow
 SET @category_id := 8;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'H5 Flow', 'CC-H51FB-01', 'NZXT', 'CASE-NZXT-H5-FLOW', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'H5 Flow', 'CC-H51FB-01', 'NZXT', 'CASE-NZXT-H5-FLOW', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -9540,8 +9540,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이스 / NZXT / H7 Flow
 SET @category_id := 8;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'H7 Flow', 'CM-H71FB-01', 'NZXT', 'CASE-NZXT-H7-FLOW', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'H7 Flow', 'CM-H71FB-01', 'NZXT', 'CASE-NZXT-H7-FLOW', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -9596,8 +9596,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이스 / LIAN LI / LANCOOL 216
 SET @category_id := 8;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'LANCOOL 216', 'LANCOOL 216', 'LIAN LI', 'CASE-LL-LANCOOL216', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'LANCOOL 216', 'LANCOOL 216', 'LIAN LI', 'CASE-LL-LANCOOL216', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -9652,8 +9652,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이스 / LIAN LI / O11 Dynamic EVO
 SET @category_id := 8;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'O11 Dynamic EVO', 'O11D EVO', 'LIAN LI', 'CASE-LL-O11D-EVO', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'O11 Dynamic EVO', 'O11D EVO', 'LIAN LI', 'CASE-LL-O11D-EVO', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -9708,8 +9708,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이스 / Corsair / 4000D Airflow
 SET @category_id := 8;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, '4000D Airflow', 'CC-9011200-WW', 'Corsair', 'CASE-COR-4000D-AF', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, '4000D Airflow', 'CC-9011200-WW', 'Corsair', 'CASE-COR-4000D-AF', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -9764,8 +9764,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이스 / Corsair / 5000D Airflow
 SET @category_id := 8;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, '5000D Airflow', 'CC-9011210-WW', 'Corsair', 'CASE-COR-5000D-AF', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, '5000D Airflow', 'CC-9011210-WW', 'Corsair', 'CASE-COR-5000D-AF', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -9820,8 +9820,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이스 / Phanteks / Eclipse G360A
 SET @category_id := 8;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Eclipse G360A', 'PH-EC360ATG', 'Phanteks', 'CASE-PHA-G360A', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Eclipse G360A', 'PH-EC360ATG', 'Phanteks', 'CASE-PHA-G360A', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -9876,8 +9876,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이스 / Cooler Master / MasterBox NR200P
 SET @category_id := 8;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'MasterBox NR200P', 'MCB-NR200P', 'Cooler Master', 'CASE-CM-NR200P', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'MasterBox NR200P', 'MCB-NR200P', 'Cooler Master', 'CASE-CM-NR200P', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -9932,8 +9932,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이스 / HYTE / Y60
 SET @category_id := 8;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Y60', 'CS-HYTE-Y60', 'HYTE', 'CASE-HYTE-Y60', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Y60', 'CS-HYTE-Y60', 'HYTE', 'CASE-HYTE-Y60', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -9988,8 +9988,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이스 / be quiet! / Pure Base 500DX
 SET @category_id := 8;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Pure Base 500DX', 'BGW37', 'be quiet!', 'CASE-BQ-500DX', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Pure Base 500DX', 'BGW37', 'be quiet!', 'CASE-BQ-500DX', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10044,8 +10044,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이스 / Antec / P20C Elite
 SET @category_id := 8;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'P20C Elite', 'P20C Elite', 'Antec', 'CASE-ANT-P20C-ELITE', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'P20C Elite', 'P20C Elite', 'Antec', 'CASE-ANT-P20C-ELITE', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10100,8 +10100,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU 쿨러 / Thermalright / Peerless Assassin 120 SE
 SET @category_id := 9;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Peerless Assassin 120 SE', 'PA120 SE', 'Thermalright', 'COOLER-TR-PA120SE', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Peerless Assassin 120 SE', 'PA120 SE', 'Thermalright', 'COOLER-TR-PA120SE', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10132,8 +10132,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU 쿨러 / Thermalright / Phantom Spirit 120 SE
 SET @category_id := 9;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Phantom Spirit 120 SE', 'PS120 SE', 'Thermalright', 'COOLER-TR-PS120SE', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Phantom Spirit 120 SE', 'PS120 SE', 'Thermalright', 'COOLER-TR-PS120SE', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10164,8 +10164,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU 쿨러 / DEEPCOOL / AK400
 SET @category_id := 9;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'AK400', 'R-AK400-BKNNMN-G-1', 'DEEPCOOL', 'COOLER-DC-AK400', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'AK400', 'R-AK400-BKNNMN-G-1', 'DEEPCOOL', 'COOLER-DC-AK400', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10196,8 +10196,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU 쿨러 / DEEPCOOL / AK620
 SET @category_id := 9;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'AK620', 'R-AK620-BKNNMT-G', 'DEEPCOOL', 'COOLER-DC-AK620', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'AK620', 'R-AK620-BKNNMT-G', 'DEEPCOOL', 'COOLER-DC-AK620', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10228,8 +10228,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU 쿨러 / DEEPCOOL / AG400
 SET @category_id := 9;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'AG400', 'R-AG400-BKNNMN-G-1', 'DEEPCOOL', 'COOLER-DC-AG400', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'AG400', 'R-AG400-BKNNMN-G-1', 'DEEPCOOL', 'COOLER-DC-AG400', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10260,8 +10260,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU 쿨러 / PCCOOLER / PALADIN 400
 SET @category_id := 9;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'PALADIN 400', 'PALADIN 400', 'PCCOOLER', 'COOLER-PCC-PALADIN400', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'PALADIN 400', 'PALADIN 400', 'PCCOOLER', 'COOLER-PCC-PALADIN400', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10292,8 +10292,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU 쿨러 / Cooler Master / Hyper 212 Halo
 SET @category_id := 9;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Hyper 212 Halo', 'RR-S4KK-20PA-R1', 'Cooler Master', 'COOLER-CM-H212-HALO', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Hyper 212 Halo', 'RR-S4KK-20PA-R1', 'Cooler Master', 'COOLER-CM-H212-HALO', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10324,8 +10324,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU 쿨러 / Noctua / NH-D15
 SET @category_id := 9;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'NH-D15', 'NH-D15', 'Noctua', 'COOLER-NOC-NHD15', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'NH-D15', 'NH-D15', 'Noctua', 'COOLER-NOC-NHD15', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10356,8 +10356,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU 쿨러 / Noctua / NH-U12A
 SET @category_id := 9;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'NH-U12A', 'NH-U12A', 'Noctua', 'COOLER-NOC-NHU12A', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'NH-U12A', 'NH-U12A', 'Noctua', 'COOLER-NOC-NHU12A', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10388,8 +10388,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU 쿨러 / be quiet! / Dark Rock Pro 5
 SET @category_id := 9;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Dark Rock Pro 5', 'BK036', 'be quiet!', 'COOLER-BQ-DRP5', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Dark Rock Pro 5', 'BK036', 'be quiet!', 'COOLER-BQ-DRP5', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10420,8 +10420,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU 쿨러 / ID-COOLING / SE-224-XTS
 SET @category_id := 9;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'SE-224-XTS', 'SE-224-XTS', 'ID-COOLING', 'COOLER-ID-SE224XTS', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'SE-224-XTS', 'SE-224-XTS', 'ID-COOLING', 'COOLER-ID-SE224XTS', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10452,8 +10452,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU 쿨러 / JONSBO / CR-1000 EVO
 SET @category_id := 9;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'CR-1000 EVO', 'CR-1000 EVO', 'JONSBO', 'COOLER-JONSBO-CR1000EVO', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'CR-1000 EVO', 'CR-1000 EVO', 'JONSBO', 'COOLER-JONSBO-CR1000EVO', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10484,8 +10484,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU 쿨러 / 3RSYS / Socoool RC1800
 SET @category_id := 9;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Socoool RC1800', 'RC1800', '3RSYS', 'COOLER-3R-RC1800', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Socoool RC1800', 'RC1800', '3RSYS', 'COOLER-3R-RC1800', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10516,8 +10516,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU 쿨러 / 3RSYS / Socoool RC410
 SET @category_id := 9;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Socoool RC410', 'RC410', '3RSYS', 'COOLER-3R-RC410', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Socoool RC410', 'RC410', '3RSYS', 'COOLER-3R-RC410', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10548,8 +10548,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU 쿨러 / ARCTIC / Liquid Freezer III 240
 SET @category_id := 9;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Liquid Freezer III 240', 'ACFRE00134A', 'ARCTIC', 'COOLER-ARC-LF3-240', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Liquid Freezer III 240', 'ACFRE00134A', 'ARCTIC', 'COOLER-ARC-LF3-240', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10580,8 +10580,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU 쿨러 / ARCTIC / Liquid Freezer III 360
 SET @category_id := 9;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Liquid Freezer III 360', 'ACFRE00136A', 'ARCTIC', 'COOLER-ARC-LF3-360', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Liquid Freezer III 360', 'ACFRE00136A', 'ARCTIC', 'COOLER-ARC-LF3-360', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10612,8 +10612,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU 쿨러 / DEEPCOOL / LS720
 SET @category_id := 9;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'LS720', 'R-LS720-BKAMNT-G-1', 'DEEPCOOL', 'COOLER-DC-LS720', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'LS720', 'R-LS720-BKAMNT-G-1', 'DEEPCOOL', 'COOLER-DC-LS720', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10644,8 +10644,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU 쿨러 / NZXT / Kraken 240
 SET @category_id := 9;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Kraken 240', 'RL-KN240-B1', 'NZXT', 'COOLER-NZXT-KRAKEN240', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Kraken 240', 'RL-KN240-B1', 'NZXT', 'COOLER-NZXT-KRAKEN240', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10676,8 +10676,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU 쿨러 / Corsair / iCUE H100i ELITE
 SET @category_id := 9;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'iCUE H100i ELITE', 'CW-9060058-WW', 'Corsair', 'COOLER-COR-H100I-ELITE', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'iCUE H100i ELITE', 'CW-9060058-WW', 'Corsair', 'COOLER-COR-H100I-ELITE', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10708,8 +10708,8 @@ WHERE @part_id IS NOT NULL
 
 -- CPU 쿨러 / LIAN LI / GALAHAD II Trinity 360
 SET @category_id := 9;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'GALAHAD II Trinity 360', 'GA2T36B', 'LIAN LI', 'COOLER-LL-GA2T-360', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'GALAHAD II Trinity 360', 'GA2T36B', 'LIAN LI', 'COOLER-LL-GA2T-360', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10740,8 +10740,8 @@ WHERE @part_id IS NOT NULL
 
 -- 쿨링팬 / ARCTIC / P12 PWM PST
 SET @category_id := 10;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'P12 PWM PST', 'ACFAN00120A', 'ARCTIC', 'FAN-ARC-P12-PWM-PST', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'P12 PWM PST', 'ACFAN00120A', 'ARCTIC', 'FAN-ARC-P12-PWM-PST', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10788,8 +10788,8 @@ WHERE @part_id IS NOT NULL
 
 -- 쿨링팬 / ARCTIC / P14 PWM PST
 SET @category_id := 10;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'P14 PWM PST', 'ACFAN00125A', 'ARCTIC', 'FAN-ARC-P14-PWM-PST', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'P14 PWM PST', 'ACFAN00125A', 'ARCTIC', 'FAN-ARC-P14-PWM-PST', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10836,8 +10836,8 @@ WHERE @part_id IS NOT NULL
 
 -- 쿨링팬 / Noctua / NF-A12x25 PWM
 SET @category_id := 10;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'NF-A12x25 PWM', 'NF-A12x25 PWM', 'Noctua', 'FAN-NOC-A12X25-PWM', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'NF-A12x25 PWM', 'NF-A12x25 PWM', 'Noctua', 'FAN-NOC-A12X25-PWM', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10884,8 +10884,8 @@ WHERE @part_id IS NOT NULL
 
 -- 쿨링팬 / Noctua / NF-P12 redux-1700 PWM
 SET @category_id := 10;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'NF-P12 redux-1700 PWM', 'NF-P12 redux-1700 PWM', 'Noctua', 'FAN-NOC-P12-REDUX', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'NF-P12 redux-1700 PWM', 'NF-P12 redux-1700 PWM', 'Noctua', 'FAN-NOC-P12-REDUX', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10932,8 +10932,8 @@ WHERE @part_id IS NOT NULL
 
 -- 쿨링팬 / be quiet! / Silent Wings 4 120mm PWM
 SET @category_id := 10;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Silent Wings 4 120mm PWM', 'BL092', 'be quiet!', 'FAN-BQ-SW4-120', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Silent Wings 4 120mm PWM', 'BL092', 'be quiet!', 'FAN-BQ-SW4-120', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -10980,8 +10980,8 @@ WHERE @part_id IS NOT NULL
 
 -- 쿨링팬 / DEEPCOOL / FC120
 SET @category_id := 10;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'FC120', 'R-FC120-BAMN3-G-1', 'DEEPCOOL', 'FAN-DC-FC120', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'FC120', 'R-FC120-BAMN3-G-1', 'DEEPCOOL', 'FAN-DC-FC120', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11028,8 +11028,8 @@ WHERE @part_id IS NOT NULL
 
 -- 쿨링팬 / Thermalright / TL-C12C
 SET @category_id := 10;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'TL-C12C', 'TL-C12C', 'Thermalright', 'FAN-TR-TLC12C', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'TL-C12C', 'TL-C12C', 'Thermalright', 'FAN-TR-TLC12C', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11076,8 +11076,8 @@ WHERE @part_id IS NOT NULL
 
 -- 쿨링팬 / darkFlash / C6M RGB
 SET @category_id := 10;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'C6M RGB', 'C6M RGB', 'darkFlash', 'FAN-DF-C6M-RGB', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'C6M RGB', 'C6M RGB', 'darkFlash', 'FAN-DF-C6M-RGB', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11124,8 +11124,8 @@ WHERE @part_id IS NOT NULL
 
 -- 쿨링팬 / 3RSYS / Socoool FAN 120
 SET @category_id := 10;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Socoool FAN 120', 'Socoool 120', '3RSYS', 'FAN-3R-SOCOOL120', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Socoool FAN 120', 'Socoool 120', '3RSYS', 'FAN-3R-SOCOOL120', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11172,8 +11172,8 @@ WHERE @part_id IS NOT NULL
 
 -- 쿨링팬 / Corsair / AF120 ELITE
 SET @category_id := 10;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'AF120 ELITE', 'CO-9050140-WW', 'Corsair', 'FAN-COR-AF120-ELITE', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'AF120 ELITE', 'CO-9050140-WW', 'Corsair', 'FAN-COR-AF120-ELITE', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11220,8 +11220,8 @@ WHERE @part_id IS NOT NULL
 
 -- 쿨링팬 / LIAN LI / UNI FAN SL-INF 120
 SET @category_id := 10;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'UNI FAN SL-INF 120', 'UF-SLIN120-1B', 'LIAN LI', 'FAN-LL-SLINF120', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'UNI FAN SL-INF 120', 'UF-SLIN120-1B', 'LIAN LI', 'FAN-LL-SLINF120', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11268,8 +11268,8 @@ WHERE @part_id IS NOT NULL
 
 -- 쿨링팬 / Cooler Master / SickleFlow 120 ARGB
 SET @category_id := 10;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'SickleFlow 120 ARGB', 'MFX-B2DN-18NPA-R1', 'Cooler Master', 'FAN-CM-SF120-ARGB', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'SickleFlow 120 ARGB', 'MFX-B2DN-18NPA-R1', 'Cooler Master', 'FAN-CM-SF120-ARGB', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11316,8 +11316,8 @@ WHERE @part_id IS NOT NULL
 
 -- ODD / LG Electronics / Slim Portable DVD Writer
 SET @category_id := 17;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Slim Portable DVD Writer', 'GP62NW60', 'LG Electronics', 'ODD-LG-GP62NW60', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Slim Portable DVD Writer', 'GP62NW60', 'LG Electronics', 'ODD-LG-GP62NW60', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11374,8 +11374,8 @@ WHERE @part_id IS NOT NULL
 
 -- ODD / LG Electronics / Slim Portable DVD Writer
 SET @category_id := 17;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Slim Portable DVD Writer', 'GP62NB60', 'LG Electronics', 'ODD-LG-GP62NB60', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Slim Portable DVD Writer', 'GP62NB60', 'LG Electronics', 'ODD-LG-GP62NB60', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11432,8 +11432,8 @@ WHERE @part_id IS NOT NULL
 
 -- ODD / ASUS / External Slim DVD-RW
 SET @category_id := 17;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'External Slim DVD-RW', 'SDRW-08D2S-U', 'ASUS', 'ODD-ASUS-SDRW08D2S', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'External Slim DVD-RW', 'SDRW-08D2S-U', 'ASUS', 'ODD-ASUS-SDRW08D2S', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11490,8 +11490,8 @@ WHERE @part_id IS NOT NULL
 
 -- ODD / ASUS / Internal DVD Writer
 SET @category_id := 17;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Internal DVD Writer', 'DRW-24D5MT', 'ASUS', 'ODD-ASUS-DRW24D5MT', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Internal DVD Writer', 'DRW-24D5MT', 'ASUS', 'ODD-ASUS-DRW24D5MT', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11548,8 +11548,8 @@ WHERE @part_id IS NOT NULL
 
 -- ODD / Hitachi-LG Data Storage / Internal DVD Writer
 SET @category_id := 17;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Internal DVD Writer', 'GH24NSD5', 'Hitachi-LG Data Storage', 'ODD-HLDS-GH24NSD5', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Internal DVD Writer', 'GH24NSD5', 'Hitachi-LG Data Storage', 'ODD-HLDS-GH24NSD5', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11606,8 +11606,8 @@ WHERE @part_id IS NOT NULL
 
 -- ODD / Pioneer / Portable Blu-ray/DVD Writer
 SET @category_id := 17;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Portable Blu-ray/DVD Writer', 'BDR-XD08', 'Pioneer', 'ODD-PIO-BDRXD08', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Portable Blu-ray/DVD Writer', 'BDR-XD08', 'Pioneer', 'ODD-PIO-BDRXD08', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11664,8 +11664,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이블류 / NEXT / SATA3 6Gbps Cable 0.5m
 SET @category_id := 18;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'SATA3 6Gbps Cable 0.5m', 'NEXT-SATA3-05', 'NEXT', 'CAB-NEXT-SATA3-05', 0.00, 5, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'SATA3 6Gbps Cable 0.5m', 'NEXT-SATA3-05', 'NEXT', 'CAB-NEXT-SATA3-05', 5, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11696,8 +11696,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이블류 / Coms / SATA3 Lock Cable 0.5m
 SET @category_id := 18;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'SATA3 Lock Cable 0.5m', 'SATA3 Lock 0.5m', 'Coms', 'CAB-COMS-SATA3-LOCK', 0.00, 5, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'SATA3 Lock Cable 0.5m', 'SATA3 Lock 0.5m', 'Coms', 'CAB-COMS-SATA3-LOCK', 5, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11728,8 +11728,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이블류 / CableMate / SATA Power Y Splitter
 SET @category_id := 18;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'SATA Power Y Splitter', 'SATA Power Y', 'CableMate', 'CAB-CM-SATA-PWR-Y', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'SATA Power Y Splitter', 'SATA Power Y', 'CableMate', 'CAB-CM-SATA-PWR-Y', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11752,8 +11752,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이블류 / CableMate / PCIe 8-pin Extension Cable
 SET @category_id := 18;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'PCIe 8-pin Extension Cable', 'PCIe 8-pin Extension', 'CableMate', 'CAB-CM-PCIE8-EXT', 0.00, 3, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'PCIe 8-pin Extension Cable', 'PCIe 8-pin Extension', 'CableMate', 'CAB-CM-PCIE8-EXT', 3, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11776,8 +11776,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이블류 / AsiaHorse / 24-pin ARGB PSU Extension Cable
 SET @category_id := 18;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, '24-pin ARGB PSU Extension Cable', '24-pin ARGB Extension', 'AsiaHorse', 'CAB-AH-24PIN-ARGB', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, '24-pin ARGB PSU Extension Cable', '24-pin ARGB Extension', 'AsiaHorse', 'CAB-AH-24PIN-ARGB', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11800,8 +11800,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이블류 / EZDIY-FAB / PSU Extension Cable Kit
 SET @category_id := 18;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'PSU Extension Cable Kit', 'Sleeved Cable Kit', 'EZDIY-FAB', 'CAB-EZDIY-PSU-KIT', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'PSU Extension Cable Kit', 'Sleeved Cable Kit', 'EZDIY-FAB', 'CAB-EZDIY-PSU-KIT', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11824,8 +11824,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이블류 / NEXI / DisplayPort 1.4 Cable 2m
 SET @category_id := 18;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'DisplayPort 1.4 Cable 2m', 'NX-DP142M', 'NEXI', 'CAB-NEXI-DP14-2M', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'DisplayPort 1.4 Cable 2m', 'NX-DP142M', 'NEXI', 'CAB-NEXI-DP14-2M', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11856,8 +11856,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이블류 / Cable Matters / HDMI 2.1 8K Cable 2m
 SET @category_id := 18;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'HDMI 2.1 8K Cable 2m', 'HDMI 2.1 2m', 'Cable Matters', 'CAB-CM-HDMI21-2M', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'HDMI 2.1 8K Cable 2m', 'HDMI 2.1 2m', 'Cable Matters', 'CAB-CM-HDMI21-2M', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11888,8 +11888,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이블류 / NEXT / USB 3.0 Extension Cable
 SET @category_id := 18;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'USB 3.0 Extension Cable', 'NEXT-USB30-EXT', 'NEXT', 'CAB-NEXT-USB30-EXT', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'USB 3.0 Extension Cable', 'NEXT-USB30-EXT', 'NEXT', 'CAB-NEXT-USB30-EXT', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11912,8 +11912,8 @@ WHERE @part_id IS NOT NULL
 
 -- 케이블류 / Coms / USB-C to USB-A Adapter Cable
 SET @category_id := 18;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'USB-C to USB-A Adapter Cable', 'USB-C to A', 'Coms', 'CAB-COMS-USBC-A', 0.00, 4, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'USB-C to USB-A Adapter Cable', 'USB-C to A', 'Coms', 'CAB-COMS-USBC-A', 4, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11936,8 +11936,8 @@ WHERE @part_id IS NOT NULL
 
 -- 캡처카드 / Elgato / Game Capture HD60 X
 SET @category_id := 16;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Game Capture HD60 X', 'HD60 X', 'Elgato', 'CAP-ELGATO-HD60X', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Game Capture HD60 X', 'HD60 X', 'Elgato', 'CAP-ELGATO-HD60X', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -11986,8 +11986,8 @@ WHERE @part_id IS NOT NULL
 
 -- 캡처카드 / Elgato / 4K60 Pro MK.2
 SET @category_id := 16;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, '4K60 Pro MK.2', '4K60 Pro MK.2', 'Elgato', 'CAP-ELGATO-4K60PRO-MK2', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, '4K60 Pro MK.2', '4K60 Pro MK.2', 'Elgato', 'CAP-ELGATO-4K60PRO-MK2', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -12036,8 +12036,8 @@ WHERE @part_id IS NOT NULL
 
 -- 캡처카드 / AVerMedia / Live Gamer MINI
 SET @category_id := 16;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Live Gamer MINI', 'GC311', 'AVerMedia', 'CAP-AVM-GC311', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Live Gamer MINI', 'GC311', 'AVerMedia', 'CAP-AVM-GC311', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -12086,8 +12086,8 @@ WHERE @part_id IS NOT NULL
 
 -- 캡처카드 / AVerMedia / Live Gamer EXTREME 3
 SET @category_id := 16;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Live Gamer EXTREME 3', 'GC551G2', 'AVerMedia', 'CAP-AVM-GC551G2', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Live Gamer EXTREME 3', 'GC551G2', 'AVerMedia', 'CAP-AVM-GC551G2', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -12136,8 +12136,8 @@ WHERE @part_id IS NOT NULL
 
 -- 캡처카드 / AVerMedia / Live Gamer 4K
 SET @category_id := 16;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Live Gamer 4K', 'GC573', 'AVerMedia', 'CAP-AVM-GC573', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Live Gamer 4K', 'GC573', 'AVerMedia', 'CAP-AVM-GC573', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -12186,8 +12186,8 @@ WHERE @part_id IS NOT NULL
 
 -- 캡처카드 / Razer / Ripsaw HD
 SET @category_id := 16;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Ripsaw HD', 'RZ20-02850100', 'Razer', 'CAP-RAZER-RIPSAWHD', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Ripsaw HD', 'RZ20-02850100', 'Razer', 'CAP-RAZER-RIPSAWHD', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -12236,8 +12236,8 @@ WHERE @part_id IS NOT NULL
 
 -- 캡처카드 / ASUS / TUF Gaming Capture Box
 SET @category_id := 16;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'TUF Gaming Capture Box', 'CU4K30', 'ASUS', 'CAP-ASUS-CU4K30', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'TUF Gaming Capture Box', 'CU4K30', 'ASUS', 'CAP-ASUS-CU4K30', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -12286,8 +12286,8 @@ WHERE @part_id IS NOT NULL
 
 -- 캡처카드 / EVGA / XR1 Lite
 SET @category_id := 16;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'XR1 Lite', '141-U1-CB20-LR', 'EVGA', 'CAP-EVGA-XR1-LITE', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'XR1 Lite', '141-U1-CB20-LR', 'EVGA', 'CAP-EVGA-XR1-LITE', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -12336,8 +12336,8 @@ WHERE @part_id IS NOT NULL
 
 -- 사운드카드 / Creative / Sound Blaster Audigy FX
 SET @category_id := 15;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Sound Blaster Audigy FX', 'SB1570', 'Creative', 'SOUND-CRE-AUDIGY-FX', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Sound Blaster Audigy FX', 'SB1570', 'Creative', 'SOUND-CRE-AUDIGY-FX', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -12369,8 +12369,8 @@ WHERE @part_id IS NOT NULL
 
 -- 사운드카드 / Creative / Sound BlasterX AE-5 Plus
 SET @category_id := 15;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Sound BlasterX AE-5 Plus', 'SB1740', 'Creative', 'SOUND-CRE-AE5PLUS', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Sound BlasterX AE-5 Plus', 'SB1740', 'Creative', 'SOUND-CRE-AE5PLUS', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -12402,8 +12402,8 @@ WHERE @part_id IS NOT NULL
 
 -- 사운드카드 / Creative / Sound Blaster Z SE
 SET @category_id := 15;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Sound Blaster Z SE', 'SB1500 SE', 'Creative', 'SOUND-CRE-Z-SE', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Sound Blaster Z SE', 'SB1500 SE', 'Creative', 'SOUND-CRE-Z-SE', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -12435,8 +12435,8 @@ WHERE @part_id IS NOT NULL
 
 -- 사운드카드 / ASUS / Xonar SE
 SET @category_id := 15;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Xonar SE', 'XONAR SE', 'ASUS', 'SOUND-ASUS-XONAR-SE', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Xonar SE', 'XONAR SE', 'ASUS', 'SOUND-ASUS-XONAR-SE', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -12468,8 +12468,8 @@ WHERE @part_id IS NOT NULL
 
 -- 사운드카드 / ASUS / Xonar AE
 SET @category_id := 15;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Xonar AE', 'XONAR AE', 'ASUS', 'SOUND-ASUS-XONAR-AE', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Xonar AE', 'XONAR AE', 'ASUS', 'SOUND-ASUS-XONAR-AE', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -12501,8 +12501,8 @@ WHERE @part_id IS NOT NULL
 
 -- 사운드카드 / EVGA / NU Audio Pro
 SET @category_id := 15;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'NU Audio Pro', '712-P1-AN11-KR', 'EVGA', 'SOUND-EVGA-NU-AUDIO-PRO', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'NU Audio Pro', '712-P1-AN11-KR', 'EVGA', 'SOUND-EVGA-NU-AUDIO-PRO', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -12542,8 +12542,8 @@ WHERE @part_id IS NOT NULL
 
 -- 무선 랜카드 / ASUS / PCE-AX3000
 SET @category_id := 14;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'PCE-AX3000', 'PCE-AX3000', 'ASUS', 'WIFI-ASUS-PCE-AX3000', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'PCE-AX3000', 'PCE-AX3000', 'ASUS', 'WIFI-ASUS-PCE-AX3000', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -12592,8 +12592,8 @@ WHERE @part_id IS NOT NULL
 
 -- 무선 랜카드 / ASUS / PCE-AXE5400
 SET @category_id := 14;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'PCE-AXE5400', 'PCE-AXE5400', 'ASUS', 'WIFI-ASUS-PCE-AXE5400', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'PCE-AXE5400', 'PCE-AXE5400', 'ASUS', 'WIFI-ASUS-PCE-AXE5400', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -12642,8 +12642,8 @@ WHERE @part_id IS NOT NULL
 
 -- 무선 랜카드 / TP-Link / Archer TX3000E
 SET @category_id := 14;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Archer TX3000E', 'Archer TX3000E', 'TP-Link', 'WIFI-TPL-TX3000E', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Archer TX3000E', 'Archer TX3000E', 'TP-Link', 'WIFI-TPL-TX3000E', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -12692,8 +12692,8 @@ WHERE @part_id IS NOT NULL
 
 -- 무선 랜카드 / TP-Link / Archer T4E
 SET @category_id := 14;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Archer T4E', 'Archer T4E', 'TP-Link', 'WIFI-TPL-T4E', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Archer T4E', 'Archer T4E', 'TP-Link', 'WIFI-TPL-T4E', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -12733,8 +12733,8 @@ WHERE @part_id IS NOT NULL
 
 -- 무선 랜카드 / ipTIME / AX3000PX
 SET @category_id := 14;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'AX3000PX', 'AX3000PX', 'ipTIME', 'WIFI-IPTIME-AX3000PX', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'AX3000PX', 'AX3000PX', 'ipTIME', 'WIFI-IPTIME-AX3000PX', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -12783,8 +12783,8 @@ WHERE @part_id IS NOT NULL
 
 -- 무선 랜카드 / ipTIME / A3000PX
 SET @category_id := 14;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'A3000PX', 'A3000PX', 'ipTIME', 'WIFI-IPTIME-A3000PX', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'A3000PX', 'A3000PX', 'ipTIME', 'WIFI-IPTIME-A3000PX', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -12824,8 +12824,8 @@ WHERE @part_id IS NOT NULL
 
 -- 무선 랜카드 / Intel / Wi-Fi 6 AX200 PCIe Kit
 SET @category_id := 14;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Wi-Fi 6 AX200 PCIe Kit', 'AX200 PCIe Kit', 'Intel', 'WIFI-INT-AX200-KIT', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Wi-Fi 6 AX200 PCIe Kit', 'AX200 PCIe Kit', 'Intel', 'WIFI-INT-AX200-KIT', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -12874,8 +12874,8 @@ WHERE @part_id IS NOT NULL
 
 -- 무선 랜카드 / Intel / Wi-Fi 6E AX210 PCIe Kit
 SET @category_id := 14;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Wi-Fi 6E AX210 PCIe Kit', 'AX210 PCIe Kit', 'Intel', 'WIFI-INT-AX210-KIT', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Wi-Fi 6E AX210 PCIe Kit', 'AX210 PCIe Kit', 'Intel', 'WIFI-INT-AX210-KIT', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -12924,8 +12924,8 @@ WHERE @part_id IS NOT NULL
 
 -- 팬 허브/컨트롤러 / DEEPCOOL / FH-10 Fan Hub
 SET @category_id := 13;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'FH-10 Fan Hub', 'FH-10', 'DEEPCOOL', 'HUB-DC-FH10', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'FH-10 Fan Hub', 'FH-10', 'DEEPCOOL', 'HUB-DC-FH10', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -12965,8 +12965,8 @@ WHERE @part_id IS NOT NULL
 
 -- 팬 허브/컨트롤러 / ARCTIC / Case Fan Hub
 SET @category_id := 13;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Case Fan Hub', 'ACFAN00175A', 'ARCTIC', 'HUB-ARC-CASEFAN', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Case Fan Hub', 'ACFAN00175A', 'ARCTIC', 'HUB-ARC-CASEFAN', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -13006,8 +13006,8 @@ WHERE @part_id IS NOT NULL
 
 -- 팬 허브/컨트롤러 / Thermaltake / Commander FP
 SET @category_id := 13;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Commander FP', 'AC-023-AN1NAN-A1', 'Thermaltake', 'HUB-TT-COMMANDER-FP', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Commander FP', 'AC-023-AN1NAN-A1', 'Thermaltake', 'HUB-TT-COMMANDER-FP', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -13047,8 +13047,8 @@ WHERE @part_id IS NOT NULL
 
 -- 팬 허브/컨트롤러 / Phanteks / Universal Fan Controller
 SET @category_id := 13;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Universal Fan Controller', 'PH-PWHUB_02', 'Phanteks', 'HUB-PHA-FANCTRL', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Universal Fan Controller', 'PH-PWHUB_02', 'Phanteks', 'HUB-PHA-FANCTRL', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -13088,8 +13088,8 @@ WHERE @part_id IS NOT NULL
 
 -- 팬 허브/컨트롤러 / NZXT / RGB & Fan Controller
 SET @category_id := 13;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'RGB & Fan Controller', 'AC-2RGBC-B1', 'NZXT', 'HUB-NZXT-RGB-FAN', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'RGB & Fan Controller', 'AC-2RGBC-B1', 'NZXT', 'HUB-NZXT-RGB-FAN', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -13129,8 +13129,8 @@ WHERE @part_id IS NOT NULL
 
 -- 팬 허브/컨트롤러 / Corsair / iCUE Commander CORE XT
 SET @category_id := 13;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'iCUE Commander CORE XT', 'CL-9011112-WW', 'Corsair', 'HUB-COR-CCORE-XT', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'iCUE Commander CORE XT', 'CL-9011112-WW', 'Corsair', 'HUB-COR-CCORE-XT', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -13170,8 +13170,8 @@ WHERE @part_id IS NOT NULL
 
 -- 팬 허브/컨트롤러 / darkFlash / RC2 ARGB PWM HUB
 SET @category_id := 13;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'RC2 ARGB PWM HUB', 'RC2 ARGB PWM HUB', 'darkFlash', 'HUB-DF-RC2-ARGB', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'RC2 ARGB PWM HUB', 'RC2 ARGB PWM HUB', 'darkFlash', 'HUB-DF-RC2-ARGB', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -13211,8 +13211,8 @@ WHERE @part_id IS NOT NULL
 
 -- 팬 허브/컨트롤러 / SilverStone / CPF04 PWM Fan Hub
 SET @category_id := 13;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'CPF04 PWM Fan Hub', 'CPF04', 'SilverStone', 'HUB-SST-CPF04', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'CPF04 PWM Fan Hub', 'CPF04', 'SilverStone', 'HUB-SST-CPF04', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -13252,8 +13252,8 @@ WHERE @part_id IS NOT NULL
 
 -- 라이저 케이블 / LIAN LI / PCIe 4.0 Riser Cable
 SET @category_id := 12;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'PCIe 4.0 Riser Cable', 'PW-PCI-4-60', 'LIAN LI', 'RISER-LL-PCIE4-60', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'PCIe 4.0 Riser Cable', 'PW-PCI-4-60', 'LIAN LI', 'RISER-LL-PCIE4-60', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -13293,8 +13293,8 @@ WHERE @part_id IS NOT NULL
 
 -- 라이저 케이블 / Cooler Master / Vertical Graphics Card Holder Kit V3
 SET @category_id := 12;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Vertical Graphics Card Holder Kit V3', 'MCA-U000R-KFVK03', 'Cooler Master', 'RISER-CM-V3-KIT', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Vertical Graphics Card Holder Kit V3', 'MCA-U000R-KFVK03', 'Cooler Master', 'RISER-CM-V3-KIT', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -13334,8 +13334,8 @@ WHERE @part_id IS NOT NULL
 
 -- 라이저 케이블 / Thermaltake / TT Premium PCI-E 4.0 Extender
 SET @category_id := 12;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'TT Premium PCI-E 4.0 Extender', 'AC-059-CO1OTN-C1', 'Thermaltake', 'RISER-TT-PCIE4', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'TT Premium PCI-E 4.0 Extender', 'AC-059-CO1OTN-C1', 'Thermaltake', 'RISER-TT-PCIE4', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -13375,8 +13375,8 @@ WHERE @part_id IS NOT NULL
 
 -- 라이저 케이블 / Phanteks / Premium PCIe 4.0 x16 Riser Cable
 SET @category_id := 12;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Premium PCIe 4.0 x16 Riser Cable', 'PH-CBRS4.0', 'Phanteks', 'RISER-PHA-PCIE4', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Premium PCIe 4.0 x16 Riser Cable', 'PH-CBRS4.0', 'Phanteks', 'RISER-PHA-PCIE4', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -13416,8 +13416,8 @@ WHERE @part_id IS NOT NULL
 
 -- 라이저 케이블 / LINKUP / Ultra PCIe 4.0 X16 Riser Cable
 SET @category_id := 12;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'Ultra PCIe 4.0 X16 Riser Cable', 'PCIE4EXT11SR-020', 'LINKUP', 'RISER-LINKUP-PCIE4', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'Ultra PCIe 4.0 X16 Riser Cable', 'PCIE4EXT11SR-020', 'LINKUP', 'RISER-LINKUP-PCIE4', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -13457,8 +13457,8 @@ WHERE @part_id IS NOT NULL
 
 -- 라이저 케이블 / darkFlash / PCIe 4.0 x16 Riser Cable
 SET @category_id := 12;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'PCIe 4.0 x16 Riser Cable', 'PCIe 4.0 Riser', 'darkFlash', 'RISER-DF-PCIE4', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'PCIe 4.0 x16 Riser Cable', 'PCIe 4.0 Riser', 'darkFlash', 'RISER-DF-PCIE4', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -13498,8 +13498,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 지지대 / darkFlash / DL240 ARGB GPU Support
 SET @category_id := 11;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'DL240 ARGB GPU Support', 'DL240 ARGB', 'darkFlash', 'SUPPORT-DF-DL240-ARGB', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'DL240 ARGB GPU Support', 'DL240 ARGB', 'darkFlash', 'SUPPORT-DF-DL240-ARGB', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -13546,8 +13546,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 지지대 / 3RSYS / ICEAGE G5 GPU Support
 SET @category_id := 11;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'ICEAGE G5 GPU Support', 'ICEAGE G5', '3RSYS', 'SUPPORT-3R-ICEAGE-G5', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'ICEAGE G5 GPU Support', 'ICEAGE G5', '3RSYS', 'SUPPORT-3R-ICEAGE-G5', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -13594,8 +13594,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 지지대 / ABKO / SUITMASTER VGA Support
 SET @category_id := 11;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'SUITMASTER VGA Support', 'SUITMASTER VGA Support', 'ABKO', 'SUPPORT-ABKO-SUITMASTER', 0.00, 2, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'SUITMASTER VGA Support', 'SUITMASTER VGA Support', 'ABKO', 'SUPPORT-ABKO-SUITMASTER', 2, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -13642,8 +13642,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 지지대 / JONSBO / VC-20 ARGB GPU Holder
 SET @category_id := 11;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'VC-20 ARGB GPU Holder', 'VC-20 ARGB', 'JONSBO', 'SUPPORT-JONSBO-VC20', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'VC-20 ARGB GPU Holder', 'VC-20 ARGB', 'JONSBO', 'SUPPORT-JONSBO-VC20', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -13690,8 +13690,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 지지대 / Cooler Master / ELV8 Universal ARGB GPU Holder
 SET @category_id := 11;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'ELV8 Universal ARGB GPU Holder', 'MCA-U000R-GSBTG-00', 'Cooler Master', 'SUPPORT-CM-ELV8', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'ELV8 Universal ARGB GPU Holder', 'MCA-U000R-GSBTG-00', 'Cooler Master', 'SUPPORT-CM-ELV8', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),
@@ -13738,8 +13738,8 @@ WHERE @part_id IS NOT NULL
 
 -- 그래픽카드 지지대 / LIAN LI / GB-001 Anti-Sag Bracket
 SET @category_id := 11;
-INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, estimated_price, safe_quantity, active, created_at, updated_at)
-VALUES (@company_id, @category_id, @created_by, 'GB-001 Anti-Sag Bracket', 'GB-001', 'LIAN LI', 'SUPPORT-LL-GB001', 0.00, 1, TRUE, NOW(6), NOW(6))
+INSERT INTO tb_pc_part (company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active, created_at, updated_at)
+VALUES (@company_id, @category_id, @created_by, 'GB-001 Anti-Sag Bracket', 'GB-001', 'LIAN LI', 'SUPPORT-LL-GB001', 1, TRUE, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     category_id = VALUES(category_id),
     part_name = VALUES(part_name),

@@ -12,7 +12,6 @@ import com.pcs.domain.part.mapper.PartMapper;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.workspace.WorkspaceAccessValidator;
-import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -85,7 +84,6 @@ class PartServiceTest {
                 "Ventus 2X",
                 "MSI",
                 "VGA-RTX3060-MSI",
-                BigDecimal.valueOf(200000),
                 2,
                 1,
                 true

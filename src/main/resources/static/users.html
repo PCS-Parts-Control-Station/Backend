@@ -40,11 +40,12 @@
                 <p class="page-description">작업공간 계정과 작업자 공통 업무 권한을 관리합니다.</p>
             </div>
             <div class="header-actions">
+                <button class="btn btn-primary" type="button" data-user-create-drawer aria-controls="user-detail-drawer" aria-expanded="false">사용자 등록</button>
                 <button class="btn btn-primary" type="button" data-open-staff-permission-modal>작업자 권한</button>
             </div>
         </header>
 
-        <section class="content-grid">
+        <section class="content-grid management-drawer-grid">
             <div class="content-main">
                 <section class="filter-card management-filter-card" aria-labelledby="filter-title">
                     <div>
@@ -113,12 +114,19 @@
                 </section>
             </div>
 
-            <aside class="side-panel" aria-label="사용자 계정 작업">
-                <div class="panel-card side-work-panel">
+            <aside class="management-detail-drawer user-detail-drawer" id="user-detail-drawer" data-user-detail-drawer aria-label="사용자 계정 작업" aria-hidden="true" tabindex="-1">
+                <div class="panel-card management-detail-drawer-panel side-work-panel">
                     <div class="panel-mode is-active" data-user-panel="create">
-                        <p class="panel-eyebrow">계정 작업</p>
-                        <h2 id="user-form-title">새 사용자 등록</h2>
-                        <p>업무에 참여할 계정과 역할을 지정합니다.</p>
+                        <div class="panel-title-bar">
+                            <div>
+                                <p class="panel-eyebrow">계정 작업</p>
+                                <h2 id="user-form-title">새 사용자 등록</h2>
+                                <p>업무에 참여할 계정과 역할을 지정합니다.</p>
+                            </div>
+                            <button class="panel-link-button" type="button" data-close-user-drawer>닫기</button>
+                        </div>
+
+                        <div class="drawer-scroll-body">
                         <form class="management-form" action="#" method="post" autocomplete="off" data-user-create-form>
                             <label>
                                 <span>이름</span>
@@ -142,6 +150,7 @@
                                 <button class="btn btn-secondary" type="reset">초기화</button>
                             </div>
                         </form>
+                        </div>
                     </div>
 
                     <div class="panel-mode" data-user-panel="detail" hidden>
@@ -154,6 +163,7 @@
                             <button class="panel-link-button" type="button" data-user-create-mode>새 사용자 등록</button>
                         </div>
 
+                        <div class="drawer-scroll-body">
                         <div class="side-detail-card user-profile-summary">
                             <strong data-detail-name>-</strong>
                             <div class="detail-badge-row" data-detail-badges>
@@ -178,6 +188,7 @@
                             <button class="btn btn-primary" type="button" data-user-edit-mode>정보 수정</button>
                             <button class="btn btn-secondary" type="button" data-open-reset-password-modal>임시 비밀번호 발급</button>
                         </div>
+                        </div>
                     </div>
 
                     <div class="panel-mode" data-user-panel="edit" hidden>
@@ -190,6 +201,7 @@
                             <button class="panel-link-button" type="button" data-user-create-mode>새 사용자 등록</button>
                         </div>
 
+                        <div class="drawer-scroll-body">
                         <form class="management-form" action="#" method="post" autocomplete="off" data-user-edit-form>
                             <label>
                                 <span>이름</span>
@@ -211,6 +223,7 @@
                                 <button class="btn btn-secondary" type="button" data-user-detail-mode>취소</button>
                             </div>
                         </form>
+                        </div>
                     </div>
                 </div>
             </aside>
@@ -343,7 +356,7 @@
     </form>
 </dialog>
 
-<script src="/js/pcs-api.js?20260619_md_alignment"></script>
+<script src="/js/pcs-api.js?20260623_memory_token"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
 <script src="/js/workspace-layout.js?20260622_sidebar_autoclose"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>

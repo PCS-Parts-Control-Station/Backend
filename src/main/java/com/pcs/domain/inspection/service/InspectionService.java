@@ -36,6 +36,7 @@ import com.pcs.domain.part.type.UnitStatus;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
+import com.pcs.global.pagination.PageQuery;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -52,7 +53,6 @@ import org.springframework.stereotype.Service;
 public class InspectionService {
 
     private static final int DEFAULT_SIZE = 20;
-    private static final int MAX_SIZE = 100;
 
     private final InspectionMapper inspectionMapper;
 
@@ -74,9 +74,7 @@ public class InspectionService {
         validateCompanyActive(companyId);
         String normalizedKeyword = normalizeOptional(keyword);
         String normalizedInspectionStatus = normalizeInspectionStatus(inspectionStatus);
-        int normalizedPage = normalizePage(page);
-        int normalizedSize = normalizeSize(size, limit);
-        int offset = normalizedPage * normalizedSize;
+        PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
         LocalDateTime from = toStartOfDay(dateFrom);
         LocalDateTime to = toExclusiveEnd(dateTo);
 
@@ -97,8 +95,8 @@ public class InspectionService {
                         normalizedInspectionStatus,
                         from,
                         to,
-                        normalizedSize,
-                        offset
+                        pageQuery.size(),
+                        pageQuery.offset()
                 );
         SearchWaitingInspectionDocumentSummaryResponse summary = inspectionMapper.summarizeWaitingDocuments(
                 companyId,
@@ -108,7 +106,7 @@ public class InspectionService {
                 from,
                 to
         );
-        return PageResultDto.of(items, normalizedPage, normalizedSize, totalElements, summary);
+        return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, summary);
     }
 
     public InspectionWaitingDocumentDetailResponse getWaitingDocumentUnits(Long companyId, Long documentId) {
@@ -270,9 +268,7 @@ public class InspectionService {
     ) {
         validateCompanyActive(companyId);
         String normalizedKeyword = normalizeOptional(keyword);
-        int normalizedPage = normalizePage(page);
-        int normalizedSize = normalizeSize(size, limit);
-        int offset = normalizedPage * normalizedSize;
+        PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
         LocalDateTime from = toStartOfDay(dateFrom);
         LocalDateTime to = toExclusiveEnd(dateTo);
 
@@ -301,8 +297,8 @@ public class InspectionService {
                         grade,
                         from,
                         to,
-                        normalizedSize,
-                        offset
+                        pageQuery.size(),
+                        pageQuery.offset()
                 );
         SearchInspectionHistorySummaryResponse summary = inspectionMapper.summarizeHistories(
                 companyId,
@@ -316,7 +312,7 @@ public class InspectionService {
                 from,
                 to
         );
-        return PageResultDto.of(items, normalizedPage, normalizedSize, totalElements, summary);
+        return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, summary);
     }
 
     public PageResultDto<SearchInspectionHistoryDocumentResponse, SearchInspectionHistoryDocumentSummaryResponse> searchHistoryDocuments(
@@ -334,9 +330,7 @@ public class InspectionService {
     ) {
         validateCompanyActive(companyId);
         String normalizedKeyword = normalizeOptional(keyword);
-        int normalizedPage = normalizePage(page);
-        int normalizedSize = normalizeSize(size, limit);
-        int offset = normalizedPage * normalizedSize;
+        PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
         LocalDateTime from = toStartOfDay(dateFrom);
         LocalDateTime to = toExclusiveEnd(dateTo);
 
@@ -361,8 +355,8 @@ public class InspectionService {
                         grade,
                         from,
                         to,
-                        normalizedSize,
-                        offset
+                        pageQuery.size(),
+                        pageQuery.offset()
                 );
         SearchInspectionHistoryDocumentSummaryResponse summary = inspectionMapper.summarizeHistoryDocuments(
                 companyId,
@@ -374,7 +368,7 @@ public class InspectionService {
                 from,
                 to
         );
-        return PageResultDto.of(items, normalizedPage, normalizedSize, totalElements, summary);
+        return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, summary);
     }
 
     public InspectionHistoryDetailResponse getHistoryDetail(Long companyId, Long inspectionId) {
@@ -619,21 +613,6 @@ public class InspectionService {
             return null;
         }
         return value.trim();
-    }
-
-    private int normalizePage(Integer page) {
-        if (page == null || page < 0) {
-            return 0;
-        }
-        return page;
-    }
-
-    private int normalizeSize(Integer size, Integer limit) {
-        Integer requestedSize = size == null ? limit : size;
-        if (requestedSize == null || requestedSize < 1) {
-            return DEFAULT_SIZE;
-        }
-        return Math.min(requestedSize, MAX_SIZE);
     }
 
     private LocalDateTime toStartOfDay(LocalDate date) {
