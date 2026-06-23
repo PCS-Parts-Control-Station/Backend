@@ -669,6 +669,37 @@
 
         detailBody.innerHTML = `
             <section class="history-detail-section">
+                <h3>최근 검수 정보</h3>
+                <div class="history-detail-summary">
+                    <div class="history-detail-summary-title">
+                        <strong>${escapeHtml(LABELS.inspectionType[detail.inspectionType] || detail.inspectionType || "-")}</strong>
+                        <span class="history-result-cell">
+                            <em class="badge ${resultBadgeClass(detail.result)}">${escapeHtml(LABELS.result[detail.result] || detail.result || "-")}</em>
+                            <span class="history-result-separator" aria-hidden="true">/</span>
+                            <em class="badge ${gradeBadgeClass(detail.grade)}">${escapeHtml(LABELS.grade[detail.grade] || detail.grade || "-")}</em>
+                        </span>
+                    </div>
+                    <dl class="history-detail-meta">
+                        <div>
+                            <dt>검수 템플릿</dt>
+                            <dd>${escapeHtml(detail.templateName || "-")}</dd>
+                        </div>
+                        <div>
+                            <dt>처리자</dt>
+                            <dd>${escapeHtml(detail.inspectedByName || "-")}</dd>
+                        </div>
+                        <div>
+                            <dt>검수일</dt>
+                            <dd>${escapeHtml(formatDate(detail.inspectedAt))}</dd>
+                        </div>
+                        <div>
+                            <dt>판매상태</dt>
+                            <dd>${escapeHtml(LABELS.salesStatus[detail.salesStatus] || detail.salesStatus || "-")}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </section>
+            <section class="history-detail-section">
                 <h3>검수 이력 타임라인</h3>
                 <div class="history-timeline">${renderTimeline(detail)}</div>
             </section>
