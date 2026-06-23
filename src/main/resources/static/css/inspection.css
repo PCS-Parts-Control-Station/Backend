@@ -193,12 +193,16 @@
     border-bottom: 0;
 }
 
+.inspection-document-card {
+    padding-bottom: 18px;
+}
+
 .inspection-document-card [data-inspection-waiting-table] {
     align-content: start;
     grid-template-rows: auto;
     width: auto;
     height: 656px;
-    margin: 0 20px;
+    margin: 0 20px 14px;
     border: 1px solid var(--line);
     border-radius: 8px;
     overflow: hidden;
@@ -304,7 +308,7 @@
 .inspection-pagination-bar {
     align-items: center;
     min-height: 42px;
-    margin: 8px 20px 14px;
+    margin: 8px 20px 0;
     padding: 6px 12px;
     border-top: 0;
 }

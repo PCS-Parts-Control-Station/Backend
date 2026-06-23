@@ -1,6 +1,6 @@
 (function () {
     const DOCUMENT_PAGE_SIZE = 10;
-    const HISTORY_PAGE_SIZE = 20;
+    const HISTORY_PAGE_SIZE = 10;
 
     const filterForm = document.querySelector(".inspection-filter-form");
     const partnerFilter = filterForm?.elements.partnerId;
@@ -428,7 +428,7 @@
                     <small>${escapeHtml(item.summary)}</small>
                 </span>
                 <span class="inspection-date-cell" role="cell" data-label="입고일">${escapeHtml(formatDate(item.createdAt))}</span>
-                <span role="cell" data-label="총수량">${numberText(item.totalUnitCount)}</span>
+                <span role="cell" data-label="검수 대상">${numberText(item.totalUnitCount)}</span>
                 <span role="cell" data-label="대기">${numberText(item.waitingCount)}</span>
                 <span role="cell" data-label="완료">${numberText(item.completedCount)}</span>
                 <span class="inspection-progress" role="cell" data-label="진행률">
@@ -571,6 +571,7 @@
     };
 
     const resetDocumentSelectionContext = () => {
+        documentDetailRequestId += 1;
         currentDocumentPage = 0;
         selectedDocumentId = null;
         currentDocumentDetail = null;
@@ -578,6 +579,7 @@
         historyStepActive = false;
         clearInspectionForm();
         resetHistorySection();
+        targetStep?.classList.remove("is-active", "is-attention");
         if (documentSummaryCard) documentSummaryCard.hidden = true;
         if (documentFields.subtitle) {
             documentFields.subtitle.hidden = false;

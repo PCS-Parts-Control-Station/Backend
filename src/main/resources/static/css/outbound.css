@@ -706,7 +706,19 @@
 .outbound-selected-list {
     display: grid;
     gap: 14px;
+    max-height: 520px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 20px;
+}
+
+.outbound-selected-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.outbound-selected-list::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.62);
 }
 
 .outbound-selected-group {
