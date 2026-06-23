@@ -244,17 +244,19 @@
         });
     };
 
-    const setEmptyMessage = (message) => {
+    const setEmptyMessage = (message, options = {}) => {
         if (!emptyRow) {
             return;
         }
         emptyRow.hidden = false;
+        emptyRow.classList.toggle("is-loading", options.loading === true);
         emptyRow.querySelector("[role='cell']").textContent = message;
     };
 
     const hideEmptyMessage = () => {
         if (emptyRow) {
             emptyRow.hidden = true;
+            emptyRow.classList.remove("is-loading");
         }
     };
 
@@ -285,8 +287,7 @@
             <span role="cell" data-label="수량">${Number(stockDocument.totalQuantity || 0)}개</span>
             <span role="cell" data-label="상태"><em class="badge ${documentStatusClass(stockDocument.documentStatus)}">${documentStatusLabel(stockDocument.documentStatus)}</em></span>
             <span role="cell" data-label="입고일">${formatDate(stockDocument.createdAt)}</span>
-            <span role="cell" class="row-actions" data-label="관리">
-                <button type="button" data-document-detail="${stockDocument.documentId}">상세</button>
+            <span role="cell" class="row-actions" data-label="취소">
                 <button type="button" data-document-cancel="${stockDocument.documentId}"${isCanceled ? " disabled" : ""}>${isCanceled ? "취소됨" : "취소"}</button>
             </span>
         `;
@@ -326,10 +327,6 @@
             }
         });
         updatePagination(data);
-    };
-
-    const findDocumentSummary = (documentId) => {
-        return currentDocuments.find((stockDocument) => String(stockDocument.documentId) === String(documentId)) || null;
     };
 
     const updateSelectedRows = () => {
@@ -447,7 +444,7 @@
         }
         if (!apiBase || !window.PcsApi) {
             setDetailLoading("입고 전표 상세를 불러오지 못했습니다.", documentId);
-            return;
+            return null;
         }
 
         setDetailLoading("입고 전표 상세를 불러오는 중입니다.", documentId);
@@ -457,8 +454,13 @@
                 loginCompanyCode: companyCode,
             });
             renderDocumentDetail(detail);
+            if (options.openCancelAfter === true) {
+                openCancelModal(detail);
+            }
+            return detail;
         } catch (error) {
-            setDetailLoading(error.message || "입고 전표 상세를 불러오지 못했습니다.");
+            setDetailLoading(error.message || "입고 전표 상세를 불러오지 못했습니다.", documentId);
+            return null;
         }
     };
 
@@ -589,7 +591,7 @@
             currentDetail = null;
             closeDetailDrawer({ restoreFocus: false });
         }
-        setEmptyMessage("입고 전표 목록을 불러오는 중입니다.");
+        setEmptyMessage("입고 전표 목록을 불러오는 중입니다.", { loading: true });
 
         try {
             const data = await api.getData(`/api/workspaces/${encodeURIComponent(companyCode)}/stock/documents?${buildDocumentParams(page).toString()}`, {
@@ -637,16 +639,10 @@
     });
 
     inboundTable?.addEventListener("click", (event) => {
-        const detailButton = event.target.closest("[data-document-detail]");
-        if (detailButton) {
-            event.stopPropagation();
-            loadDocumentDetail(detailButton.dataset.documentDetail, { trigger: detailButton });
-            return;
-        }
-
         const cancelButton = event.target.closest("[data-document-cancel]");
         if (cancelButton) {
-            openCancelModal(findDocumentSummary(cancelButton.dataset.documentCancel));
+            event.stopPropagation();
+            loadDocumentDetail(cancelButton.dataset.documentCancel, { openCancelAfter: true });
             return;
         }
 
