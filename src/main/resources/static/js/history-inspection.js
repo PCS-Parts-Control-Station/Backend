@@ -1,5 +1,6 @@
 (function () {
     const SOURCE_PAGE_SIZE = 10;
+    const UNIT_PAGE_SIZE = 10;
     const DETAIL_PAGE_SIZE = 100;
     const MAX_DETAIL_PAGES = 5;
 
@@ -20,6 +21,10 @@
     const unitCountText = document.querySelector("[data-history-unit-count]");
     const unitFilter = document.querySelector("[data-history-unit-filter]");
     const unitRefine = document.querySelector("[data-history-unit-refine]");
+    const unitPagination = document.querySelector("[data-history-unit-pagination]");
+    const unitPageInfo = document.querySelector("[data-history-unit-page-info]");
+    const unitPrevButton = document.querySelector("[data-history-unit-page-prev]");
+    const unitNextButton = document.querySelector("[data-history-unit-page-next]");
     const resultFilterSelect = document.querySelector("[data-history-result-filter]");
     const gradeFilterSelect = document.querySelector("[data-history-grade-filter]");
     const detailPanel = document.querySelector("[data-history-detail-panel]");
@@ -37,6 +42,7 @@
     let activeHistoryFilter = "ALL";
     let activeResultFilter = "";
     let activeGradeFilter = "";
+    let unitCurrentPage = 0;
     let detailPanelOpen = false;
     let lastDetailTrigger = null;
 
@@ -63,6 +69,12 @@
             AVAILABLE: "판매 가능",
             HOLD: "판매 보류",
             UNAVAILABLE: "판매 불가"
+        },
+        unitStatus: {
+            IN_STOCK: "재고",
+            OUTBOUND: "출고됨",
+            DISPOSED: "폐기됨",
+            CANCELED: "취소됨"
         }
     };
 
@@ -132,6 +144,19 @@
         if (grade === "B") return "badge-grade-b";
         if (grade === "C") return "badge-grade-c";
         return "badge-blue";
+    };
+
+    const unitStatusBadgeClass = (status) => {
+        if (status === "OUTBOUND") return "badge-warning";
+        if (status === "DISPOSED" || status === "CANCELED") return "badge-danger";
+        return "badge-active";
+    };
+
+    const renderUnitStatusBadge = (status, options = {}) => {
+        if (!status || (options.hideInStock && status === "IN_STOCK")) {
+            return "";
+        }
+        return `<em class="badge ${unitStatusBadgeClass(status)} history-unit-status-badge">${escapeHtml(LABELS.unitStatus[status] || status)}</em>`;
     };
 
     const clearRows = (targetTable) => {
@@ -329,6 +354,7 @@
         activeHistoryFilter = "ALL";
         activeResultFilter = "";
         activeGradeFilter = "";
+        unitCurrentPage = 0;
         if (unitSection) {
             unitSection.hidden = true;
         }
@@ -358,6 +384,12 @@
         }
         if (unitCountText) {
             unitCountText.textContent = "0개";
+        }
+        if (unitPagination) {
+            unitPagination.hidden = true;
+        }
+        if (unitPageInfo) {
+            unitPageInfo.textContent = "1 / 1 페이지";
         }
         clearRows(unitTable);
         closeDetailPanel({ restoreFocus: false });
@@ -488,6 +520,7 @@
                     key,
                     unitId: item.unitId,
                     internalSerialNo: item.internalSerialNo || "-",
+                    unitStatus: item.unitStatus || "",
                     partName: item.partName || "-",
                     modelName: item.modelName || "",
                     rows: []
@@ -495,6 +528,9 @@
             }
             const group = groups.get(key);
             group.rows.push(item);
+            if (!group.unitStatus) {
+                group.unitStatus = item.unitStatus || "";
+            }
             if (!group.partName || group.partName === "-") {
                 group.partName = item.partName || "-";
             }
@@ -525,6 +561,22 @@
             row.classList.toggle("is-selected", isSelected);
             row.setAttribute("aria-selected", String(isSelected));
         });
+    };
+
+    const updateUnitPagination = (totalElements) => {
+        const totalPages = Math.max(1, Math.ceil(totalElements / UNIT_PAGE_SIZE));
+        if (unitPagination) {
+            unitPagination.hidden = totalElements <= UNIT_PAGE_SIZE;
+        }
+        if (unitPageInfo) {
+            unitPageInfo.textContent = `${numberText(unitCurrentPage + 1)} / ${numberText(totalPages)} 페이지 · 총 ${numberText(totalElements)}개`;
+        }
+        if (unitPrevButton) {
+            unitPrevButton.disabled = unitCurrentPage <= 0;
+        }
+        if (unitNextButton) {
+            unitNextButton.disabled = unitCurrentPage >= totalPages - 1;
+        }
     };
 
     const renderDocumentRows = (groups, sourcePageData) => {
@@ -570,10 +622,20 @@
         if (!groups.length) {
             const hasDetailFilter = activeHistoryFilter !== "ALL" || activeResultFilter || activeGradeFilter;
             setTableMessage(unitTable, hasDetailFilter ? "선택한 조건의 관리번호가 없습니다." : "표시할 관리번호가 없습니다.");
+            updateUnitPagination(0);
             return;
         }
 
-        groups.forEach((group) => {
+        const totalPages = Math.max(1, Math.ceil(groups.length / UNIT_PAGE_SIZE));
+        if (unitCurrentPage >= totalPages) {
+            unitCurrentPage = totalPages - 1;
+        }
+        if (unitCurrentPage < 0) {
+            unitCurrentPage = 0;
+        }
+
+        const pageGroups = groups.slice(unitCurrentPage * UNIT_PAGE_SIZE, (unitCurrentPage + 1) * UNIT_PAGE_SIZE);
+        pageGroups.forEach((group) => {
             const latest = group.latest || {};
             const row = document.createElement("div");
             row.className = "data-row document-data-row history-unit-row is-selectable";
@@ -583,7 +645,10 @@
             row.dataset.historyUnitKey = group.key;
             row.dataset.historyInspectionId = String(latest.inspectionId || "");
             row.innerHTML = `
-                <code role="cell" data-label="관리번호">${escapeHtml(group.internalSerialNo || "-")}</code>
+                <span class="history-unit-code-cell" role="cell" data-label="관리번호">
+                    <code>${escapeHtml(group.internalSerialNo || "-")}</code>
+                    ${renderUnitStatusBadge(group.unitStatus || latest.unitStatus, { hideInStock: true })}
+                </span>
                 <span class="history-stack-cell" role="cell" data-label="품목">
                     <strong>${escapeHtml(group.partName || "-")}</strong>
                     <small>${escapeHtml(group.modelName || "")}</small>
@@ -599,6 +664,7 @@
             unitTable.append(row);
         });
 
+        updateUnitPagination(groups.length);
         updateSelectedManagementRow();
     };
 
@@ -683,6 +749,10 @@
                         <div>
                             <dt>검수 템플릿</dt>
                             <dd>${escapeHtml(detail.templateName || "-")}</dd>
+                        </div>
+                        <div>
+                            <dt>현재 상태</dt>
+                            <dd>${renderUnitStatusBadge(detail.unitStatus) || "-"}</dd>
                         </div>
                         <div>
                             <dt>처리자</dt>
@@ -829,6 +899,7 @@
         activeHistoryFilter = "ALL";
         activeResultFilter = "";
         activeGradeFilter = "";
+        unitCurrentPage = 0;
         selectedDocumentRows = [];
         closeDetailPanel({ restoreFocus: false });
         updateSelectedDocumentRow();
@@ -1005,6 +1076,7 @@
         }
         selectedPartGroup = button.dataset.historyPartGroup || "ALL";
         selectedManagementNumber = null;
+        unitCurrentPage = 0;
         activeHistoryFilter = "ALL";
         activeResultFilter = "";
         activeGradeFilter = "";
@@ -1057,6 +1129,7 @@
         }
         activeHistoryFilter = button.dataset.historyFilter || "ALL";
         selectedManagementNumber = null;
+        unitCurrentPage = 0;
         closeDetailPanel({ restoreFocus: false });
         updateUnitFilterControls();
         renderUnitRows(selectedDocumentRows);
@@ -1065,12 +1138,31 @@
     resultFilterSelect?.addEventListener("change", () => {
         activeResultFilter = resultFilterSelect.value;
         selectedManagementNumber = null;
+        unitCurrentPage = 0;
         closeDetailPanel({ restoreFocus: false });
         renderUnitRows(selectedDocumentRows);
     });
 
     gradeFilterSelect?.addEventListener("change", () => {
         activeGradeFilter = gradeFilterSelect.value;
+        selectedManagementNumber = null;
+        unitCurrentPage = 0;
+        closeDetailPanel({ restoreFocus: false });
+        renderUnitRows(selectedDocumentRows);
+    });
+
+    unitPrevButton?.addEventListener("click", () => {
+        if (unitCurrentPage <= 0) {
+            return;
+        }
+        unitCurrentPage -= 1;
+        selectedManagementNumber = null;
+        closeDetailPanel({ restoreFocus: false });
+        renderUnitRows(selectedDocumentRows);
+    });
+
+    unitNextButton?.addEventListener("click", () => {
+        unitCurrentPage += 1;
         selectedManagementNumber = null;
         closeDetailPanel({ restoreFocus: false });
         renderUnitRows(selectedDocumentRows);

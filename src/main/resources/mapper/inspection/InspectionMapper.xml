@@ -405,6 +405,7 @@
             ) AS document_no,
             i.unit_id,
             u.internal_serial_no,
+            u.unit_status,
             p.part_id,
             p.category_id,
             c.category_name,

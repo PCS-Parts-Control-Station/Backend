@@ -227,6 +227,25 @@
     overflow-wrap: anywhere;
 }
 
+.history-unit-code-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.history-unit-code-cell code {
+    min-width: 0;
+}
+
+.history-unit-status-badge {
+    flex: 0 0 auto;
+    min-height: 22px;
+    padding: 0 8px;
+    font-size: 10px;
+    line-height: 20px;
+}
+
 .history-unit-header {
     display: flex;
     align-items: center;
@@ -292,6 +311,23 @@
 
 .history-unit-table {
     min-width: 0;
+}
+
+.history-unit-pagination {
+    margin: 0;
+    padding: 10px 14px;
+    border-top: 1px solid var(--line);
+    box-shadow: none;
+}
+
+.history-unit-pagination p {
+    font-size: 12px;
+}
+
+.history-unit-pagination .pagination-actions button {
+    min-height: 30px;
+    padding: 0 10px;
+    font-size: 12px;
 }
 
 .history-panel-title-row {
@@ -537,6 +573,12 @@
     border-color: rgba(37, 99, 235, 0.2);
     background: var(--blue-soft);
     color: var(--blue);
+}
+
+.history-detail-panel .history-unit-status-badge {
+    display: inline-flex;
+    align-items: center;
+    width: max-content;
 }
 
 .history-detail-panel {
@@ -969,6 +1011,16 @@
     .history-unit-row > [data-label="최근 처리일"] {
         overflow: visible;
         white-space: normal;
+    }
+
+    .history-unit-row:not(.table-head) > .history-unit-code-cell {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .history-unit-row:not(.table-head) > .history-unit-code-cell::before {
+        flex: 0 0 100%;
     }
 
     .history-unit-header {
