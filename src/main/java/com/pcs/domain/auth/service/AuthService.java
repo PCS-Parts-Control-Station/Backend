@@ -29,12 +29,15 @@ public class AuthService {
 
     private static final int MAX_LOGIN_FAILED_COUNT = 5;
     private static final Duration LOGIN_LOCK_DURATION = Duration.ofMinutes(10);
+    private static final int MAX_IP_LOGIN_FAILURES_PER_MINUTE = 30;
+    private static final Duration IP_LOGIN_FAILURE_WINDOW = Duration.ofMinutes(1);
 
     private final AuthMapper authMapper;
     private final StaffPermissionService staffPermissionService;
     private final PasswordEncoder passwordEncoder;
     private final SecureRandom secureRandom = new SecureRandom();
     private final Duration refreshTokenDuration;
+    private final String dummyPasswordHash;
 
     public AuthService(
             AuthMapper authMapper,
@@ -46,6 +49,7 @@ public class AuthService {
         this.staffPermissionService = staffPermissionService;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenDuration = Duration.ofDays(refreshTokenExpirationDays);
+        this.dummyPasswordHash = passwordEncoder.encode(UUID.randomUUID().toString());
     }
 
     public AuthMember authenticateWorkspace(
@@ -57,10 +61,26 @@ public class AuthService {
     ) {
         String normalizedCompanyCode = normalizeRequired(companyCode).toLowerCase();
         String normalizedLoginId = normalizeRequired(loginId);
-        AuthMember member = authMapper.findLoginMember(normalizedCompanyCode, normalizedLoginId);
+        String loginScopeCompanyCode = truncate(normalizedCompanyCode, 50);
         LocalDateTime now = LocalDateTime.now();
+        if (isIpRateLimited(loginScopeCompanyCode, loginIp, now)) {
+            authMapper.insertLoginHistory(
+                    null,
+                    null,
+                    loginScopeCompanyCode,
+                    normalizedLoginId,
+                    LoginResult.FAIL,
+                    "IP_RATE_LIMITED",
+                    loginIp,
+                    truncate(userAgent, 500)
+            );
+            throw loginFailed();
+        }
+
+        AuthMember member = authMapper.findLoginMember(normalizedCompanyCode, normalizedLoginId);
 
         if (member == null) {
+            passwordEncoder.matches(rawPassword, dummyPasswordHash);
             authMapper.insertLoginHistory(
                     null,
                     null,
@@ -69,29 +89,30 @@ public class AuthService {
                     LoginResult.FAIL,
                     "LOGIN_MEMBER_NOT_FOUND",
                     loginIp,
-                    userAgent
+                    truncate(userAgent, 500)
             );
-            throw new BusinessException(ErrorCode.AUTH_LOGIN_FAILED);
+            throw loginFailed();
         }
 
+        boolean passwordMatches = passwordEncoder.matches(rawPassword, member.getPasswordHash());
         if (!member.isCompanyActive()) {
             insertHistory(member, LoginResult.INACTIVE, "COMPANY_INACTIVE", loginIp, userAgent);
-            throw new BusinessException(ErrorCode.COMPANY_INACTIVE);
+            throw loginFailed();
         }
 
         if (!member.isActive()) {
             insertHistory(member, LoginResult.INACTIVE, "MEMBER_INACTIVE", loginIp, userAgent);
-            throw new BusinessException(ErrorCode.MEMBER_INACTIVE);
+            throw loginFailed();
         }
 
         if (member.isLocked(now)) {
             insertHistory(member, LoginResult.LOCKED, "LOGIN_LOCKED", loginIp, userAgent);
-            throw new BusinessException(ErrorCode.AUTH_ACCOUNT_LOCKED);
+            throw loginFailed();
         }
 
-        if (!passwordEncoder.matches(rawPassword, member.getPasswordHash())) {
+        if (!passwordMatches) {
             recordPasswordFailure(member, loginIp, userAgent, now);
-            throw new BusinessException(ErrorCode.AUTH_LOGIN_FAILED);
+            throw loginFailed();
         }
 
         if (member.isTemporaryPasswordExpired(now)) {
@@ -148,6 +169,7 @@ public class AuthService {
                 refreshToken.getTokenId(),
                 rawToken,
                 tokenHash,
+                refreshToken.getTokenFamilyId(),
                 expiresAt,
                 refreshTokenDuration.toSeconds()
         );
@@ -207,13 +229,18 @@ public class AuthService {
         authMapper.revokeRefreshTokenFamily(companyId, memberId, tokenFamilyId, revokedReason);
     }
 
-    public void revokeRefreshTokenByRawValue(String rawRefreshToken, RefreshTokenRevokedReason revokedReason) {
+    public void revokeRefreshTokenFamilyByRawValue(String rawRefreshToken, RefreshTokenRevokedReason revokedReason) {
         if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
             return;
         }
         AuthRefreshTokenSession session = authMapper.findRefreshTokenSession(hashRefreshToken(rawRefreshToken));
-        if (session != null && !session.isRevoked()) {
-            revokeRefreshToken(session.getTokenId(), revokedReason, null);
+        if (session != null) {
+            revokeRefreshTokenFamily(
+                    session.getCompanyId(),
+                    session.getMemberId(),
+                    session.getTokenFamilyId(),
+                    revokedReason
+            );
         }
     }
 
@@ -264,6 +291,22 @@ public class AuthService {
                 : null;
         authMapper.recordLoginFailure(member.getCompanyId(), member.getMemberId(), lockedUntilAt);
         insertHistory(member, LoginResult.FAIL, "PASSWORD_MISMATCH", loginIp, userAgent);
+    }
+
+    private boolean isIpRateLimited(String companyCode, String loginIp, LocalDateTime now) {
+        if (loginIp == null || loginIp.isBlank()) {
+            return false;
+        }
+        long failureCount = authMapper.countRecentLoginFailures(
+                companyCode,
+                loginIp,
+                now.minus(IP_LOGIN_FAILURE_WINDOW)
+        );
+        return failureCount >= MAX_IP_LOGIN_FAILURES_PER_MINUTE;
+    }
+
+    private BusinessException loginFailed() {
+        return new BusinessException(ErrorCode.AUTH_LOGIN_FAILED);
     }
 
     private void insertHistory(

@@ -64,7 +64,7 @@ src/main/resources/static/js/parts.js -> part
 
 ## 지원 중인 Feature 값
 
-현재 `run-harness.ps1`과 `run-feedback-loop.ps1`의 `-Feature`, `-DbFeature`에서 바로 선택할 수 있는 값:
+현재 `-Feature` 지원값은 `harness/config/features.json`의 `features`에서 관리한다.
 
 ```text
 none
@@ -74,6 +74,24 @@ auth
 partner
 category
 part
+stock
+inspection
+history
+dashboard
+```
+
+현재 `-DbFeature` 지원값:
+
+```text
+none
+company
+member
+auth
+partner
+category
+part
+stock
+inspection
 ```
 
 새 도메인 문서를 만들었다고 해서 하네스가 자동으로 그 기능의 세부 규칙을 검사하는 것은 아니다.  
@@ -92,21 +110,10 @@ part
 
 ## Feature 검사 추가 방법
 
-새 기능을 하네스에서 직접 검사하려면 `harness/run-harness.ps1`에 기능명을 추가하고 검사 함수를 만든다.
+새 기능을 하네스에서 직접 검사하려면 아래 순서를 따른다.
 
-예: `inspection` 기능 검사를 추가하는 경우
-
-1. 파라미터 허용값에 기능명을 추가한다.
-
-```powershell
-[ValidateSet("none", "company", "member", "auth", "partner", "category", "inspection")]
-[string] $Feature = "none",
-
-[ValidateSet("none", "company", "member", "auth", "partner", "category", "inspection")]
-[string] $DbFeature = "none",
-```
-
-2. 기능 검사 함수를 만든다.
+1. `harness/config/features.json`에 기능명, 변경 경로 정규식, 연관 DB 검사를 추가한다.
+2. `run-harness.ps1`에 기능 검사 함수를 만든다.
 
 ```powershell
 function Test-InspectionFeature {
@@ -119,7 +126,7 @@ function Test-InspectionFeature {
 }
 ```
 
-3. 실행부에 연결한다.
+3. `Invoke-FeatureChecks`에 검사 함수를 연결한다.
 
 ```powershell
 if ($Feature -eq "inspection") {
@@ -127,17 +134,8 @@ if ($Feature -eq "inspection") {
 }
 ```
 
-4. DB 검사가 필요하면 `docs/features/{feature}-db.md`를 만들고, DB Java 검사 쪽에도 같은 기능명 체크를 추가한다.
-
-5. `harness/run-feedback-loop.ps1`의 `Feature`, `DbFeature` 허용값에도 같은 기능명을 추가한다.
-
-```powershell
-[ValidateSet("none", "company", "member", "auth", "partner", "category", "inspection")]
-[string] $Feature = "none",
-
-[ValidateSet("none", "company", "member", "auth", "partner", "category", "inspection")]
-[string] $DbFeature = "none",
-```
+4. DB 검사가 필요하면 `docs/features/{feature}-db.md`와 DB checker를 추가하고 레지스트리의 `dbChecks`에 연결한다.
+5. `Test-FeatureRegistry`와 해당 Feature 명령을 실행한다.
 
 하네스 문서만 추가하면 검사가 생기는 것이 아니다.  
 문서는 기준이고, `run-harness.ps1`의 함수가 실제 검사 코드다.
@@ -157,7 +155,7 @@ src/main/java/com/pcs/PcsApiApplication.java
 src/main/java/com/pcs/web/controller/PageController.java
 src/main/resources/application.yaml
 src/main/resources/static/main.html
-src/main/resources/static/css/main.css
+src/main/resources/static/css/pages/main.css
 src/main/resources/static/js/main.js
 ```
 
@@ -174,6 +172,7 @@ src/main/resources/static/js/main.js
 - `.gitignore` 필수 규칙 확인
 - `domain/{feature}`가 있으면 `docs/features/{feature}.md`가 있어야 함
 - 인증 기능은 `docs/features/auth.md`와 `docs/ai/pcs-auth-client-rules.md` 기준을 유지함
+- JWT 서명 검사는 수동 구현의 `MessageDigest.isEqual` 또는 HS256으로 설정한 `NimbusJwtDecoder`를 허용함
 
 관리형 페이지 JS 공통 유틸 WARN 검사 대상:
 
@@ -318,6 +317,7 @@ gradle.properties
 *.tmp
 tmp/
 harness/reports/*
+src/main/resources/static/*-preview.html
 .DS_Store
 Thumbs.db
 ```
@@ -357,6 +357,7 @@ out/
 *.tmp
 tmp/
 harness/reports/*
+src/main/resources/static/*-preview.html
 .DS_Store
 Thumbs.db
 ```
@@ -459,6 +460,10 @@ SQL 품질:
 .\harness\run-feedback-loop.ps1 -Mode gate -Feature partner -RunBuild -RunDb
 .\harness\run-feedback-loop.ps1 -Mode gate -Feature category -RunBuild -RunDb
 .\harness\run-feedback-loop.ps1 -Mode gate -Feature part -RunBuild -RunDb
+.\harness\run-feedback-loop.ps1 -Mode gate -Feature stock -RunBuild -RunDb
+.\harness\run-feedback-loop.ps1 -Mode gate -Feature inspection -RunBuild -RunDb
+.\harness\run-feedback-loop.ps1 -Mode gate -Feature history -RunBuild -RunDb
+.\harness\run-feedback-loop.ps1 -Mode gate -Feature dashboard -RunBuild -RunDb
 .\harness\run-feedback-loop.ps1 -Mode gate -DbFeature member
 ```
 
@@ -481,3 +486,13 @@ harness/reports/agent-failures.md
 - 이 스크립트가 코드를 자동 수정하지는 않는다.
 - 같은 실행에서 여러 DB 기준을 함께 보고 싶으면 `-RunDb -DbFeature {feature}`를 함께 사용한다.
 - `run-feedback-loop.ps1` 결과 파일은 매 실행마다 덮어쓴다.
+
+## Codex Stop 훅
+
+Codex 작업 종료 시 자동 검증은 `.codex/hooks.json`과 `.codex/hooks/stop.ps1`이 담당한다.
+상세 기준은 `docs/ai/pcs-codex-hook-rules.md`를 따른다.
+
+- Stop 훅은 변경 파일 목록을 만들어 `run-feedback-loop.ps1 -Mode gate`를 호출한다.
+- 실제 검사 규칙을 Stop 스크립트에 중복 작성하지 않는다.
+- DB 관련 변경일 때만 `-RunDb`를 추가한다.
+- 서버를 시작, 종료, 재시작하지 않는다.

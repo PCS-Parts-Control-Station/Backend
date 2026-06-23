@@ -32,6 +32,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - 대화 기억만으로 문서를 추정하지 않는다.
 - 아래 작업 유형 중 하나를 고른 뒤, 해당 유형의 필수 문서와 조건부 문서만 읽는다.
 - 새 공통 규칙이 필요하면 먼저 기존 문서 중 가장 책임이 맞는 문서를 찾고, 새 문서는 마지막 선택으로 둔다.
+- 디자인 작업은 이전 대화에서 읽었더라도 현재 저장소의 디자인 문서를 다시 읽는다.
 
 ### 1. 화면 디자인 / HTML / CSS 작업
 
@@ -39,8 +40,21 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 
 - `docs/ai/pcs-design-system.md`
 - `docs/ai/design/design-md-rules.md`
+- `docs/ai/design/css-architecture.md`
 - 화면 문구가 바뀌면 `docs/ai/pcs-terminology-rules.md`
 - 화면 유형에 맞는 `docs/ai/design/*.md` 문서 1~3개
+
+필수 작업 순서:
+
+1. 위 필수 문서와 화면 유형 문서를 읽는다.
+2. 대상 페이지 MD, 페이지 CSS, 해당 화면이 로드하는 공통 CSS를 읽는다.
+3. `rg`로 같은 class, 상태, 반응형 규칙이 이미 있는지 검색한다.
+4. 기존 공통 사용 → 공통 modifier 보완 → 공통 컴포넌트 추가 → 페이지 예외 순서로 결정한다.
+5. 디자인 수정과 함께 대상 페이지 MD/CSS 전체의 기존 중복도 정리한다.
+6. 페이지 MD에는 공통 문서 참조와 도메인 계약만, 페이지 CSS에는 공통화 불가능한 최소 예외만 남긴다.
+7. 같은 유형의 대표 화면 2개 이상을 실행 확인하고 `processResources`를 수행한다.
+
+디자인 변경에서 페이지 MD/CSS를 바로 늘리는 구현은 금지한다. 공통으로 이동할 수 없는 근거를 먼저 확인한 뒤 최소 범위만 추가한다.
 
 화면 유형별 추가 문서:
 
@@ -49,6 +63,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - 업무 화면 반응형/햄버거 사이드바 → `docs/ai/design/responsive-layout.md`
 - 디자인 MD 추가/수정 위치 판단 → `docs/ai/design/design-md-rules.md`
 - 대시보드 → `docs/ai/design/dashboard.md`
+- 품목·분류·거래처·사용자·검수 템플릿 같은 관리형 화면 → `docs/ai/design/management-page.md`
 - 검색/목록/테이블 → `docs/ai/design/data-table.md`
 - 등록/수정 패널 → `docs/ai/design/form-panel.md`
 - 모달/확인창/토스트 → `docs/ai/design/modal-dialog.md`
@@ -180,6 +195,7 @@ SQL 참조 기준:
 
 - `docs/ai/pcs-harness-rules.md`
 - `docs/ai/pcs-powershell-harness-rules.md`
+- Codex lifecycle 훅 작업이면 `docs/ai/pcs-codex-hook-rules.md`
 - `docs/ai/pcs-agent-context.md`
 - 필요한 경우 `docs/ai/pcs-project-structure-reference.md`
 
@@ -189,14 +205,17 @@ SQL 참조 기준:
 - `harness/run-feedback-loop.ps1`
 - `harness/install-hooks.ps1`
 - `harness/hooks/*`
+- `harness/config/features.json`
+- `.codex/hooks.json`
 - `.codex/hooks/*.ps1`
 
 기준:
 
-- 새 `-Feature` 또는 `-DbFeature` 값을 추가하면 두 스크립트의 허용값을 함께 맞춘다.
+- Feature 경로와 DB 의존성은 `harness/config/features.json` 한 곳에서 관리한다.
 - 실제 검사는 `run-harness.ps1`에 구현하고, `run-feedback-loop.ps1`은 옵션 전달과 실패 요약 생성을 담당한다.
 - PowerShell 하네스 코드는 Windows/macOS 검증 로직을 복제하지 않고, 공통 검증 로직 + OS 어댑터 구조를 따른다.
 - Git pre-push 훅은 `bootstrap`이나 `full`이 아니라 `gate` 모드로 변경 파일 기준 feature 검사와 공통 검증을 실행한다.
+- Codex Stop 훅도 `gate`를 사용하며 서버를 제어하지 않는다.
 - `.gitignore` 필수 패턴, Git 추적 금지 파일, pre-push 변경 파일 금지 검사는 `docs/ai/pcs-harness-rules.md`의 `.gitignore 규칙` 기준을 따른다.
 
 ---
@@ -231,7 +250,7 @@ SQL 참조 기준:
 - 인증 API 호출, access token 재발급: `src/main/resources/static/js/pcs-api.js`
 - 페이징 query, 응답 정규화, 스크롤 보존: `src/main/resources/static/js/pcs-pagination.js`
 - 토스트/공통 UI 피드백: `src/main/resources/static/js/pcs-ui.js`
-- 회사 코드 추출, 링크 갱신, 포맷, 공통 폼/테이블 유틸: `src/main/resources/static/js/pcs-common.js`
+- 회사 코드 추출, 링크 갱신, 포맷, 공통 폼/테이블/드로어 유틸: `src/main/resources/static/js/pcs-common.js`
 - 관리형 페이지의 검색/목록/등록/수정 JS 기준: `docs/ai/pcs-frontend-js-rules.md`
 
 사양 항목:

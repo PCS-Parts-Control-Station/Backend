@@ -165,7 +165,25 @@ Owner 회원가입 + 회사 생성 요청 예시:
 }
 ```
 
-사용자 생성 시 초기 비밀번호는 로그인 아이디와 동일하게 임시 발급한다.
+사용자 생성 시 로그인 아이디와 무관한 난수 임시 비밀번호를 발급한다. 응답에는 생성된 사용자와 일회성 임시 비밀번호를 함께 반환하며 `Cache-Control: no-store`를 사용한다.
+
+사용자 생성 응답 `data` 예시:
+
+```json
+{
+  "member": {
+    "memberId": 15,
+    "memberName": "이검수",
+    "loginId": "staff01",
+    "role": "STAFF",
+    "passwordStatus": "TEMPORARY",
+    "active": true,
+    "updatedAt": "2026-06-19T15:30:00"
+  },
+  "temporaryPassword": "PCS-Ab3de5Fg7H",
+  "expiresAt": "2026-06-26T15:30:00"
+}
+```
 
 임시 비밀번호 재발급 응답 예시:
 
@@ -330,6 +348,16 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&pag
   "safeQuantity": 0,
   "currentStockQuantity": 3,
   "active": true
+}
+```
+
+품목 검색 응답의 `summary`는 현재 페이지가 아니라 동일 검색 조건의 전체 결과 기준이다.
+
+```json
+{
+  "totalCount": 950,
+  "totalStock": 120,
+  "lowStockCount": 10
 }
 ```
 

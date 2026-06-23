@@ -48,8 +48,8 @@ workflow.css
 
 기준:
 
-- `process-panel`, `workflow-list`, `workflow-step`, `process-dot`, `sub-process-list` 시각 구조는 `workflow.css`를 따른다.
-- 오른쪽 패널 카드 자체의 기본 여백과 표면은 `admin.css`의 `panel-card` 기준을 따른다.
+- `process-panel`, `workflow-list`, `workflow-step`, `process-dot`, `sub-process-list` 시각 구조는 `components/workflow.css`를 따른다.
+- 오른쪽 패널 카드 자체의 기본 여백과 표면은 `components/components.css`의 `panel-card` 기준을 따른다.
 
 ```text
 side-panel

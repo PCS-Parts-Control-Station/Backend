@@ -6,6 +6,7 @@ public record RefreshTokenIssueResult(
         Long tokenId,
         String rawToken,
         String tokenHash,
+        String tokenFamilyId,
         LocalDateTime expiresAt,
         long expiresInSeconds
 ) {

@@ -1,0 +1,61 @@
+@layer page {
+.inspection-template-row {
+    grid-template-columns: minmax(220px, 1.35fr) minmax(110px, 0.7fr) 72px 84px 96px 108px;
+}
+
+.inspection-template-row .badge {
+    width: fit-content;
+}
+
+.inspection-template-row.empty-data-row {
+    grid-template-columns: 1fr;
+    min-height: 72px;
+}
+
+.inspection-template-row.empty-data-row [role="cell"] {
+    justify-self: center;
+    width: 100%;
+    color: var(--muted);
+    font-weight: 800;
+    text-align: center;
+}
+
+@media (max-width: 840px) {
+    .inspection-template-row {
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        gap: 6px 12px;
+    }
+
+    .inspection-template-row [role="cell"]::before,
+    .inspection-template-row strong[role="cell"][data-label]::before {
+        display: none;
+        content: none;
+    }
+
+    .inspection-template-row strong[role="cell"] {
+        grid-column: 1 / -1;
+        font-size: 15px;
+    }
+
+    .inspection-template-row.empty-data-row [role="cell"] {
+        grid-column: 1 / -1;
+        justify-self: center;
+    }
+
+    .inspection-template-row [data-label="수정일"] {
+        display: none;
+    }
+
+    .inspection-template-row [data-label="카테고리"],
+    .inspection-template-row [data-label="버전"],
+    .inspection-template-row [data-label="항목"] {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .inspection-template-row [data-label="상태"] {
+        justify-self: end;
+    }
+}
+}

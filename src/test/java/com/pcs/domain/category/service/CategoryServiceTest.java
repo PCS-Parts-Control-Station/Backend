@@ -43,10 +43,8 @@ class CategoryServiceTest {
 
     @Mock
     private CategoryMapper categoryMapper;
-
     @Mock
     private PartSpecMapper partSpecMapper;
-
     @Mock
     private WorkspaceAccessValidator workspaceAccessValidator;
 
@@ -112,8 +110,7 @@ class CategoryServiceTest {
     void searchCategories_failsWhenCompanyInactive() {
         Long companyId = 1L;
         doThrow(new BusinessException(ErrorCode.COMPANY_INACTIVE))
-                .when(workspaceAccessValidator)
-                .validateCompanyActive(companyId);
+                .when(workspaceAccessValidator).validateCompanyActive(companyId);
 
         BusinessException exception = assertThrows(
                 BusinessException.class,

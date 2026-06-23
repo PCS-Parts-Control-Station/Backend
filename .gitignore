@@ -59,6 +59,7 @@ gradle.properties
 tmp/
 harness/reports/*
 !harness/reports/.gitkeep
+src/main/resources/static/*-preview.html
 .DS_Store
 Thumbs.db
 

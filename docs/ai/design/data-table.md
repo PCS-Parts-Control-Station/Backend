@@ -42,8 +42,8 @@ modifier class는 새 규칙을 뜻하지 않는다. 기본 구조를 유지한 
 
 CSS 기준:
 
-- 선택형 관리 목록은 `admin.css` 공통 스타일을 우선 사용한다.
-- 전표형 목록은 `admin.css`에 더해 전표 행, 상세 패널, 취소 모달 보강을 위해 `inbound.css`를 사용할 수 있다.
+- 선택형 관리 목록은 `components/components.css`의 공통 목록 스타일을 우선 사용한다.
+- 전표형 목록의 공통 구조는 `components/components.css`, 업무 흐름 표현은 `components/workflow.css`, 화면 고유 보강은 `pages/{page}.css`에 둔다.
 
 ## 검색 / 필터 카드
 

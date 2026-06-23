@@ -22,6 +22,12 @@ public interface AuthMapper {
             @Param("memberId") Long memberId
     );
 
+    long countRecentLoginFailures(
+            @Param("companyCode") String companyCode,
+            @Param("loginIp") String loginIp,
+            @Param("since") LocalDateTime since
+    );
+
     void recordLoginFailure(
             @Param("companyId") Long companyId,
             @Param("memberId") Long memberId,
@@ -49,6 +55,12 @@ public interface AuthMapper {
     void insertRefreshToken(AuthRefreshToken refreshToken);
 
     AuthRefreshTokenSession findRefreshTokenSession(String refreshTokenHash);
+
+    boolean existsActiveRefreshTokenFamily(
+            @Param("companyId") Long companyId,
+            @Param("memberId") Long memberId,
+            @Param("tokenFamilyId") String tokenFamilyId
+    );
 
     void revokeRefreshToken(
             @Param("tokenId") Long tokenId,

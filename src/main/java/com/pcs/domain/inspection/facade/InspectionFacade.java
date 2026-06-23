@@ -17,10 +17,8 @@ import com.pcs.domain.inspection.type.InspectionResult;
 import com.pcs.domain.inspection.type.InspectionType;
 import com.pcs.domain.part.type.PartGrade;
 import com.pcs.global.dto.PageResultDto;
-import com.pcs.global.error.ErrorCode;
-import com.pcs.global.error.exception.BusinessException;
-import com.pcs.global.jwt.JwtClaims;
-import com.pcs.global.jwt.JwtTokenProvider;
+import com.pcs.global.security.PcsPrincipal;
+import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.time.LocalDate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,18 +26,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 public class InspectionFacade {
 
-    private static final String TOKEN_TYPE = "Bearer";
-
     private final InspectionService inspectionService;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final WorkspaceAccessValidator workspaceAccessValidator;
 
-    public InspectionFacade(InspectionService inspectionService, JwtTokenProvider jwtTokenProvider) {
+    public InspectionFacade(InspectionService inspectionService, WorkspaceAccessValidator workspaceAccessValidator) {
         this.inspectionService = inspectionService;
-        this.jwtTokenProvider = jwtTokenProvider;
+        this.workspaceAccessValidator = workspaceAccessValidator;
     }
 
     public PageResultDto<SearchWaitingInspectionDocumentResponse, SearchWaitingInspectionDocumentSummaryResponse> searchWaitingDocuments(
-            String authorizationHeader,
+            PcsPrincipal principal,
             String pathCompanyCode,
             String keyword,
             Long partnerId,
@@ -50,9 +46,9 @@ public class InspectionFacade {
             Integer size,
             Integer limit
     ) {
-        JwtClaims claims = parseAndValidateWorkspace(authorizationHeader, pathCompanyCode);
+        PcsPrincipal checkedPrincipal = validatePrincipal(principal, pathCompanyCode);
         return inspectionService.searchWaitingDocuments(
-                claims.companyId(),
+                checkedPrincipal.companyId(),
                 keyword,
                 partnerId,
                 inspectionStatus,
@@ -65,58 +61,76 @@ public class InspectionFacade {
     }
 
     public InspectionWaitingDocumentDetailResponse getWaitingDocumentUnits(
-            String authorizationHeader,
+            PcsPrincipal principal,
             String pathCompanyCode,
             Long documentId
     ) {
-        JwtClaims claims = parseAndValidateWorkspace(authorizationHeader, pathCompanyCode);
-        return inspectionService.getWaitingDocumentUnits(claims.companyId(), documentId);
+        PcsPrincipal checkedPrincipal = validatePrincipal(principal, pathCompanyCode);
+        return inspectionService.getWaitingDocumentUnits(checkedPrincipal.companyId(), documentId);
     }
 
     @Transactional
     public CreateInspectionResponse createInitialInspection(
-            String authorizationHeader,
+            PcsPrincipal principal,
             String pathCompanyCode,
             CreateInspectionRequest request
     ) {
-        JwtClaims claims = parseAndValidateWorkspace(authorizationHeader, pathCompanyCode);
-        return inspectionService.createInitialInspection(claims.companyId(), claims.memberId(), request);
+        PcsPrincipal checkedPrincipal = validatePrincipal(principal, pathCompanyCode);
+        return inspectionService.createInitialInspection(
+                checkedPrincipal.companyId(),
+                checkedPrincipal.memberId(),
+                request
+        );
     }
 
     @Transactional
     public CreateInspectionResponse createBulkInitialInspection(
-            String authorizationHeader,
+            PcsPrincipal principal,
             String pathCompanyCode,
             CreateBulkInspectionRequest request
     ) {
-        JwtClaims claims = parseAndValidateWorkspace(authorizationHeader, pathCompanyCode);
-        return inspectionService.createBulkInitialInspection(claims.companyId(), claims.memberId(), request);
+        PcsPrincipal checkedPrincipal = validatePrincipal(principal, pathCompanyCode);
+        return inspectionService.createBulkInitialInspection(
+                checkedPrincipal.companyId(),
+                checkedPrincipal.memberId(),
+                request
+        );
     }
 
     @Transactional
     public CreateInspectionResponse createCorrection(
-            String authorizationHeader,
+            PcsPrincipal principal,
             String pathCompanyCode,
             Long inspectionId,
             CreateInspectionRevisionRequest request
     ) {
-        JwtClaims claims = parseAndValidateWorkspace(authorizationHeader, pathCompanyCode);
-        return inspectionService.createCorrection(claims.companyId(), claims.memberId(), inspectionId, request);
+        PcsPrincipal checkedPrincipal = validatePrincipal(principal, pathCompanyCode);
+        return inspectionService.createCorrection(
+                checkedPrincipal.companyId(),
+                checkedPrincipal.memberId(),
+                inspectionId,
+                request
+        );
     }
 
     @Transactional
     public CreateInspectionResponse createReinspection(
-            String authorizationHeader,
+            PcsPrincipal principal,
             String pathCompanyCode,
             Long inspectionId,
             CreateInspectionRevisionRequest request
     ) {
-        JwtClaims claims = parseAndValidateWorkspace(authorizationHeader, pathCompanyCode);
-        return inspectionService.createReinspection(claims.companyId(), claims.memberId(), inspectionId, request);
+        PcsPrincipal checkedPrincipal = validatePrincipal(principal, pathCompanyCode);
+        return inspectionService.createReinspection(
+                checkedPrincipal.companyId(),
+                checkedPrincipal.memberId(),
+                inspectionId,
+                request
+        );
     }
 
     public PageResultDto<SearchInspectionHistoryResponse, SearchInspectionHistorySummaryResponse> searchHistories(
-            String authorizationHeader,
+            PcsPrincipal principal,
             String pathCompanyCode,
             String keyword,
             Long documentId,
@@ -131,9 +145,9 @@ public class InspectionFacade {
             Integer size,
             Integer limit
     ) {
-        JwtClaims claims = parseAndValidateWorkspace(authorizationHeader, pathCompanyCode);
+        PcsPrincipal checkedPrincipal = validatePrincipal(principal, pathCompanyCode);
         return inspectionService.searchHistories(
-                claims.companyId(),
+                checkedPrincipal.companyId(),
                 keyword,
                 documentId,
                 unitId,
@@ -150,7 +164,7 @@ public class InspectionFacade {
     }
 
     public PageResultDto<SearchInspectionHistoryDocumentResponse, SearchInspectionHistoryDocumentSummaryResponse> searchHistoryDocuments(
-            String authorizationHeader,
+            PcsPrincipal principal,
             String pathCompanyCode,
             String keyword,
             Long partId,
@@ -163,9 +177,9 @@ public class InspectionFacade {
             Integer size,
             Integer limit
     ) {
-        JwtClaims claims = parseAndValidateWorkspace(authorizationHeader, pathCompanyCode);
+        PcsPrincipal checkedPrincipal = validatePrincipal(principal, pathCompanyCode);
         return inspectionService.searchHistoryDocuments(
-                claims.companyId(),
+                checkedPrincipal.companyId(),
                 keyword,
                 partId,
                 inspectionType,
@@ -180,37 +194,15 @@ public class InspectionFacade {
     }
 
     public InspectionHistoryDetailResponse getHistoryDetail(
-            String authorizationHeader,
+            PcsPrincipal principal,
             String pathCompanyCode,
             Long inspectionId
     ) {
-        JwtClaims claims = parseAndValidateWorkspace(authorizationHeader, pathCompanyCode);
-        return inspectionService.getHistoryDetail(claims.companyId(), inspectionId);
+        PcsPrincipal checkedPrincipal = validatePrincipal(principal, pathCompanyCode);
+        return inspectionService.getHistoryDetail(checkedPrincipal.companyId(), inspectionId);
     }
 
-    private JwtClaims parseAndValidateWorkspace(String authorizationHeader, String pathCompanyCode) {
-        JwtClaims claims = jwtTokenProvider.parseAccessToken(extractBearerToken(authorizationHeader));
-        validateWorkspace(pathCompanyCode, claims.companyCode());
-        return claims;
-    }
-
-    private void validateWorkspace(String pathCompanyCode, String tokenCompanyCode) {
-        if (pathCompanyCode == null || pathCompanyCode.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "업체 코드가 필요합니다.");
-        }
-        if (!tokenCompanyCode.equals(pathCompanyCode.trim().toLowerCase())) {
-            throw new BusinessException(ErrorCode.AUTH_WORKSPACE_MISMATCH);
-        }
-    }
-
-    private String extractBearerToken(String authorizationHeader) {
-        if (authorizationHeader == null || authorizationHeader.isBlank()) {
-            throw new BusinessException(ErrorCode.AUTH_REQUIRED);
-        }
-        String prefix = TOKEN_TYPE + " ";
-        if (!authorizationHeader.startsWith(prefix)) {
-            throw new BusinessException(ErrorCode.AUTH_TOKEN_INVALID);
-        }
-        return authorizationHeader.substring(prefix.length()).trim();
+    private PcsPrincipal validatePrincipal(PcsPrincipal principal, String pathCompanyCode) {
+        return workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
     }
 }

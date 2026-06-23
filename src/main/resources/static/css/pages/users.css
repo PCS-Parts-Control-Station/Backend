@@ -1,0 +1,86 @@
+@layer page {
+.user-filter-form {
+    grid-template-columns: minmax(280px, 1fr) minmax(122px, 150px) 76px;
+}
+
+.data-row.user-management-data-row {
+    grid-template-columns: minmax(180px, 1.45fr) 104px 104px 112px;
+}
+
+.data-row.user-management-data-row:not(.empty-data-row):not(.table-head) {
+    min-height: 72px;
+}
+
+.data-row.user-management-data-row:not(.empty-data-row) > [role="cell"] {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.data-row.user-management-data-row:not(.empty-data-row) strong,
+.data-row.user-management-data-row:not(.empty-data-row) span[role="cell"] {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.user-identity-cell {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.user-identity-cell strong,
+.user-identity-cell small {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.user-identity-cell strong {
+    color: var(--navy);
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.user-identity-cell small {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.user-role-cell,
+.user-account-status-cell,
+.user-password-status-cell {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.confirm-summary .mono-value {
+    color: var(--blue);
+    font-family: var(--ff-mono);
+    font-size: 16px;
+}
+
+@media (max-width: 1280px) {
+.has-collapsible-sidebar .user-filter-form {
+        grid-template-columns: minmax(0, 1fr) minmax(122px, 144px) 76px;
+    }
+}
+
+@media (max-width: 840px) {
+.has-collapsible-sidebar .user-filter-form,
+    .data-row.user-management-data-row {
+        grid-template-columns: 1fr;
+    }
+
+.user-role-cell,
+    .user-account-status-cell,
+    .user-password-status-cell {
+        display: grid;
+        gap: 5px;
+    }
+}
+}

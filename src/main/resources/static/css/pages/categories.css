@@ -1,0 +1,19 @@
+@layer page {
+.data-row.simple-management-data-row {
+    grid-template-columns: minmax(160px, 0.9fr) minmax(220px, 1.35fr) 88px 92px;
+}
+
+@media (max-width: 840px) {
+.data-row.simple-management-data-row {
+        grid-template-columns: 1fr;
+    }
+
+.data-row.simple-management-data-row span[role="cell"]:not([data-label]):nth-child(3)::before {
+        content: "품목 수";
+    }
+
+.data-row.simple-management-data-row span[role="cell"]:not([data-label]):nth-child(4)::before {
+        content: "수정일";
+    }
+}
+}

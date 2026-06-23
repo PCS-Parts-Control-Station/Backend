@@ -1,21 +1,30 @@
 package com.pcs.global.jwt;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.pcs.domain.member.type.MemberRole;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
-import java.security.MessageDigest;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Base64;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import javax.crypto.Mac;
+import java.util.List;
+import java.util.UUID;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import org.springframework.core.env.Environment;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.JwtException;
+import org.springframework.security.oauth2.jwt.JwtValidationException;
+import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.JwsHeader;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -25,24 +34,33 @@ public class JwtTokenProvider {
     private static final String ACCESS_TOKEN_TYPE = "ACCESS";
     private static final String DEFAULT_LOCAL_SECRET = "pcs-local-development-jwt-secret-change-before-production-2026";
     private static final int MIN_SECRET_BYTE_LENGTH = 32;
-    private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {
-    };
 
-    private final ObjectMapper objectMapper;
-    private final SecretKeySpec secretKeySpec;
+    private final JwtEncoder jwtEncoder;
+    private final JwtDecoder jwtDecoder;
     private final Duration accessTokenDuration;
+    private final String issuer;
+    private final String audience;
 
     public JwtTokenProvider(
-            ObjectMapper objectMapper,
             @Value("${pcs.jwt.secret}") String secret,
             @Value("${pcs.jwt.access-token-expiration-minutes}") long accessTokenExpirationMinutes,
             @Value("${pcs.jwt.allow-default-secret:false}") boolean allowDefaultSecret,
+            @Value("${pcs.jwt.issuer:pcs}") String issuer,
+            @Value("${pcs.jwt.audience:pcs-api}") String audience,
             Environment environment
     ) {
         validateSecret(secret, allowDefaultSecret, environment);
-        this.objectMapper = objectMapper;
-        this.secretKeySpec = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), HMAC_ALGORITHM);
+        this.issuer = requireConfiguration(issuer, "pcs.jwt.issuer");
+        this.audience = requireConfiguration(audience, "pcs.jwt.audience");
         this.accessTokenDuration = Duration.ofMinutes(accessTokenExpirationMinutes);
+
+        SecretKey secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), HMAC_ALGORITHM);
+        this.jwtEncoder = new NimbusJwtEncoder(new ImmutableSecret<>(secretKey));
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(secretKey)
+                .macAlgorithm(MacAlgorithm.HS256)
+                .build();
+        decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(this.issuer));
+        this.jwtDecoder = decoder;
     }
 
     public String createAccessToken(
@@ -50,110 +68,94 @@ public class JwtTokenProvider {
             Long companyId,
             String companyCode,
             String loginId,
-            MemberRole role
+            MemberRole role,
+            String sessionId
     ) {
         Instant issuedAt = Instant.now();
         Instant expiresAt = issuedAt.plus(accessTokenDuration);
+        String tokenId = UUID.randomUUID().toString();
 
-        Map<String, Object> header = new LinkedHashMap<>();
-        header.put("alg", "HS256");
-        header.put("typ", "JWT");
-
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("sub", memberId.toString());
-        payload.put("memberId", memberId);
-        payload.put("companyId", companyId);
-        payload.put("companyCode", companyCode);
-        payload.put("loginId", loginId);
-        payload.put("role", role.name());
-        payload.put("tokenType", ACCESS_TOKEN_TYPE);
-        payload.put("iat", issuedAt.getEpochSecond());
-        payload.put("exp", expiresAt.getEpochSecond());
-
-        String encodedHeader = encodeJson(header);
-        String encodedPayload = encodeJson(payload);
-        String signingInput = encodedHeader + "." + encodedPayload;
-        return signingInput + "." + sign(signingInput);
+        JwsHeader header = JwsHeader.with(MacAlgorithm.HS256)
+                .type("JWT")
+                .build();
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer(issuer)
+                .audience(List.of(audience))
+                .subject(memberId.toString())
+                .id(tokenId)
+                .issuedAt(issuedAt)
+                .expiresAt(expiresAt)
+                .claim("memberId", memberId)
+                .claim("companyId", companyId)
+                .claim("companyCode", companyCode)
+                .claim("loginId", loginId)
+                .claim("role", role.name())
+                .claim("tokenType", ACCESS_TOKEN_TYPE)
+                .claim("sid", requireConfiguration(sessionId, "sessionId"))
+                .build();
+        return jwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
     }
 
     public JwtClaims parseAccessToken(String token) {
-        Map<String, Object> payload = parseAndVerify(token);
-        String tokenType = readString(payload, "tokenType");
-        if (!ACCESS_TOKEN_TYPE.equals(tokenType)) {
+        if (token == null || token.isBlank()) {
+            throw new BusinessException(ErrorCode.AUTH_REQUIRED);
+        }
+
+        try {
+            Jwt jwt = jwtDecoder.decode(token);
+            String tokenType = requiredClaim(jwt, "tokenType");
+            if (!ACCESS_TOKEN_TYPE.equals(tokenType) || !jwt.getAudience().contains(audience)) {
+                throw new BusinessException(ErrorCode.AUTH_TOKEN_INVALID);
+            }
+
+            return new JwtClaims(
+                    requiredLongClaim(jwt, "memberId"),
+                    requiredLongClaim(jwt, "companyId"),
+                    requiredClaim(jwt, "companyCode"),
+                    requiredClaim(jwt, "loginId"),
+                    MemberRole.valueOf(requiredClaim(jwt, "role")),
+                    tokenType,
+                    requiredClaim(jwt, "jti"),
+                    requiredClaim(jwt, "sid"),
+                    jwt.getIssuedAt(),
+                    jwt.getExpiresAt()
+            );
+        } catch (BusinessException exception) {
+            throw exception;
+        } catch (JwtValidationException exception) {
+            if (exception.getErrors().stream()
+                    .map(error -> error.getDescription().toLowerCase())
+                    .anyMatch(description -> description.contains("expired"))) {
+                throw new BusinessException(ErrorCode.AUTH_TOKEN_EXPIRED);
+            }
+            throw new BusinessException(ErrorCode.AUTH_TOKEN_INVALID);
+        } catch (JwtException | IllegalArgumentException exception) {
             throw new BusinessException(ErrorCode.AUTH_TOKEN_INVALID);
         }
-
-        Instant expiresAt = Instant.ofEpochSecond(readLong(payload, "exp"));
-        if (expiresAt.isBefore(Instant.now())) {
-            throw new BusinessException(ErrorCode.AUTH_TOKEN_EXPIRED);
-        }
-
-        return new JwtClaims(
-                readLong(payload, "memberId"),
-                readLong(payload, "companyId"),
-                readString(payload, "companyCode"),
-                readString(payload, "loginId"),
-                MemberRole.valueOf(readString(payload, "role")),
-                tokenType,
-                expiresAt
-        );
     }
 
     public long getAccessTokenExpiresInSeconds() {
         return accessTokenDuration.toSeconds();
     }
 
-    private Map<String, Object> parseAndVerify(String token) {
-        if (token == null || token.isBlank()) {
-            throw new BusinessException(ErrorCode.AUTH_REQUIRED);
-        }
-
-        String[] parts = token.split("\\.");
-        if (parts.length != 3) {
+    private String requiredClaim(Jwt jwt, String name) {
+        String value = jwt.getClaimAsString(name);
+        if (value == null || value.isBlank()) {
             throw new BusinessException(ErrorCode.AUTH_TOKEN_INVALID);
         }
+        return value;
+    }
 
-        String signingInput = parts[0] + "." + parts[1];
-        String expectedSignature = sign(signingInput);
-        if (!constantTimeEquals(expectedSignature, parts[2])) {
+    private Long requiredLongClaim(Jwt jwt, String name) {
+        Object value = jwt.getClaim(name);
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        try {
+            return Long.valueOf(requiredClaim(jwt, name));
+        } catch (NumberFormatException exception) {
             throw new BusinessException(ErrorCode.AUTH_TOKEN_INVALID);
         }
-
-        try {
-            byte[] payloadBytes = Base64.getUrlDecoder().decode(parts[1]);
-            return objectMapper.readValue(payloadBytes, MAP_TYPE);
-        } catch (Exception exception) {
-            throw new BusinessException(ErrorCode.AUTH_TOKEN_INVALID);
-        }
-    }
-
-    private String encodeJson(Map<String, Object> value) {
-        try {
-            return Base64.getUrlEncoder()
-                    .withoutPadding()
-                    .encodeToString(objectMapper.writeValueAsBytes(value));
-        } catch (Exception exception) {
-            throw new IllegalStateException("Failed to encode JWT JSON.", exception);
-        }
-    }
-
-    private String sign(String value) {
-        try {
-            Mac mac = Mac.getInstance(HMAC_ALGORITHM);
-            mac.init(secretKeySpec);
-            return Base64.getUrlEncoder()
-                    .withoutPadding()
-                    .encodeToString(mac.doFinal(value.getBytes(StandardCharsets.UTF_8)));
-        } catch (Exception exception) {
-            throw new IllegalStateException("Failed to sign JWT.", exception);
-        }
-    }
-
-    private boolean constantTimeEquals(String left, String right) {
-        return MessageDigest.isEqual(
-                left.getBytes(StandardCharsets.US_ASCII),
-                right.getBytes(StandardCharsets.US_ASCII)
-        );
     }
 
     private void validateSecret(String secret, boolean allowDefaultSecret, Environment environment) {
@@ -168,6 +170,13 @@ public class JwtTokenProvider {
         }
     }
 
+    private String requireConfiguration(String value, String name) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException(name + " must not be blank.");
+        }
+        return value.trim();
+    }
+
     private boolean isProductionProfile(Environment environment) {
         for (String profile : environment.getActiveProfiles()) {
             if ("prod".equalsIgnoreCase(profile) || "production".equalsIgnoreCase(profile)) {
@@ -175,25 +184,5 @@ public class JwtTokenProvider {
             }
         }
         return false;
-    }
-
-    private String readString(Map<String, Object> payload, String key) {
-        Object value = payload.get(key);
-        if (value == null) {
-            throw new BusinessException(ErrorCode.AUTH_TOKEN_INVALID);
-        }
-        return value.toString();
-    }
-
-    private Long readLong(Map<String, Object> payload, String key) {
-        Object value = payload.get(key);
-        if (value instanceof Number number) {
-            return number.longValue();
-        }
-        try {
-            return Long.parseLong(readString(payload, key));
-        } catch (NumberFormatException exception) {
-            throw new BusinessException(ErrorCode.AUTH_TOKEN_INVALID);
-        }
     }
 }

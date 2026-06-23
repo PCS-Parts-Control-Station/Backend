@@ -1,7 +1,5 @@
 (function () {
-    const companyCode = window.PcsWorkspace?.getCompanyCode?.()
-            || window.location.pathname.split("/").filter(Boolean)[1]
-            || "";
+    const companyCode = window.PcsWorkspace.getCompanyCode();
 
     const roleLabels = {
         OWNER: "최고 관리자",
@@ -28,10 +26,8 @@
     const passwordForm = document.querySelector("[data-mypage-password-form]");
     const passwordSection = document.querySelector("[data-password-section]");
     const passwordRequiredNotice = document.querySelector("[data-password-required-notice]");
-    const showToast = window.PcsFeedback?.toast || ((message, type = "info") => {
-        window.PcsUi?.toast?.({ message, type });
-    });
-    const setFormSaving = window.PcsForm?.setSaving || (() => {});
+    const showToast = window.PcsFeedback.toast;
+    const setFormSaving = window.PcsForm.setSaving;
 
     const text = (selector, value) => {
         const element = document.querySelector(selector);

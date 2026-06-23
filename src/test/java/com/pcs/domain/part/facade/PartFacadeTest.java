@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.pcs.domain.member.type.MemberRole;
+import com.pcs.domain.part.dto.response.SearchPartSummaryResponse;
 import com.pcs.domain.part.service.PartService;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
@@ -26,7 +27,6 @@ class PartFacadeTest {
 
     @Mock
     private PartService partService;
-
     @Mock
     private WorkspaceAccessValidator workspaceAccessValidator;
 
@@ -40,13 +40,15 @@ class PartFacadeTest {
     @Test
     void searchParts_success() {
         PcsPrincipal principal = principal(1L, 10L, "acme");
+        SearchPartSummaryResponse summary = new SearchPartSummaryResponse(0, 0, 0);
         when(workspaceAccessValidator.validateAuthenticatedWorkspace(principal, "acme")).thenReturn(principal);
         when(partService.searchParts(1L, "RTX", null, true, 0, 20, null))
-                .thenReturn(PageResultDto.of(List.of(), 0, 20, 0, null));
+                .thenReturn(PageResultDto.of(List.of(), 0, 20, 0, summary));
 
         var response = partFacade.searchParts(principal, "acme", "RTX", null, true, 0, 20, null);
 
         assertEquals(0, response.content().size());
+        assertEquals(summary, response.summary());
         verify(partService).searchParts(1L, "RTX", null, true, 0, 20, null);
     }
 
