@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pcs.domain.dashboard.mapper.DashboardMapper">
+
+    <select id="isCompanyActive" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM tb_company
+            WHERE company_id = #{companyId}
+              AND active = TRUE
+        )
+    </select>
+
+    <select id="summarize" resultType="com.pcs.domain.dashboard.dto.response.DashboardSummaryResponse">
+        SELECT
+            COALESCE((
+                SELECT SUM(m.quantity)
+                FROM tb_stock_movement m
+                WHERE m.company_id = #{companyId}
+                  AND m.movement_type = 'INBOUND'
+                  AND m.movement_status = 'COMPLETED'
+                  AND m.canceled_movement_id IS NULL
+                  AND m.created_at &gt;= #{todayStart}
+                  AND m.created_at &lt; #{tomorrowStart}
+            ), 0) AS today_inbound_quantity,
+            COALESCE((
+                SELECT SUM(m.quantity)
+                FROM tb_stock_movement m
+                WHERE m.company_id = #{companyId}
+                  AND m.movement_type = 'OUTBOUND'
+                  AND m.movement_status = 'COMPLETED'
+                  AND m.canceled_movement_id IS NULL
+                  AND m.created_at &gt;= #{todayStart}
+                  AND m.created_at &lt; #{tomorrowStart}
+            ), 0) AS today_outbound_quantity,
+            COALESCE((
+                SELECT COUNT(*)
+                FROM tb_pc_part_unit u
+                WHERE u.company_id = #{companyId}
+                  AND u.active = TRUE
+                  AND u.unit_status = 'IN_STOCK'
+                  AND u.inspection_status = 'WAITING'
+            ), 0) AS waiting_inspection_quantity,
+            COALESCE((
+                SELECT COUNT(*)
+                FROM tb_pc_part_unit u
+                WHERE u.company_id = #{companyId}
+                  AND u.active = TRUE
+                  AND u.unit_status = 'IN_STOCK'
+                  AND u.inspection_status = 'COMPLETED'
+                  AND u.sales_status = 'AVAILABLE'
+            ), 0) AS available_quantity,
+            COALESCE((
+                SELECT COUNT(*)
+                FROM tb_pc_part_unit u
+                WHERE u.company_id = #{companyId}
+                  AND u.active = TRUE
+                  AND u.unit_status = 'IN_STOCK'
+                  AND u.sales_status = 'HOLD'
+            ), 0) AS hold_quantity,
+            COALESCE((
+                SELECT COUNT(*)
+                FROM tb_pc_part_unit u
+                WHERE u.company_id = #{companyId}
+                  AND u.active = TRUE
+                  AND u.unit_status = 'IN_STOCK'
+                  AND u.sales_status = 'UNAVAILABLE'
+            ), 0) AS unavailable_quantity,
+            COALESCE((
+                SELECT COUNT(*)
+                FROM tb_inspection i
+                WHERE i.company_id = #{companyId}
+                  AND i.inspected_at &gt;= #{todayStart}
+                  AND i.inspected_at &lt; #{tomorrowStart}
+                  AND (i.result = 'FAIL' OR i.grade = 'DEFECTIVE')
+            ), 0) AS today_defective_inspection_count
+    </select>
+
+    <select id="summarizeStockStatus" resultType="com.pcs.domain.dashboard.dto.response.DashboardStockStatusResponse">
+        SELECT
+            status.available_quantity,
+            status.hold_quantity,
+            status.unavailable_quantity,
+            CASE
+                WHEN status.total_quantity = 0 THEN 0
+                ELSE FLOOR(status.available_quantity * 100 / status.total_quantity)
+            END AS available_ratio,
+            CASE
+                WHEN status.total_quantity = 0 THEN 0
+                ELSE FLOOR(status.hold_quantity * 100 / status.total_quantity)
+            END AS hold_ratio,
+            CASE
+                WHEN status.total_quantity = 0 THEN 0
+                ELSE FLOOR(status.unavailable_quantity * 100 / status.total_quantity)
+            END AS unavailable_ratio
+        FROM (
+            SELECT
+                COALESCE(SUM(CASE
+                    WHEN u.inspection_status = 'COMPLETED' AND u.sales_status = 'AVAILABLE'
+                    THEN 1 ELSE 0
+                END), 0) AS available_quantity,
+                COALESCE(SUM(CASE WHEN u.sales_status = 'HOLD' THEN 1 ELSE 0 END), 0) AS hold_quantity,
+                COALESCE(SUM(CASE WHEN u.sales_status = 'UNAVAILABLE' THEN 1 ELSE 0 END), 0) AS unavailable_quantity,
+                COUNT(*) AS total_quantity
+            FROM tb_pc_part_unit u
+            WHERE u.company_id = #{companyId}
+              AND u.active = TRUE
+              AND u.unit_status = 'IN_STOCK'
+        ) status
+    </select>
+
+    <select id="findTodos" resultType="com.pcs.domain.dashboard.dto.response.DashboardTodoResponse">
+        SELECT
+            todo.type,
+            todo.label,
+            todo.title,
+            todo.count,
+            todo.route
+        FROM (
+            SELECT
+                1 AS sort_order,
+                'INSPECTION_WAITING' AS type,
+                '검수 대기' AS label,
+                CONCAT(p.part_name, CASE
+                    WHEN p.model_name IS NOT NULL AND p.model_name != ''
+                    THEN CONCAT(' ', p.model_name)
+                    ELSE ''
+                END) AS title,
+                COUNT(*) AS count,
+                'inspection' AS route
+            FROM tb_pc_part_unit u
+            INNER JOIN tb_pc_part p
+                ON p.company_id = u.company_id
+               AND p.part_id = u.part_id
+            WHERE u.company_id = #{companyId}
+              AND u.active = TRUE
+              AND u.unit_status = 'IN_STOCK'
+              AND u.inspection_status = 'WAITING'
+            GROUP BY p.part_id, p.part_name, p.model_name
+
+            UNION ALL
+
+            SELECT
+                2 AS sort_order,
+                'STOCK_HOLD' AS type,
+                '출고 보류' AS label,
+                CONCAT(p.part_name, CASE
+                    WHEN p.model_name IS NOT NULL AND p.model_name != ''
+                    THEN CONCAT(' ', p.model_name)
+                    ELSE ''
+                END) AS title,
+                COUNT(*) AS count,
+                'outbound' AS route
+            FROM tb_pc_part_unit u
+            INNER JOIN tb_pc_part p
+                ON p.company_id = u.company_id
+               AND p.part_id = u.part_id
+            WHERE u.company_id = #{companyId}
+              AND u.active = TRUE
+              AND u.unit_status = 'IN_STOCK'
+              AND u.sales_status = 'HOLD'
+            GROUP BY p.part_id, p.part_name, p.model_name
+
+            UNION ALL
+
+            SELECT
+                3 AS sort_order,
+                'STOCK_UNAVAILABLE' AS type,
+                '출고 불가' AS label,
+                CONCAT(p.part_name, CASE
+                    WHEN p.model_name IS NOT NULL AND p.model_name != ''
+                    THEN CONCAT(' ', p.model_name)
+                    ELSE ''
+                END) AS title,
+                COUNT(*) AS count,
+                'outbound' AS route
+            FROM tb_pc_part_unit u
+            INNER JOIN tb_pc_part p
+                ON p.company_id = u.company_id
+               AND p.part_id = u.part_id
+            WHERE u.company_id = #{companyId}
+              AND u.active = TRUE
+              AND u.unit_status = 'IN_STOCK'
+              AND u.sales_status = 'UNAVAILABLE'
+            GROUP BY p.part_id, p.part_name, p.model_name
+        ) todo
+        WHERE todo.count &gt; 0
+        ORDER BY todo.sort_order ASC, todo.count DESC, todo.title ASC
+        LIMIT #{size}
+    </select>
+
+    <select id="findRecentActivities" resultType="com.pcs.domain.dashboard.dto.response.DashboardRecentActivityResponse">
+        SELECT
+            activity.type,
+            activity.label,
+            activity.document_no,
+            activity.title,
+            activity.quantity,
+            activity.processed_at,
+            activity.route
+        FROM (
+            SELECT
+                d.document_type AS type,
+                CASE
+                    WHEN d.document_type = 'INBOUND' THEN '입고'
+                    ELSE '출고'
+                END AS label,
+                d.document_no,
+                COALESCE(
+                    CONCAT(
+                        SUBSTRING_INDEX(GROUP_CONCAT(DISTINCT p.part_name ORDER BY m.movement_id SEPARATOR ','), ',', 1),
+                        CASE
+                            WHEN COUNT(DISTINCT m.movement_id) &gt; 1
+                            THEN CONCAT(' 외 ', COUNT(DISTINCT m.movement_id) - 1, '종')
+                            ELSE ''
+                        END
+                    ),
+                    '-'
+                ) AS title,
+                COALESCE(SUM(m.quantity), 0) AS quantity,
+                d.created_at AS processed_at,
+                CASE
+                    WHEN d.document_type = 'INBOUND' THEN 'inbound'
+                    ELSE 'outbound'
+                END AS route
+            FROM tb_stock_document d
+            LEFT JOIN tb_stock_movement m
+                ON m.company_id = d.company_id
+               AND m.document_id = d.document_id
+               AND m.canceled_movement_id IS NULL
+            LEFT JOIN tb_pc_part p
+                ON p.company_id = m.company_id
+               AND p.part_id = m.part_id
+            WHERE d.company_id = #{companyId}
+              AND d.document_status = 'COMPLETED'
+            GROUP BY d.document_id, d.document_type, d.document_no, d.created_at
+
+            UNION ALL
+
+            SELECT
+                inspection_activity.type,
+                inspection_activity.label,
+                inspection_activity.document_no,
+                CONCAT(
+                    SUBSTRING_INDEX(
+                        GROUP_CONCAT(DISTINCT inspection_activity.part_title ORDER BY inspection_activity.part_id SEPARATOR ','),
+                        ',',
+                        1
+                    ),
+                    CASE
+                        WHEN COUNT(DISTINCT inspection_activity.part_id) &gt; 1
+                        THEN CONCAT(' 외 ', COUNT(DISTINCT inspection_activity.part_id) - 1, '종')
+                        ELSE ''
+                    END
+                ) AS title,
+                COUNT(*) AS quantity,
+                inspection_activity.processed_at,
+                inspection_activity.route
+            FROM (
+                SELECT
+                    i.inspection_type AS type,
+                    CASE
+                        WHEN i.inspection_type = 'INITIAL' THEN '검수'
+                        WHEN i.inspection_type = 'CORRECTION' THEN '정정'
+                        ELSE '재검수'
+                    END AS label,
+                    COALESCE((
+                        SELECT d2.document_no
+                        FROM tb_stock_movement_unit mu2
+                        INNER JOIN tb_stock_movement m2
+                            ON m2.movement_id = mu2.movement_id
+                           AND m2.company_id = i.company_id
+                           AND m2.movement_type = 'INBOUND'
+                           AND m2.canceled_movement_id IS NULL
+                        INNER JOIN tb_stock_document d2
+                            ON d2.company_id = m2.company_id
+                           AND d2.document_id = m2.document_id
+                        WHERE mu2.unit_id = i.unit_id
+                        ORDER BY d2.created_at DESC, d2.document_id DESC
+                        LIMIT 1
+                    ), '-') AS document_no,
+                    p.part_id,
+                    CONCAT(p.part_name, CASE
+                        WHEN p.model_name IS NOT NULL AND p.model_name != ''
+                        THEN CONCAT(' ', p.model_name)
+                        ELSE ''
+                    END) AS part_title,
+                    i.inspected_at AS processed_at,
+                    'history/inspection' AS route
+                FROM tb_inspection i
+                INNER JOIN tb_pc_part_unit u
+                    ON u.company_id = i.company_id
+                   AND u.unit_id = i.unit_id
+                INNER JOIN tb_pc_part p
+                    ON p.company_id = u.company_id
+                   AND p.part_id = u.part_id
+                WHERE i.company_id = #{companyId}
+            ) inspection_activity
+            GROUP BY
+                inspection_activity.type,
+                inspection_activity.label,
+                inspection_activity.document_no,
+                inspection_activity.processed_at,
+                inspection_activity.route
+        ) activity
+        ORDER BY activity.processed_at DESC
+        LIMIT #{size}
+    </select>
+</mapper>

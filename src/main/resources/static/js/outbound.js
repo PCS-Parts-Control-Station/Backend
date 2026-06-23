@@ -302,8 +302,7 @@
             <span role="cell" data-label="수량">${numberText(stockDocument.totalQuantity)}개</span>
             <span role="cell" data-label="상태"><em class="badge ${documentStatusClass(stockDocument.documentStatus)}">${documentStatusLabel(stockDocument.documentStatus)}</em></span>
             <span role="cell" data-label="출고일">${formatDate(stockDocument.createdAt)}</span>
-            <span role="cell" class="row-actions" data-label="관리">
-                <button type="button" data-document-detail="${stockDocument.documentId}">상세</button>
+            <span role="cell" class="row-actions" data-label="취소">
                 <button type="button" data-document-cancel="${stockDocument.documentId}"${isCanceled ? " disabled" : ""}>${isCanceled ? "취소됨" : "취소"}</button>
             </span>
         `;
@@ -638,13 +637,6 @@
     });
 
     outboundTable.addEventListener("click", (event) => {
-        const detailButton = event.target.closest("[data-document-detail]");
-        if (detailButton) {
-            event.stopPropagation();
-            loadDocumentDetail(detailButton.dataset.documentDetail, { trigger: detailButton });
-            return;
-        }
-
         const cancelButton = event.target.closest("[data-document-cancel]");
         if (cancelButton) {
             event.stopPropagation();

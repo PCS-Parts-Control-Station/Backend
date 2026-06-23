@@ -94,6 +94,7 @@
         LEFT JOIN tb_stock_movement m
             ON m.company_id = d.company_id
            AND m.document_id = d.document_id
+           AND m.canceled_movement_id IS NULL
         LEFT JOIN tb_pc_part p
             ON p.company_id = m.company_id
            AND p.part_id = m.part_id
@@ -124,6 +125,7 @@
         LEFT JOIN tb_stock_movement m
             ON m.company_id = d.company_id
            AND m.document_id = d.document_id
+           AND m.canceled_movement_id IS NULL
         LEFT JOIN tb_pc_part p
             ON p.company_id = m.company_id
            AND p.part_id = m.part_id
@@ -151,6 +153,7 @@
                        AND u.unit_id = mu.unit_id
                     WHERE mw.company_id = d.company_id
                       AND mw.document_id = d.document_id
+                      AND mw.canceled_movement_id IS NULL
                       AND u.inspection_status = 'WAITING'
                       AND u.unit_status = 'IN_STOCK'
                       AND u.active = TRUE
@@ -162,6 +165,7 @@
             LEFT JOIN tb_stock_movement m
                 ON m.company_id = d.company_id
                AND m.document_id = d.document_id
+               AND m.canceled_movement_id IS NULL
             LEFT JOIN tb_pc_part p
                 ON p.company_id = m.company_id
                AND p.part_id = m.part_id
