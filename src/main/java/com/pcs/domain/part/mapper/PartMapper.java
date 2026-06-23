@@ -2,6 +2,7 @@ package com.pcs.domain.part.mapper;
 
 import com.pcs.domain.part.dto.response.PartSpecValueResponse;
 import com.pcs.domain.part.dto.response.SearchPartResponse;
+import com.pcs.domain.part.dto.response.SearchPartSummaryResponse;
 import com.pcs.domain.part.entity.PartSpecValue;
 import com.pcs.domain.part.entity.PcPart;
 import java.util.List;
@@ -21,6 +22,13 @@ public interface PartMapper {
     );
 
     long countParts(
+            @Param("companyId") Long companyId,
+            @Param("keyword") String keyword,
+            @Param("categoryId") Long categoryId,
+            @Param("active") Boolean active
+    );
+
+    SearchPartSummaryResponse summarizeParts(
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,
             @Param("categoryId") Long categoryId,

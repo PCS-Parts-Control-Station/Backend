@@ -351,6 +351,16 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&pag
 }
 ```
 
+품목 검색 응답의 `summary`는 현재 페이지가 아니라 동일 검색 조건의 전체 결과 기준이다.
+
+```json
+{
+  "totalCount": 950,
+  "totalStock": 120,
+  "lowStockCount": 10
+}
+```
+
 품목 등록 요청 예시:
 
 ```json

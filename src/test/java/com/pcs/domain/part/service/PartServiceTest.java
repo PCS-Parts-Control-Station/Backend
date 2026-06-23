@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.pcs.domain.category.mapper.PartSpecMapper;
 import com.pcs.domain.part.dto.response.SearchPartResponse;
+import com.pcs.domain.part.dto.response.SearchPartSummaryResponse;
 import com.pcs.domain.part.mapper.PartMapper;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
@@ -40,22 +41,28 @@ class PartServiceTest {
     @Test
     void searchParts_usesDefaultActiveAndLimit() {
         Long companyId = 1L;
-        when(partMapper.countParts(companyId, "RTX", null, true)).thenReturn(1L);
+        SearchPartSummaryResponse summary = new SearchPartSummaryResponse(5, 12, 2);
+        when(partMapper.countParts(companyId, "RTX", null, true)).thenReturn(5L);
         when(partMapper.searchParts(companyId, "RTX", null, true, 10, 0)).thenReturn(List.of(part()));
+        when(partMapper.summarizeParts(companyId, "RTX", null, true)).thenReturn(summary);
 
         var response = partService.searchParts(companyId, " RTX ", null, null, null, null, null);
 
         assertEquals(1, response.content().size());
         assertEquals(0, response.page());
         assertEquals(10, response.size());
+        assertEquals(5, response.totalElements());
+        assertEquals(summary, response.summary());
         verify(partMapper).searchParts(companyId, "RTX", null, true, 10, 0);
     }
 
     @Test
     void searchParts_capsLimitToMax() {
         Long companyId = 1L;
+        SearchPartSummaryResponse summary = new SearchPartSummaryResponse(1, 1, 1);
         when(partMapper.countParts(companyId, null, 3L, false)).thenReturn(1L);
         when(partMapper.searchParts(companyId, null, 3L, false, 100, 100)).thenReturn(List.of(part()));
+        when(partMapper.summarizeParts(companyId, null, 3L, false)).thenReturn(summary);
 
         partService.searchParts(companyId, " ", 3L, false, 1, 200, null);
 

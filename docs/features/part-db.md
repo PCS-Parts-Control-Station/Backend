@@ -18,6 +18,7 @@ tb_pc_part_unit
 - `part_code`는 화면에서 받지 않고 서버에서 생성한다.
 - `part_code`는 `UNIQUE(company_id, part_code)` 제약을 만족해야 한다.
 - 품목 목록의 현재 재고는 `tb_part_stock.quantity`를 `LEFT JOIN`해서 조회한다.
+- 품목 목록 summary의 총 재고와 재고 부족 수는 페이지 제한이 아니라 동일 검색 조건의 전체 결과 기준으로 집계한다.
 
 ## 사양값 저장
 
