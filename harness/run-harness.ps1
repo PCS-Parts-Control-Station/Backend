@@ -427,8 +427,13 @@ function Get-GitTrackedFiles {
 
 function Test-GitForbiddenFiles {
     $trackedFiles = @(Get-GitTrackedFiles)
+    $trackedPathSet = @{}
+    foreach ($trackedFile in $trackedFiles) {
+        $trackedPathSet[(Normalize-HarnessPath $trackedFile)] = $true
+    }
+
     if ($trackedFiles.Count -gt 0) {
-        $forbiddenTrackedFiles = @($trackedFiles | Where-Object { Test-ForbiddenGitPath $_ } | Select-Object -Unique)
+        $forbiddenTrackedFiles = @($trackedPathSet.Keys | Where-Object { Test-ForbiddenGitPath $_ } | Select-Object -Unique)
         if ($forbiddenTrackedFiles.Count -gt 0) {
             Add-Result "FAIL" "GIT_TRACKED_FORBIDDEN_FILES" "Forbidden files are already tracked by Git: $($forbiddenTrackedFiles -join ', ')" "Remove them from Git tracking with git rm --cached, keep them in .gitignore, then commit the removal."
         } else {
@@ -452,8 +457,7 @@ function Test-GitForbiddenFiles {
             continue
         }
 
-        $absolutePath = Join-Path $ProjectRoot $normalizedPath
-        if (Test-Path $absolutePath) {
+        if ($trackedPathSet.ContainsKey($normalizedPath)) {
             $forbiddenChangedFiles.Add($normalizedPath) | Out-Null
         }
     }
