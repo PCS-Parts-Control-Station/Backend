@@ -79,6 +79,8 @@ Long memberId = jwtTokenProvider.parse(token);
 ## 재발급 기준
 
 - access token 만료 시 `pcs-api.js`가 `/api/auth/refresh`를 호출한다.
+- 로그아웃·비밀번호 변경·관리자 초기화로 access token의 `sid` 세션이 폐기된 경우에도 서버는 `AUTH-003`을 반환하고 같은 refresh 재시도 흐름을 사용한다.
+- 폐기된 세션은 refresh도 실패하므로 access token을 제거하고 로그인 화면으로 이동한다.
 - refresh token 회전, 만료, 재사용 감지 정책은 `docs/features/auth.md`를 따른다.
 - refresh 실패 시 재로그인이 필요하다.
 

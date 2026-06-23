@@ -148,6 +148,26 @@
         LIMIT 1
     </select>
 
+    <select id="existsActiveRefreshTokenFamily" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM tb_auth_refresh_token t
+            JOIN tb_company c
+                ON c.company_id = t.company_id
+            JOIN tb_member m
+                ON m.company_id = t.company_id
+               AND m.member_id = t.member_id
+            WHERE t.company_id = #{companyId}
+              AND t.member_id = #{memberId}
+              AND t.token_family_id = #{tokenFamilyId}
+              AND t.revoked_at IS NULL
+              AND t.expires_at &gt; CURRENT_TIMESTAMP(6)
+              AND c.active = TRUE
+              AND m.active = TRUE
+            LIMIT 1
+        )
+    </select>
+
     <update id="revokeRefreshToken">
         UPDATE tb_auth_refresh_token
         SET revoked_at = CURRENT_TIMESTAMP(6),

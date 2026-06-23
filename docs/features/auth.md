@@ -29,6 +29,8 @@ com.pcs.domain.auth
 - access token은 Spring Security Nimbus JWT 구현으로 HS256 서명·검증한다.
 - access token에는 표준 claim `iss`, `aud`, `sub`, `jti`, `iat`, `exp`와 업무 claim `memberId`, `companyId`, `companyCode`, `loginId`, `role`, `tokenType`, `sid`를 담는다.
 - `jti`는 Access Token별 UUID, `sid`는 연결된 refresh token family ID를 사용한다.
+- 서명 검증을 통과한 access token도 `sid`, `companyId`, `memberId`에 해당하는 활성 refresh token family가 DB에 존재해야 인증된다.
+- access token 세션 검증은 활성 회사·활성 회원, 미폐기 refresh token, refresh token 만료 시각을 함께 확인한다.
 - refresh token은 HttpOnly Cookie로 관리한다.
 - refresh token 원문은 DB에 저장하지 않고 SHA-256 해시만 저장한다.
 - refresh token cookie의 `Secure` 속성은 환경 설정으로 제어한다. 로컬 HTTP는 `false`, 운영 HTTPS는 `true`로 설정한다.
@@ -49,9 +51,11 @@ com.pcs.domain.auth
 - refresh token 재발급은 rotation 방식으로 처리한다. 재발급 성공 시 새 access token과 새 refresh token을 함께 발급하고, 기존 refresh token은 `ROTATED`로 폐기한다.
 - refresh token 만료는 `EXPIRED`, 회전된 토큰 재사용은 `REUSE_DETECTED`로 분리한다.
 - 회전된 refresh token이 다시 사용되면 같은 token family의 활성 refresh token을 `REUSE_DETECTED`로 폐기한다.
+- 로그아웃은 전달된 refresh token 한 건이 아니라 같은 token family 전체를 `LOGOUT`으로 폐기한다. 이미 회전된 refresh token이 전달되어도 패밀리를 추적해 폐기한다.
 - 로그인 이후 정적 화면의 인증 API 호출 방식은 `docs/ai/pcs-auth-client-rules.md`를 따른다.
 - API 인증 판별은 Spring Security에서 처리한다.
 - JWT 파싱과 `SecurityContext` 인증 객체 생성은 `global/security/JwtAuthenticationFilter`가 담당한다.
+- JWT 서명 검증 후 access token의 활성 세션 판별은 `global/security/AccessTokenSessionValidator`가 담당한다.
 - 인증이 필요한 Controller는 Authorization 헤더를 직접 파싱하지 않고 `@AuthenticationPrincipal PcsPrincipal`을 사용한다.
 - Security 인증 실패/권한 실패 응답도 `docs/ai/pcs-backend-common-rules.md` 기준의 JSON 형식으로 반환한다.
 
@@ -61,6 +65,14 @@ com.pcs.domain.auth
 - 기존 활성 refresh token은 모두 `ADMIN_REVOKED`로 폐기하여 새 `sid` 세션으로 다시 로그인하게 한다.
 - 기존 형식 Access Token은 `iss`, `aud`, `jti`, `sid` 검증을 통과하지 못하므로 배포 후 즉시 사용할 수 없다.
 - 기존 `TEMPORARY` 계정은 임시 비밀번호를 만료 처리한다. 관리자가 사용자 관리에서 난수 임시 비밀번호를 다시 발급해야 한다.
+
+## 파트1-2 Access Token 즉시 무효화
+
+- `JwtAuthenticationFilter`는 JWT 서명·claim 검증 후 `AccessTokenSessionValidator`로 `sid`의 활성 세션을 확인한다.
+- 로그아웃, refresh token 재사용 감지, 비밀번호 변경, 임시 비밀번호 재발급으로 해당 패밀리 또는 회원의 refresh token이 폐기되면 기존 access token도 다음 요청부터 `AUTH_TOKEN_INVALID`로 거부한다.
+- 활성 세션 조회가 실패했을 때 인증을 허용하지 않는다. 예상하지 못한 저장소 장애는 `COMMON-999` JSON 응답으로 실패 처리한다.
+- 별도 인메모리 블랙리스트는 사용하지 않는다. 모든 서버 인스턴스가 동일한 DB 세션 상태를 확인해 노드 간 무효화 불일치를 방지한다.
+- access token 요청마다 `tb_auth_refresh_token.idx_auth_refresh_family`를 사용하는 존재 여부 조회를 수행한다.
 
 ## 기능 개발 시 인증 사용 규칙
 
@@ -118,8 +130,8 @@ pcsRefreshToken={token}; HttpOnly; SameSite=Strict; Path=/api/auth
 - access token 없음: `AUTH_REQUIRED`
 - access token 위조 또는 형식 오류: `AUTH_TOKEN_INVALID`
 - access token 또는 refresh token 만료: `AUTH_TOKEN_EXPIRED`
-- 로그인 이후 세션 검증 중 비활성 회사: `COMPANY_INACTIVE`
-- 로그인 이후 세션 검증 중 비활성 사용자: `MEMBER_INACTIVE`
+- refresh token 검증 중 비활성 회사: `COMPANY_INACTIVE`
+- refresh token 검증 중 비활성 사용자: `MEMBER_INACTIVE`
 - 임시 비밀번호 만료: `MEMBER_TEMP_PASSWORD_EXPIRED`
 - 임시 비밀번호 변경 필요: `MEMBER_PASSWORD_CHANGE_REQUIRED`
 - URL 업체 코드와 JWT 업체 코드 불일치: `AUTH_WORKSPACE_MISMATCH`

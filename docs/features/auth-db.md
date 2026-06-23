@@ -93,14 +93,23 @@ tb_auth_login_history.idx_auth_login_history_company_ip_date
 
 로그아웃 시:
 
-- refresh token을 `revoked_reason = LOGOUT`으로 폐기한다.
+- 전달된 refresh token의 `token_family_id`를 조회하고 같은 패밀리의 활성 refresh token을 모두 `revoked_reason = LOGOUT`으로 폐기한다.
+- 전달된 refresh token이 이미 `ROTATED` 상태여도 같은 패밀리의 후속 활성 토큰을 폐기한다.
 - refresh cookie를 만료시킨다.
+
+access token 인증 시:
+
+- JWT의 `companyId`, `memberId`, `sid`로 `tb_auth_refresh_token`의 활성 패밀리 존재 여부를 조회한다.
+- `revoked_at IS NULL`, `expires_at > CURRENT_TIMESTAMP(6)`, 활성 회사, 활성 회원 조건을 모두 만족해야 한다.
+- 조회는 `idx_auth_refresh_family (company_id, member_id, token_family_id)`를 사용한다.
+- 조건을 만족하는 row가 없으면 access token 자체 만료 전이라도 `AUTH_TOKEN_INVALID`로 처리한다.
 
 비밀번호 초기화/변경 시:
 
 - 해당 `company_id`, `member_id`의 `revoked_at IS NULL` refresh token을 모두 폐기한다.
 - 폐기 사유는 `ADMIN_REVOKED`를 사용한다.
 - 비밀번호 초기화와 refresh token 폐기는 하나의 트랜잭션으로 처리한다.
+- refresh token 폐기에 실패하면 비밀번호 변경 또는 초기화도 롤백한다.
 
 ## 실패 시나리오
 

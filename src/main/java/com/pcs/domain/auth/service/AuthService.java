@@ -229,13 +229,18 @@ public class AuthService {
         authMapper.revokeRefreshTokenFamily(companyId, memberId, tokenFamilyId, revokedReason);
     }
 
-    public void revokeRefreshTokenByRawValue(String rawRefreshToken, RefreshTokenRevokedReason revokedReason) {
+    public void revokeRefreshTokenFamilyByRawValue(String rawRefreshToken, RefreshTokenRevokedReason revokedReason) {
         if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
             return;
         }
         AuthRefreshTokenSession session = authMapper.findRefreshTokenSession(hashRefreshToken(rawRefreshToken));
-        if (session != null && !session.isRevoked()) {
-            revokeRefreshToken(session.getTokenId(), revokedReason, null);
+        if (session != null) {
+            revokeRefreshTokenFamily(
+                    session.getCompanyId(),
+                    session.getMemberId(),
+                    session.getTokenFamilyId(),
+                    revokedReason
+            );
         }
     }
 
