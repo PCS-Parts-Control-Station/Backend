@@ -1,5 +1,5 @@
 (function () {
-    const PAGE_SIZE = 100;
+    const PAGE_SIZE = 10;
     const SORT_STEP = 10;
 
     const INPUT_TYPES = {
@@ -34,6 +34,10 @@
 
     const filterForm = document.querySelector("[data-template-filter-form]");
     const table = document.querySelector("[data-template-table]");
+    const pagination = document.querySelector("[data-template-pagination]");
+    const pageInfo = document.querySelector("[data-template-page-info]");
+    const prevButton = document.querySelector("[data-template-page-prev]");
+    const nextButton = document.querySelector("[data-template-page-next]");
     const panelViews = document.querySelectorAll("[data-template-panel]");
     const detailDrawer = document.querySelector("[data-template-detail-drawer]");
     const createDrawerButton = document.querySelector("[data-template-create-drawer]");
@@ -44,10 +48,12 @@
     const categoryPickerList = document.querySelector("[data-template-category-picker-list]");
     const categoryPickerMessage = document.querySelector("[data-template-category-picker-message]");
     const categoryPickerInputs = {
+        filter: filterForm?.elements.categoryId,
         create: createForm?.elements.categoryId,
         edit: editForm?.elements.categoryId
     };
     const categoryPickerLabels = {
+        filter: document.querySelector("[data-template-filter-category-label]"),
         create: document.querySelector("[data-template-create-category-label]"),
         edit: document.querySelector("[data-template-edit-category-label]")
     };
@@ -104,6 +110,16 @@
     let selectedItemId = null;
     let editingItemId = null;
     let editingOptionId = null;
+    let templatePageData = {
+        content: [],
+        page: 0,
+        size: PAGE_SIZE,
+        totalElements: 0,
+        totalPages: 0,
+        hasPrevious: false,
+        hasNext: false,
+        summary: null
+    };
     let lastDrawerTrigger = null;
     let dragState = null;
     let isSorting = false;
@@ -111,6 +127,51 @@
     let activeCategoryPickerMode = "create";
 
     const numberText = (value) => Number(value || 0).toLocaleString("ko-KR");
+
+    const normalizeTemplatePageData = (data) => {
+        if (window.PcsPagination) {
+            return window.PcsPagination.normalizePageData(data, PAGE_SIZE);
+        }
+
+        return {
+            content: Array.isArray(data?.content) ? data.content : [],
+            page: Math.max(0, Number(data?.page || 0)),
+            size: Math.max(1, Number(data?.size || PAGE_SIZE)),
+            totalElements: Math.max(0, Number(data?.totalElements || 0)),
+            totalPages: Math.max(0, Number(data?.totalPages || 0)),
+            hasPrevious: data?.hasPrevious === true,
+            hasNext: data?.hasNext === true,
+            summary: data?.summary || null
+        };
+    };
+
+    const updateTemplatePagination = () => {
+        if (window.PcsPagination) {
+            window.PcsPagination.updateControls({
+                pageData: templatePageData,
+                container: pagination,
+                info: pageInfo,
+                prevButton,
+                nextButton
+            });
+            return;
+        }
+
+        if (pagination) {
+            pagination.hidden = templatePageData.totalPages <= 1;
+        }
+        if (pageInfo) {
+            pageInfo.textContent = templatePageData.totalPages
+                ? `${templatePageData.page + 1} / ${templatePageData.totalPages} 페이지 · 총 ${numberText(templatePageData.totalElements)}건`
+                : "0건";
+        }
+        if (prevButton) {
+            prevButton.disabled = !templatePageData.hasPrevious;
+        }
+        if (nextButton) {
+            nextButton.disabled = !templatePageData.hasNext;
+        }
+    };
 
     const getCompanyCode = () => {
         const match = window.location.pathname.match(/^\/w\/([^/]+)/);
@@ -151,11 +212,11 @@
         if (!input || !label) {
             return;
         }
-        label.textContent = input.value ? getCategoryNameById(input.value) : "선택";
+        label.textContent = input.value ? getCategoryNameById(input.value) : mode === "filter" ? "전체" : "선택";
     };
 
     const syncAllCategoryLabels = () => {
-        ["create", "edit"].forEach(syncCategoryLabel);
+        ["filter", "create", "edit"].forEach(syncCategoryLabel);
     };
 
     const setCategoryValue = (mode, categoryId) => {
@@ -165,6 +226,29 @@
         }
         input.value = normalizeString(categoryId);
         syncCategoryLabel(mode);
+    };
+
+    const createCategoryPickerAllOption = (selectedCategoryId) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "category-picker-option";
+        if (!selectedCategoryId) {
+            button.classList.add("is-selected");
+        }
+
+        const name = document.createElement("strong");
+        name.textContent = "전체 분류";
+
+        const description = document.createElement("small");
+        description.textContent = "분류 조건 없이 전체 템플릿을 조회합니다.";
+
+        button.append(name, description);
+        button.addEventListener("click", () => {
+            setCategoryValue("filter", "");
+            closeCategoryPicker();
+        });
+
+        return button;
     };
 
     const matchesCategoryKeyword = (category, keyword) => {
@@ -206,6 +290,10 @@
         const selectedCategoryId = categoryPickerInputs[activeCategoryPickerMode]?.value || "";
         const filteredCategories = categories.filter((category) => matchesCategoryKeyword(category, keyword));
         categoryPickerList.innerHTML = "";
+
+        if (activeCategoryPickerMode === "filter" && !keyword) {
+            categoryPickerList.append(createCategoryPickerAllOption(selectedCategoryId));
+        }
 
         if (!filteredCategories.length) {
             const empty = document.createElement("p");
@@ -676,7 +764,6 @@
     };
 
     const populateCategorySelects = () => {
-        renderCategoryOptions(filterForm?.elements.categoryId, { includeAll: true });
         syncAllCategoryLabels();
     };
 
@@ -756,9 +843,10 @@
         updateSelectedRow();
     };
 
-    const loadTemplates = async ({ preferredTemplateId = selectedTemplateId } = {}) => {
+    const loadTemplates = async ({ preferredTemplateId = selectedTemplateId, page = templatePageData.page } = {}) => {
+        const nextPage = Math.max(0, Number(page || 0));
         const params = new URLSearchParams({
-            page: "0",
+            page: String(nextPage),
             size: String(PAGE_SIZE)
         });
         const keyword = filterForm?.elements.keyword?.value.trim();
@@ -770,9 +858,11 @@
 
         setEmptyMessage("검수 템플릿 목록을 불러오는 중입니다.");
         const data = await window.PcsApi.getData(`${apiBase()}/inspection-templates?${params.toString()}`, apiOptions());
-        templates = (data?.content || []).map(normalizeTemplateSummary);
-        updateSummary(data?.summary || null);
+        templatePageData = normalizeTemplatePageData(data);
+        templates = templatePageData.content.map(normalizeTemplateSummary);
+        updateSummary(templatePageData.summary || null);
         renderRows();
+        updateTemplatePagination();
 
         if (!templates.length) {
             return;
@@ -800,6 +890,7 @@
         if (filterForm.elements.categoryId) {
             filterForm.elements.categoryId.value = "";
         }
+        syncCategoryLabel("filter");
         if (filterForm.elements.active) {
             filterForm.elements.active.value = "";
         }
@@ -1535,9 +1626,31 @@
     filterForm?.addEventListener("submit", async (event) => {
         event.preventDefault();
         try {
-            await loadTemplates({ preferredTemplateId: null });
+            await loadTemplates({ preferredTemplateId: null, page: 0 });
         } catch (error) {
             handleApiError(error, "검수 템플릿 목록 조회에 실패했습니다.");
+        }
+    });
+
+    prevButton?.addEventListener("click", async () => {
+        if (!templatePageData.hasPrevious) {
+            return;
+        }
+        try {
+            await loadTemplates({ page: templatePageData.page - 1 });
+        } catch (error) {
+            handleApiError(error, "이전 페이지 조회에 실패했습니다.");
+        }
+    });
+
+    nextButton?.addEventListener("click", async () => {
+        if (!templatePageData.hasNext) {
+            return;
+        }
+        try {
+            await loadTemplates({ page: templatePageData.page + 1 });
+        } catch (error) {
+            handleApiError(error, "다음 페이지 조회에 실패했습니다.");
         }
     });
 
@@ -1674,7 +1787,7 @@
             createForm.reset();
             setCategoryValue("create", "");
             createForm.elements.active.checked = true;
-            await loadTemplates({ preferredTemplateId: selectedTemplateId });
+            await loadTemplates({ preferredTemplateId: selectedTemplateId, page: 0 });
             showToast("템플릿을 등록했습니다.", "success");
         } catch (error) {
             handleApiError(error, "템플릿 등록에 실패했습니다.");
