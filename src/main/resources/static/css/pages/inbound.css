@@ -404,6 +404,7 @@
 }
 
 .partner-picker-button {
+    box-sizing: border-box;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     gap: 12px;
@@ -411,9 +412,9 @@
     width: 100%;
     min-height: var(--control-height);
     padding: 0 16px;
-    border: 1px solid var(--line-strong);
+    border: 1px solid var(--line-strong, #cbd5e1);
     border-radius: var(--radius);
-    background: var(--surface);
+    background: var(--surface, #ffffff);
     color: var(--ink);
     text-align: left;
     cursor: pointer;

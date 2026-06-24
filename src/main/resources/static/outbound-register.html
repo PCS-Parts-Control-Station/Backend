@@ -9,15 +9,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/workflow.css?20260522_split">
-    <link rel="stylesheet" href="/css/pcs-toast.css?20260527_1">
-    <link rel="stylesheet" href="/css/pages/outbound.css?20260623_selected_scroll">
     <link rel="stylesheet" href="/css/core/tokens.css?20260618_layers">
     <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
     <link rel="stylesheet" href="/css/layouts/workspace.css?20260622_sidebar_autoclose">
     <link rel="stylesheet" href="/css/components/components.css?20260618_layers">
     <link rel="stylesheet" href="/css/components/workflow.css?20260618_layers">
     <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
+    <link rel="stylesheet" href="/css/pages/outbound.css?20260623_selected_scroll">
     <link rel="stylesheet" href="/css/pages/outbound-register.css?20260622_merge">
 </head>
 <body class="has-collapsible-sidebar outbound-register-page page-outbound-register workspace-page">
@@ -106,9 +104,11 @@
                                 </label>
                                 <label>
                                     <span>품목 분류</span>
-                                    <select name="categoryId" data-category-filter>
-                                        <option value="">전체 분류</option>
-                                    </select>
+                                    <button class="category-picker-button outbound-category-picker-button" type="button" data-open-category-picker>
+                                        <span data-category-filter-label>전체 분류</span>
+                                        <small>분류 선택</small>
+                                    </button>
+                                    <input type="hidden" name="categoryId" data-category-filter>
                                 </label>
                                 <label>
                                     <span>등급</span>
@@ -245,6 +245,38 @@
         </section>
     </main>
 </div>
+
+<dialog class="part-modal category-picker-modal outbound-category-picker-modal" data-category-picker-modal aria-labelledby="outbound-category-picker-title">
+    <div class="part-modal-card">
+        <div class="part-modal-header">
+            <div>
+                <p class="page-kicker">분류 선택</p>
+                <h2 id="outbound-category-picker-title">품목 분류를 선택합니다.</h2>
+                <p>출고 가능한 관리번호를 분류 기준으로 좁혀 봅니다.</p>
+            </div>
+            <button class="modal-close-button" type="button" data-close-category-picker aria-label="닫기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M6 6l12 12" />
+                    <path d="M18 6L6 18" />
+                </svg>
+            </button>
+        </div>
+        <div class="part-modal-fields">
+            <label>
+                <span>분류 검색</span>
+                <input type="search" data-category-picker-search placeholder="예: RAM" autocomplete="off">
+            </label>
+            <div class="category-picker-list" data-category-picker-list>
+                <p class="spec-builder-empty">분류 목록을 불러오는 중입니다.</p>
+            </div>
+        </div>
+        <p class="field-message is-error modal-message" data-category-picker-message role="status" aria-live="polite"></p>
+        <div class="part-modal-actions">
+            <button class="btn btn-secondary" type="button" data-clear-category-picker>전체 분류</button>
+            <button class="btn btn-secondary" type="button" data-close-category-picker>닫기</button>
+        </div>
+    </div>
+</dialog>
 
 <script src="/js/pcs-api.js?20260526_1"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>

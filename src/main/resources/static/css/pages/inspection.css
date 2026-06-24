@@ -334,6 +334,13 @@
     line-height: 1;
 }
 
+.inspection-history-card .inspection-pagination-bar {
+    margin-top: 0;
+    min-height: 56px;
+    padding-block: 12px;
+    border-top: 1px solid var(--line);
+}
+
 .inspection-result-summary {
     display: flex;
     flex-wrap: wrap;

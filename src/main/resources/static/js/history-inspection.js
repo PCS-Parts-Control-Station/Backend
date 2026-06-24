@@ -72,7 +72,7 @@
         },
         unitStatus: {
             IN_STOCK: "재고",
-            OUTBOUND: "출고됨",
+            OUTBOUND: "출고 완료",
             DISPOSED: "폐기됨",
             CANCELED: "취소됨"
         }
@@ -157,6 +157,16 @@
             return "";
         }
         return `<em class="badge ${unitStatusBadgeClass(status)} history-unit-status-badge">${escapeHtml(LABELS.unitStatus[status] || status)}</em>`;
+    };
+
+    const resolveCurrentSalesStatus = (unitStatus, salesStatus) => {
+        if (unitStatus === "OUTBOUND") {
+            return salesStatus === "AVAILABLE" ? "판매 완료" : "출고 완료";
+        }
+        if (unitStatus === "DISPOSED" || unitStatus === "CANCELED") {
+            return LABELS.unitStatus[unitStatus] || unitStatus;
+        }
+        return LABELS.salesStatus[salesStatus] || salesStatus || "-";
     };
 
     const clearRows = (targetTable) => {
@@ -637,6 +647,7 @@
         const pageGroups = groups.slice(unitCurrentPage * UNIT_PAGE_SIZE, (unitCurrentPage + 1) * UNIT_PAGE_SIZE);
         pageGroups.forEach((group) => {
             const latest = group.latest || {};
+            const unitStatusBadge = renderUnitStatusBadge(group.unitStatus || latest.unitStatus, { hideInStock: true });
             const row = document.createElement("div");
             row.className = "data-row document-data-row history-unit-row is-selectable";
             row.setAttribute("role", "row");
@@ -647,7 +658,7 @@
             row.innerHTML = `
                 <span class="history-unit-code-cell" role="cell" data-label="관리번호">
                     <code>${escapeHtml(group.internalSerialNo || "-")}</code>
-                    ${renderUnitStatusBadge(group.unitStatus || latest.unitStatus, { hideInStock: true })}
+                    ${unitStatusBadge ? `<span class="history-unit-status-line">${unitStatusBadge}</span>` : ""}
                 </span>
                 <span class="history-stack-cell" role="cell" data-label="품목">
                     <strong>${escapeHtml(group.partName || "-")}</strong>
@@ -763,8 +774,8 @@
                             <dd>${escapeHtml(formatDate(detail.inspectedAt))}</dd>
                         </div>
                         <div>
-                            <dt>판매상태</dt>
-                            <dd>${escapeHtml(LABELS.salesStatus[detail.salesStatus] || detail.salesStatus || "-")}</dd>
+                            <dt>현재 판매상태</dt>
+                            <dd>${escapeHtml(resolveCurrentSalesStatus(detail.unitStatus, detail.salesStatus))}</dd>
                         </div>
                     </dl>
                 </div>
