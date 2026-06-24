@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="/css/layouts/workspace.css?20260622_sidebar_autoclose">
     <link rel="stylesheet" href="/css/components/components.css?20260618_layers">
     <link rel="stylesheet" href="/css/components/management-page.css?20260619_management">
-    <link rel="stylesheet" href="/css/pages/inspection-templates.css?20260618_layers">
+    <link rel="stylesheet" href="/css/pages/inspection-templates.css?20260624_template_pagination">
 </head>
 <body class="has-collapsible-sidebar inspection-template-page page-inspection-templates workspace-page">
 <div class="workspace-layout">
@@ -55,9 +55,11 @@
                         </label>
                         <label>
                             <span>분류</span>
-                            <select name="categoryId" data-template-category-filter>
-                                <option value="">전체</option>
-                            </select>
+                            <input type="hidden" name="categoryId" data-template-category-filter>
+                            <button class="category-picker-button" type="button" data-open-template-category-picker="filter">
+                                <span data-template-filter-category-label>전체</span>
+                                <small>분류 선택</small>
+                            </button>
                         </label>
                         <label>
                             <span>사용 상태</span>
@@ -112,6 +114,13 @@
                             <span role="cell" data-label="안내">검수 템플릿 목록을 불러오는 중입니다.</span>
                         </div>
                     </div>
+                    <div class="pagination-bar" data-template-pagination hidden>
+                        <p data-template-page-info>0건</p>
+                        <div class="pagination-actions">
+                            <button type="button" data-template-page-prev>이전</button>
+                            <button type="button" data-template-page-next>다음</button>
+                        </div>
+                    </div>
                 </section>
 
                 <section class="table-card management-editor-card" aria-labelledby="template-builder-title" data-template-builder>
@@ -134,7 +143,7 @@
                                     <h3 id="template-items-title">항목 목록</h3>
                                     <div class="management-editor-title-actions">
                                         <span class="management-editor-count" data-template-item-count>항목 0 · 선택지 0</span>
-                                        <button class="panel-link-button management-compact-action" type="button" data-template-item-reset hidden>항목 추가</button>
+                                        <button class="panel-link-button management-compact-action inspection-template-add-item-button" type="button" data-template-item-reset hidden>항목 추가</button>
                                     </div>
                                 </div>
                                 <div class="management-editor-list" data-template-item-list></div>
@@ -432,6 +441,7 @@
 <script src="/js/pcs-api.js?20260617_temp_password"></script>
 <script src="/js/workspace-layout.js?20260622_sidebar_autoclose"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/inspection-templates.js?20260615_item_modal"></script>
+<script src="/js/pcs-pagination.js?20260527_pagination"></script>
+<script src="/js/inspection-templates.js?20260624_template_pagination"></script>
 </body>
 </html>

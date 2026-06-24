@@ -434,6 +434,11 @@
         });
     };
 
+    const selectDocumentRow = (documentId) => {
+        selectedDocumentId = documentId ? String(documentId) : null;
+        updateSelectedRows();
+    };
+
     const setDetailStatus = (status) => {
         if (!detailFields.status) {
             return;
@@ -778,6 +783,7 @@
 
         const row = event.target.closest("[data-document-id]");
         if (row) {
+            selectDocumentRow(row.dataset.documentId);
             loadDocumentDetail(row.dataset.documentId, { trigger: row });
         }
     });
@@ -791,6 +797,7 @@
             return;
         }
         event.preventDefault();
+        selectDocumentRow(row.dataset.documentId);
         loadDocumentDetail(row.dataset.documentId, { trigger: row });
     });
 
