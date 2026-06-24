@@ -367,18 +367,22 @@
 }
 
 .workspace-quick-bar {
+    --quick-bar-height: 60px;
+    --quick-menu-size: 44px;
+    --quick-title-height: 44px;
+    --quick-title-font-size: 16px;
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     z-index: 44;
     display: grid;
-    grid-template-columns: 44px minmax(0, 1fr) auto;
+    grid-template-columns: var(--quick-menu-size) minmax(0, 1fr) auto;
     align-items: center;
     gap: 12px;
     width: 100%;
-    min-height: 60px;
-    padding: 8px 32px;
+    min-height: var(--quick-bar-height);
+    padding: 6px 32px;
     border-bottom: 1px solid var(--line);
     background: #ffffff;
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.10);
@@ -404,6 +408,14 @@
 
 .workspace-quick-bar .menu-toggle {
     display: inline-flex;
+    width: var(--quick-menu-size);
+    height: var(--quick-menu-size);
+    min-height: var(--quick-menu-size);
+}
+
+.workspace-quick-bar .menu-toggle svg {
+    width: 22px;
+    height: 22px;
 }
 
 .workspace-quick-brand {
@@ -412,15 +424,18 @@
     left: 50%;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    min-height: 40px;
-    padding: 0 10px;
+    justify-content: center;
+    min-width: 124px;
+    height: var(--quick-title-height);
+    min-height: var(--quick-title-height);
+    padding: 0 16px;
     border: 0;
     border-radius: var(--radius);
     background: transparent;
-    color: var(--ink);
-    font-size: 15px;
+    color: var(--navy);
+    font-size: var(--quick-title-font-size);
     font-weight: 800;
+    line-height: 1;
     cursor: pointer;
     transform: translate(-50%, -50%);
 }
@@ -700,14 +715,7 @@
         width: 100%;
         padding-right: 16px;
         padding-left: 16px;
-        grid-template-columns: 44px minmax(0, 1fr) auto;
-    }
-
-.workspace-quick-actions .btn {
-        min-height: 40px;
-        padding-right: 12px;
-        padding-left: 12px;
-        font-size: 13px;
+        grid-template-columns: var(--quick-menu-size) minmax(0, 1fr) auto;
     }
 
 .header-actions > * {
@@ -739,20 +747,23 @@
     }
 
 .workspace-quick-bar {
-        grid-template-columns: 40px minmax(0, 1fr);
+        --quick-bar-height: 60px;
+        --quick-menu-size: 44px;
+        --quick-title-height: 44px;
+        --quick-title-font-size: 15px;
+        grid-template-columns: var(--quick-menu-size) minmax(0, 1fr) auto;
         gap: 8px;
-        padding: 7px 10px;
+        padding: 6px 10px;
     }
 
 .workspace-quick-bar .menu-toggle {
-        width: 40px;
-        height: 40px;
+        width: var(--quick-menu-size);
+        height: var(--quick-menu-size);
+        min-height: var(--quick-menu-size);
     }
 
 .workspace-quick-actions {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        gap: 6px;
+        gap: 5px;
     }
 
 .workspace-header h1 {
