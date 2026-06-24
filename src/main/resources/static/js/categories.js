@@ -183,6 +183,33 @@
         return metaParts.join(" · ");
     };
 
+    const createSpecCardContent = (spec) => {
+        const body = document.createElement("div");
+        body.className = "management-subitem-body";
+
+        const header = document.createElement("div");
+        header.className = "management-subitem-header";
+
+        const title = document.createElement("strong");
+        title.textContent = spec.specName || "-";
+
+        const meta = document.createElement("small");
+        meta.className = "management-subitem-meta";
+        meta.textContent = specMetaText(spec);
+
+        header.append(title, meta);
+        body.append(header);
+
+        if (Array.isArray(spec.options) && spec.options.length > 0) {
+            const options = document.createElement("small");
+            options.className = "management-subitem-options";
+            options.textContent = `선택지: ${spec.options.map((option) => option.optionLabel).join(", ")}`;
+            body.append(options);
+        }
+
+        return body;
+    };
+
     const renderSpecDetail = (specDefinitions = []) => {
         if (!detailSpecList) {
             return;
@@ -199,21 +226,7 @@
         specDefinitions.forEach((spec) => {
             const item = document.createElement("article");
             item.className = "management-subitem-detail-item";
-
-            const title = document.createElement("strong");
-            title.textContent = spec.specName || "-";
-
-            const meta = document.createElement("small");
-            meta.textContent = specMetaText(spec);
-
-            item.append(title, meta);
-
-            if (Array.isArray(spec.options) && spec.options.length > 0) {
-                const options = document.createElement("small");
-                options.textContent = `선택지: ${spec.options.map((option) => option.optionLabel).join(", ")}`;
-                item.append(options);
-            }
-
+            item.append(createSpecCardContent(spec));
             detailSpecList.append(item);
         });
     };
@@ -253,20 +266,7 @@
             item.dataset.specIndex = String(index);
             item.dataset.specOwner = owner;
 
-            const body = document.createElement("div");
-            const title = document.createElement("strong");
-            title.textContent = spec.specName || "-";
-            const meta = document.createElement("small");
-            meta.textContent = specMetaText(spec);
-            body.append(title, meta);
-
-            if (Array.isArray(spec.options) && spec.options.length > 0) {
-                const options = document.createElement("small");
-                options.textContent = `선택지: ${spec.options.map((option) => option.optionLabel).join(", ")}`;
-                body.append(options);
-            }
-
-            item.append(body);
+            item.append(createSpecCardContent(spec));
 
             if (editable) {
                 const actions = document.createElement("div");

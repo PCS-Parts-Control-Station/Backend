@@ -147,7 +147,6 @@ Owner 회원가입 + 회사 생성 요청 예시:
 | POST | `/api/workspaces/{companyCode}/users` | 사용자 생성 |
 | GET | `/api/workspaces/{companyCode}/users/{memberId}` | 사용자 상세 |
 | PATCH | `/api/workspaces/{companyCode}/users/{memberId}` | 사용자 수정 |
-| PATCH | `/api/workspaces/{companyCode}/users/{memberId}/active` | 사용자 활성 여부 변경 |
 | POST | `/api/workspaces/{companyCode}/users/{memberId}/temporary-password` | 임시 비밀번호 발급 |
 | GET | `/api/workspaces/{companyCode}/users/staff-permissions` | STAFF 공통 업무 권한 조회 |
 | PATCH | `/api/workspaces/{companyCode}/users/staff-permissions` | STAFF 공통 업무 권한 저장 |
@@ -313,7 +312,7 @@ Owner 회원가입 + 회사 생성 요청 예시:
 }
 ```
 
-### 3.6 품목 / 개별 부품 / 기준 `part`
+### 3.6 품목 / 기준 `part`
 
 | Method | API | 설명 |
 |---|---|---|
@@ -321,10 +320,7 @@ Owner 회원가입 + 회사 생성 요청 예시:
 | POST | `/api/workspaces/{companyCode}/parts` | 품목 마스터 등록 |
 | GET | `/api/workspaces/{companyCode}/parts/{partId}` | 품목 상세 |
 | PATCH | `/api/workspaces/{companyCode}/parts/{partId}` | 품목 마스터 수정 |
-| GET | `/api/workspaces/{companyCode}/parts/{partId}/units` | 개별 부품 목록 |
-| GET | `/api/workspaces/{companyCode}/parts/{partId}/units/{unitId}` | 개별 부품 상세 |
-| PATCH | `/api/workspaces/{companyCode}/parts/{partId}/units/{unitId}/sales-status` | 개별 부품 판매 상태 변경 |
-| PATCH | `/api/workspaces/{companyCode}/parts/{partId}/units/{unitId}/active` | 개별 부품 활성 여부 변경 |
+
 품목 기준 입력은 현재 별도 `/standards` API가 아니라 품목 분류의 `specDefinitions`와 품목의 `specValues`를 통해 처리한다.
 
 품목 검색 요청:
@@ -350,6 +346,9 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&pag
 }
 ```
 
+품목 검색 응답은 `PageResultDto<SearchPartResponse, Void>` 구조이며 현재 `summary`는 `null`이다.
+전체 재고/재고 부족 요약이 필요하면 백엔드 summary DTO와 집계 SQL을 먼저 추가한다.
+
 품목 등록 요청 예시:
 
 ```json
@@ -360,15 +359,6 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&pag
   "manufacturer": "ZOTAC",
   "safeQuantity": 3,
   "specValues": []
-}
-```
-
-개별 부품 판매 상태 변경 요청 예시:
-
-```json
-{
-  "salesStatus": "AVAILABLE",
-  "reason": "검수 완료 후 판매 가능 처리"
 }
 ```
 
@@ -882,6 +872,7 @@ API별 특별 제한이 있으면 각 feature 문서에만 추가한다.
 docs/features/auth.md
 docs/features/company.md
 docs/features/member.md
+docs/features/mypage.md
 docs/features/partner.md
 docs/features/category.md
 docs/features/part.md

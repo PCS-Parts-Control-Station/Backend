@@ -32,10 +32,13 @@
 .inbound-management-page .document-detail-drawer {
     position: fixed;
     top: 0;
-    right: 0;
+    right: 12px;
     z-index: 90;
-    width: min(520px, calc(100vw - 32px));
-    height: 100vh;
+    width: min(520px, calc(100% - 24px));
+    max-width: calc(100% - 24px);
+    height: 100dvh;
+    min-width: 0;
+    overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
     border-left: 1px solid var(--line);
@@ -56,9 +59,22 @@
 
 .inbound-management-page .document-detail-drawer .document-detail-panel {
     min-height: 100%;
+    min-width: 0;
+    max-width: 100%;
     border: 0;
     border-radius: 0;
     box-shadow: none;
+}
+
+.inbound-management-page .document-detail-drawer,
+.inbound-management-page .document-detail-drawer * {
+    max-width: 100%;
+}
+
+.inbound-management-page .document-detail-drawer * {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .inbound-management-page .document-detail-drawer .panel-title-bar {
@@ -425,7 +441,10 @@
 
 @media (max-width: 640px) {
 .inbound-management-page .document-detail-drawer {
-        width: 100vw;
+        left: 12px;
+        right: 12px;
+        width: auto;
+        max-width: none;
     }
 
 .inbound-management-page .document-detail-drawer .panel-title-bar {

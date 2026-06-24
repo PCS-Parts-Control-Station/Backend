@@ -36,6 +36,38 @@ com.pcs.domain.partner
 - `active`를 보내지 않으면 거래 가능/거래 불가 거래처를 모두 조회한다.
 - 거래처 목록 응답은 공통 페이징 응답에 `summary`를 포함한다.
 - `summary`는 현재 검색 조건 기준의 `totalCount`, `supplierCount`, `customerCount`, `activeCount`를 제공한다.
+- `summary`는 현재 페이지가 아니라 같은 검색 조건의 전체 결과 기준이다.
+- 화면은 현재 페이지 행을 직접 세서 요약을 만들지 않고 서버 summary를 사용한다.
+
+## 요청 / 응답 필드
+
+거래처 생성과 수정은 아래 값을 받는다.
+
+```text
+partnerName
+partnerType
+partnerRole
+phone
+email
+address
+memo
+active
+```
+
+거래처 목록과 상세 응답은 아래 값을 반환한다.
+
+```text
+partnerId
+partnerName
+partnerType
+partnerRole
+phone
+email
+address
+memo
+active
+updatedAt
+```
 
 ## 화면 규칙
 

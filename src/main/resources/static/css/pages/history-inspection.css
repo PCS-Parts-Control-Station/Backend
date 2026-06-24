@@ -543,16 +543,30 @@
 .history-detail-panel {
     position: fixed;
     top: 0;
-    right: 0;
+    right: 12px;
     z-index: 61;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
-    width: min(520px, 100vw);
+    width: min(520px, calc(100% - 24px));
+    max-width: calc(100% - 24px);
+    min-width: 0;
     height: 100dvh;
+    overflow-x: hidden;
     border-left: 1px solid var(--line-strong);
     background: #ffffff;
     box-shadow: -18px 0 40px rgba(15, 23, 42, 0.18);
     animation: historyPanelIn 180ms ease-out;
+}
+
+.history-detail-panel,
+.history-detail-panel * {
+    max-width: 100%;
+}
+
+.history-detail-panel * {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 @keyframes historyPanelIn {
@@ -864,7 +878,7 @@
     }
 
 .history-detail-panel {
-        width: min(68vw, 520px);
+        width: min(520px, calc(100% - 24px));
     }
 }
 
@@ -989,7 +1003,10 @@
     }
 
 .history-detail-panel {
-        width: 100vw;
+        left: 12px;
+        right: 12px;
+        width: auto;
+        max-width: none;
     }
 }
 

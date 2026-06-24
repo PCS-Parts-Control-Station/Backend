@@ -18,10 +18,6 @@ com.pcs.domain.part
 | POST | `/api/workspaces/{companyCode}/parts` | 품목 마스터 등록 |
 | GET | `/api/workspaces/{companyCode}/parts/{partId}` | 품목 상세 |
 | PATCH | `/api/workspaces/{companyCode}/parts/{partId}` | 품목 마스터 수정 |
-| GET | `/api/workspaces/{companyCode}/parts/{partId}/units` | 개별 품목 목록 |
-| GET | `/api/workspaces/{companyCode}/parts/{partId}/units/{unitId}` | 개별 품목 상세 |
-| PATCH | `/api/workspaces/{companyCode}/parts/{partId}/units/{unitId}/sales-status` | 개별 품목 판매 상태 변경 |
-| PATCH | `/api/workspaces/{companyCode}/parts/{partId}/units/{unitId}/active` | 개별 품목 활성 여부 변경 |
 
 ## 등록 / 수정 요청
 
@@ -56,13 +52,22 @@ selectedOptionId
 - 사양 항목은 해당 분류에 정의된 `tb_part_spec_definition` 기준만 입력할 수 있다.
 - `SELECT` 사양은 `tb_part_spec_option`에 존재하는 선택지만 저장할 수 있다.
 - 수정 시 기존 사양값은 삭제 후 현재 요청값으로 다시 저장한다.
-- 검수 상태, 등급, 판매 상태는 개별 품목 기준으로 관리한다.
+- 검수 상태, 등급, 판매 상태는 입고, 검수, 출고 도메인에서 관리한다.
 - 품목 마스터와 개별 품목의 `active` 의미는 `docs/ai/pcs-status-lifecycle-rules.md` 기준을 따른다.
 - 현재 품목 관리 화면에서는 품목 마스터 사용 중지 기능을 노출하지 않는다.
 - 품목 관리 화면 헤더 오른쪽에는 품목 분류 화면으로 이동하는 `품목 분류` 버튼을 둔다.
 - 품목 검색은 `keyword`, `categoryId`, `active`, `page`, `size`, `limit` 조건을 지원하고 기본 `active=true`로 조회한다.
-- `grade = DEFECTIVE`인 개별 품목은 판매 가능 상태가 될 수 없다.
-- 판매 상태 변경 시 `tb_part_status_history`를 저장한다.
+- 현재 품목 API는 개별 품목 조회/상태 변경 엔드포인트를 제공하지 않는다.
+
+## 목록 / 검색 응답
+
+- 품목 목록은 `PageResultDto<SearchPartResponse, Void>` 구조를 사용한다.
+- `summary`는 현재 구현에서 `null`이다.
+- `totalElements`는 현재 검색 조건 기준 전체 품목 수이다.
+- `currentStockQuantity`는 `tb_part_stock.quantity`를 기준으로 내려준다.
+- 화면에서 전체 건수는 `totalElements`를 사용한다.
+- 화면의 재고/재고 부족 요약을 전체 검색 조건 기준으로 바꾸려면 백엔드 summary DTO와 집계 SQL을 먼저 추가해야 한다.
+- 현재 페이지 행을 기준으로 만든 재고/재고 부족 요약을 전체 집계로 오해하지 않게 문구와 테스트를 함께 갱신한다.
 
 ## 하네스 포인트
 
@@ -70,5 +75,5 @@ selectedOptionId
 - 등록/수정은 Facade에서 업체 코드와 JWT의 업체 코드를 비교한 뒤 Service 트랜잭션에서 처리한다.
 - 품목코드는 DB 저장 전에 생성하고 `tb_pc_part.part_code` 유니크 제약을 만족해야 한다.
 - 사양값 저장은 `tb_part_spec_value`를 사용한다.
-- 개별 품목 조회는 항상 `companyId`와 `partId` 범위를 함께 검증한다.
-- 상태 변경은 Facade 트랜잭션 안에서 처리한다.
+- 품목 상세 조회는 항상 `companyId`와 `partId` 범위를 함께 검증한다.
+- 개별 품목 API를 추가할 때는 `part.md`, `part-db.md`, `stock.md`, `inspection.md`의 책임 경계를 먼저 정리한다.

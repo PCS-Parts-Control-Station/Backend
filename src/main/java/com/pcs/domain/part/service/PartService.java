@@ -10,6 +10,7 @@ import com.pcs.domain.part.dto.request.UpdatePartRequest;
 import com.pcs.domain.part.dto.response.PartDetailResponse;
 import com.pcs.domain.part.dto.response.PartSpecValueResponse;
 import com.pcs.domain.part.dto.response.SearchPartResponse;
+import com.pcs.domain.part.dto.response.SearchPartSummaryResponse;
 import com.pcs.domain.part.entity.PartSpecValue;
 import com.pcs.domain.part.entity.PcPart;
 import com.pcs.domain.part.mapper.PartMapper;
@@ -55,7 +56,7 @@ public class PartService {
         this.workspaceAccessValidator = workspaceAccessValidator;
     }
 
-    public PageResultDto<SearchPartResponse, Void> searchParts(
+    public PageResultDto<SearchPartResponse, SearchPartSummaryResponse> searchParts(
             Long companyId,
             String keyword,
             Long categoryId,
@@ -81,8 +82,14 @@ public class PartService {
                         pageQuery.size(),
                         pageQuery.offset()
                 );
+        SearchPartSummaryResponse summary = partMapper.summarizeParts(
+                companyId,
+                normalizedKeyword,
+                categoryId,
+                normalizedActive
+        );
 
-        return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, null);
+        return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, summary);
     }
 
     public PartDetailResponse getPart(Long companyId, Long partId) {

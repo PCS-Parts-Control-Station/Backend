@@ -499,12 +499,11 @@
             return;
         }
 
-        const items = pageData.content || [];
         const summary = pageData.summary || {};
-        const totalStock = summary.totalStock ?? items.reduce((sum, part) => sum + getCurrentStock(part), 0);
-        const lowStockCount = summary.lowStockCount ?? items.filter(isLowStock).length;
+        const totalStock = summary.totalStock ?? 0;
+        const lowStockCount = summary.lowStockCount ?? 0;
 
-        summaryFields.total.textContent = numberText(summary.totalCount ?? pageData.totalElements ?? items.length);
+        summaryFields.total.textContent = numberText(summary.totalCount ?? pageData.totalElements ?? 0);
         summaryFields.stock.textContent = numberText(totalStock);
         summaryFields.lowStock.textContent = numberText(lowStockCount);
     };

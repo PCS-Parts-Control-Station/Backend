@@ -664,6 +664,7 @@ label {
 
 .pagination-bar {
     display: flex;
+    flex-direction: row-reverse;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
@@ -673,6 +674,7 @@ label {
 }
 
 .pagination-bar p {
+    margin: 0;
     color: var(--muted);
     font-size: 13px;
     font-weight: 700;
@@ -763,6 +765,8 @@ label {
     width: min(520px, calc(100% - 24px));
     max-width: calc(100% - 24px);
     max-height: 100dvh;
+    min-width: 0;
+    overflow: hidden;
     opacity: 0;
     visibility: hidden;
     transform: translateX(28px);
@@ -791,6 +795,11 @@ label {
     box-shadow: -16px 0 32px rgba(15, 23, 42, 0.14);
 }
 
+.management-detail-drawer,
+.management-detail-drawer * {
+    max-width: 100%;
+}
+
 .management-detail-drawer .panel-mode {
     min-height: 0;
     height: 100%;
@@ -809,15 +818,26 @@ label {
     min-width: 0;
     min-height: 0;
     max-height: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
     overflow-y: auto;
     padding-right: 4px;
     overscroll-behavior: contain;
     scrollbar-gutter: stable;
 }
 
+.drawer-scroll-body *,
+.management-detail-drawer .panel-title-bar *,
+.management-detail-drawer .side-detail-card *,
+.management-detail-drawer .detail-list * {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
 .management-detail-drawer .panel-title-bar {
     align-items: flex-start;
-    margin: -8px -8px 20px;
+    margin: 0 0 20px;
     padding: 0 0 18px;
     border-bottom: 1px solid var(--line);
 }
@@ -828,6 +848,7 @@ label {
 
 .panel-link-button {
     flex: 0 0 auto;
+    max-width: 100%;
     min-height: 32px;
     padding: 0 10px;
     border: 1px solid var(--line-strong);
@@ -837,6 +858,8 @@ label {
     font-size: 12px;
     font-weight: 800;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     cursor: pointer;
 }
 
@@ -1354,9 +1377,17 @@ label {
 
 .pagination-bar {
         display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+    }
+
+.pagination-bar p {
+        order: 2;
+        justify-self: end;
     }
 
 .pagination-actions {
+        order: 1;
         display: grid;
         grid-template-columns: 1fr 1fr;
     }

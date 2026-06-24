@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.pcs.domain.category.mapper.PartSpecMapper;
 import com.pcs.domain.part.dto.response.SearchPartResponse;
+import com.pcs.domain.part.dto.response.SearchPartSummaryResponse;
 import com.pcs.domain.part.mapper.PartMapper;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
@@ -41,13 +42,19 @@ class PartServiceTest {
         Long companyId = 1L;
         when(partMapper.countParts(companyId, "RTX", null, true)).thenReturn(1L);
         when(partMapper.searchParts(companyId, "RTX", null, true, 10, 0)).thenReturn(List.of(part()));
+        when(partMapper.summarizeParts(companyId, "RTX", null, true))
+                .thenReturn(new SearchPartSummaryResponse(3, 12, 2));
 
         var response = partService.searchParts(companyId, " RTX ", null, null, null, null, null);
 
         assertEquals(1, response.content().size());
         assertEquals(0, response.page());
         assertEquals(10, response.size());
+        assertEquals(3, response.summary().totalCount());
+        assertEquals(12, response.summary().totalStock());
+        assertEquals(2, response.summary().lowStockCount());
         verify(partMapper).searchParts(companyId, "RTX", null, true, 10, 0);
+        verify(partMapper).summarizeParts(companyId, "RTX", null, true);
     }
 
     @Test
@@ -55,6 +62,8 @@ class PartServiceTest {
         Long companyId = 1L;
         when(partMapper.countParts(companyId, null, 3L, false)).thenReturn(1L);
         when(partMapper.searchParts(companyId, null, 3L, false, 100, 100)).thenReturn(List.of(part()));
+        when(partMapper.summarizeParts(companyId, null, 3L, false))
+                .thenReturn(new SearchPartSummaryResponse(1, 1, 1));
 
         partService.searchParts(companyId, " ", 3L, false, 1, 200, null);
 
