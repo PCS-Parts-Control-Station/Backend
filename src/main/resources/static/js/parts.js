@@ -10,7 +10,8 @@
     const searchButton = filterForm?.querySelector("button[type='submit']");
     const panelViews = document.querySelectorAll("[data-part-panel]");
     const detailDrawer = document.querySelector("[data-part-detail-drawer]");
-    const createDrawerButton = document.querySelector("[data-part-create-drawer]");
+    const createDrawerButtons = document.querySelectorAll("[data-part-create-drawer]");
+    const createDrawerButton = createDrawerButtons[0] || null;
     const closeDrawerButtons = document.querySelectorAll("[data-close-part-drawer]");
     const createForm = document.querySelector("[data-part-create-form]");
     const editForm = document.querySelector("[data-part-edit-form]");
@@ -291,7 +292,9 @@
     const setDrawerOpen = (isOpen) => {
         detailDrawer?.classList.toggle("is-open", isOpen);
         detailDrawer?.setAttribute("aria-hidden", String(!isOpen));
-        createDrawerButton?.setAttribute("aria-expanded", String(isOpen));
+        createDrawerButtons.forEach((button) => {
+            button.setAttribute("aria-expanded", String(isOpen));
+        });
     };
 
     const openDrawer = (trigger = null) => {
@@ -954,9 +957,9 @@
         closeCategoryPicker();
     });
 
-    createDrawerButton?.addEventListener("click", (event) => {
+    createDrawerButtons.forEach((button) => button.addEventListener("click", (event) => {
         showCreatePanel(event.currentTarget);
-    });
+    }));
 
     document.querySelectorAll("[data-part-create-mode]").forEach((button) => {
         button.addEventListener("click", (event) => showCreatePanel(event.currentTarget));

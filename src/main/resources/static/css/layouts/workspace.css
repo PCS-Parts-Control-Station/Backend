@@ -366,6 +366,77 @@
     flex-wrap: wrap;
 }
 
+.workspace-quick-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 44;
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 60px;
+    padding: 8px 32px;
+    border-bottom: 1px solid var(--line);
+    background: #ffffff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.10);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-100%);
+    transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease;
+}
+
+.workspace-quick-bar.is-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.sidebar-open .workspace-quick-bar {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.workspace-quick-bar .menu-toggle {
+    display: inline-flex;
+}
+
+.workspace-quick-brand {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--ink);
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+}
+
+.workspace-quick-brand:hover {
+    background: var(--surface-soft);
+}
+
+.workspace-quick-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    min-width: 0;
+}
+
 .content-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 336px;
@@ -625,6 +696,20 @@
         grid-template-columns: 1fr 1fr;
     }
 
+.workspace-quick-bar {
+        width: 100%;
+        padding-right: 16px;
+        padding-left: 16px;
+        grid-template-columns: 44px minmax(0, 1fr) auto;
+    }
+
+.workspace-quick-actions .btn {
+        min-height: 40px;
+        padding-right: 12px;
+        padding-left: 12px;
+        font-size: 13px;
+    }
+
 .header-actions > * {
         width: 100%;
     }
@@ -651,6 +736,23 @@
 @media (max-width: 560px) {
 .header-actions {
         grid-template-columns: 1fr;
+    }
+
+.workspace-quick-bar {
+        grid-template-columns: 40px minmax(0, 1fr);
+        gap: 8px;
+        padding: 7px 10px;
+    }
+
+.workspace-quick-bar .menu-toggle {
+        width: 40px;
+        height: 40px;
+    }
+
+.workspace-quick-actions {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 6px;
     }
 
 .workspace-header h1 {
