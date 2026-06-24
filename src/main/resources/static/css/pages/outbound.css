@@ -731,11 +731,43 @@
     background: var(--surface);
 }
 
+.outbound-selected-group summary {
+    display: block;
+    cursor: pointer;
+    list-style: none;
+}
+
+.outbound-selected-group summary::-webkit-details-marker {
+    display: none;
+}
+
+.outbound-selected-group.is-collapsible:not([open]) {
+    background: var(--surface-soft);
+}
+
+.outbound-selected-group-body {
+    display: grid;
+    gap: 12px;
+}
+
+.outbound-selected-group.is-collapsible[open] .outbound-selected-units {
+    max-height: 180px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
 .outbound-selected-group-header {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 10px;
     align-items: start;
+}
+
+.outbound-selected-group-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
 }
 
 .outbound-selected-group-header b {
@@ -750,6 +782,39 @@
     font-size: 12px;
     font-weight: 800;
     white-space: nowrap;
+}
+
+.outbound-selected-group-actions button {
+    min-height: 28px;
+    padding: 0 10px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.outbound-selected-group-actions button:hover {
+    border-color: var(--red);
+    background: var(--red-soft);
+    color: var(--red);
+}
+
+.outbound-selected-toggle-label {
+    color: var(--blue);
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.outbound-selected-toggle-label::before {
+    content: "펼치기";
+}
+
+.outbound-selected-group[open] .outbound-selected-toggle-label::before {
+    content: "접기";
 }
 
 .outbound-selected-units {
@@ -868,7 +933,9 @@
 }
 
 .outbound-pagination {
+    min-height: 46px;
     margin: 0;
+    padding: 6px 14px;
     border-top: 0;
 }
 

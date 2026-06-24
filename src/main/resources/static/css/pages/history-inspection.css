@@ -11,19 +11,6 @@
     gap: 20px;
 }
 
-.history-template-link {
-    border-color: transparent;
-    background: transparent;
-    box-shadow: none;
-    color: var(--muted);
-}
-
-.history-template-link:hover {
-    border-color: var(--line);
-    background: var(--surface-soft);
-    color: var(--navy);
-}
-
 .history-filter-card {
     grid-template-columns: minmax(0, 1fr);
     gap: 14px;
@@ -43,8 +30,8 @@
 }
 
 .history-filter-form {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: minmax(260px, 1.35fr) minmax(300px, 1fr) minmax(140px, 0.48fr) max-content;
     gap: 10px;
     align-items: end;
     width: 100%;
@@ -61,12 +48,14 @@
 }
 
 .history-keyword-field {
-    flex: 1 1 300px;
+    display: grid;
+    gap: 6px;
 }
 
 .history-filter-select {
-    flex: 1 1 130px;
-    max-width: 178px;
+    display: grid;
+    gap: 6px;
+    max-width: none;
 }
 
 .history-date-range {
@@ -74,9 +63,8 @@
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     gap: 8px;
-    flex: 1 1 310px;
     min-width: 0;
-    max-width: 420px;
+    max-width: none;
     margin: 0;
     padding: 0;
     border: 0;
@@ -97,15 +85,14 @@
 }
 
 .history-filter-actions {
-    display: flex;
-    flex: 0 0 auto;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, 92px);
     gap: 8px;
     align-items: end;
     justify-content: flex-end;
     min-width: max-content;
     max-width: 100%;
-    margin-left: auto;
+    margin-left: 0;
 }
 
 .history-filter-actions .btn {
@@ -129,7 +116,17 @@
 }
 
 .history-unit-row {
-    grid-template-columns: minmax(210px, 1.05fr) minmax(220px, 1.2fr) minmax(116px, 0.7fr) 96px minmax(144px, 0.85fr);
+    grid-template-columns: minmax(220px, 1.05fr) minmax(280px, 1.42fr) minmax(108px, 0.55fr) 86px minmax(142px, 0.7fr);
+}
+
+.history-unit-row.table-head {
+    padding-right: 14px;
+    padding-left: 14px;
+}
+
+.history-unit-row.table-head > span:nth-child(3) {
+    justify-content: flex-start;
+    text-align: left;
 }
 
 .history-document-row:not(.table-head),
@@ -166,6 +163,7 @@
 }
 
 .history-unit-row > [data-label="최근 결과"],
+.history-unit-row > [data-label="이력 건수"],
 .history-unit-row > [data-label="최근 처리일"] {
     justify-content: flex-start;
     text-align: left;
@@ -175,22 +173,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-@media (max-width: 1600px) {
-    .history-keyword-field,
-    .history-date-range {
-        flex: 0 0 calc(50% - 5px);
-    }
-
-    .history-date-range {
-        max-width: none;
-    }
-
-    .history-filter-select {
-        flex: 1 1 150px;
-        max-width: none;
-    }
 }
 
 .history-document-row:focus-visible,
@@ -229,9 +211,10 @@
 }
 
 .history-unit-code-cell {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    display: grid;
+    align-content: center;
+    justify-items: start;
+    gap: 5px;
     min-width: 0;
 }
 
@@ -245,6 +228,12 @@
     padding: 0 8px;
     font-size: 10px;
     line-height: 20px;
+}
+
+.history-unit-status-line {
+    display: flex;
+    align-items: center;
+    min-width: 0;
 }
 
 .history-unit-header {
@@ -518,8 +507,15 @@
 .history-result-cell {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: 4px;
     min-width: 0;
+}
+
+@media (min-width: 721px) {
+    .history-unit-row:not(.table-head) > .history-result-cell {
+        margin-left: -8px;
+    }
 }
 
 .history-result-cell .badge-active {
@@ -889,7 +885,7 @@
     }
 
     .history-unit-row {
-        grid-template-columns: minmax(180px, 1fr) minmax(190px, 1.1fr) 112px 86px 142px;
+        grid-template-columns: minmax(210px, 1fr) minmax(240px, 1.25fr) 108px 86px 142px;
     }
 
     .history-document-detail-layout {
@@ -906,7 +902,7 @@
     }
 
     .history-unit-table {
-        min-width: 710px;
+        min-width: 780px;
     }
 
     .history-detail-panel {
@@ -1015,13 +1011,13 @@
     }
 
     .history-unit-row:not(.table-head) > .history-unit-code-cell {
-        display: flex;
-        flex-wrap: wrap;
+        display: grid;
         align-items: flex-start;
+        gap: 4px;
     }
 
     .history-unit-row:not(.table-head) > .history-unit-code-cell::before {
-        flex: 0 0 100%;
+        width: 100%;
     }
 
     .history-unit-header {
