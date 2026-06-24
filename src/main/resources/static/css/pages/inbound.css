@@ -240,11 +240,12 @@
 
 .document-data-row.is-created {
     border-color: rgba(37, 99, 235, 0.24);
-    background: var(--primary-faint, #eff6ff);
+    box-shadow: inset 3px 0 0 rgba(37, 99, 235, 0.28);
 }
 
 .document-data-row.is-selected {
     background: var(--cyan-soft);
+    box-shadow: inset 4px 0 0 var(--blue, #2563eb);
 }
 
 .document-data-row:not(.table-head):nth-last-child(2) {
