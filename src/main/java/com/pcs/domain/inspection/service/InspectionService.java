@@ -386,6 +386,7 @@ public class InspectionService {
                 row.documentNo(),
                 row.unitId(),
                 row.internalSerialNo(),
+                row.unitStatus(),
                 row.partId(),
                 row.categoryId(),
                 row.categoryName(),

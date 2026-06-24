@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="/css/layouts/workspace.css?20260622_sidebar_autoclose">
     <link rel="stylesheet" href="/css/components/components.css?20260623_drawer_clip_fix">
     <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
-    <link rel="stylesheet" href="/css/pages/history-inspection.css?20260622_merge">
+    <link rel="stylesheet" href="/css/pages/history-inspection.css?20260624_result_align">
 </head>
 <body class="has-collapsible-sidebar page-history-inspection workspace-page">
 <div class="workspace-layout">
@@ -36,7 +36,7 @@
             </div>
             <div class="header-actions">
                 <a class="btn btn-secondary" data-route="inspection">검수 관리</a>
-                <a class="btn btn-ghost history-template-link" data-route="inspection/templates">템플릿 관리</a>
+                <a class="btn btn-secondary" data-route="inspection/templates">템플릿 관리</a>
             </div>
         </header>
 
@@ -165,6 +165,13 @@
                                     <span role="columnheader">최근 처리일</span>
                                 </div>
                             </div>
+                            <div class="pagination-bar history-unit-pagination" data-history-unit-pagination hidden>
+                                <p data-history-unit-page-info>1 / 1 페이지</p>
+                                <div class="pagination-actions">
+                                    <button type="button" data-history-unit-page-prev>이전</button>
+                                    <button type="button" data-history-unit-page-next>다음</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -191,6 +198,6 @@
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
 <script src="/js/workspace-layout.js?20260622_sidebar_autoclose"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/history-inspection.js?20260619_non_modal_drawer"></script>
+<script src="/js/history-inspection.js?20260624_unit_align"></script>
 </body>
 </html>

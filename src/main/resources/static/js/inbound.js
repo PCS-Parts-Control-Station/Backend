@@ -6,6 +6,13 @@
     const filterForm = document.querySelector(".document-filter-form");
     const searchButton = filterForm?.querySelector("button[type='submit']");
     const partnerFilter = document.querySelector("[data-partner-filter]");
+    const openPartnerModalButton = document.querySelector("[data-open-partner-modal]");
+    const partnerModal = document.querySelector("[data-partner-modal]");
+    const closePartnerModalButtons = document.querySelectorAll("[data-close-partner-modal]");
+    const partnerSearchInput = document.querySelector("[data-partner-search]");
+    const partnerList = document.querySelector("[data-partner-list]");
+    const selectedPartnerName = document.querySelector("[data-selected-partner-name]");
+    const selectedPartnerMeta = document.querySelector("[data-selected-partner-meta]");
     const inboundTable = document.querySelector(".document-data-table");
     const tableHead = inboundTable?.querySelector(".table-head");
     const emptyRow = document.querySelector("[data-inbound-empty]");
@@ -51,6 +58,8 @@
     let currentDetail = null;
     let cancelTarget = null;
     let lastDetailTrigger = null;
+    let partners = [];
+    let selectedPartner = null;
 
     const getCompanyCode = () => {
         const segments = window.location.pathname.split("/").filter(Boolean);
@@ -165,21 +174,110 @@
         }
     };
 
-    const renderPartnerOptions = (partners) => {
+    const partnerRoleLabel = (role) => {
+        const normalizedRole = String(role || "").trim().toUpperCase();
+        const labels = {
+            SUPPLIER: "공급 거래처",
+            CUSTOMER: "출고 거래처",
+            CLIENT: "출고 거래처",
+            BUYER: "출고 거래처",
+            BOTH: "공급/출고 거래처",
+        };
+        return labels[normalizedRole] || "";
+    };
+
+    const partnerMeta = (partner) => {
+        const code = partner.partnerCode || partner.code || "";
+        const role = partnerRoleLabel(partner.partnerRole);
+        return [code, role].filter(Boolean).join(" · ") || "공급 거래처";
+    };
+
+    const partnerSearchText = (partner) => [
+        partner.partnerName,
+        partner.partnerCode,
+        partner.code,
+        partner.representativeName,
+        partner.phoneNumber,
+        partner.tel,
+    ].filter(Boolean).join(" ").toLowerCase();
+
+    const updateSelectedPartnerView = () => {
         if (!partnerFilter) {
             return;
         }
 
-        partnerFilter.innerHTML = "";
-        partnerFilter.append(new Option("전체 거래처", ""));
+        const hasPartner = Boolean(selectedPartner);
+        partnerFilter.value = hasPartner ? String(selectedPartner.partnerId) : "";
+        if (selectedPartnerName) {
+            selectedPartnerName.textContent = hasPartner ? selectedPartner.partnerName : "전체 거래처";
+        }
+        if (selectedPartnerMeta) {
+            selectedPartnerMeta.textContent = hasPartner ? partnerMeta(selectedPartner) : "거래처를 검색해 선택해 주세요.";
+        }
+        openPartnerModalButton?.classList.toggle("is-selected", hasPartner);
+    };
 
-        partners.forEach((partner) => {
-            partnerFilter.append(new Option(partner.partnerName, String(partner.partnerId)));
-        });
+    const renderPartnerList = () => {
+        if (!partnerList) {
+            return;
+        }
+
+        const keyword = partnerSearchInput?.value.trim().toLowerCase() || "";
+        const filteredPartners = keyword
+                ? partners.filter((partner) => partnerSearchText(partner).includes(keyword))
+                : partners;
+
+        const allSelected = !selectedPartner;
+        const allRow = `
+            <button class="partner-modal-row${allSelected ? " is-selected" : ""}" type="button" data-partner-option="">
+                <span>
+                    <strong>전체 거래처</strong>
+                    <small>거래처 조건 없이 조회합니다.</small>
+                </span>
+            </button>
+        `;
+
+        if (!filteredPartners.length) {
+            partnerList.innerHTML = `
+                ${allRow}
+                <p class="partner-modal-empty">${partners.length ? "검색 결과가 없습니다." : "선택 가능한 공급 거래처가 없습니다."}</p>
+            `;
+            return;
+        }
+
+        const partnerRows = filteredPartners.map((partner) => {
+            const selected = String(selectedPartner?.partnerId || "") === String(partner.partnerId);
+            return `
+                <button class="partner-modal-row${selected ? " is-selected" : ""}" type="button" data-partner-option="${escapeHtml(String(partner.partnerId))}">
+                    <span>
+                        <strong>${escapeHtml(partner.partnerName || "-")}</strong>
+                        <small>${escapeHtml(partnerMeta(partner))}</small>
+                    </span>
+                </button>
+            `;
+        }).join("");
+
+        partnerList.innerHTML = `${allRow}${partnerRows}`;
+    };
+
+    const selectPartnerFilter = (partner) => {
+        selectedPartner = partner;
+        updateSelectedPartnerView();
+        renderPartnerList();
+        partnerModal?.close();
+    };
+
+    const renderPartnerOptions = (nextPartners) => {
+        partners = nextPartners;
+        if (openPartnerModalButton) {
+            openPartnerModalButton.disabled = false;
+        }
+        updateSelectedPartnerView();
+        renderPartnerList();
     };
 
     const loadPartnerFilter = async () => {
-        if (!partnerFilter) {
+        if (!partnerFilter || !openPartnerModalButton) {
             return;
         }
 
@@ -187,12 +285,12 @@
         const api = window.PcsApi;
 
         if (!companyCode || !api) {
-            partnerFilter.innerHTML = '<option value="">거래처를 불러오지 못했습니다</option>';
-            partnerFilter.disabled = true;
+            openPartnerModalButton.disabled = true;
+            if (selectedPartnerName) selectedPartnerName.textContent = "거래처 조회 실패";
             return;
         }
 
-        partnerFilter.disabled = true;
+        openPartnerModalButton.disabled = true;
 
         try {
             const params = new URLSearchParams({
@@ -205,10 +303,9 @@
                 loginCompanyCode: companyCode,
             });
             renderPartnerOptions(Array.isArray(data) ? data : data?.content || []);
-            partnerFilter.disabled = false;
         } catch (error) {
-            partnerFilter.innerHTML = '<option value="">거래처를 불러오지 못했습니다</option>';
-            partnerFilter.disabled = true;
+            openPartnerModalButton.disabled = true;
+            if (selectedPartnerName) selectedPartnerName.textContent = "거래처 조회 실패";
         }
     };
 
@@ -244,17 +341,19 @@
         });
     };
 
-    const setEmptyMessage = (message) => {
+    const setEmptyMessage = (message, options = {}) => {
         if (!emptyRow) {
             return;
         }
         emptyRow.hidden = false;
+        emptyRow.classList.toggle("is-loading", options.loading === true);
         emptyRow.querySelector("[role='cell']").textContent = message;
     };
 
     const hideEmptyMessage = () => {
         if (emptyRow) {
             emptyRow.hidden = true;
+            emptyRow.classList.remove("is-loading");
         }
     };
 
@@ -285,8 +384,7 @@
             <span role="cell" data-label="수량">${Number(stockDocument.totalQuantity || 0)}개</span>
             <span role="cell" data-label="상태"><em class="badge ${documentStatusClass(stockDocument.documentStatus)}">${documentStatusLabel(stockDocument.documentStatus)}</em></span>
             <span role="cell" data-label="입고일">${formatDate(stockDocument.createdAt)}</span>
-            <span role="cell" class="row-actions" data-label="관리">
-                <button type="button" data-document-detail="${stockDocument.documentId}">상세</button>
+            <span role="cell" class="row-actions" data-label="취소">
                 <button type="button" data-document-cancel="${stockDocument.documentId}"${isCanceled ? " disabled" : ""}>${isCanceled ? "취소됨" : "취소"}</button>
             </span>
         `;
@@ -326,10 +424,6 @@
             }
         });
         updatePagination(data);
-    };
-
-    const findDocumentSummary = (documentId) => {
-        return currentDocuments.find((stockDocument) => String(stockDocument.documentId) === String(documentId)) || null;
     };
 
     const updateSelectedRows = () => {
@@ -447,7 +541,7 @@
         }
         if (!apiBase || !window.PcsApi) {
             setDetailLoading("입고 전표 상세를 불러오지 못했습니다.", documentId);
-            return;
+            return null;
         }
 
         setDetailLoading("입고 전표 상세를 불러오는 중입니다.", documentId);
@@ -457,8 +551,13 @@
                 loginCompanyCode: companyCode,
             });
             renderDocumentDetail(detail);
+            if (options.openCancelAfter === true) {
+                openCancelModal(detail);
+            }
+            return detail;
         } catch (error) {
-            setDetailLoading(error.message || "입고 전표 상세를 불러오지 못했습니다.");
+            setDetailLoading(error.message || "입고 전표 상세를 불러오지 못했습니다.", documentId);
+            return null;
         }
     };
 
@@ -589,7 +688,7 @@
             currentDetail = null;
             closeDetailDrawer({ restoreFocus: false });
         }
-        setEmptyMessage("입고 전표 목록을 불러오는 중입니다.");
+        setEmptyMessage("입고 전표 목록을 불러오는 중입니다.", { loading: true });
 
         try {
             const data = await api.getData(`/api/workspaces/${encodeURIComponent(companyCode)}/stock/documents?${buildDocumentParams(page).toString()}`, {
@@ -622,6 +721,39 @@
         loadDocuments(0);
     });
 
+    openPartnerModalButton?.addEventListener("click", () => {
+        renderPartnerList();
+        partnerModal?.showModal();
+        requestAnimationFrame(() => partnerSearchInput?.focus());
+    });
+
+    closePartnerModalButtons.forEach((button) => {
+        button.addEventListener("click", () => partnerModal?.close());
+    });
+
+    partnerSearchInput?.addEventListener("input", renderPartnerList);
+    partnerSearchInput?.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            renderPartnerList();
+        }
+    });
+
+    partnerList?.addEventListener("click", (event) => {
+        const option = event.target.closest("[data-partner-option]");
+        if (!option) {
+            return;
+        }
+        if (!option.dataset.partnerOption) {
+            selectPartnerFilter(null);
+            return;
+        }
+        const partner = partners.find((candidate) => String(candidate.partnerId) === option.dataset.partnerOption);
+        if (partner) {
+            selectPartnerFilter(partner);
+        }
+    });
+
     prevButton?.addEventListener("click", () => {
         if (!currentPageData?.hasPrevious) {
             return;
@@ -637,16 +769,10 @@
     });
 
     inboundTable?.addEventListener("click", (event) => {
-        const detailButton = event.target.closest("[data-document-detail]");
-        if (detailButton) {
-            event.stopPropagation();
-            loadDocumentDetail(detailButton.dataset.documentDetail, { trigger: detailButton });
-            return;
-        }
-
         const cancelButton = event.target.closest("[data-document-cancel]");
         if (cancelButton) {
-            openCancelModal(findDocumentSummary(cancelButton.dataset.documentCancel));
+            event.stopPropagation();
+            loadDocumentDetail(cancelButton.dataset.documentCancel, { openCancelAfter: true });
             return;
         }
 

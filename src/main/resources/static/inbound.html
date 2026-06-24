@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="/css/components/components.css?20260623_drawer_clip_fix">
     <link rel="stylesheet" href="/css/components/workflow.css?20260618_layers">
     <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
-    <link rel="stylesheet" href="/css/pages/inbound.css?20260622_merge">
+    <link rel="stylesheet" href="/css/pages/inbound.css?20260623_partner_modal">
 </head>
 <body class="has-collapsible-sidebar page-inbound workspace-page">
 <div class="workspace-layout">
@@ -65,12 +65,17 @@
                             <span>검색어</span>
                             <input type="search" name="keyword" placeholder="거래처, 품목명, 전표번호 검색">
                         </label>
-                        <label>
+                        <div class="partner-picker-field document-partner-filter-field">
                             <span>거래처</span>
-                            <select name="partnerId" data-partner-filter>
-                                <option value="">전체 거래처</option>
-                            </select>
-                        </label>
+                            <input type="hidden" name="partnerId" data-partner-filter>
+                            <button class="partner-picker-button" type="button" data-open-partner-modal>
+                                <span class="partner-picker-label">선택</span>
+                                <span class="partner-picker-value">
+                                    <strong data-selected-partner-name>전체 거래처</strong>
+                                    <small data-selected-partner-meta>거래처를 검색해 선택해 주세요.</small>
+                                </span>
+                            </button>
+                        </div>
                         <label>
                             <span>상태</span>
                             <select name="documentStatus">
@@ -120,7 +125,7 @@
                             <span role="columnheader">수량</span>
                             <span role="columnheader">상태</span>
                             <span role="columnheader">입고일</span>
-                            <span role="columnheader">관리</span>
+                            <span role="columnheader">취소</span>
                         </div>
                         <div class="data-row document-data-row empty-data-row" role="row" data-inbound-empty hidden>
                             <span role="cell" data-label="안내">입고 전표 목록을 불러오는 중입니다.</span>
@@ -196,6 +201,36 @@
     </main>
 </div>
 
+<dialog class="part-modal partner-modal" data-partner-modal aria-labelledby="partner-modal-title">
+    <div class="part-modal-card partner-modal-card">
+        <div class="part-modal-header">
+            <div>
+                <p class="page-kicker">거래처 선택</p>
+                <h2 id="partner-modal-title">거래처를 선택합니다.</h2>
+                <p>검색 후 입고 전표 조회에 사용할 거래처를 선택해 주세요.</p>
+            </div>
+            <button class="modal-close-button" type="button" data-close-partner-modal aria-label="닫기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M6 6l12 12" />
+                    <path d="M18 6 6 18" />
+                </svg>
+            </button>
+        </div>
+        <div class="partner-modal-body">
+            <div class="partner-modal-search">
+                <label>
+                    <span>거래처 검색</span>
+                    <input type="search" data-partner-search placeholder="예: 미래전자유통">
+                </label>
+            </div>
+            <div class="partner-modal-list" data-partner-list aria-live="polite"></div>
+        </div>
+        <div class="partner-modal-actions">
+            <button class="btn btn-secondary" type="button" data-close-partner-modal>닫기</button>
+        </div>
+    </div>
+</dialog>
+
 <dialog class="part-modal confirm-modal" data-cancel-modal aria-labelledby="cancel-modal-title">
     <form class="part-modal-card" method="dialog">
         <div class="part-modal-header">
@@ -237,6 +272,6 @@
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
 <script src="/js/workspace-layout.js?20260622_sidebar_autoclose"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/inbound.js?20260619_non_modal_drawer"></script>
+<script src="/js/inbound.js?20260623_partner_modal"></script>
 </body>
 </html>

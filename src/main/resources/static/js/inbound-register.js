@@ -5,7 +5,15 @@
     const submitMessage = document.querySelector("[data-submit-message]");
     const partResults = document.querySelector(".part-search-results");
     let partOptions = [...document.querySelectorAll("[data-part-option]")];
-    const partnerSelect = document.querySelector("[data-partner-select]");
+    const partnerIdInput = document.querySelector("[data-partner-id]");
+    const openPartnerModalButton = document.querySelector("[data-open-partner-modal]");
+    const partnerModal = document.querySelector("[data-partner-modal]");
+    const closePartnerModalButtons = document.querySelectorAll("[data-close-partner-modal]");
+    const partnerSearchInput = document.querySelector("[data-partner-search]");
+    const partnerSearchButton = document.querySelector("[data-partner-search-button]");
+    const partnerList = document.querySelector("[data-partner-list]");
+    const selectedPartnerName = document.querySelector("[data-selected-partner-name]");
+    const selectedPartnerMeta = document.querySelector("[data-selected-partner-meta]");
     const partnerMessage = document.querySelector("[data-partner-message]");
     const lineEmpty = document.querySelector("[data-line-empty]");
     const keywordInput = document.querySelector("[data-part-keyword]");
@@ -44,6 +52,8 @@
     };
     const CREATED_INBOUND_KEY = "pcsCreatedInboundDocument";
     let selectedPart = null;
+    let partners = [];
+    let selectedPartner = null;
     let pendingInbound = null;
     let currentRegisterStep = "1";
     let partSearchStarted = false;
@@ -127,6 +137,99 @@
         partnerMessage.classList.toggle("is-error", type === "error");
     };
 
+    const partnerRoleLabel = (role) => {
+        const normalizedRole = String(role || "").trim().toUpperCase();
+        const labels = {
+            SUPPLIER: "공급 거래처",
+            CUSTOMER: "출고 거래처",
+            CLIENT: "출고 거래처",
+            BUYER: "출고 거래처",
+            BOTH: "공급/출고 거래처",
+        };
+        return labels[normalizedRole] || "";
+    };
+
+    const partnerMeta = (partner) => {
+        const code = partner.partnerCode || partner.code || "";
+        const role = partnerRoleLabel(partner.partnerRole);
+        return [code, role].filter(Boolean).join(" · ") || "공급 거래처";
+    };
+
+    const partnerSearchText = (partner) => [
+        partner.partnerName,
+        partner.partnerCode,
+        partner.code,
+        partner.representativeName,
+        partner.phoneNumber,
+        partner.tel,
+    ].filter(Boolean).join(" ").toLowerCase();
+
+    const updateSelectedPartnerView = () => {
+        const hasPartner = Boolean(selectedPartner);
+        if (partnerIdInput) {
+            partnerIdInput.value = hasPartner ? String(selectedPartner.partnerId) : "";
+        }
+        if (selectedPartnerName) {
+            selectedPartnerName.textContent = hasPartner ? selectedPartner.partnerName : "거래처 선택";
+        }
+        if (selectedPartnerMeta) {
+            selectedPartnerMeta.textContent = hasPartner ? partnerMeta(selectedPartner) : "거래처를 검색해 선택해 주세요.";
+        }
+        openPartnerModalButton?.classList.toggle("is-selected", hasPartner);
+    };
+
+    const renderPartnerList = () => {
+        if (!partnerList) {
+            return;
+        }
+
+        const keyword = partnerSearchInput?.value.trim().toLowerCase() || "";
+        const filteredPartners = keyword
+                ? partners.filter((partner) => partnerSearchText(partner).includes(keyword))
+                : partners;
+
+        if (!filteredPartners.length) {
+            partnerList.innerHTML = `
+                <p class="partner-modal-empty">
+                    ${partners.length ? "검색 결과가 없습니다." : "선택 가능한 공급 거래처가 없습니다."}
+                </p>
+            `;
+            return;
+        }
+
+        partnerList.innerHTML = filteredPartners.map((partner) => {
+            const selected = String(selectedPartner?.partnerId || "") === String(partner.partnerId);
+            return `
+                <button class="partner-modal-row${selected ? " is-selected" : ""}" type="button" data-partner-option="${escapeHtml(String(partner.partnerId))}">
+                    <span>
+                        <strong>${escapeHtml(partner.partnerName || "-")}</strong>
+                        <small>${escapeHtml(partnerMeta(partner))}</small>
+                    </span>
+                </button>
+            `;
+        }).join("");
+    };
+
+    const selectPartner = (partner) => {
+        selectedPartner = partner;
+        updateSelectedPartnerView();
+        setPartnerMessage("");
+        updateCurrentRegisterStep("1");
+        partnerModal?.close();
+    };
+
+    const validatePartnerSelection = () => {
+        if (partnerIdInput?.value) {
+            setPartnerMessage("");
+            return true;
+        }
+
+        setPartnerMessage("거래처를 선택해 주세요.", "error");
+        openPartnerModalButton?.focus();
+        updateCurrentRegisterStep("1");
+        return false;
+    };
+
     const setPartSearchMessage = (message, type = "info") => {
         if (!partSearchMessage) {
             return;
@@ -205,12 +308,10 @@
     const serialPreview = (prefix, quantity) => {
         const count = Number(quantity) || 1;
         const createdDate = dateToken();
-        const second = count >= 2 ? `<span>${prefix}-${createdDate}-0002</span>` : "";
-        const more = count > 2 ? `<span>외 ${count - 2}개</span>` : "";
+        const more = count > 1 ? `<em>외 ${count - 1}개</em>` : "";
         return `
-            <strong>관리번호 발급 예시</strong>
+            <strong>관리번호 예시</strong>
             <span>${prefix}-${createdDate}-0001</span>
-            ${second}
             ${more}
         `;
     };
@@ -592,27 +693,15 @@
         }
     };
 
-    const renderPartners = (partners) => {
-        if (!partnerSelect) {
-            return;
-        }
-
-        partnerSelect.innerHTML = "";
-        const placeholder = new Option("거래처 선택", "");
-        partnerSelect.append(placeholder);
-
-        partners.forEach((partner) => {
-            const option = new Option(partner.partnerName, String(partner.partnerId));
-            option.dataset.partnerRole = partner.partnerRole || "";
-            partnerSelect.append(option);
-        });
-
-        partnerSelect.disabled = partners.length === 0;
+    const renderPartners = (nextPartners) => {
+        partners = nextPartners;
+        openPartnerModalButton.disabled = partners.length === 0;
+        renderPartnerList();
         setPartnerMessage(partners.length ? "" : "선택 가능한 공급 거래처가 없습니다.");
     };
 
     const loadPartners = async () => {
-        if (!partnerSelect) {
+        if (!partnerIdInput || !openPartnerModalButton) {
             return;
         }
 
@@ -620,20 +709,18 @@
         const api = window.PcsApi;
 
         if (!companyCode) {
-            partnerSelect.innerHTML = '<option value="">업체 코드를 확인할 수 없습니다</option>';
-            partnerSelect.disabled = true;
+            openPartnerModalButton.disabled = true;
             setPartnerMessage("업체 코드를 확인할 수 없습니다.", "error");
             return;
         }
 
         if (!api) {
-            partnerSelect.innerHTML = '<option value="">필요한 화면 기능을 불러오지 못했습니다</option>';
-            partnerSelect.disabled = true;
+            openPartnerModalButton.disabled = true;
             setPartnerMessage("필요한 화면 기능을 불러오지 못했습니다. 새로고침 후 다시 시도하세요.", "error");
             return;
         }
 
-        partnerSelect.disabled = true;
+        openPartnerModalButton.disabled = true;
         setPartnerMessage("거래처를 불러오는 중입니다.");
 
         try {
@@ -648,7 +735,7 @@
             });
             renderPartners(normalizeListData(data));
         } catch (error) {
-            partnerSelect.innerHTML = '<option value="">거래처를 불러오지 못했습니다</option>';
+            openPartnerModalButton.disabled = true;
             setPartnerMessage(error.message || "거래처 조회 요청을 처리할 수 없습니다.", "error");
         }
     };
@@ -699,7 +786,36 @@
         updateCurrentRegisterStep("3");
     });
 
-    partnerSelect?.addEventListener("change", () => updateCurrentRegisterStep());
+    openPartnerModalButton?.addEventListener("click", () => {
+        renderPartnerList();
+        partnerModal?.showModal();
+        requestAnimationFrame(() => partnerSearchInput?.focus());
+    });
+
+    closePartnerModalButtons.forEach((button) => {
+        button.addEventListener("click", () => partnerModal?.close());
+    });
+
+    partnerSearchButton?.addEventListener("click", renderPartnerList);
+    partnerSearchInput?.addEventListener("input", renderPartnerList);
+    partnerSearchInput?.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            renderPartnerList();
+        }
+    });
+
+    partnerList?.addEventListener("click", (event) => {
+        const option = event.target.closest("[data-partner-option]");
+        if (!option) {
+            return;
+        }
+        const partner = partners.find((candidate) => String(candidate.partnerId) === option.dataset.partnerOption);
+        if (partner) {
+            selectPartner(partner);
+        }
+    });
+
     inboundForm.elements.reason?.addEventListener("input", () => updateCurrentRegisterStep());
 
     const setSubmitMessage = (message, isError = false) => {
@@ -734,10 +850,9 @@
     };
 
     const inboundSummary = (payload) => {
-        const partnerName = inboundForm.elements.partnerId.selectedOptions[0]?.textContent?.trim() || "-";
         const totalQuantity = payload.lines.reduce((sum, line) => sum + line.quantity, 0);
         return {
-            partnerName,
+            partnerName: selectedPartner?.partnerName || "-",
             reason: payload.reason || "-",
             lineCount: payload.lines.length,
             totalQuantity,
@@ -820,6 +935,10 @@
     inboundForm?.addEventListener("submit", (event) => {
         event.preventDefault();
         setSubmitMessage("");
+
+        if (!validatePartnerSelection()) {
+            return;
+        }
 
         if (!inboundForm.reportValidity()) {
             return;

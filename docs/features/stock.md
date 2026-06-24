@@ -81,7 +81,8 @@ Query:
 
 ```text
 src/main/resources/static/inbound-register.html
-src/main/resources/static/css/inbound.css
+src/main/resources/static/css/pages/inbound.css
+src/main/resources/static/css/pages/inbound-register.css
 src/main/resources/static/js/inbound-register.js
 ```
 
@@ -99,6 +100,8 @@ src/main/resources/static/js/inbound-register.js
 
 - 사용자 화면에서는 `품목 검색`, `입고 품목`, `품목 추가`, `품목 사유`를 사용한다.
 - DB와 API 설명에서는 기존 `stock movement`, `line` 용어를 사용할 수 있다.
+- 거래처는 긴 셀렉트 박스보다 검색 모달에서 선택하는 방식을 우선한다.
+- 거래처 선택 버튼은 왼쪽에 `선택`, 오른쪽에 현재 선택 상태 또는 `거래처 선택`을 표시한다.
 - 품목 분류는 배지보다 일반 텍스트에 가깝게 표시해 목록 가독성을 우선한다.
 - 품목 추가 후에는 선택한 품목, 수량, 품목 사유 입력 상태를 초기화한다.
 
@@ -116,6 +119,7 @@ src/main/resources/static/js/outbound.js
 화면 기준:
 
 - 상단에는 검색, 필터, 요약 정보를 간결하게 배치한다.
+- 입고 관리의 거래처 조건은 검색 모달에서 선택한다.
 - 전표 목록은 전표번호, 거래처, 처리일, 수량, 상태를 한 행에서 비교할 수 있게 표시한다.
 - 전표 행 전체를 클릭해 상세를 연다.
 - 선택된 전표 행은 배경색과 왼쪽 강조선으로 구분한다.
