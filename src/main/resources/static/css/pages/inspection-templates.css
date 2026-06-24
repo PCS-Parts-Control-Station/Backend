@@ -20,6 +20,27 @@
     text-align: center;
 }
 
+.inspection-template-add-item-button {
+    border-color: var(--blue);
+    background: var(--blue);
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16);
+}
+
+.inspection-template-add-item-button:hover,
+.inspection-template-add-item-button:focus-visible {
+    border-color: #1d4ed8;
+    background: #1d4ed8;
+    color: #fff;
+}
+
+.inspection-template-add-item-button:disabled {
+    border-color: var(--line);
+    background: var(--gray-soft);
+    color: var(--muted);
+    box-shadow: none;
+}
+
 @media (max-width: 840px) {
     .inspection-template-row {
         grid-template-columns: minmax(0, 1fr) auto auto;
