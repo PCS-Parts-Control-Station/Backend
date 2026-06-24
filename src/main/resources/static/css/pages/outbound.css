@@ -57,16 +57,19 @@
 .outbound-management-page .document-detail-drawer {
     position: fixed;
     top: 0;
-    right: 0;
+    right: 12px;
     z-index: 90;
-    width: min(520px, calc(100vw - 32px));
-    height: 100vh;
+    width: min(520px, calc(100% - 24px));
+    max-width: calc(100% - 24px);
+    height: 100dvh;
+    min-width: 0;
     background: var(--surface);
     border-left: 1px solid var(--line);
     box-shadow: -22px 0 48px rgba(15, 23, 42, 0.16);
     transform: translateX(100%);
     visibility: hidden;
     pointer-events: none;
+    overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
     transition: transform 180ms ease, visibility 0s linear 180ms;
@@ -80,10 +83,23 @@
 }
 
 .outbound-management-page .document-detail-drawer .document-detail-panel {
-    min-height: 100%;
+min-height: 100%;
+    min-width: 0;
+    max-width: 100%;
     border: 0;
     border-radius: 0;
     box-shadow: none;
+}
+
+.outbound-management-page .document-detail-drawer,
+.outbound-management-page .document-detail-drawer * {
+    max-width: 100%;
+}
+
+.outbound-management-page .document-detail-drawer * {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .outbound-management-page .document-detail-drawer .panel-title-bar {
@@ -1091,9 +1107,12 @@
 }
 
 @media (max-width: 640px) {
-    .outbound-management-page .document-detail-drawer {
-        width: 100vw;
-    }
+.outbound-management-page .document-detail-drawer {
+left: 12px;
+right: 12px;
+width: auto;
+max-width: none;
+}
 
     .outbound-management-page .document-detail-drawer .panel-title-bar {
         margin: -18px -18px 16px;

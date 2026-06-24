@@ -14,11 +14,15 @@ tb_pc_part_unit
 ## 품목 마스터 저장
 
 - 품목 마스터는 `tb_pc_part`에 저장한다.
-- `company_id`, `category_id`, `part_name`, `manufacturer`, `model_name`, `part_code`, `estimated_price`, `safe_quantity`는 등록/수정 흐름에서 관리한다.
+- `company_id`, `category_id`, `part_name`, `manufacturer`, `model_name`, `part_code`, `safe_quantity`는 등록/수정 흐름에서 관리한다.
 - `part_code`는 화면에서 받지 않고 서버에서 생성한다.
 - `part_code`는 `UNIQUE(company_id, part_code)` 제약을 만족해야 한다.
 - 품목 목록의 현재 재고는 `tb_part_stock.quantity`를 `LEFT JOIN`해서 조회한다.
-- 품목 목록 summary의 총 재고와 재고 부족 수는 페이지 제한이 아니라 동일 검색 조건의 전체 결과 기준으로 집계한다.
+- 품목 목록 전체 건수는 `tb_pc_part` 기준으로 계산한다.
+- 현재 구현의 품목 목록 API는 별도 summary row를 조회하지 않는다.
+- 품목 목록 요약은 `partSearchWhere`와 같은 조건으로 집계한다.
+- `total_stock`은 조회 조건 전체 품목의 `COALESCE(tb_part_stock.quantity, 0)` 합계다.
+- `low_stock_count`는 조회 조건 전체 품목 중 `safe_quantity > 0`이고 현재 재고가 안전 재고보다 작은 품목 수다.
 
 ## 사양값 저장
 

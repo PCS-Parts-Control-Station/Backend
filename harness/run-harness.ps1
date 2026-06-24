@@ -2524,7 +2524,6 @@ public class PcsHarnessDbCheck {
             {"tb_pc_part", "model_name"},
             {"tb_pc_part", "manufacturer"},
             {"tb_pc_part", "part_code"},
-            {"tb_pc_part", "estimated_price"},
             {"tb_pc_part", "safe_quantity"},
             {"tb_part_spec_value", "company_id"},
             {"tb_part_spec_value", "part_id"},
@@ -2545,7 +2544,6 @@ public class PcsHarnessDbCheck {
             requireColumn(column[0], column[1]);
         }
         requireConstraint("tb_pc_part", "uk_pc_part_company_code");
-        requireConstraint("tb_pc_part", "chk_pc_part_price");
         requireConstraint("tb_pc_part", "chk_pc_part_safe_quantity");
         requireConstraint("tb_part_spec_value", "uk_part_spec_value_part_definition");
         requireConstraint("tb_pc_part_unit", "uk_pc_part_unit_internal_serial");

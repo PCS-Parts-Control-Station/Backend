@@ -178,18 +178,20 @@
 
     const bindSidebarToggle = () => {
         const body = document.body;
-        const toggle = document.querySelector("[data-sidebar-toggle]");
+        const toggles = Array.from(document.querySelectorAll("[data-sidebar-toggle]"));
         const backdrop = document.querySelector("[data-sidebar-backdrop]");
         let sidebarAnimationTimer = null;
 
-        if (!toggle || !backdrop) {
+        if (toggles.length === 0 || !backdrop) {
             return;
         }
 
         const syncToggleState = () => {
             const isOpen = body.classList.contains("sidebar-open");
-            toggle.setAttribute("aria-expanded", String(isOpen));
-            toggle.setAttribute("aria-label", isOpen ? "메뉴 닫기" : "메뉴 열기");
+            toggles.forEach((toggle) => {
+                toggle.setAttribute("aria-expanded", String(isOpen));
+                toggle.setAttribute("aria-label", isOpen ? "메뉴 닫기" : "메뉴 열기");
+            });
         };
 
         const animateSidebar = () => {
@@ -229,13 +231,13 @@
             syncToggleState();
         };
 
-        toggle.addEventListener("click", () => {
+        toggles.forEach((toggle) => toggle.addEventListener("click", () => {
             if (body.classList.contains("sidebar-open")) {
                 closeMenu();
                 return;
             }
             openMenu();
-        });
+        }));
 
         backdrop.addEventListener("click", () => closeMenu());
 
@@ -246,6 +248,56 @@
         });
 
         closeMenu(false);
+    };
+
+    const bindWorkspaceQuickBar = () => {
+        const quickBar = document.querySelector("[data-workspace-quick-bar]");
+        if (!quickBar || quickBar.dataset.bound === "true") {
+            return;
+        }
+
+        quickBar.dataset.bound = "true";
+        const targetSelector = quickBar.dataset.watchTarget || ".workspace-header .header-actions";
+        const watchTarget = document.querySelector(targetSelector);
+        const scrollTopButton = quickBar.querySelector("[data-scroll-top]");
+
+        const setVisible = (isVisible) => {
+            quickBar.classList.toggle("is-visible", isVisible);
+            quickBar.setAttribute("aria-hidden", String(!isVisible));
+        };
+
+        const shouldShowByPosition = () => {
+            if (!watchTarget) {
+                return window.scrollY > 180;
+            }
+            const rect = watchTarget.getBoundingClientRect();
+            return window.scrollY > 0 && rect.bottom <= 12;
+        };
+
+        const syncQuickBar = () => setVisible(shouldShowByPosition());
+
+        if ("IntersectionObserver" in window && watchTarget) {
+            const observer = new IntersectionObserver((entries) => {
+                const entry = entries[0];
+                setVisible(Boolean(entry && !entry.isIntersecting && window.scrollY > 0));
+            }, {
+                rootMargin: "-12px 0px 0px 0px",
+                threshold: 0
+            });
+            observer.observe(watchTarget);
+        } else {
+            window.addEventListener("scroll", syncQuickBar, { passive: true });
+        }
+
+        window.addEventListener("resize", syncQuickBar, { passive: true });
+        syncQuickBar();
+
+        scrollTopButton?.addEventListener("click", () => {
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+        });
     };
 
     const bindAccountActions = () => {
@@ -281,7 +333,6 @@
                             "Accept": "application/json"
                         }
                     });
-                    window.localStorage.removeItem("pcsAccessToken");
                 }
             } finally {
                 window.location.href = `/w/${encodeURIComponent(companyCode)}`;
@@ -317,6 +368,7 @@
             applyWorkspaceContext();
             applyActiveRoute();
             bindSidebarToggle();
+            bindWorkspaceQuickBar();
             bindAccountActions();
             await loadSession();
             return;
@@ -340,6 +392,7 @@
         applyWorkspaceContext();
         applyActiveRoute();
         bindSidebarToggle();
+        bindWorkspaceQuickBar();
         bindAccountActions();
         await loadSession();
     };

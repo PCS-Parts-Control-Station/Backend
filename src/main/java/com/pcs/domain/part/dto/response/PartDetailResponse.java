@@ -1,6 +1,4 @@
 package com.pcs.domain.part.dto.response;
-
-import java.math.BigDecimal;
 import java.util.List;
 
 public record PartDetailResponse(
@@ -11,7 +9,6 @@ public record PartDetailResponse(
         String modelName,
         String manufacturer,
         String partCode,
-        BigDecimal estimatedPrice,
         Integer safeQuantity,
         Integer currentStockQuantity,
         boolean active,
@@ -29,7 +26,6 @@ public record PartDetailResponse(
                 part.modelName(),
                 part.manufacturer(),
                 part.partCode(),
-                part.estimatedPrice(),
                 part.safeQuantity(),
                 part.currentStockQuantity(),
                 part.active(),

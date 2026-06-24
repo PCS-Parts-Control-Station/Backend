@@ -15,6 +15,9 @@
     const nextButton = document.querySelector("[data-page-next]");
     const searchButton = filterForm?.querySelector("button[type='submit']");
     const panelViews = document.querySelectorAll("[data-category-panel]");
+    const detailDrawer = document.querySelector("[data-category-detail-drawer]");
+    const createDrawerButton = document.querySelector("[data-category-create-drawer]");
+    const closeDrawerButtons = document.querySelectorAll("[data-close-category-drawer]");
     const createForm = document.querySelector("[data-category-create-form]");
     const editForm = document.querySelector("[data-category-edit-form]");
     const createMessage = document.querySelector("[data-category-create-message]");
@@ -54,6 +57,7 @@
     let currentPage = 0;
     let currentCategories = [];
     let selectedCategoryId = null;
+    let lastDrawerTrigger = null;
     let createSpecs = [];
     let editSpecs = [];
     let editSpecsEditable = true;
@@ -89,6 +93,34 @@
             panel.hidden = !isActive;
             panel.classList.toggle("is-active", isActive);
         });
+        const titleIds = {
+            create: "category-form-title",
+            detail: "category-detail-title",
+            edit: "category-edit-title"
+        };
+        detailDrawer?.setAttribute("aria-labelledby", titleIds[mode] || titleIds.create);
+    };
+
+    const setDrawerOpen = (isOpen) => {
+        detailDrawer?.classList.toggle("is-open", isOpen);
+        detailDrawer?.setAttribute("aria-hidden", String(!isOpen));
+        createDrawerButton?.setAttribute("aria-expanded", String(isOpen));
+    };
+
+    const openDrawer = (trigger = null) => {
+        if (trigger instanceof HTMLElement) {
+            lastDrawerTrigger = detailDrawer?.contains(trigger) ? createDrawerButton : trigger;
+        }
+        setDrawerOpen(true);
+    };
+
+    const closeDrawer = (options = {}) => {
+        selectedCategoryId = null;
+        setDrawerOpen(false);
+        updateSelectedRow();
+        if (options.restoreFocus !== false && lastDrawerTrigger?.isConnected) {
+            lastDrawerTrigger.focus({ preventScroll: true });
+        }
     };
 
     const setFormMessage = (element, message = "") => {
@@ -151,6 +183,33 @@
         return metaParts.join(" · ");
     };
 
+    const createSpecCardContent = (spec) => {
+        const body = document.createElement("div");
+        body.className = "management-subitem-body";
+
+        const header = document.createElement("div");
+        header.className = "management-subitem-header";
+
+        const title = document.createElement("strong");
+        title.textContent = spec.specName || "-";
+
+        const meta = document.createElement("small");
+        meta.className = "management-subitem-meta";
+        meta.textContent = specMetaText(spec);
+
+        header.append(title, meta);
+        body.append(header);
+
+        if (Array.isArray(spec.options) && spec.options.length > 0) {
+            const options = document.createElement("small");
+            options.className = "management-subitem-options";
+            options.textContent = `선택지: ${spec.options.map((option) => option.optionLabel).join(", ")}`;
+            body.append(options);
+        }
+
+        return body;
+    };
+
     const renderSpecDetail = (specDefinitions = []) => {
         if (!detailSpecList) {
             return;
@@ -167,21 +226,7 @@
         specDefinitions.forEach((spec) => {
             const item = document.createElement("article");
             item.className = "management-subitem-detail-item";
-
-            const title = document.createElement("strong");
-            title.textContent = spec.specName || "-";
-
-            const meta = document.createElement("small");
-            meta.textContent = specMetaText(spec);
-
-            item.append(title, meta);
-
-            if (Array.isArray(spec.options) && spec.options.length > 0) {
-                const options = document.createElement("small");
-                options.textContent = `선택지: ${spec.options.map((option) => option.optionLabel).join(", ")}`;
-                item.append(options);
-            }
-
+            item.append(createSpecCardContent(spec));
             detailSpecList.append(item);
         });
     };
@@ -221,20 +266,7 @@
             item.dataset.specIndex = String(index);
             item.dataset.specOwner = owner;
 
-            const body = document.createElement("div");
-            const title = document.createElement("strong");
-            title.textContent = spec.specName || "-";
-            const meta = document.createElement("small");
-            meta.textContent = specMetaText(spec);
-            body.append(title, meta);
-
-            if (Array.isArray(spec.options) && spec.options.length > 0) {
-                const options = document.createElement("small");
-                options.textContent = `선택지: ${spec.options.map((option) => option.optionLabel).join(", ")}`;
-                body.append(options);
-            }
-
-            item.append(body);
+            item.append(createSpecCardContent(spec));
 
             if (editable) {
                 const actions = document.createElement("div");
@@ -288,8 +320,9 @@
         );
     };
 
-    const selectCategory = async (categoryId) => {
+    const selectCategory = async (categoryId, trigger = null) => {
         selectedCategoryId = categoryId;
+        openDrawer(trigger);
         const category = getSelectedCategory();
         updateSelectedRow();
         if (category) {
@@ -307,7 +340,7 @@
         }
     };
 
-    const showCreatePanel = () => {
+    const showCreatePanel = (trigger = null, options = {}) => {
         selectedCategoryId = null;
         updateSelectedRow();
         createForm?.reset();
@@ -315,6 +348,9 @@
         renderCreateSpecs();
         setFormMessage(createMessage);
         setPanelMode("create");
+        if (options.open === true) {
+            openDrawer(trigger);
+        }
     };
 
     const fillEditForm = (category) => {
@@ -500,11 +536,11 @@
                 createTextCell("수정일", formatDate(category.updatedAt))
             );
 
-            row.addEventListener("click", () => selectCategory(category.categoryId));
+            row.addEventListener("click", (event) => selectCategory(category.categoryId, event.currentTarget));
             row.addEventListener("keydown", (event) => {
                 if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
-                    selectCategory(category.categoryId);
+                    selectCategory(category.categoryId, event.currentTarget);
                 }
             });
 
@@ -631,6 +667,7 @@
 
             if (options.keepSelection !== true) {
                 selectedCategoryId = null;
+                closeDrawer({ restoreFocus: false });
                 showCreatePanel();
             }
 
@@ -692,8 +729,24 @@
         loadCategories(0);
     });
 
+    createDrawerButton?.addEventListener("click", (event) => {
+        showCreatePanel(event.currentTarget, { open: true });
+    });
+
     document.querySelectorAll("[data-category-create-mode]").forEach((button) => {
-        button.addEventListener("click", showCreatePanel);
+        button.addEventListener("click", (event) => {
+            showCreatePanel(event.currentTarget, { open: true });
+        });
+    });
+
+    closeDrawerButtons.forEach((button) => {
+        button.addEventListener("click", () => closeDrawer());
+    });
+
+    window.PcsDrawer?.bindOutsideClose({
+        drawer: detailDrawer,
+        close: closeDrawer,
+        keepOpenSelector: "[data-category-create-drawer], [data-category-id], [data-spec-modal], [data-category-delete-modal]"
     });
 
     document.querySelector("[data-category-edit-mode]")?.addEventListener("click", showEditPanel);
@@ -744,6 +797,17 @@
     specModal?.addEventListener("click", (event) => {
         if (event.target === specModal) {
             closeSpecModal();
+        }
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (
+            event.key === "Escape" &&
+            detailDrawer?.classList.contains("is-open") &&
+            !specModal?.open &&
+            !deleteModal?.open
+        ) {
+            closeDrawer();
         }
     });
 

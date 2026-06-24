@@ -46,7 +46,7 @@ window.PcsWorkspace.getCompanyCode()
 window.PcsWorkspace.updateWorkspaceLinks(companyCode)
 window.PcsFormat.date(value)
 window.PcsFormat.number(value)
-window.PcsFormat.money(value)
+window.PcsHtml.escape(value)
 window.PcsFeedback.toast(message, type)
 window.PcsForm.setSaving(form, isSaving)
 window.PcsTable.clearRows(table)
@@ -58,7 +58,8 @@ window.PcsDrawer.bindOutsideClose(options)
 기준:
 
 - 업체 코드 추출 정규식은 화면별 JS에 반복 작성하지 않는다.
-- 날짜/숫자/금액 포맷은 `PcsFormat`을 사용한다.
+- 날짜/숫자 포맷은 `PcsFormat`을 사용한다.
+- HTML 문자열이 불가피하면 escape 처리는 `PcsHtml.escape()`를 사용한다.
 - 저장 중 폼 비활성화는 `PcsForm.setSaving()`을 사용한다.
 - 빈 목록/로딩/오류 행은 `PcsTable.emptyRow()`를 우선 사용한다.
 - 관리형 작업 드로어의 외부 클릭 닫기는 `PcsDrawer.bindOutsideClose()`를 사용한다.
@@ -139,6 +140,9 @@ const json = await response.json();
 - API 응답을 받은 뒤 필요한 행만 다시 그린다.
 - 문자열 조합으로 큰 HTML을 만들기보다 `document.createElement()`를 우선한다.
 - 사용자 입력값을 `innerHTML`에 직접 넣지 않는다.
+- API 응답 값을 문자열 템플릿으로 렌더링해야 하는 기존 코드에서는 화면 파일 안의 escape 함수보다 공통 escaping/DOM 생성 유틸을 우선한다.
+- access token은 메모리에만 있으므로 XSS가 발생해도 저장소에서 장기 토큰을 읽을 수 없어야 한다. 이를 깨는 `localStorage.setItem("pcsAccessToken", ...)` 사용은 금지한다.
+- 정적 HTML/JS는 서버의 `Content-Security-Policy` 기본값과 충돌하면 안 된다. 새 외부 스크립트, 이미지, 폰트 도메인이 필요하면 보안 헤더 정책과 문서를 함께 수정한다.
 - 빈 목록, 로딩, 오류 상태를 모두 고려한다.
 
 ## 폼 기준

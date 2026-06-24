@@ -26,21 +26,20 @@ content-grid
     - table-header.inline-summary-header.management-summary-header
     - data-table
   - table-card.management-editor-card (필요한 화면만)
-- side-panel
-  - panel-card.side-work-panel
-    - create / detail / edit mode
-  - panel-card.muted-panel
+management-detail-drawer
+- panel-card.management-detail-drawer-panel.side-work-panel
+  - create / detail / edit mode
 ```
 
 기준:
 
 - 검색과 목록은 모든 관리형 페이지에서 같은 순서로 둔다.
-- 오른쪽 패널은 등록, 선택 상세, 수정 모드를 같은 자리에서 전환한다.
+- 오른쪽 드로어는 등록, 선택 상세, 수정 모드를 같은 자리에서 전환한다.
 - 하위 항목이나 선택지를 편집하는 화면만 `management-editor-card`를 목록 아래에 추가한다.
 - 기능별 `data-*` 속성과 API 이름은 도메인 이름을 유지하고, 시각 클래스에는 도메인 이름을 넣지 않는다.
 - 검수 템플릿에만 필요한 열 너비와 모바일 셀 노출 순서는 페이지 CSS에 남긴다.
 
-목록 전체 너비를 우선하는 품목 관리 화면은 아래 드로어 변형을 사용한다.
+품목 관리, 품목 분류, 거래처 관리, 사용자 관리, 검수 템플릿처럼 목록 전체 너비를 우선하는 관리형 화면은 아래 드로어 구조를 사용한다.
 
 ```text
 workspace-header
@@ -61,6 +60,10 @@ management-detail-drawer
 - 드로어 표면은 `--surface`의 불투명 배경을 사용해 뒤의 목록 내용이 비치지 않게 한다.
 - 드로어의 위치, 폭, 그림자, 모바일 전환은 입출고 이력 드로어와 같은 `management-detail-drawer`를 사용한다.
 - 드로어 셸과 패널 기본 배치는 공통 CSS가 소유하고, 페이지 CSS는 목록 전체 너비와 도메인별 내부 배치만 소유한다.
+- `management-detail-drawer`와 `management-detail-drawer-panel` 자체에는 세로 스크롤을 만들지 않는다.
+- 드로어 안에서 내용이 길어지는 경우 제목/닫기 버튼 아래의 `drawer-scroll-body`만 세로 스크롤을 가진다.
+- 등록/상세/수정 모드의 제목 영역은 고정된 판단 영역으로 유지하고, 긴 폼·상세 목록·하위 항목 목록만 `drawer-scroll-body` 안에 둔다.
+- 품목 분류의 분류명/설명 입력은 드로어 안에 두고, 반복적으로 길어질 수 있는 사양 항목 입력은 모달로 분리한다.
 
 ## 공통 클래스
 
@@ -79,6 +82,7 @@ detail-badge-row
 detail-list
 management-detail-drawer
 management-detail-drawer-panel
+drawer-scroll-body
 ```
 
 하위 항목 편집:

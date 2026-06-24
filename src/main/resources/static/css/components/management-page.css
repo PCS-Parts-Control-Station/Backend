@@ -63,7 +63,8 @@
 
 .management-subitem-card,
 .management-subitem-detail-item {
-    padding: 12px;
+    min-width: 0;
+    padding: 10px 12px;
     border: 1px solid var(--line);
     border-radius: var(--radius);
     background: var(--surface-soft);
@@ -72,28 +73,70 @@
 .management-subitem-card {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 10px;
-    align-items: start;
+    gap: 8px;
+    align-items: center;
 }
 
-.management-subitem-card strong,
-.management-subitem-detail-item strong {
-    display: block;
+.management-subitem-body {
+    display: grid;
+    min-width: 0;
+    gap: 4px;
+}
+
+.management-subitem-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) max-content;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.management-subitem-header strong {
+    min-width: 0;
+    overflow: hidden;
     color: var(--navy);
     font-size: 14px;
     font-weight: 800;
     line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.management-subitem-card small,
-.management-subitem-detail-item small {
+.management-subitem-meta,
+.management-subitem-options {
     display: block;
-    margin-top: 4px;
+    min-width: 0;
+    overflow: hidden;
     color: var(--muted);
     font-size: 12px;
     font-weight: 700;
-    line-height: 1.45;
-    overflow-wrap: anywhere;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.management-subitem-meta {
+    max-width: 180px;
+    text-align: right;
+}
+
+.management-subitem-card[data-spec-owner="edit"] {
+    align-items: start;
+}
+
+.management-subitem-card[data-spec-owner="edit"] .management-subitem-header {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+}
+
+.management-subitem-card[data-spec-owner="edit"] .management-subitem-header strong,
+.management-subitem-card[data-spec-owner="edit"] .management-subitem-meta,
+.management-subitem-card[data-spec-owner="edit"] .management-subitem-options {
+    max-width: none;
+    overflow: visible;
+    text-align: left;
+    text-overflow: clip;
+    white-space: normal;
 }
 
 .management-subitem-actions {
@@ -143,7 +186,7 @@
 }
 
 .management-subitem-detail-list {
-    max-height: 420px;
+    max-height: 340px;
     overflow-y: auto;
     padding-right: 4px;
 }

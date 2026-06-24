@@ -33,6 +33,7 @@ import com.pcs.domain.stock.type.StockDocumentType;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
+import com.pcs.global.pagination.PageQuery;
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -52,7 +53,6 @@ public class StockService {
     private static final int DOCUMENT_RANDOM_LENGTH = 16;
     private static final int DOCUMENT_NO_CREATE_MAX_ATTEMPT = 20;
     private static final int DEFAULT_SIZE = 20;
-    private static final int MAX_SIZE = 100;
 
     private final StockMapper stockMapper;
     private final SecureRandom secureRandom = new SecureRandom();
@@ -78,9 +78,7 @@ public class StockService {
         }
 
         String normalizedKeyword = normalizeOptional(keyword);
-        int normalizedPage = normalizePage(page);
-        int normalizedSize = normalizeSize(size, limit);
-        int offset = normalizedPage * normalizedSize;
+        PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
         long totalElements = stockMapper.countDocuments(
                 companyId,
                 documentType,
@@ -100,8 +98,8 @@ public class StockService {
                         documentStatus,
                         dateFrom,
                         dateTo,
-                        normalizedSize,
-                        offset
+                        pageQuery.size(),
+                        pageQuery.offset()
                 );
         SearchStockDocumentSummaryResponse summary = stockMapper.summarizeDocuments(
                 companyId,
@@ -113,7 +111,7 @@ public class StockService {
                 dateTo
         );
 
-        return PageResultDto.of(items, normalizedPage, normalizedSize, totalElements, summary);
+        return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, summary);
     }
 
     public PageResultDto<SearchOutboundCandidateResponse, Void> searchOutboundCandidates(
@@ -131,9 +129,7 @@ public class StockService {
         }
 
         String normalizedKeyword = normalizeOptional(keyword);
-        int normalizedPage = normalizePage(page);
-        int normalizedSize = normalizeSize(size, limit);
-        int offset = normalizedPage * normalizedSize;
+        PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
         long totalElements = stockMapper.countOutboundCandidates(
                 companyId,
                 normalizedKeyword,
@@ -149,11 +145,11 @@ public class StockService {
                         categoryId,
                         partId,
                         grade,
-                        normalizedSize,
-                        offset
+                        pageQuery.size(),
+                        pageQuery.offset()
                 );
 
-        return PageResultDto.of(items, normalizedPage, normalizedSize, totalElements, null);
+        return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, null);
     }
 
     public StockDocumentDetailResponse getDocument(Long companyId, Long documentId) {
@@ -732,21 +728,6 @@ public class StockService {
             return null;
         }
         return value.trim();
-    }
-
-    private int normalizePage(Integer page) {
-        if (page == null || page < 0) {
-            return 0;
-        }
-        return page;
-    }
-
-    private int normalizeSize(Integer size, Integer limit) {
-        Integer requestedSize = size == null ? limit : size;
-        if (requestedSize == null || requestedSize < 1) {
-            return DEFAULT_SIZE;
-        }
-        return Math.min(requestedSize, MAX_SIZE);
     }
 
     private String normalizeRequired(String value, String fallback) {

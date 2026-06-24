@@ -129,7 +129,6 @@ public class PartService {
                 TextNormalizer.required(request.modelName()),
                 TextNormalizer.required(request.manufacturer()),
                 partCode,
-                normalizePrice(request.estimatedPrice()),
                 normalizeQuantity(request.safeQuantity())
         );
         partMapper.insert(part);
@@ -161,7 +160,6 @@ public class PartService {
         part.setPartName(TextNormalizer.required(request.partName()));
         part.setModelName(TextNormalizer.required(request.modelName()));
         part.setManufacturer(TextNormalizer.required(request.manufacturer()));
-        part.setEstimatedPrice(normalizePrice(request.estimatedPrice()));
         part.setSafeQuantity(normalizeQuantity(request.safeQuantity()));
         part.setPartCode(generatePartCode(
                 companyId,
@@ -458,16 +456,6 @@ public class PartService {
 
     private void validateCompanyActive(Long companyId) {
         workspaceAccessValidator.validateCompanyActive(companyId);
-    }
-
-    private BigDecimal normalizePrice(BigDecimal value) {
-        if (value == null) {
-            return BigDecimal.ZERO;
-        }
-        if (value.signum() < 0) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "예상 단가는 0 이상이어야 합니다.");
-        }
-        return value;
     }
 
     private int normalizeQuantity(Integer value) {

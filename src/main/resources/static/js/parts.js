@@ -10,7 +10,8 @@
     const searchButton = filterForm?.querySelector("button[type='submit']");
     const panelViews = document.querySelectorAll("[data-part-panel]");
     const detailDrawer = document.querySelector("[data-part-detail-drawer]");
-    const createDrawerButton = document.querySelector("[data-part-create-drawer]");
+    const createDrawerButtons = document.querySelectorAll("[data-part-create-drawer]");
+    const createDrawerButton = createDrawerButtons[0] || null;
     const closeDrawerButtons = document.querySelectorAll("[data-close-part-drawer]");
     const createForm = document.querySelector("[data-part-create-form]");
     const editForm = document.querySelector("[data-part-edit-form]");
@@ -44,7 +45,6 @@
         model: document.querySelector("[data-detail-model]"),
         stock: document.querySelector("[data-detail-stock]"),
         safeQuantity: document.querySelector("[data-detail-safe-quantity]"),
-        estimatedPrice: document.querySelector("[data-detail-estimated-price]"),
         specs: document.querySelector("[data-detail-specs]")
     };
     const summaryFields = {
@@ -55,7 +55,6 @@
 
     const createEmptyDetailState = () => ({
         categoryId: "",
-        estimatedPrice: 0,
         safeQuantity: 0,
         specValues: []
     });
@@ -84,8 +83,6 @@
         const safeQuantity = getSafeQuantity(part);
         return safeQuantity > 0 && getCurrentStock(part) < safeQuantity;
     };
-
-    const formatMoney = window.PcsFormat.money;
 
     const normalizeString = (value) => (value === null || value === undefined ? "" : String(value));
 
@@ -295,7 +292,9 @@
     const setDrawerOpen = (isOpen) => {
         detailDrawer?.classList.toggle("is-open", isOpen);
         detailDrawer?.setAttribute("aria-hidden", String(!isOpen));
-        createDrawerButton?.setAttribute("aria-expanded", String(isOpen));
+        createDrawerButtons.forEach((button) => {
+            button.setAttribute("aria-expanded", String(isOpen));
+        });
     };
 
     const openDrawer = (trigger = null) => {
@@ -394,9 +393,6 @@
         }
 
         const parts = [];
-        if (Number(state.estimatedPrice) > 0) {
-            parts.push(`예상 단가 ${formatMoney(state.estimatedPrice)}`);
-        }
         if (Number(state.safeQuantity) > 0) {
             parts.push(`안전 재고 ${numberText(state.safeQuantity)}개`);
         }
@@ -405,7 +401,7 @@
             parts.push(`사양 ${specCount}개`);
         }
 
-        target.textContent = parts.length ? parts.join(", ") : "예상 단가, 안전 재고, 사양 항목";
+        target.textContent = parts.length ? parts.join(", ") : "안전 재고, 사양 항목";
     };
 
     const renderDetail = (part) => {
@@ -422,7 +418,6 @@
         detailFields.model.textContent = part.modelName || "-";
         detailFields.stock.textContent = `${numberText(getCurrentStock(part))}개`;
         detailFields.safeQuantity.textContent = `${numberText(getSafeQuantity(part))}개`;
-        detailFields.estimatedPrice.textContent = formatMoney(part.estimatedPrice);
         if (detailFields.specs) {
             detailFields.specs.textContent = summarizeSpecValues(part.specValues || []);
         }
@@ -432,7 +427,6 @@
         const previous = getDetailState(mode);
         detailStateByMode[mode] = {
             categoryId: normalizeString(categoryId),
-            estimatedPrice: previous.estimatedPrice || 0,
             safeQuantity: previous.safeQuantity || 0,
             specValues: []
         };
@@ -449,7 +443,6 @@
         editForm.elements.modelName.value = part.modelName || "";
         detailStateByMode.edit = {
             categoryId: normalizeString(part.categoryId),
-            estimatedPrice: Number(part.estimatedPrice ?? 0),
             safeQuantity: Number(part.safeQuantity ?? 0),
             specValues: (part.specValues || []).map(normalizeSpecValue)
         };
@@ -742,7 +735,6 @@
         }
 
         specModalMessage.textContent = "";
-        specModalForm.elements.estimatedPrice.value = state.estimatedPrice || "";
         specModalForm.elements.safeQuantity.value = state.safeQuantity || "";
 
         try {
@@ -823,7 +815,6 @@
             manufacturer: targetForm.elements.manufacturer.value.trim(),
             modelName: targetForm.elements.modelName.value.trim(),
             categoryId,
-            estimatedPrice: readNumberValue(state.categoryId === normalizeString(categoryId) ? state.estimatedPrice : 0),
             safeQuantity: readNumberValue(state.categoryId === normalizeString(categoryId) ? state.safeQuantity : 0),
             specValues: state.categoryId === normalizeString(categoryId) ? state.specValues : []
         };
@@ -966,9 +957,9 @@
         closeCategoryPicker();
     });
 
-    createDrawerButton?.addEventListener("click", (event) => {
+    createDrawerButtons.forEach((button) => button.addEventListener("click", (event) => {
         showCreatePanel(event.currentTarget);
-    });
+    }));
 
     document.querySelectorAll("[data-part-create-mode]").forEach((button) => {
         button.addEventListener("click", (event) => showCreatePanel(event.currentTarget));
@@ -1015,7 +1006,6 @@
             const state = getDetailState(activeSpecModalMode);
             detailStateByMode[activeSpecModalMode] = {
                 ...state,
-                estimatedPrice: readNumberValue(specModalForm.elements.estimatedPrice.value),
                 safeQuantity: readNumberValue(specModalForm.elements.safeQuantity.value),
                 specValues: readRenderedSpecValues()
             };

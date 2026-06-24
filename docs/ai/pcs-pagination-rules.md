@@ -36,6 +36,16 @@
 - 기존 단순 선택 목록 호환이 필요하면 `limit`을 `size` 별칭으로 받을 수 있다.
 - SQL은 `COUNT(*)`와 `LIMIT/OFFSET`을 분리해서 처리한다.
 - 정렬 기준은 API마다 명확히 고정한다.
+- `page`, `size`, `limit`, `offset` 계산은 `com.pcs.global.pagination.PageQuery`를 사용한다.
+- Service별 `normalizePage`, `normalizeSize`를 새로 만들지 않는다.
+- 비정상적으로 큰 `page` 값으로 offset 정수 오버플로가 발생하면 안 된다.
+
+대용량 이력 목록 기준:
+
+- 입출고 이력, 검수 이력, 상태 변경 이력처럼 계속 누적되는 API는 기본 목록에서는 기간 필터를 제공한다.
+- 운영 데이터가 커질 수 있는 API를 새로 만들 때는 `LIMIT/OFFSET`만 전제로 설계하지 않는다.
+- 깊은 페이지 탐색이 필요한 이력 API는 `cursor`, `lastId`, `lastCreatedAt` 같은 no-offset 페이징을 별도 API 계약으로 검토한다.
+- 관리형 마스터 목록(품목, 품목 분류, 거래처, 사용자)은 검색 조건과 page size 제한이 있는 현재 `PageResultDto` 구조를 기본으로 유지할 수 있다.
 
 ## Frontend
 

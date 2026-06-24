@@ -134,7 +134,7 @@ pcs-common.js
 - 공통 JS 사용 기준은 `docs/ai/pcs-frontend-js-rules.md`를 따른다.
 - 인증 API 호출 방식은 `docs/ai/pcs-auth-client-rules.md`를 따른다.
 - 페이징 목록 화면은 `docs/ai/pcs-pagination-rules.md`를 따른다.
-- 회사 코드 추출, workspace 링크 갱신, 날짜/숫자/금액 포맷, 토스트 래핑, 폼 저장중 처리, 공통 테이블 빈 행 처리는 `pcs-common.js`를 우선 사용한다.
+- 회사 코드 추출, workspace 링크 갱신, 날짜/숫자 포맷, 토스트 래핑, 폼 저장중 처리, 공통 테이블 빈 행 처리는 `pcs-common.js`를 우선 사용한다.
 
 입고 화면 JS:
 
@@ -242,7 +242,7 @@ domain/category/type/PartSpecInputTypes.java
 - 입출고 이력 조회
 - 검수 이력 조회
 - 상태 변경 이력 조회
-- 품목 분류별 재고 수량/가치
+- 품목 분류별 재고 수량
 - 제조사별 재고 수량
 - 등급별 재고 수량
 - 기간별 입고/출고 합계

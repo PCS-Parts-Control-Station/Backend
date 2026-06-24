@@ -17,6 +17,8 @@
     const nextButton = document.querySelector("[data-page-next]");
     const searchButton = filterForm?.querySelector("button[type='submit']");
     const panelViews = document.querySelectorAll("[data-user-panel]");
+    const detailDrawer = document.querySelector("[data-user-detail-drawer]");
+    const createDrawerButton = document.querySelector("[data-user-create-drawer]");
     const createForm = document.querySelector("[data-user-create-form]");
     const editForm = document.querySelector("[data-user-edit-form]");
     const staffPermissionModal = document.querySelector("[data-staff-permission-modal]");
@@ -58,6 +60,7 @@
     let currentUsers = [];
     let selectedUserId = null;
     let currentSession = null;
+    let lastDrawerTrigger = null;
 
     const getCompanyCode = window.PcsWorkspace?.getCompanyCode;
     const formatDate = window.PcsFormat?.date;
@@ -191,6 +194,28 @@
         });
     };
 
+    const setDrawerOpen = (isOpen) => {
+        detailDrawer?.classList.toggle("is-open", isOpen);
+        detailDrawer?.setAttribute("aria-hidden", String(!isOpen));
+        createDrawerButton?.setAttribute("aria-expanded", String(isOpen));
+    };
+
+    const openDrawer = (trigger = null) => {
+        if (trigger instanceof HTMLElement) {
+            lastDrawerTrigger = detailDrawer?.contains(trigger) ? createDrawerButton : trigger;
+        }
+        setDrawerOpen(true);
+    };
+
+    const closeDrawer = (options = {}) => {
+        selectedUserId = null;
+        setDrawerOpen(false);
+        updateSelectedRow();
+        if (options.restoreFocus !== false && lastDrawerTrigger?.isConnected) {
+            lastDrawerTrigger.focus({ preventScroll: true });
+        }
+    };
+
     const getSelectedUser = () => {
         return currentUsers.find((user) => String(user.memberId) === String(selectedUserId)) || null;
     };
@@ -244,23 +269,27 @@
         editForm.elements.role.value = user.role || "";
     };
 
-    const selectUser = (userId) => {
+    const selectUser = (userId, trigger = null) => {
         selectedUserId = userId;
         const user = getSelectedUser();
         updateSelectedRow();
         if (!user) {
             return;
         }
+        openDrawer(trigger);
         renderDetail(user);
         setPanelMode("detail");
     };
 
-    const showCreatePanel = () => {
+    const showCreatePanel = (trigger = null, options = {}) => {
         selectedUserId = null;
         updateSelectedRow();
         createForm?.reset();
         configureRoleSelect(createForm?.elements.role, { placeholderDisabled: true });
         setPanelMode("create");
+        if (options.open === true) {
+            openDrawer(trigger);
+        }
     };
 
     const renderSummary = (pageData) => {
@@ -280,7 +309,7 @@
 
         if (!items.length) {
             setEmptyMessage("조회된 사용자가 없습니다.");
-            showCreatePanel();
+            showCreatePanel(null, { open: false });
             return;
         }
 
@@ -308,11 +337,11 @@
                 )
             );
 
-            row.addEventListener("click", () => selectUser(user.memberId));
+            row.addEventListener("click", () => selectUser(user.memberId, row));
             row.addEventListener("keydown", (event) => {
                 if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
-                    selectUser(user.memberId);
+                    selectUser(user.memberId, row);
                 }
             });
 
@@ -323,7 +352,7 @@
             renderDetail(getSelectedUser());
             updateSelectedRow();
         } else {
-            showCreatePanel();
+            showCreatePanel(null, { open: false });
         }
     };
 
@@ -487,7 +516,7 @@
                     hasPrevious: false,
                     hasNext: false
                 });
-                showCreatePanel();
+                showCreatePanel(null, { open: false });
             } finally {
                 setLoading(false);
             }
@@ -630,7 +659,15 @@
     });
 
     document.querySelectorAll("[data-user-create-mode]").forEach((button) => {
-        button.addEventListener("click", showCreatePanel);
+        button.addEventListener("click", (event) => showCreatePanel(event.currentTarget, { open: true }));
+    });
+
+    createDrawerButton?.addEventListener("click", (event) => {
+        showCreatePanel(event.currentTarget, { open: true });
+    });
+
+    document.querySelectorAll("[data-close-user-drawer]").forEach((button) => {
+        button.addEventListener("click", () => closeDrawer());
     });
 
     document.querySelector("[data-user-edit-mode]")?.addEventListener("click", () => {
@@ -645,11 +682,36 @@
     document.querySelector("[data-user-detail-mode]")?.addEventListener("click", () => {
         const user = getSelectedUser();
         if (!user) {
-            showCreatePanel();
+            showCreatePanel(null, { open: false });
             return;
         }
         renderDetail(user);
         setPanelMode("detail");
+    });
+
+    document.addEventListener("click", (event) => {
+        if (!detailDrawer?.classList.contains("is-open")) {
+            return;
+        }
+        const target = event.target;
+        if (!(target instanceof Element)) {
+            return;
+        }
+        if (
+            detailDrawer.contains(target) ||
+            target.closest("[data-user-create-drawer]") ||
+            target.closest("[data-user-id]") ||
+            target.closest("[data-open-staff-permission-modal]")
+        ) {
+            return;
+        }
+        closeDrawer({ restoreFocus: false });
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && detailDrawer?.classList.contains("is-open")) {
+            closeDrawer();
+        }
     });
 
     createForm?.addEventListener("submit", async (event) => {

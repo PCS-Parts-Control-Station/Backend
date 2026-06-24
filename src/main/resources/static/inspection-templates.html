@@ -38,9 +38,12 @@
                 <h1>검수 템플릿 관리</h1>
                 <p class="page-description">검수 등록 화면에서 사용할 템플릿, 항목, 선택지를 관리합니다.</p>
             </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" type="button" data-template-create-drawer aria-controls="template-detail-drawer" aria-expanded="false">템플릿 등록</button>
+            </div>
         </header>
 
-        <section class="content-grid">
+        <section class="content-grid management-drawer-grid">
             <div class="content-main">
                 <section class="filter-card management-filter-card" aria-labelledby="template-filter-title">
                     <div>
@@ -163,11 +166,18 @@
                 </section>
             </div>
 
-            <aside class="side-panel" aria-labelledby="template-form-title">
-                <div class="panel-card side-work-panel">
+            <aside class="management-detail-drawer template-detail-drawer" id="template-detail-drawer" data-template-detail-drawer aria-labelledby="template-form-title" aria-hidden="true" tabindex="-1">
+                <div class="panel-card management-detail-drawer-panel side-work-panel">
                     <div class="panel-mode is-active" data-template-panel="create">
-                        <h2 id="template-form-title">템플릿 등록</h2>
-                        <p>검수 등록 화면에서 선택할 기본 양식을 만듭니다.</p>
+                        <div class="panel-title-bar">
+                            <div>
+                                <h2 id="template-form-title">템플릿 등록</h2>
+                                <p>검수 등록 화면에서 선택할 기본 양식을 만듭니다.</p>
+                            </div>
+                            <button class="panel-link-button" type="button" data-close-template-drawer>닫기</button>
+                        </div>
+
+                        <div class="drawer-scroll-body">
                         <!-- API: POST /api/workspaces/{companyCode}/inspection-templates -->
                         <form class="category-form" action="#" method="post" autocomplete="off" data-template-create-form>
                             <label>
@@ -195,6 +205,7 @@
                                 <button class="btn btn-secondary" type="reset">초기화</button>
                             </div>
                         </form>
+                        </div>
                     </div>
 
                     <div class="panel-mode" data-template-panel="detail" hidden>
@@ -206,6 +217,7 @@
                             <button class="panel-link-button management-compact-action" type="button" data-template-create-mode>새 템플릿</button>
                         </div>
 
+                        <div class="drawer-scroll-body">
                         <div class="side-detail-card">
                             <strong data-detail-template-name>-</strong>
                             <div class="detail-badge-row">
@@ -242,6 +254,7 @@
                             <button class="btn btn-primary" type="button" data-template-edit-mode>수정</button>
                             <button class="btn btn-secondary" type="button" data-template-active-toggle>상태 변경</button>
                         </div>
+                        </div>
                     </div>
 
                     <div class="panel-mode" data-template-panel="edit" hidden>
@@ -253,6 +266,7 @@
                             <button class="panel-link-button management-compact-action" type="button" data-template-create-mode>새 템플릿</button>
                         </div>
 
+                        <div class="drawer-scroll-body">
                         <!-- API: PATCH /api/workspaces/{companyCode}/inspection-templates/{templateId} -->
                         <form class="category-form" action="#" method="post" autocomplete="off" data-template-edit-form>
                             <label>
@@ -280,6 +294,7 @@
                                 <button class="btn btn-secondary" type="button" data-template-detail-mode>취소</button>
                             </div>
                         </form>
+                        </div>
                     </div>
                 </div>
 
@@ -438,7 +453,7 @@
         </div>
     </form>
 </dialog>
-<script src="/js/pcs-api.js?20260617_temp_password"></script>
+<script src="/js/pcs-api.js?20260623_memory_token"></script>
 <script src="/js/workspace-layout.js?20260622_sidebar_autoclose"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>

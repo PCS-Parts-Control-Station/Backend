@@ -13,7 +13,6 @@ import com.pcs.domain.part.mapper.PartMapper;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.workspace.WorkspaceAccessValidator;
-import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,28 +40,30 @@ class PartServiceTest {
     @Test
     void searchParts_usesDefaultActiveAndLimit() {
         Long companyId = 1L;
-        SearchPartSummaryResponse summary = new SearchPartSummaryResponse(5, 12, 2);
-        when(partMapper.countParts(companyId, "RTX", null, true)).thenReturn(5L);
+        when(partMapper.countParts(companyId, "RTX", null, true)).thenReturn(1L);
         when(partMapper.searchParts(companyId, "RTX", null, true, 10, 0)).thenReturn(List.of(part()));
-        when(partMapper.summarizeParts(companyId, "RTX", null, true)).thenReturn(summary);
+        when(partMapper.summarizeParts(companyId, "RTX", null, true))
+                .thenReturn(new SearchPartSummaryResponse(3, 12, 2));
 
         var response = partService.searchParts(companyId, " RTX ", null, null, null, null, null);
 
         assertEquals(1, response.content().size());
         assertEquals(0, response.page());
         assertEquals(10, response.size());
-        assertEquals(5, response.totalElements());
-        assertEquals(summary, response.summary());
+        assertEquals(3, response.summary().totalCount());
+        assertEquals(12, response.summary().totalStock());
+        assertEquals(2, response.summary().lowStockCount());
         verify(partMapper).searchParts(companyId, "RTX", null, true, 10, 0);
+        verify(partMapper).summarizeParts(companyId, "RTX", null, true);
     }
 
     @Test
     void searchParts_capsLimitToMax() {
         Long companyId = 1L;
-        SearchPartSummaryResponse summary = new SearchPartSummaryResponse(1, 1, 1);
         when(partMapper.countParts(companyId, null, 3L, false)).thenReturn(1L);
         when(partMapper.searchParts(companyId, null, 3L, false, 100, 100)).thenReturn(List.of(part()));
-        when(partMapper.summarizeParts(companyId, null, 3L, false)).thenReturn(summary);
+        when(partMapper.summarizeParts(companyId, null, 3L, false))
+                .thenReturn(new SearchPartSummaryResponse(1, 1, 1));
 
         partService.searchParts(companyId, " ", 3L, false, 1, 200, null);
 
@@ -92,7 +93,6 @@ class PartServiceTest {
                 "Ventus 2X",
                 "MSI",
                 "VGA-RTX3060-MSI",
-                BigDecimal.valueOf(200000),
                 2,
                 1,
                 true
