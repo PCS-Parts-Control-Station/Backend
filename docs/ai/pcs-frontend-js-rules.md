@@ -52,7 +52,9 @@ window.PcsForm.setSaving(form, isSaving)
 window.PcsTable.clearRows(table)
 window.PcsTable.textCell(label, text, tagName)
 window.PcsTable.emptyRow(table, options)
+window.PcsDrawer.bindDismiss(options)
 window.PcsDrawer.bindOutsideClose(options)
+window.PcsDrawer.bindEscapeClose(options)
 ```
 
 기준:
@@ -62,7 +64,7 @@ window.PcsDrawer.bindOutsideClose(options)
 - HTML 문자열이 불가피하면 escape 처리는 `PcsHtml.escape()`를 사용한다.
 - 저장 중 폼 비활성화는 `PcsForm.setSaving()`을 사용한다.
 - 빈 목록/로딩/오류 행은 `PcsTable.emptyRow()`를 우선 사용한다.
-- 관리형 작업 드로어의 외부 클릭 닫기는 `PcsDrawer.bindOutsideClose()`를 사용한다.
+- 오른쪽 사이드바/드로어의 외부 클릭과 `Escape` 닫기는 `PcsDrawer.bindDismiss()`를 사용한다.
 - 다른 목록 행, 드로어를 여는 버튼, 연결된 모달처럼 닫기에서 제외할 요소는 `keepOpenSelector`로 지정한다.
 - 화면별 JS는 도메인별 렌더링, 이벤트 연결, API URL 조립에 집중한다.
 
@@ -78,7 +80,7 @@ window.PcsDrawer.bindOutsideClose(options)
 - 저장 중 폼 상태는 `window.PcsForm.setSaving()`을 사용한다.
 - 빈 목록, 로딩, 오류 행은 `window.PcsTable.emptyRow()`를 사용한다.
 - 텍스트 셀 생성은 `window.PcsTable.textCell()`을 우선 사용한다.
-- 관리형 작업 드로어의 외부 클릭 처리는 `window.PcsDrawer.bindOutsideClose()`를 사용한다.
+- 관리형 작업 드로어의 외부 클릭과 `Escape` 닫기는 `window.PcsDrawer.bindDismiss()`를 사용한다.
 - 화면별 JS에는 해당 화면의 API URL, 폼 값 읽기, 행 렌더링, 이벤트 연결만 남긴다.
 
 금지:

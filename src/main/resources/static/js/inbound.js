@@ -566,10 +566,10 @@
         }
     };
 
-    const closeDetailPanel = () => {
+    const closeDetailPanel = (options = {}) => {
         selectedDocumentId = null;
         currentDetail = null;
-        closeDetailDrawer();
+        closeDetailDrawer(options);
         updateSelectedRows();
     };
 
@@ -805,11 +805,11 @@
         button.addEventListener("click", closeDetailPanel);
     });
 
-    document.addEventListener("keydown", (event) => {
-        if (event.key !== "Escape" || !detailDrawer?.classList.contains("is-open") || cancelModal?.open) {
-            return;
-        }
-        closeDetailPanel();
+    window.PcsDrawer?.bindDismiss({
+        drawer: detailDrawer,
+        close: closeDetailPanel,
+        keepOpenSelector: "[data-document-id], [data-document-cancel], dialog",
+        shouldIgnoreEscape: () => Boolean(cancelModal?.open)
     });
 
     openCancelModalButton?.addEventListener("click", () => {

@@ -508,10 +508,10 @@
         button.addEventListener("click", () => closeDetailDrawer());
     });
 
-    document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && detailDrawer?.classList.contains("is-open")) {
-            closeDetailDrawer();
-        }
+    window.PcsDrawer?.bindDismiss({
+        drawer: detailDrawer,
+        close: closeDetailDrawer,
+        keepOpenSelector: "[data-document-id]"
     });
 
     const initialize = async () => {

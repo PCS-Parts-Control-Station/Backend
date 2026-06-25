@@ -969,10 +969,11 @@
         button.addEventListener("click", () => closeDrawer());
     });
 
-    window.PcsDrawer?.bindOutsideClose({
+    window.PcsDrawer?.bindDismiss({
         drawer: detailDrawer,
         close: closeDrawer,
-        keepOpenSelector: "[data-part-create-drawer], [data-part-id], [data-part-spec-modal], [data-category-picker-modal]"
+        keepOpenSelector: "[data-part-create-drawer], [data-part-id], [data-part-spec-modal], [data-category-picker-modal]",
+        shouldIgnoreEscape: () => Boolean(specModal?.open || categoryPickerModal?.open)
     });
 
     document.querySelectorAll("[data-open-part-spec-modal]").forEach((button) => {
@@ -986,17 +987,6 @@
     specModal?.addEventListener("click", (event) => {
         if (event.target === specModal) {
             closeSpecModal();
-        }
-    });
-
-    document.addEventListener("keydown", (event) => {
-        if (
-            event.key === "Escape" &&
-            detailDrawer?.classList.contains("is-open") &&
-            !specModal?.open &&
-            !categoryPickerModal?.open
-        ) {
-            closeDrawer();
         }
     });
 

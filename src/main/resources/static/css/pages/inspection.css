@@ -3,14 +3,6 @@
     margin-top: 18px;
 }
 
-.inspection-page .side-panel {
-    position: sticky;
-    top: 20px;
-    max-height: calc(100vh - 40px);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-}
-
 .inspection-page [data-inspection-side-step] {
     padding: 8px;
     border: 1px solid transparent;
@@ -2472,14 +2464,6 @@
 
 .inspection-document-row .row-actions {
         grid-row: 6;
-    }
-}
-
-@media (max-width: 1180px) {
-.inspection-page .side-panel {
-        position: static;
-        max-height: none;
-        overflow: visible;
     }
 }
 

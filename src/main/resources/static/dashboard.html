@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/core/tokens.css?20260618_layers">
     <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
-    <link rel="stylesheet" href="/css/layouts/workspace.css?20260622_sidebar_autoclose">
+    <link rel="stylesheet" href="/css/layouts/workspace.css?20260624_quick_bar">
     <link rel="stylesheet" href="/css/components/components.css?20260618_layers">
     <link rel="stylesheet" href="/css/pages/dashboard.css?20260623_dashboard_donut_1100ms">
 
@@ -19,6 +19,24 @@
 <body class="has-collapsible-sidebar page-dashboard workspace-page">
 <div class="workspace-layout">
     <div data-workspace-sidebar data-active-route="dashboard"></div>
+
+    <div class="workspace-quick-bar" data-workspace-quick-bar data-watch-target=".workspace-header .header-actions" aria-hidden="true">
+        <button class="menu-toggle" type="button" data-sidebar-toggle aria-controls="workspace-sidebar" aria-expanded="false" aria-label="메뉴 열기">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M4 7h16" />
+                <path d="M4 12h16" />
+                <path d="M4 17h16" />
+            </svg>
+        </button>
+        <button class="workspace-quick-brand" type="button" data-scroll-top aria-label="운영 현황 화면 맨 위로 이동">
+            <span>운영 현황</span>
+        </button>
+        <div class="workspace-quick-actions">
+            <a class="btn btn-secondary" data-route="inspection">검수 관리</a>
+            <a class="btn btn-secondary" data-route="outbound/new">출고 등록</a>
+            <a class="btn btn-primary" data-route="inbound/new">입고 등록</a>
+        </div>
+    </div>
 
     <main class="workspace-main dashboard-page" data-dashboard-root>
         <header class="workspace-header">
@@ -145,7 +163,7 @@
     </main>
 </div>
 <script src="/js/pcs-api.js?20260617_temp_password"></script>
-<script src="/js/workspace-layout.js?20260617_temp_password"></script>
+<script src="/js/workspace-layout.js?20260624_quick_bar"></script>
 <script src="/js/dashboard.js?20260623_dashboard_card_paging"></script>
 </body>
 </html>
