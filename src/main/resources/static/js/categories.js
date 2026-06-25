@@ -751,10 +751,11 @@
         button.addEventListener("click", () => closeDrawer());
     });
 
-    window.PcsDrawer?.bindOutsideClose({
+    window.PcsDrawer?.bindDismiss({
         drawer: detailDrawer,
         close: closeDrawer,
-        keepOpenSelector: "[data-category-create-drawer], [data-category-id], [data-spec-modal], [data-category-delete-modal]"
+        keepOpenSelector: "[data-category-create-drawer], [data-category-id], [data-spec-modal], [data-category-delete-modal]",
+        shouldIgnoreEscape: () => Boolean(specModal?.open || deleteModal?.open)
     });
 
     document.querySelector("[data-category-edit-mode]")?.addEventListener("click", showEditPanel);
@@ -805,17 +806,6 @@
     specModal?.addEventListener("click", (event) => {
         if (event.target === specModal) {
             closeSpecModal();
-        }
-    });
-
-    document.addEventListener("keydown", (event) => {
-        if (
-            event.key === "Escape" &&
-            detailDrawer?.classList.contains("is-open") &&
-            !specModal?.open &&
-            !deleteModal?.open
-        ) {
-            closeDrawer();
         }
     });
 

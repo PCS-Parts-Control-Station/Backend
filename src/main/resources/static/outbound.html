@@ -153,8 +153,8 @@
                 </section>
             </div>
 
-            <aside class="document-detail-drawer" data-outbound-detail-drawer aria-labelledby="outbound-detail-title" aria-hidden="true" tabindex="-1">
-                <div class="panel-card document-detail-panel">
+            <aside class="right-side-drawer document-detail-drawer" data-outbound-detail-drawer aria-labelledby="outbound-detail-title" aria-hidden="true" tabindex="-1">
+                <div class="panel-card right-side-drawer-panel document-detail-panel">
                     <div class="panel-title-bar">
                         <div>
                             <h2 id="outbound-detail-title">출고 전표 상세</h2>
@@ -163,6 +163,7 @@
                         <button class="panel-link-button" type="button" data-close-detail-panel>닫기</button>
                     </div>
 
+                    <div class="drawer-scroll-body">
                     <div class="document-detail-card">
                         <strong data-detail-document-no>-</strong>
                         <div class="detail-badge-row">
@@ -198,7 +199,7 @@
                             <h3>품목 요약</h3>
                             <span data-detail-line-summary>-</span>
                         </div>
-                        <div class="document-line-list" data-detail-lines>
+                        <div class="document-line-list right-side-scroll-list" data-detail-lines>
                             <p class="detail-empty-text">전표를 선택해 주세요.</p>
                         </div>
                     </div>
@@ -206,6 +207,7 @@
                     <div class="form-actions">
                         <button class="btn btn-secondary" type="button" data-close-detail-panel>상세 닫기</button>
                         <button class="btn btn-danger" type="button" data-open-cancel-modal disabled>전표 취소</button>
+                    </div>
                     </div>
                 </div>
             </aside>
@@ -254,6 +256,7 @@
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
 <script src="/js/workspace-layout.js?20260624_quick_bar"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/outbound.js?20260619_non_modal_drawer"></script>
+<script src="/js/pcs-common.js?20260625_right_drawer_v2"></script>
+<script src="/js/outbound.js?20260625_right_drawer_v2"></script>
 </body>
 </html>

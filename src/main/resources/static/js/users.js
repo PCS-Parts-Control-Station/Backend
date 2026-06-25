@@ -697,29 +697,10 @@
         setPanelMode("detail");
     });
 
-    document.addEventListener("click", (event) => {
-        if (!detailDrawer?.classList.contains("is-open")) {
-            return;
-        }
-        const target = event.target;
-        if (!(target instanceof Element)) {
-            return;
-        }
-        if (
-            detailDrawer.contains(target) ||
-            target.closest("[data-user-create-drawer]") ||
-            target.closest("[data-user-id]") ||
-            target.closest("[data-open-staff-permission-modal]")
-        ) {
-            return;
-        }
-        closeDrawer({ restoreFocus: false });
-    });
-
-    document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && detailDrawer?.classList.contains("is-open")) {
-            closeDrawer();
-        }
+    window.PcsDrawer?.bindDismiss({
+        drawer: detailDrawer,
+        close: closeDrawer,
+        keepOpenSelector: "[data-user-create-drawer], [data-user-id], [data-open-staff-permission-modal]"
     });
 
     createForm?.addEventListener("submit", async (event) => {

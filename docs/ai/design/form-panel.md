@@ -27,8 +27,8 @@
 오른쪽 등록/수정 폼 패널은 아래 구조를 기본으로 한다.
 
 ```text
-management-detail-drawer
-- panel-card.management-detail-drawer-panel.side-work-panel
+right-side-drawer.management-detail-drawer
+- panel-card.right-side-drawer-panel.management-detail-drawer-panel.side-work-panel
   - 제목
   - 짧은 설명
   - form
@@ -40,11 +40,11 @@ management-detail-drawer
 
 ## 오른쪽 작업 패널
 
-목록을 보면서 바로 추가/수정해야 하는 조회 중심 관리 화면은 헤더의 등록 버튼과 오른쪽 `management-detail-drawer`를 사용한다. 등록·상세·수정 모드와 입력 항목은 같은 드로어 안에서 전환한다.
+목록을 보면서 바로 추가/수정해야 하는 조회 중심 관리 화면은 헤더의 등록 버튼과 오른쪽 `right-side-drawer management-detail-drawer`를 사용한다. 등록·상세·수정 모드와 입력 항목은 같은 드로어 안에서 전환한다.
 
 기준:
 
-- 기본 폭은 `management-detail-drawer` 공통 폭을 따른다.
+- 기본 폭은 `right-side-drawer` 공통 폭을 따른다.
 - 본문 목록보다 더 강하게 튀면 안 된다.
 - 핵심 입력만 담는다.
 - 길고 복잡한 입력은 별도 상세/등록 페이지로 분리한다.
@@ -80,6 +80,8 @@ management-detail-drawer
 - 관리형 작업 드로어는 본문 외부 클릭으로 닫되, 다른 목록 행 클릭은 닫기 동작으로 처리하지 않고 같은 드로어의 상세 내용만 교체한다.
 - 관리형 작업 드로어의 패널 자체에는 세로 스크롤을 두지 않는다.
 - 제목/닫기 버튼 아래의 폼, 상세 정보, 하위 항목 목록은 `drawer-scroll-body` 안에 넣고 그 영역만 세로 스크롤한다.
+- 하위 항목이 길어지는 경우에는 드로어나 패널이 아니라 하위 항목 목록 컨테이너에 `right-side-scroll-list`를 사용한다.
+- 상세 화면의 `management-subitem-detail`처럼 하위 항목 목록이 별도 섹션으로 보이면 섹션 안의 목록만 스크롤되게 하고, 드로어 루트와 패널에는 스크롤을 두지 않는다.
 
 공통 패널 전환 기준:
 

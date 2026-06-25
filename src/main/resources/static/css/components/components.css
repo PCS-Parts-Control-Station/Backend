@@ -714,8 +714,15 @@ label {
     padding: 20px;
 }
 
-.side-work-panel {
+.side-work-panel,
+.right-side-drawer-panel {
     min-height: 0;
+}
+
+.right-assist-panel {
+    position: sticky;
+    top: 20px;
+    align-self: start;
 }
 
 .management-drawer-grid {
@@ -756,6 +763,7 @@ label {
     flex-wrap: wrap;
 }
 
+.right-side-drawer,
 .management-detail-drawer {
     position: fixed;
     top: 0;
@@ -774,6 +782,7 @@ label {
     transition: opacity 180ms ease, transform 180ms ease, visibility 0s linear 180ms;
 }
 
+.right-side-drawer.is-open,
 .management-detail-drawer.is-open {
     opacity: 1;
     visibility: visible;
@@ -782,6 +791,15 @@ label {
     transition-delay: 0s;
 }
 
+.right-side-drawer:not([hidden]):not([aria-hidden="true"]) {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+    pointer-events: auto;
+    transition-delay: 0s;
+}
+
+.right-side-drawer-panel,
 .management-detail-drawer-panel {
     display: grid;
     grid-template-rows: minmax(0, 1fr);
@@ -795,11 +813,34 @@ label {
     box-shadow: -16px 0 32px rgba(15, 23, 42, 0.14);
 }
 
+.right-side-drawer-panel:has(> .panel-title-bar),
+.right-side-drawer-panel:has(> .history-detail-panel-header) {
+    grid-template-rows: auto minmax(0, 1fr);
+}
+
+.right-side-drawer > .right-side-drawer-panel {
+    border-left: 1px solid var(--line);
+}
+
+.right-side-drawer.right-side-drawer-panel {
+    width: min(520px, calc(100% - 24px));
+    max-width: calc(100% - 24px);
+    border-left: 1px solid var(--line);
+}
+
+.right-side-drawer > .right-side-drawer-panel > .panel-title-bar,
+.right-side-drawer > .right-side-drawer-panel > .drawer-scroll-body {
+    min-width: 0;
+}
+
 .management-detail-drawer,
-.management-detail-drawer * {
+.management-detail-drawer *,
+.right-side-drawer,
+.right-side-drawer * {
     max-width: 100%;
 }
 
+.right-side-drawer .panel-mode,
 .management-detail-drawer .panel-mode {
     min-height: 0;
     height: 100%;
@@ -807,6 +848,7 @@ label {
     overflow: hidden;
 }
 
+.right-side-drawer .panel-mode:not(:has(.drawer-scroll-body)),
 .management-detail-drawer .panel-mode:not(:has(.drawer-scroll-body)) {
     overflow-y: auto;
     padding-right: 4px;
@@ -826,7 +868,41 @@ label {
     scrollbar-gutter: stable;
 }
 
+.right-side-scroll-list {
+    min-width: 0;
+    min-height: 0;
+    max-height: min(360px, 48dvh);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+}
+
+.drawer-scroll-body:has(> .document-line-section .right-side-scroll-list),
+.drawer-scroll-body:has(> .management-subitem-detail .right-side-scroll-list) {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    overflow-y: hidden;
+}
+
+.right-side-drawer .document-line-section:has(.right-side-scroll-list),
+.management-detail-drawer .document-line-section:has(.right-side-scroll-list),
+.right-side-drawer .management-subitem-detail:has(.right-side-scroll-list),
+.management-detail-drawer .management-subitem-detail:has(.right-side-scroll-list) {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    min-height: 0;
+}
+
+.drawer-scroll-body:has(> .document-line-section .right-side-scroll-list) .right-side-scroll-list,
+.drawer-scroll-body:has(> .management-subitem-detail .right-side-scroll-list) .right-side-scroll-list {
+    max-height: none;
+}
+
 .drawer-scroll-body *,
+.right-side-drawer .panel-title-bar *,
+.right-side-drawer .side-detail-card *,
+.right-side-drawer .detail-list *,
 .management-detail-drawer .panel-title-bar *,
 .management-detail-drawer .side-detail-card *,
 .management-detail-drawer .detail-list * {
@@ -835,6 +911,7 @@ label {
     word-break: break-word;
 }
 
+.right-side-drawer .panel-title-bar,
 .management-detail-drawer .panel-title-bar {
     align-items: flex-start;
     margin: 0 0 20px;
@@ -842,6 +919,7 @@ label {
     border-bottom: 1px solid var(--line);
 }
 
+.right-side-drawer > .muted-panel,
 .management-detail-drawer > .muted-panel {
     display: none;
 }
@@ -864,11 +942,18 @@ label {
 }
 
 @media (max-width: 840px) {
+.right-side-drawer,
 .management-detail-drawer {
         left: 12px;
         right: 12px;
         width: auto;
         max-width: none;
+    }
+}
+
+@media (max-width: 1180px) {
+.right-assist-panel {
+        position: static;
     }
 }
 

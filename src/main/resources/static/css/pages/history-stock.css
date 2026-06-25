@@ -162,38 +162,6 @@
     font-weight: 800;
 }
 
-.stock-history-detail-drawer {
-    bottom: 0;
-    pointer-events: none;
-    position: fixed;
-    right: 0;
-    top: 0;
-    transform: translateX(100%);
-    transition: transform 180ms ease;
-    width: min(520px, calc(100vw - 32px));
-    z-index: 45;
-}
-
-.stock-history-detail-drawer.is-open {
-    pointer-events: auto;
-    transform: translateX(0);
-}
-
-.stock-history-detail-drawer .document-detail-panel {
-    background: var(--surface);
-    border-radius: 0;
-    box-shadow: -16px 0 32px rgba(15, 23, 42, 0.14);
-    height: 100%;
-    overflow-y: auto;
-}
-
-.stock-history-detail-drawer .panel-title-bar {
-    align-items: flex-start;
-    border-bottom: 1px solid var(--line);
-    margin: -8px -8px 20px;
-    padding: 0 0 18px;
-}
-
 .stock-history-detail-drawer .document-detail-card .detail-badge-row {
     align-items: center;
     display: flex;
@@ -444,9 +412,6 @@
         min-width: 760px;
     }
 
-    .stock-history-detail-drawer {
-        width: 100vw;
-    }
 }
 
 @media (max-width: 640px) {

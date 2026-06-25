@@ -1713,29 +1713,10 @@
         setPanelMode("detail");
     });
 
-    document.addEventListener("click", (event) => {
-        if (!detailDrawer?.classList.contains("is-open")) {
-            return;
-        }
-        const target = event.target;
-        if (!(target instanceof Element)) {
-            return;
-        }
-        if (
-            detailDrawer.contains(target) ||
-            target.closest("[data-template-create-drawer]") ||
-            target.closest("[data-template-id]") ||
-            target.closest("dialog")
-        ) {
-            return;
-        }
-        closeDrawer({ restoreFocus: false });
-    });
-
-    document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && detailDrawer?.classList.contains("is-open")) {
-            closeDrawer();
-        }
+    window.PcsDrawer?.bindDismiss({
+        drawer: detailDrawer,
+        close: closeDrawer,
+        keepOpenSelector: "[data-template-create-drawer], [data-template-id], dialog"
     });
 
     document.querySelector("[data-template-active-toggle]")?.addEventListener("click", async () => {

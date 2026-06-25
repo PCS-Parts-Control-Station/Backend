@@ -35,7 +35,7 @@ src/main/resources/static/css/
 - `core/tokens.css`: 색상, 글꼴, 간격과 공통 CSS 변수, layer 순서
 - `core/base.css`: box sizing, 기본 글꼴, 기본 요소 초기화
 - `layouts/workspace.css`: 사이드바, 헤더, 본문 폭, 공통 반응형 골격
-- `components/components.css`: 버튼, 입력, 카드, 표, 배지, 모달, 페이징
+- `components/components.css`: 버튼, 입력, 카드, 표, 배지, 모달, 페이징, 오른쪽 사이드바/드로어 기본 구조
 - `components/management-page.css`: 관리형 화면의 요약, 하위 항목 편집, 선택·정렬 상태
 - `components/workflow.css`: 입고·검수·출고에서 공유하는 업무 흐름 표현
 - `components/feedback.css`: 토스트 등 공통 피드백
@@ -92,6 +92,9 @@ layer 순서는 아래 한 곳에서만 선언한다.
 - 페이지 CSS는 비어 있거나 `@layer page {}`만 있어도 된다. 페이지별 선언을 채우는 것이 목적이 아니다.
 - 페이지 전용 규칙은 가능한 경우 `.page-{page}` 아래로 범위를 제한한다.
 - 공통 `.btn`, `.field`, `.panel-card`, `.data-row`를 페이지 CSS에서 다시 정의하지 않는다.
+- 오른쪽 사이드바 기본 구조는 `right-side-drawer`, `right-side-drawer-panel`, `drawer-scroll-body`, `right-side-scroll-list`, `right-assist-panel`을 사용한다.
+- 페이지 CSS에서 오른쪽 사이드바의 `position`, `right`, `width`, `height`, `transform`, `visibility`, `box-shadow`, 패널 자체 `overflow-y`를 다시 정의하지 않는다.
+- 전표 라인, 사양 항목처럼 반복 항목이 길어지는 영역은 `right-side-scroll-list`를 붙이고, 드로어 루트와 패널에는 스크롤을 만들지 않는다.
 - 공통 컴포넌트의 실제 페이지 차이만 modifier 또는 페이지 범위 선택자로 보정한다.
 - 반응형 전체 골격은 layout이, 컴포넌트 내부 전환은 components가, 한 페이지의 예외만 page가 담당한다.
 
@@ -100,11 +103,13 @@ layer 순서는 아래 한 곳에서만 선언한다.
 - 해당 목록의 실제 열 수에 따른 `grid-template-columns`
 - 특정 도메인에만 존재하는 필드 묶음의 배치
 - 모바일에서 숨길 데이터 열과 페이지 고유 노출 순서
+- 오른쪽 사이드바 내부의 도메인별 라인 목록, 사양 항목, 타임라인, 배지 배치
 - 공통 컴포넌트 계약으로 표현할 수 없는 페이지 상태
 
 공통 CSS로 이동해야 하는 규칙:
 
 - 카드, 버튼, 배지, 검색 폼, 요약, 패널, 모달의 기본 모양
+- 오른쪽 사이드바/드로어의 위치, 폭, 열림/닫힘, 패널 높이, 내부 스크롤 컨테이너
 - hover, focus, selected, inactive, dragging 같은 재사용 상태
 - 두 열에서 한 열로 바뀌는 컴포넌트 내부 반응형
 - 다른 데이터로 바꿔도 동일하게 성립하는 목록·편집·상세 구조

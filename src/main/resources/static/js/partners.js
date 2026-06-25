@@ -432,28 +432,10 @@
         setPanelMode("detail");
     });
 
-    document.addEventListener("click", (event) => {
-        if (!detailDrawer?.classList.contains("is-open")) {
-            return;
-        }
-        const target = event.target;
-        if (!(target instanceof Element)) {
-            return;
-        }
-        if (
-            detailDrawer.contains(target) ||
-            target.closest("[data-partner-create-drawer]") ||
-            target.closest("[data-partner-id]")
-        ) {
-            return;
-        }
-        closeDrawer({ restoreFocus: false });
-    });
-
-    document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && detailDrawer?.classList.contains("is-open")) {
-            closeDrawer();
-        }
+    window.PcsDrawer?.bindDismiss({
+        drawer: detailDrawer,
+        close: closeDrawer,
+        keepOpenSelector: "[data-partner-create-drawer], [data-partner-id]"
     });
 
     createForm?.addEventListener("submit", async (event) => {
