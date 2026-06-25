@@ -18,11 +18,15 @@
     const searchButton = filterForm?.querySelector("button[type='submit']");
     const panelViews = document.querySelectorAll("[data-user-panel]");
     const detailDrawer = document.querySelector("[data-user-detail-drawer]");
-    const createDrawerButton = document.querySelector("[data-user-create-drawer]");
+    const createDrawerButtons = document.querySelectorAll("[data-user-create-drawer]");
+    const createDrawerButton = Array.from(createDrawerButtons)
+            .find((button) => !button.closest("[data-workspace-quick-bar]"))
+            || createDrawerButtons[0]
+            || null;
     const createForm = document.querySelector("[data-user-create-form]");
     const editForm = document.querySelector("[data-user-edit-form]");
     const staffPermissionModal = document.querySelector("[data-staff-permission-modal]");
-    const openStaffPermissionModalButton = document.querySelector("[data-open-staff-permission-modal]");
+    const openStaffPermissionModalButtons = document.querySelectorAll("[data-open-staff-permission-modal]");
     const closeStaffPermissionModalButtons = document.querySelectorAll("[data-close-staff-permission-modal]");
     const staffPermissionForm = document.querySelector("[data-staff-permission-form]");
     const staffPermissionInputs = document.querySelectorAll("[data-staff-permission-input]");
@@ -197,7 +201,9 @@
     const setDrawerOpen = (isOpen) => {
         detailDrawer?.classList.toggle("is-open", isOpen);
         detailDrawer?.setAttribute("aria-hidden", String(!isOpen));
-        createDrawerButton?.setAttribute("aria-expanded", String(isOpen));
+        createDrawerButtons.forEach((button) => {
+            button.setAttribute("aria-expanded", String(isOpen));
+        });
     };
 
     const openDrawer = (trigger = null) => {
@@ -662,8 +668,10 @@
         button.addEventListener("click", (event) => showCreatePanel(event.currentTarget, { open: true }));
     });
 
-    createDrawerButton?.addEventListener("click", (event) => {
-        showCreatePanel(event.currentTarget, { open: true });
+    createDrawerButtons.forEach((button) => {
+        button.addEventListener("click", (event) => {
+            showCreatePanel(event.currentTarget, { open: true });
+        });
     });
 
     document.querySelectorAll("[data-close-user-drawer]").forEach((button) => {
@@ -812,7 +820,9 @@
         }
     });
 
-    openStaffPermissionModalButton?.addEventListener("click", openStaffPermissionModal);
+    openStaffPermissionModalButtons.forEach((button) => {
+        button.addEventListener("click", openStaffPermissionModal);
+    });
 
     closeStaffPermissionModalButtons.forEach((button) => {
         button.addEventListener("click", closeStaffPermissionModal);

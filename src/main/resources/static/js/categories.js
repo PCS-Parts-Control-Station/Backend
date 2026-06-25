@@ -16,7 +16,11 @@
     const searchButton = filterForm?.querySelector("button[type='submit']");
     const panelViews = document.querySelectorAll("[data-category-panel]");
     const detailDrawer = document.querySelector("[data-category-detail-drawer]");
-    const createDrawerButton = document.querySelector("[data-category-create-drawer]");
+    const createDrawerButtons = document.querySelectorAll("[data-category-create-drawer]");
+    const createDrawerButton = Array.from(createDrawerButtons)
+            .find((button) => !button.closest("[data-workspace-quick-bar]"))
+            || createDrawerButtons[0]
+            || null;
     const closeDrawerButtons = document.querySelectorAll("[data-close-category-drawer]");
     const createForm = document.querySelector("[data-category-create-form]");
     const editForm = document.querySelector("[data-category-edit-form]");
@@ -104,7 +108,9 @@
     const setDrawerOpen = (isOpen) => {
         detailDrawer?.classList.toggle("is-open", isOpen);
         detailDrawer?.setAttribute("aria-hidden", String(!isOpen));
-        createDrawerButton?.setAttribute("aria-expanded", String(isOpen));
+        createDrawerButtons.forEach((button) => {
+            button.setAttribute("aria-expanded", String(isOpen));
+        });
     };
 
     const openDrawer = (trigger = null) => {
@@ -729,8 +735,10 @@
         loadCategories(0);
     });
 
-    createDrawerButton?.addEventListener("click", (event) => {
-        showCreatePanel(event.currentTarget, { open: true });
+    createDrawerButtons.forEach((button) => {
+        button.addEventListener("click", (event) => {
+            showCreatePanel(event.currentTarget, { open: true });
+        });
     });
 
     document.querySelectorAll("[data-category-create-mode]").forEach((button) => {

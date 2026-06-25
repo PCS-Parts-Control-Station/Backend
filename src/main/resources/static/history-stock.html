@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/core/tokens.css?20260618_layers">
     <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
-    <link rel="stylesheet" href="/css/layouts/workspace.css?20260622_sidebar_autoclose">
+    <link rel="stylesheet" href="/css/layouts/workspace.css?20260624_quick_bar">
     <link rel="stylesheet" href="/css/components/components.css?20260623_drawer_clip_fix">
     <link rel="stylesheet" href="/css/components/workflow.css?20260618_layers">
     <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
@@ -20,6 +20,23 @@
 <body class="has-collapsible-sidebar page-history-stock workspace-page">
 <div class="workspace-layout">
     <div data-workspace-sidebar data-active-route="history/stock"></div>
+
+    <div class="workspace-quick-bar" data-workspace-quick-bar data-watch-target=".workspace-header .header-actions" aria-hidden="true">
+        <button class="menu-toggle" type="button" data-sidebar-toggle aria-controls="workspace-sidebar" aria-expanded="false" aria-label="메뉴 열기">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M4 7h16" />
+                <path d="M4 12h16" />
+                <path d="M4 17h16" />
+            </svg>
+        </button>
+        <button class="workspace-quick-brand" type="button" data-scroll-top aria-label="입출고 이력 화면 맨 위로 이동">
+            <span>입출고 이력</span>
+        </button>
+        <div class="workspace-quick-actions">
+            <a class="btn btn-secondary" data-route="inbound">입고 관리</a>
+            <a class="btn btn-secondary" data-route="outbound">출고 관리</a>
+        </div>
+    </div>
 
     <main class="workspace-main stock-history-page">
         <header class="workspace-header">
@@ -174,7 +191,7 @@
 </div>
 <script src="/js/pcs-api.js?20260623_memory_token"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
-<script src="/js/workspace-layout.js?20260622_sidebar_autoclose"></script>
+<script src="/js/workspace-layout.js?20260624_quick_bar"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
 <script src="/js/history-stock.js?20260621_stock_history"></script>
 </body>
