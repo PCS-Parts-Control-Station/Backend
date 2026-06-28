@@ -23,6 +23,8 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
     - 권한/role 분기 기준 확인
 - `docs/ai/pcs-status-lifecycle-rules.md`
     - `active`, 사용 중지, 상태 보존 기준 확인
+- `docs/ai/pcs-test-strategy.md`
+    - JUnit, MockMvc, Testcontainers 테스트 작성 기준 확인
 
 ## 문서 선택 규칙
 
@@ -221,6 +223,34 @@ SQL 참조 기준:
 - Git pre-push 훅은 `bootstrap`이나 `full`이 아니라 `gate` 모드로 변경 파일 기준 feature 검사와 공통 검증을 실행한다.
 - Codex Stop 훅도 `gate`를 사용하며 서버를 제어하지 않는다.
 - `.gitignore` 필수 패턴, Git 추적 금지 파일, pre-push 변경 파일 금지 검사는 `docs/ai/pcs-harness-rules.md`의 `.gitignore 규칙` 기준을 따른다.
+
+---
+
+### 7. 테스트 작성 작업
+
+읽을 문서:
+
+- `docs/ai/pcs-test-strategy.md`
+- `docs/ai/pcs-backend-common-rules.md`
+- `docs/ai/pcs-permission-rules.md`
+- 해당 기능 문서 `docs/features/{feature}.md`
+- DB를 검증하면 `docs/features/{feature}-db.md`
+- 테스트를 하네스에 연결하면 `docs/ai/pcs-harness-rules.md`
+
+기준:
+
+- 먼저 feature 문서와 DB 문서에 테스트 기준 섹션이 있는지 확인한다.
+- 부족하면 테스트 작성 전에 MD의 테스트 기준을 보강한다.
+- 단위 테스트는 DB 없이 검증 가능한 정책과 계산 로직만 다룬다.
+- API 테스트는 MockMvc로 요청/응답, 예외 응답, 권한 차단을 검증한다.
+- DB 통합 테스트는 Testcontainers + MariaDB로 MyBatis SQL과 제약조건을 검증한다.
+- 하네스는 테스트를 직접 재구현하지 않고 feature별 테스트 실행 명령만 연결한다.
+
+예시:
+
+- 품목 관리 테스트 작성 → `docs/features/part.md` + `docs/features/part-db.md`
+- 품목 분류 테스트 작성 → `docs/features/category.md` + `docs/features/category-db.md`
+- 권한 차단 테스트 작성 → 해당 기능 문서 + `docs/ai/pcs-permission-rules.md`
 
 ---
 

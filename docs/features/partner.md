@@ -90,3 +90,13 @@ updatedAt
 - 거래 불가 상태의 거래처는 신규 입출고 전표에 사용할 수 없다.
 - 인증 사용자 사용 방식은 `docs/ai/pcs-auth-client-rules.md` 기준을 따른다.
 - 거래처 목록 SQL은 `docs/ai/pcs-pagination-rules.md` 기준으로 페이징한다.
+## Test Coverage
+
+- Unit/service tests: `PartnerServiceTest`
+- API tests: `PartnerApiControllerTest`
+- Required checks:
+  - partner search keeps company scope, filters, summary, and pagination
+  - create partner defaults `active` to true when the request omits it
+  - duplicate partner name in the same company is rejected
+  - update partner can preserve or change active status in the same PATCH flow
+  - standalone active-status update validates partner existence

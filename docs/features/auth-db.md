@@ -126,3 +126,13 @@ access token 인증 시:
 
 실행 명령과 `-Feature`, `-DbFeature` 조합 기준은 `docs/ai/pcs-harness-rules.md`를 따른다.  
 인증 검증 시에는 `auth.md`, `auth-db.md`, `member-db.md`, `checkdb.md` 기준을 함께 확인한다.
+
+## DB Integration Test Coverage
+
+- Integration test: `AuthPersistenceIntegrationTest`
+- Schema fixture: `src/integrationTest/resources/pcs-account-test-schema.sql`
+- Required checks:
+  - successful and failed login attempts update member login state and login history
+  - refresh token is saved as a hash, not as a raw token
+  - expired, rotated, and reuse-detected refresh-token states are handled
+  - current session lookup rejects workspace mismatch

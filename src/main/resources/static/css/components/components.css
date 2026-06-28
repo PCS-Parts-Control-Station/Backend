@@ -767,11 +767,12 @@ label {
 .management-detail-drawer {
     position: fixed;
     top: 0;
-    right: 12px;
+    /* Cover the root scrollbar gutter so the drawer touches the viewport edge. */
+    right: calc(100% - 100vw);
     bottom: 0;
     z-index: 45;
-    width: min(520px, calc(100% - 24px));
-    max-width: calc(100% - 24px);
+    width: min(520px, 100%);
+    max-width: 100%;
     max-height: 100dvh;
     min-width: 0;
     overflow: hidden;
@@ -823,8 +824,8 @@ label {
 }
 
 .right-side-drawer.right-side-drawer-panel {
-    width: min(520px, calc(100% - 24px));
-    max-width: calc(100% - 24px);
+    width: min(520px, 100%);
+    max-width: 100%;
     border-left: 1px solid var(--line);
 }
 
@@ -944,8 +945,8 @@ label {
 @media (max-width: 840px) {
 .right-side-drawer,
 .management-detail-drawer {
-        left: 12px;
-        right: 12px;
+        left: 0;
+        right: calc(100% - 100vw);
         width: auto;
         max-width: none;
     }

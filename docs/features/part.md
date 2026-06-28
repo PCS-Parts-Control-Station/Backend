@@ -61,13 +61,12 @@ selectedOptionId
 
 ## 목록 / 검색 응답
 
-- 품목 목록은 `PageResultDto<SearchPartResponse, Void>` 구조를 사용한다.
-- `summary`는 현재 구현에서 `null`이다.
+- 품목 목록은 `PageResultDto<SearchPartResponse, SearchPartSummaryResponse>` 구조를 사용한다.
+- `summary`는 `totalCount`, `totalStock`, `lowStockCount`를 포함한다.
 - `totalElements`는 현재 검색 조건 기준 전체 품목 수이다.
 - `currentStockQuantity`는 `tb_part_stock.quantity`를 기준으로 내려준다.
 - 화면에서 전체 건수는 `totalElements`를 사용한다.
-- 화면의 재고/재고 부족 요약을 전체 검색 조건 기준으로 바꾸려면 백엔드 summary DTO와 집계 SQL을 먼저 추가해야 한다.
-- 현재 페이지 행을 기준으로 만든 재고/재고 부족 요약을 전체 집계로 오해하지 않게 문구와 테스트를 함께 갱신한다.
+- 화면의 재고/재고 부족 요약은 현재 페이지 행 기준이 아니라 검색 조건 전체 기준의 `summary`를 사용한다.
 
 ## 하네스 포인트
 
@@ -77,3 +76,37 @@ selectedOptionId
 - 사양값 저장은 `tb_part_spec_value`를 사용한다.
 - 품목 상세 조회는 항상 `companyId`와 `partId` 범위를 함께 검증한다.
 - 개별 품목 API를 추가할 때는 `part.md`, `part-db.md`, `stock.md`, `inspection.md`의 책임 경계를 먼저 정리한다.
+
+## 테스트 기준
+
+단위 테스트:
+
+- 품목코드는 분류명, 제조사, 제조사 모델명, 사양값을 기준으로 생성한다.
+- 같은 입력은 같은 base code를 만든다.
+- 중복 코드가 있으면 순번 후보를 증가시켜 다음 품목코드를 만든다.
+- 품목코드는 DB 컬럼 길이를 넘지 않도록 잘라낸다.
+- `safeQuantity`가 없으면 0으로 처리하고, 음수면 실패한다.
+- 필수 사양값이 누락되면 실패한다.
+- `BOOLEAN` 사양값은 미입력 시 `false`로 처리한다.
+- `SELECT` 사양값은 현재 분류에 등록된 선택지만 허용한다.
+- 같은 `specDefinitionId`가 중복 입력되면 실패한다.
+- 현재 분류에 없는 `specDefinitionId`가 들어오면 실패한다.
+
+API 테스트:
+
+- 목록 조회는 기본 `active=true` 조건을 사용한다.
+- 목록 조회는 `keyword`, `categoryId`, `page`, `size`, `limit` 조건과 `PageResultDto` 구조를 검증한다.
+- 목록 응답은 `currentStockQuantity`와 summary 값을 포함해야 한다.
+- 생성은 품목코드를 입력받지 않고 서버에서 자동 생성해야 한다.
+- 생성은 `TEXT`, `NUMBER`, `SELECT`, `BOOLEAN` 사양값 저장 요청을 검증한다.
+- 없는 분류 ID로 생성하면 실패해야 한다.
+- 필수 사양값 누락, 잘못된 선택지, 음수 안전 재고는 실패해야 한다.
+- 상세 조회는 품목 기본 정보와 사양값 목록을 함께 내려줘야 한다.
+- 수정은 기본 정보와 사양값을 현재 요청 기준으로 교체 저장해야 한다.
+- 수정 시 품목코드는 현재 입력값 기준으로 다시 생성해야 한다.
+- 없는 품목 조회/수정은 실패해야 한다.
+
+권한 테스트:
+
+- `companyCode`와 JWT의 업체가 다르면 실패해야 한다.
+- STAFF는 `STAFF_PART_CREATE` 권한이 없으면 생성과 수정을 할 수 없다.

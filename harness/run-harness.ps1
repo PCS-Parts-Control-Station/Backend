@@ -76,6 +76,7 @@ $AllowedGitPathPatterns = @(
     '^harness/reports/\.gitkeep$'
 )
 $script:SelectedFeatures = @()
+$script:ExecutedGradleTestCommands = @{}
 
 function Add-Result {
     param(
@@ -147,6 +148,36 @@ function Get-JavaExecutablePath {
     foreach ($candidate in $candidates) {
         if (Test-Path $candidate) {
             return $candidate
+        }
+    }
+
+    return $null
+}
+
+function Get-GitCommandPath {
+    $gitCommand = Get-Command git -ErrorAction SilentlyContinue
+    if ($gitCommand) {
+        return $gitCommand.Source
+    }
+
+    if (Test-IsWindowsHost) {
+        $candidates = @(
+            (Join-Path $env:ProgramFiles "Git/cmd/git.exe"),
+            (Join-Path $env:ProgramFiles "Git/bin/git.exe")
+        )
+
+        $programFilesX86 = ${env:ProgramFiles(x86)}
+        if (-not [string]::IsNullOrWhiteSpace($programFilesX86)) {
+            $candidates += @(
+                (Join-Path $programFilesX86 "Git/cmd/git.exe"),
+                (Join-Path $programFilesX86 "Git/bin/git.exe")
+            )
+        }
+
+        foreach ($candidate in $candidates) {
+            if (Test-Path $candidate) {
+                return $candidate
+            }
         }
     }
 
@@ -292,6 +323,44 @@ function Invoke-GradleWrapper {
     & sh $gradleWrapper @Arguments
 }
 
+function Invoke-GradleTestCheck {
+    param(
+        [string] $Rule,
+        [string] $Description,
+        [string[]] $Arguments
+    )
+
+    $commandKey = $Arguments -join "|"
+    if ($script:ExecutedGradleTestCommands.ContainsKey($commandKey)) {
+        Add-Result "INFO" "$($Rule)_SKIPPED_DUPLICATE" "$Description was already executed in this harness run."
+        return
+    }
+    $script:ExecutedGradleTestCommands[$commandKey] = $true
+
+    $gradlew = Get-GradleWrapperPath
+    if (-not $gradlew) {
+        Add-Result "FAIL" "$($Rule)_GRADLEW_MISSING" "Gradle Wrapper is missing." "Restore Gradle Wrapper."
+        return
+    }
+
+    if (-not (Ensure-JavaHome17) -and $env:JAVA_HOME) {
+        Add-Result "FAIL" "$($Rule)_JAVA_HOME_17_REQUIRED" "$Description requires JDK 17 or later." "Set JAVA_HOME to JDK 17 or later."
+        return
+    }
+
+    Push-Location $ProjectRoot
+    try {
+        Invoke-GradleWrapper $Arguments | Out-Host
+        if ($LASTEXITCODE -ne 0) {
+            Add-Result "FAIL" $Rule "$Description failed." "Run .\gradlew.bat $($Arguments -join ' ') and fix failing tests."
+        } else {
+            Add-Result "INFO" $Rule "$Description passed."
+        }
+    } finally {
+        Pop-Location
+    }
+}
+
 function Get-ProjectTextFiles {
     Get-ChildItem -Path $ProjectRoot -Recurse -File |
         Where-Object {
@@ -432,14 +501,15 @@ function Get-GitTrackedFiles {
         Add-Result "WARN" "GIT_TRACKED_FILES_LIST_MISSING" "Tracked files list was not found: $TrackedFilesPath" "Check the pre-push hook tracked-file collection."
     }
 
-    if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+    $gitCommand = Get-GitCommandPath
+    if ([string]::IsNullOrWhiteSpace($gitCommand)) {
         Add-Result "WARN" "GIT_COMMAND_UNAVAILABLE" "git command is not available, so tracked forbidden-file checks were skipped." "Run the harness from a shell where git is available."
         return @()
     }
 
     try {
         Push-Location $ProjectRoot
-        $trackedFiles = @(git ls-files 2>$null)
+        $trackedFiles = @(& $gitCommand ls-files 2>$null)
         Pop-Location
         return @($trackedFiles | ForEach-Object { Normalize-HarnessPath $_ } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
     } catch {
@@ -1230,6 +1300,10 @@ function Test-CompanyFeature {
     Test-PathRequired "src/main/java/com/pcs/domain/company/service/CompanyService.java" "COMPANY_SERVICE" "Keep company DB validation and persistence in company/service."
     Test-PathRequired "src/main/java/com/pcs/domain/company/mapper/CompanyMapper.java" "COMPANY_MAPPER" "Keep MyBatis mapper interface for company persistence."
     Test-PathRequired "src/main/resources/mapper/company/CompanyMapper.xml" "COMPANY_MAPPER_XML" "Keep MyBatis mapper XML for company persistence."
+    Test-PathRequired "src/test/java/com/pcs/domain/company/facade/CompanyFacadeTest.java" "COMPANY_FACADE_TEST" "Keep company signup and owner-company unit tests aligned with docs/features/company.md."
+    Test-PathRequired "src/test/java/com/pcs/domain/company/api/OwnerSignupApiControllerTest.java" "COMPANY_OWNER_API_TEST" "Keep owner signup API tests aligned with docs/features/company.md."
+    Test-PathRequired "src/test/java/com/pcs/domain/company/api/WorkspacePublicApiControllerTest.java" "COMPANY_PUBLIC_API_TEST" "Keep workspace public-info API tests aligned with docs/features/company.md."
+    Test-PathRequired "src/integrationTest/java/com/pcs/domain/company/CompanyPersistenceIntegrationTest.java" "COMPANY_DB_INTEGRATION_TEST" "Keep company MariaDB integration tests aligned with docs/features/company-db.md."
 
     $controller = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/company/api/OwnerSignupApiController.java"
     if (Test-Path $controller) {
@@ -1292,17 +1366,28 @@ function Test-CompanyFeature {
         }
     }
 
+    Invoke-GradleTestCheck "COMPANY_UNIT_API_TESTS" "Company unit and API tests" @("test", "--tests", "com.pcs.domain.company.*")
+    Invoke-GradleTestCheck "COMPANY_DB_INTEGRATION_TESTS" "Company DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.company.*")
+
     Add-Result "INFO" "COMPANY_FEATURE" "Company feature checks completed."
 }
 
 function Test-MemberFeature {
     Test-PathRequired "docs/features/member.md" "MEMBER_FEATURE_DOC" "Keep docs/features/member.md as the member feature rule source."
+    Test-PathRequired "docs/features/mypage.md" "MYPAGE_FEATURE_DOC" "Keep docs/features/mypage.md as the mypage feature rule source."
     Test-PathRequired "src/main/java/com/pcs/domain/member/type/MemberRole.java" "MEMBER_ROLE_ENUM" "Keep OWNER, ADMIN, STAFF in MemberRole."
     Test-PathRequired "src/main/java/com/pcs/domain/member/type/PasswordStatus.java" "MEMBER_PASSWORD_STATUS_ENUM" "Keep TEMPORARY, ACTIVE in PasswordStatus."
+    Test-PathRequired "src/main/java/com/pcs/domain/member/type/StaffPermission.java" "MEMBER_STAFF_PERMISSION_ENUM" "Keep STAFF common permission enum in member/type."
     Test-PathRequired "src/main/java/com/pcs/domain/member/entity/Member.java" "MEMBER_ENTITY" "Keep tb_member row state in member/entity."
     Test-PathRequired "src/main/java/com/pcs/domain/member/service/MemberService.java" "MEMBER_SERVICE" "Keep member creation and password hashing in member/service."
+    Test-PathRequired "src/main/java/com/pcs/domain/member/service/StaffPermissionService.java" "MEMBER_STAFF_PERMISSION_SERVICE" "Keep STAFF common permission service."
     Test-PathRequired "src/main/java/com/pcs/domain/member/mapper/MemberMapper.java" "MEMBER_MAPPER" "Keep MyBatis mapper interface for member persistence."
     Test-PathRequired "src/main/resources/mapper/member/MemberMapper.xml" "MEMBER_MAPPER_XML" "Keep MyBatis mapper XML for member persistence."
+    Test-PathRequired "src/main/resources/mapper/member/StaffPermissionMapper.xml" "MEMBER_STAFF_PERMISSION_MAPPER_XML" "Keep STAFF common permission mapper XML."
+    Test-PathRequired "src/test/java/com/pcs/domain/member/service/MemberServiceTest.java" "MEMBER_SERVICE_TEST" "Keep user-management and mypage service tests aligned with docs/features/member.md and mypage.md."
+    Test-PathRequired "src/test/java/com/pcs/domain/member/service/StaffPermissionServiceTest.java" "MEMBER_STAFF_PERMISSION_SERVICE_TEST" "Keep STAFF common permission tests aligned with docs/features/member.md."
+    Test-PathRequired "src/test/java/com/pcs/domain/member/api/MemberApiControllerTest.java" "MEMBER_API_TEST" "Keep user-management and mypage API tests aligned with docs/features/member.md and mypage.md."
+    Test-PathRequired "src/integrationTest/java/com/pcs/domain/member/MemberPersistenceIntegrationTest.java" "MEMBER_DB_INTEGRATION_TEST" "Keep member MariaDB integration tests aligned with docs/features/member-db.md."
 
     $memberRole = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/member/type/MemberRole.java"
     if (Test-Path $memberRole) {
@@ -1379,6 +1464,9 @@ function Test-MemberFeature {
         }
     }
 
+    Invoke-GradleTestCheck "MEMBER_UNIT_API_TESTS" "Member, mypage, and staff-permission unit/API tests" @("test", "--tests", "com.pcs.domain.member.*")
+    Invoke-GradleTestCheck "MEMBER_DB_INTEGRATION_TESTS" "Member, mypage, and staff-permission DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.member.*")
+
     Add-Result "INFO" "MEMBER_FEATURE" "Member feature checks completed."
 }
 
@@ -1399,6 +1487,10 @@ function Test-AuthFeature {
     Test-PathRequired "src/main/java/com/pcs/global/security/TemporaryPasswordAuthorizationFilter.java" "AUTH_TEMP_PASSWORD_FILTER" "Temporary passwords must be restricted to password-change endpoints."
     Test-PathRequired "src/main/java/com/pcs/global/security/PcsPrincipal.java" "AUTH_SECURITY_PRINCIPAL" "Authenticated user claims must be exposed through PcsPrincipal."
     Test-PathRequired "src/main/resources/static/js/pcs-api.js" "AUTH_STATIC_API_FETCH" "Keep common fetch wrapper for access token attachment and refresh retry."
+    Test-PathRequired "src/test/java/com/pcs/domain/auth/service/AuthServiceTest.java" "AUTH_SERVICE_TEST" "Keep auth service tests aligned with docs/features/auth.md."
+    Test-PathRequired "src/test/java/com/pcs/domain/auth/facade/AuthFacadeTest.java" "AUTH_FACADE_TEST" "Keep auth facade tests aligned with docs/features/auth.md."
+    Test-PathRequired "src/test/java/com/pcs/domain/auth/api/AuthApiControllerTest.java" "AUTH_API_TEST" "Keep auth API tests aligned with docs/features/auth.md."
+    Test-PathRequired "src/integrationTest/java/com/pcs/domain/auth/AuthPersistenceIntegrationTest.java" "AUTH_DB_INTEGRATION_TEST" "Keep auth MariaDB integration tests aligned with docs/features/auth-db.md."
 
     $controller = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/auth/api/AuthApiController.java"
     if (Test-Path $controller) {
@@ -1525,6 +1617,9 @@ function Test-AuthFeature {
         }
     }
 
+    Invoke-GradleTestCheck "AUTH_UNIT_API_TESTS" "Auth unit and API tests" @("test", "--tests", "com.pcs.domain.auth.*")
+    Invoke-GradleTestCheck "AUTH_DB_INTEGRATION_TESTS" "Auth DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.auth.*")
+
     Add-Result "INFO" "AUTH_FEATURE" "Auth feature checks completed."
 }
 
@@ -1540,6 +1635,10 @@ function Test-PartnerFeature {
     Test-PathRequired "src/main/resources/mapper/partner/PartnerMapper.xml" "PARTNER_MAPPER_XML" "Keep MyBatis mapper XML for partner persistence."
     Test-PathRequired "src/main/java/com/pcs/domain/partner/type/PartnerType.java" "PARTNER_TYPE_ENUM" "Keep partner type enum."
     Test-PathRequired "src/main/java/com/pcs/domain/partner/type/PartnerRole.java" "PARTNER_ROLE_ENUM" "Keep partner role enum."
+    Test-PathRequired "src/test/java/com/pcs/domain/partner/service/PartnerServiceTest.java" "PARTNER_SERVICE_TEST" "Keep partner unit tests aligned with docs/features/partner.md."
+    Test-PathRequired "src/test/java/com/pcs/domain/partner/api/PartnerApiControllerTest.java" "PARTNER_API_TEST" "Keep partner MockMvc API tests aligned with docs/features/partner.md."
+    Test-PathRequired "src/integrationTest/java/com/pcs/domain/partner/PartnerPersistenceIntegrationTest.java" "PARTNER_DB_INTEGRATION_TEST" "Keep partner MariaDB integration tests aligned with docs/features/partner-db.md."
+    Test-PathRequired "src/integrationTest/resources/pcs-account-test-schema.sql" "PARTNER_DB_TEST_SCHEMA" "Keep shared account/partner integration schema available."
 
     $controller = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/partner/api/PartnerApiController.java"
     if (Test-Path $controller) {
@@ -1607,6 +1706,9 @@ function Test-PartnerFeature {
         }
     }
 
+    Invoke-GradleTestCheck "PARTNER_UNIT_API_TESTS" "Partner unit and API tests" @("test", "--tests", "com.pcs.domain.partner.*")
+    Invoke-GradleTestCheck "PARTNER_DB_INTEGRATION_TESTS" "Partner DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.partner.*")
+
     Add-Result "INFO" "PARTNER_FEATURE" "Partner feature checks completed."
 }
 
@@ -1629,6 +1731,9 @@ function Test-CategoryFeature {
     Test-PathRequired "src/main/java/com/pcs/domain/category/mapper/PartSpecMapper.java" "CATEGORY_PART_SPEC_MAPPER" "Keep shared part spec read mapper in category/mapper."
     Test-PathRequired "src/main/resources/mapper/category/CategoryMapper.xml" "CATEGORY_MAPPER_XML" "Keep MyBatis mapper XML for category persistence."
     Test-PathRequired "src/main/resources/mapper/category/PartSpecMapper.xml" "CATEGORY_PART_SPEC_MAPPER_XML" "Keep shared part spec read mapper XML in mapper/category."
+    Test-PathRequired "src/test/java/com/pcs/domain/category/service/CategoryServiceTest.java" "CATEGORY_SERVICE_TEST" "Keep category unit tests aligned with docs/features/category.md."
+    Test-PathRequired "src/test/java/com/pcs/domain/category/api/CategoryApiControllerTest.java" "CATEGORY_API_TEST" "Keep category MockMvc API tests aligned with docs/features/category.md."
+    Test-PathRequired "src/integrationTest/java/com/pcs/domain/category/CategoryPersistenceIntegrationTest.java" "CATEGORY_DB_INTEGRATION_TEST" "Keep category MariaDB integration tests aligned with docs/features/category-db.md."
 
     $controller = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/category/api/CategoryApiController.java"
     if (Test-Path $controller) {
@@ -1676,6 +1781,9 @@ function Test-CategoryFeature {
         }
     }
 
+    Invoke-GradleTestCheck "CATEGORY_UNIT_API_TESTS" "Category unit and API tests" @("test", "--tests", "com.pcs.domain.category.*")
+    Invoke-GradleTestCheck "CATEGORY_DB_INTEGRATION_TESTS" "Category DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.category.*")
+
     Add-Result "INFO" "CATEGORY_FEATURE" "Category feature checks completed."
 }
 
@@ -1695,6 +1803,9 @@ function Test-PartFeature {
     Test-PathRequired "src/main/java/com/pcs/domain/part/service/PartService.java" "PART_SERVICE" "Keep part business rules in part/service."
     Test-PathRequired "src/main/java/com/pcs/domain/part/mapper/PartMapper.java" "PART_MAPPER" "Keep MyBatis mapper interface for part persistence."
     Test-PathRequired "src/main/resources/mapper/part/PartMapper.xml" "PART_MAPPER_XML" "Keep MyBatis mapper XML for part persistence."
+    Test-PathRequired "src/test/java/com/pcs/domain/part/service/PartServiceTest.java" "PART_SERVICE_TEST" "Keep part unit tests aligned with docs/features/part.md."
+    Test-PathRequired "src/test/java/com/pcs/domain/part/api/PartApiControllerTest.java" "PART_API_TEST" "Keep part MockMvc API tests aligned with docs/features/part.md."
+    Test-PathRequired "src/integrationTest/java/com/pcs/domain/part/PartPersistenceIntegrationTest.java" "PART_DB_INTEGRATION_TEST" "Keep part MariaDB integration tests aligned with docs/features/part-db.md."
 
     $controller = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/part/api/PartApiController.java"
     if (Test-Path $controller) {
@@ -1718,6 +1829,9 @@ function Test-PartFeature {
             }
         }
     }
+
+    Invoke-GradleTestCheck "PART_UNIT_API_TESTS" "Part unit and API tests" @("test", "--tests", "com.pcs.domain.part.*")
+    Invoke-GradleTestCheck "PART_DB_INTEGRATION_TESTS" "Part DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.part.*")
 
     Add-Result "INFO" "PART_FEATURE" "Part feature checks completed."
 }

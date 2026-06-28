@@ -66,3 +66,33 @@ com.pcs.domain.category
 - 품목 분류 상세는 `tb_part_spec_definition`, `tb_part_spec_option`을 조회할 수 있어야 한다.
 - 품목 분류 삭제 전에는 `tb_pc_part` 연결 수를 확인한다.
 - 연결된 품목이 없는 분류 삭제 시 사양값, 선택지, 사양 정의, 분류 순서로 삭제한다.
+
+## 테스트 기준
+
+단위 테스트:
+
+- 사양 항목 `specKey`가 없으면 `spec_1`, `spec_2` 형태로 생성한다.
+- `specKey`는 소문자, 숫자, `_`, `-` 기준으로 정규화한다.
+- 같은 요청 안에서 사양 항목명과 `specKey` 중복을 막는다.
+- `SELECT` 사양 항목은 선택지가 1개 이상 있어야 한다.
+- 선택지 `optionValue`가 없으면 `optionLabel`을 사용한다.
+- 같은 사양 항목 안에서 선택지 값 중복을 막는다.
+- 사양 항목은 최대 20개, 선택지는 항목당 최대 30개까지만 허용한다.
+- `sortOrder`가 없으면 입력 순서를 사용하고, 음수면 실패한다.
+
+API 테스트:
+
+- 목록 조회는 `keyword`, `page`, `size`, `limit` 조건과 `PageResultDto` 구조를 검증한다.
+- 목록 응답은 `partCount`를 포함해야 한다.
+- 생성은 분류명/설명만 있는 요청과 사양 항목/선택지를 포함한 요청을 모두 검증한다.
+- 중복 분류명 생성은 실패해야 한다.
+- 상세 조회는 `partCount`, `specDefinitions`, 선택지를 포함해야 한다.
+- 수정은 `specDefinitions` 생략 시 분류명/설명만 수정해야 한다.
+- 연결 품목이 없는 분류는 사양 항목 전체 교체가 가능해야 한다.
+- 연결 품목이 있는 분류에 `specDefinitions`가 포함되면 실패해야 한다.
+- 연결 품목이 없는 분류 삭제는 성공하고, 연결 품목이 있는 분류 삭제는 `CATEGORY_IN_USE`로 실패해야 한다.
+
+권한 테스트:
+
+- `companyCode`와 JWT의 업체가 다르면 실패해야 한다.
+- STAFF는 `STAFF_CATEGORY_MANAGE` 권한이 없으면 생성, 수정, 삭제를 할 수 없다.
