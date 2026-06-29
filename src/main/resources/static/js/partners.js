@@ -40,7 +40,11 @@
     const summaryActive = document.querySelector("[data-summary-active]");
     const panelViews = document.querySelectorAll("[data-partner-panel]");
     const detailDrawer = document.querySelector("[data-partner-detail-drawer]");
-    const createDrawerButton = document.querySelector("[data-partner-create-drawer]");
+    const createDrawerButtons = document.querySelectorAll("[data-partner-create-drawer]");
+    const createDrawerButton = Array.from(createDrawerButtons)
+            .find((button) => !button.closest("[data-workspace-quick-bar]"))
+            || createDrawerButtons[0]
+            || null;
     const createForm = document.querySelector("[data-partner-create-form]");
     const editForm = document.querySelector("[data-partner-edit-form]");
     const detailFields = {
@@ -93,7 +97,9 @@
     const setDrawerOpen = (isOpen) => {
         detailDrawer?.classList.toggle("is-open", isOpen);
         detailDrawer?.setAttribute("aria-hidden", String(!isOpen));
-        createDrawerButton?.setAttribute("aria-expanded", String(isOpen));
+        createDrawerButtons.forEach((button) => {
+            button.setAttribute("aria-expanded", String(isOpen));
+        });
     };
 
     const openDrawer = (trigger = null) => {
@@ -397,8 +403,10 @@
         button.addEventListener("click", (event) => showCreatePanel(event.currentTarget, { open: true }));
     });
 
-    createDrawerButton?.addEventListener("click", (event) => {
-        showCreatePanel(event.currentTarget, { open: true });
+    createDrawerButtons.forEach((button) => {
+        button.addEventListener("click", (event) => {
+            showCreatePanel(event.currentTarget, { open: true });
+        });
     });
 
     document.querySelectorAll("[data-close-partner-drawer]").forEach((button) => {
@@ -424,28 +432,10 @@
         setPanelMode("detail");
     });
 
-    document.addEventListener("click", (event) => {
-        if (!detailDrawer?.classList.contains("is-open")) {
-            return;
-        }
-        const target = event.target;
-        if (!(target instanceof Element)) {
-            return;
-        }
-        if (
-            detailDrawer.contains(target) ||
-            target.closest("[data-partner-create-drawer]") ||
-            target.closest("[data-partner-id]")
-        ) {
-            return;
-        }
-        closeDrawer({ restoreFocus: false });
-    });
-
-    document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && detailDrawer?.classList.contains("is-open")) {
-            closeDrawer();
-        }
+    window.PcsDrawer?.bindDismiss({
+        drawer: detailDrawer,
+        close: closeDrawer,
+        keepOpenSelector: "[data-partner-create-drawer], [data-partner-id]"
     });
 
     createForm?.addEventListener("submit", async (event) => {

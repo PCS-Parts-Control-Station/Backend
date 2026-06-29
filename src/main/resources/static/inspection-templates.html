@@ -15,7 +15,7 @@
 
     <link rel="stylesheet" href="/css/core/tokens.css?20260618_layers">
     <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
-    <link rel="stylesheet" href="/css/layouts/workspace.css?20260622_sidebar_autoclose">
+    <link rel="stylesheet" href="/css/layouts/workspace.css?20260624_quick_bar">
     <link rel="stylesheet" href="/css/components/components.css?20260618_layers">
     <link rel="stylesheet" href="/css/components/management-page.css?20260619_management">
     <link rel="stylesheet" href="/css/pages/inspection-templates.css?20260624_template_pagination">
@@ -23,6 +23,22 @@
 <body class="has-collapsible-sidebar inspection-template-page page-inspection-templates workspace-page">
 <div class="workspace-layout">
     <div data-workspace-sidebar data-active-route="inspection/templates"></div>
+
+    <div class="workspace-quick-bar" data-workspace-quick-bar data-watch-target=".workspace-header .header-actions" aria-hidden="true">
+        <button class="menu-toggle" type="button" data-sidebar-toggle aria-controls="workspace-sidebar" aria-expanded="false" aria-label="메뉴 열기">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M4 7h16" />
+                <path d="M4 12h16" />
+                <path d="M4 17h16" />
+            </svg>
+        </button>
+        <button class="workspace-quick-brand" type="button" data-scroll-top aria-label="검수 템플릿 관리 화면 맨 위로 이동">
+            <span>검수 템플릿 관리</span>
+        </button>
+        <div class="workspace-quick-actions">
+            <button class="btn btn-primary" type="button" data-template-create-drawer aria-controls="template-detail-drawer" aria-expanded="false">템플릿 등록</button>
+        </div>
+    </div>
 
     <main class="workspace-main">
         <header class="workspace-header">
@@ -166,8 +182,8 @@
                 </section>
             </div>
 
-            <aside class="management-detail-drawer template-detail-drawer" id="template-detail-drawer" data-template-detail-drawer aria-labelledby="template-form-title" aria-hidden="true" tabindex="-1">
-                <div class="panel-card management-detail-drawer-panel side-work-panel">
+            <aside class="right-side-drawer management-detail-drawer template-detail-drawer" id="template-detail-drawer" data-template-detail-drawer aria-labelledby="template-form-title" aria-hidden="true" tabindex="-1">
+                <div class="panel-card right-side-drawer-panel management-detail-drawer-panel side-work-panel">
                     <div class="panel-mode is-active" data-template-panel="create">
                         <div class="panel-title-bar">
                             <div>
@@ -454,9 +470,10 @@
     </form>
 </dialog>
 <script src="/js/pcs-api.js?20260623_memory_token"></script>
-<script src="/js/workspace-layout.js?20260622_sidebar_autoclose"></script>
+<script src="/js/workspace-layout.js?20260624_quick_bar"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
-<script src="/js/inspection-templates.js?20260624_template_pagination"></script>
+<script src="/js/pcs-common.js?20260625_right_drawer_v2"></script>
+<script src="/js/inspection-templates.js?20260625_right_drawer_v2"></script>
 </body>
 </html>

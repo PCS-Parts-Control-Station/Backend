@@ -1201,6 +1201,11 @@
         if (event.key === "Escape" && detailPanelOpen) {
             closeDetailPanel();
         }
+    window.PcsDrawer?.bindDismiss({
+        drawer: detailPanel,
+        close: closeDetailPanel,
+        isOpen: () => detailPanelOpen,
+        keepOpenSelector: "[data-history-unit-key]"
     });
 
     prevButton.addEventListener("click", () => {

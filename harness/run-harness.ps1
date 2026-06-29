@@ -847,13 +847,14 @@ function Test-CodexHookConfiguration {
 function Test-WorkspaceNavigation {
     $fragmentPath = Join-Path $ProjectRoot "src/main/resources/static/fragments/workspace-sidebar.html"
     $partsPath = Join-Path $ProjectRoot "src/main/resources/static/parts.html"
+    $commonScriptPath = Join-Path $ProjectRoot "src/main/resources/static/js/pcs-common.js"
     $partsScriptPath = Join-Path $ProjectRoot "src/main/resources/static/js/parts.js"
     $partsStylePath = Join-Path $ProjectRoot "src/main/resources/static/css/pages/parts.css"
     $componentsStylePath = Join-Path $ProjectRoot "src/main/resources/static/css/components/components.css"
     $layoutScriptPath = Join-Path $ProjectRoot "src/main/resources/static/js/workspace-layout.js"
     $layoutStylePath = Join-Path $ProjectRoot "src/main/resources/static/css/layouts/workspace.css"
 
-    foreach ($requiredPath in @($fragmentPath, $partsPath, $partsScriptPath, $partsStylePath, $componentsStylePath, $layoutScriptPath, $layoutStylePath)) {
+    foreach ($requiredPath in @($fragmentPath, $partsPath, $commonScriptPath, $partsScriptPath, $partsStylePath, $componentsStylePath, $layoutScriptPath, $layoutStylePath)) {
         if (-not (Test-Path $requiredPath)) {
             Add-Result "FAIL" "WORKSPACE_NAV_FILE_MISSING" "$requiredPath is missing." "Restore the common workspace navigation file."
             return
@@ -862,6 +863,7 @@ function Test-WorkspaceNavigation {
 
     $fragment = Get-Content -Raw -Encoding UTF8 -Path $fragmentPath
     $parts = Get-Content -Raw -Encoding UTF8 -Path $partsPath
+    $commonScript = Get-Content -Raw -Encoding UTF8 -Path $commonScriptPath
     $partsScript = Get-Content -Raw -Encoding UTF8 -Path $partsScriptPath
     $partsStyle = Get-Content -Raw -Encoding UTF8 -Path $partsStylePath
     $componentsStyle = Get-Content -Raw -Encoding UTF8 -Path $componentsStylePath
@@ -930,15 +932,37 @@ function Test-WorkspaceNavigation {
         Add-Result "FAIL" "WORKSPACE_PART_DRAWER_INVALID" "parts.html still contains the legacy fixed side panel." "Move part create, detail, and edit modes into the management detail drawer."
     }
 
+    if ($parts -notmatch '<script src="/js/pcs-common\.js[^"]*"></script>\s*<script src="/js/parts\.js[^"]*"></script>') {
+        Add-Result "FAIL" "WORKSPACE_PART_DRAWER_SCRIPT_ORDER_INVALID" "parts.html must load pcs-common.js before parts.js." "Keep shared drawer helpers available before page scripts run."
+    }
+
+    foreach ($pattern in @(
+        'const isDrawerOpen',
+        'const bindOutsideClose',
+        'const bindEscapeClose',
+        'const bindDismiss',
+        'event.key !== "Escape"',
+        'window.PcsDrawer =',
+        'bindDismiss'
+    )) {
+        if ($commonScript -notmatch [regex]::Escape($pattern)) {
+            Add-Result "FAIL" "WORKSPACE_COMMON_DRAWER_SCRIPT_INVALID" "pcs-common.js is missing $pattern." "Keep right-side drawer dismiss behavior in the shared PcsDrawer helper."
+        }
+    }
+
     foreach ($pattern in @(
         'const setDrawerOpen',
         'const openDrawer',
         'const closeDrawer',
-        'event.key === "Escape"',
+        'window.PcsDrawer?.bindDismiss({',
+        'drawer: detailDrawer',
+        'close: closeDrawer',
+        'keepOpenSelector:',
+        'shouldIgnoreEscape:',
         'selectPart(part.partId, row)'
     )) {
         if ($partsScript -notmatch [regex]::Escape($pattern)) {
-            Add-Result "FAIL" "WORKSPACE_PART_DRAWER_SCRIPT_INVALID" "parts.js is missing $pattern." "Preserve part drawer open, close, selection, and keyboard behavior."
+            Add-Result "FAIL" "WORKSPACE_PART_DRAWER_SCRIPT_INVALID" "parts.js is missing $pattern." "Preserve part drawer open, close, selection, and shared dismiss behavior."
         }
     }
 

@@ -108,10 +108,27 @@
         table.append(row);
     };
 
+    const isDrawerOpen = (drawer, predicate) => {
+        if (!drawer) {
+            return false;
+        }
+        if (typeof predicate === "function") {
+            return Boolean(predicate(drawer));
+        }
+        if (drawer.hidden) {
+            return false;
+        }
+        if (drawer.classList.contains("is-open")) {
+            return true;
+        }
+        return drawer.getAttribute("aria-hidden") === "false";
+    };
+
     const bindOutsideClose = (options = {}) => {
         const drawer = options.drawer;
         const close = options.close;
         const keepOpenSelector = options.keepOpenSelector || "";
+        const isOpen = options.isOpen;
 
         if (!drawer || typeof close !== "function") {
             return () => {};
@@ -120,7 +137,7 @@
         const handleDocumentClick = (event) => {
             const target = event.target;
             if (
-                !drawer.classList.contains("is-open") ||
+                !isDrawerOpen(drawer, isOpen) ||
                 !(target instanceof Element) ||
                 drawer.contains(target) ||
                 (keepOpenSelector && target.closest(keepOpenSelector))
@@ -133,6 +150,42 @@
 
         document.addEventListener("click", handleDocumentClick);
         return () => document.removeEventListener("click", handleDocumentClick);
+    };
+
+    const bindEscapeClose = (options = {}) => {
+        const drawer = options.drawer;
+        const close = options.close;
+        const isOpen = options.isOpen;
+        const shouldIgnore = options.shouldIgnoreEscape;
+
+        if (!drawer || typeof close !== "function") {
+            return () => {};
+        }
+
+        const handleKeydown = (event) => {
+            if (
+                event.key !== "Escape" ||
+                !isDrawerOpen(drawer, isOpen) ||
+                (typeof shouldIgnore === "function" && shouldIgnore(event))
+            ) {
+                return;
+            }
+
+            close();
+        };
+
+        document.addEventListener("keydown", handleKeydown);
+        return () => document.removeEventListener("keydown", handleKeydown);
+    };
+
+    const bindDismiss = (options = {}) => {
+        const unbindOutside = bindOutsideClose(options);
+        const unbindEscape = bindEscapeClose(options);
+
+        return () => {
+            unbindOutside();
+            unbindEscape();
+        };
     };
 
     window.PcsWorkspace = {
@@ -158,6 +211,9 @@
         emptyRow
     };
     window.PcsDrawer = {
-        bindOutsideClose
+        isOpen: isDrawerOpen,
+        bindOutsideClose,
+        bindEscapeClose,
+        bindDismiss
     };
 })(window);

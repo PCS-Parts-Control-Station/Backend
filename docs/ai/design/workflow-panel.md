@@ -226,8 +226,8 @@ workflow panel 아래에는 화면별 운영 규칙을 `muted-panel`로 둘 수 
 전표형 상세 모드 구조:
 
 ```text
-aside.document-detail-drawer
-- panel-card.document-detail-panel
+aside.right-side-drawer.document-detail-drawer
+- panel-card.right-side-drawer-panel.document-detail-panel
   - panel-title-bar
     - 제목
     - 선택 안내 또는 전표 요약 문구
@@ -261,6 +261,8 @@ aside.document-detail-drawer
 - 상태는 배지로 표시한다.
 - 상세 카드 안 상태 배지는 작은 pill 형태로 유지하고, 행 높이나 카드 높이에 맞춰 원형으로 커지지 않게 한다.
 - 관련 항목 목록은 길어질 수 있으므로 내부 스크롤을 허용한다.
+- 내부 스크롤은 드로어나 패널 자체가 아니라 `drawer-scroll-body` 또는 그 안의 `right-side-scroll-list`에만 둔다.
+- 전표 라인처럼 반복 목록이 긴 경우에는 `document-line-section` 안의 `right-side-scroll-list`만 스크롤되게 하고, 드로어 본문과 목록 스크롤이 동시에 생기지 않게 한다.
 - 품목별 관리번호 목록은 접기/펼치기를 제공할 수 있다.
 - 관리번호 옆에는 작은 복사 버튼을 둘 수 있다.
 - 위험 작업은 오른쪽 패널에서 바로 실행하지 않고 확인 모달을 거친다.
