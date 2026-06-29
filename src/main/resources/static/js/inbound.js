@@ -573,6 +573,20 @@
         updateSelectedRows();
     };
 
+    const shouldKeepDetailPanelOnClick = (target) => {
+        if (!detailDrawer?.classList.contains("is-open") || !(target instanceof Element)) {
+            return true;
+        }
+        if (cancelModal?.open) {
+            return true;
+        }
+        return Boolean(
+            target.closest("[data-inbound-detail-drawer]")
+            || target.closest("[data-document-id]")
+            || target.closest("[data-document-cancel]")
+        );
+    };
+
     const setCancelMessage = (message) => {
         if (!cancelFields.message) {
             return;
@@ -807,6 +821,13 @@
 
     document.addEventListener("keydown", (event) => {
         if (event.key !== "Escape" || !detailDrawer?.classList.contains("is-open") || cancelModal?.open) {
+            return;
+        }
+        closeDetailPanel();
+    });
+
+    document.addEventListener("click", (event) => {
+        if (shouldKeepDetailPanelOnClick(event.target)) {
             return;
         }
         closeDetailPanel();

@@ -508,6 +508,22 @@
         button.addEventListener("click", () => closeDetailDrawer());
     });
 
+    document.addEventListener("click", (event) => {
+        if (!detailDrawer?.classList.contains("is-open")) {
+            return;
+        }
+        if (!(event.target instanceof Element)) {
+            return;
+        }
+        if (detailDrawer.contains(event.target)) {
+            return;
+        }
+        if (event.target.closest("[data-document-id]")) {
+            return;
+        }
+        closeDetailDrawer({ restoreFocus: false });
+    });
+
     document.addEventListener("keydown", (event) => {
         if (event.key === "Escape" && detailDrawer?.classList.contains("is-open")) {
             closeDetailDrawer();

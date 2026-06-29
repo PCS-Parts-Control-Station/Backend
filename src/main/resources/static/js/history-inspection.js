@@ -1181,6 +1181,22 @@
 
     detailCloseButton?.addEventListener("click", () => closeDetailPanel());
 
+    document.addEventListener("click", (event) => {
+        if (!detailPanelOpen || !detailPanel) {
+            return;
+        }
+        if (!(event.target instanceof Element)) {
+            return;
+        }
+        if (detailPanel.contains(event.target)) {
+            return;
+        }
+        if (event.target.closest("[data-history-document-key], [data-history-unit-key]")) {
+            return;
+        }
+        closeDetailPanel({ restoreFocus: false });
+    });
+
     document.addEventListener("keydown", (event) => {
         if (event.key === "Escape" && detailPanelOpen) {
             closeDetailPanel();
