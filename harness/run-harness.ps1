@@ -1842,6 +1842,8 @@ function Test-PartUnitFeature {
     foreach ($required in @(
         @("docs/features/part-unit.md", "PART_UNIT_FEATURE_DOC"),
         @("docs/features/part-unit-db.md", "PART_UNIT_DB_DOC"),
+        @("docs/sql/pcs-schema-ddl.sql", "PART_UNIT_SCHEMA_DDL"),
+        @("docs/sql/pcs-part-unit-list-index-alter.sql", "PART_UNIT_LIST_INDEX_ALTER"),
         @("src/main/resources/static/part-units.html", "PART_UNIT_HTML"),
         @("src/main/resources/static/css/pages/part-units.css", "PART_UNIT_CSS"),
         @("src/main/resources/static/js/part-units.js", "PART_UNIT_JS"),
@@ -1884,15 +1886,21 @@ function Test-PartUnitFeature {
                 Add-Result "FAIL" "PART_UNIT_SERVICE_PATTERN" "PartService is missing part-unit service pattern: $pattern" "Validate partState and normalize paging in PartService."
             }
         }
+        if ($content -match "countPartUnits") {
+            Add-Result "FAIL" "PART_UNIT_SERVICE_DUPLICATE_COUNT" "PartService must not call countPartUnits for part-unit search." "Use summarizePartUnits.totalCount as PageResultDto.totalElements."
+        }
     }
 
     $mapper = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/part/mapper/PartMapper.java"
     if (Test-Path $mapper) {
         $content = Get-Content -Raw -Encoding UTF8 -Path $mapper
-        foreach ($pattern in @("searchPartUnits", "countPartUnits", "summarizePartUnits", "findPartUnitById", "findPartUnitStockHistories", "findPartUnitInspectionHistories")) {
+        foreach ($pattern in @("searchPartUnits", "summarizePartUnits", "findPartUnitById", "findPartUnitStockHistories", "findPartUnitInspectionHistories")) {
             if ($content -notmatch $pattern) {
                 Add-Result "FAIL" "PART_UNIT_MAPPER_METHOD" "PartMapper is missing part-unit mapper method: $pattern" "Keep mapper interface aligned with PartMapper.xml."
             }
+        }
+        if ($content -match "countPartUnits") {
+            Add-Result "FAIL" "PART_UNIT_MAPPER_DUPLICATE_COUNT_METHOD" "PartMapper must not expose countPartUnits for part-unit search." "Use summarizePartUnits.totalCount as the single count source."
         }
         if ($content -match '@Param\("salesStatus"\)') {
             Add-Result "FAIL" "PART_UNIT_MAPPER_SALES_STATUS_FILTER" "PartMapper must not receive salesStatus as a part-unit search parameter." "Keep salesStatus display-only for part-unit search."
@@ -1902,14 +1910,47 @@ function Test-PartUnitFeature {
     $mapperXml = Join-Path $ProjectRoot "src/main/resources/mapper/part/PartMapper.xml"
     if (Test-Path $mapperXml) {
         $content = Get-Content -Raw -Encoding UTF8 -Path $mapperXml
-        foreach ($pattern in @("tb_pc_part_unit", "tb_stock_movement_unit", "tb_stock_movement", "tb_stock_document", "tb_inspection", "tb_pc_part", "tb_part_category", "LIMIT", "OFFSET", "COUNT(*)", "summarizePartUnits")) {
+        foreach ($pattern in @("tb_pc_part_unit", "tb_stock_movement_unit", "tb_stock_movement", "tb_stock_document", "tb_inspection", "tb_pc_part", "tb_part_category", "LIMIT", "OFFSET", "COUNT(*)", "summarizePartUnits", "page_units")) {
             if ($content -notmatch [regex]::Escape($pattern)) {
                 Add-Result "FAIL" "PART_UNIT_MAPPER_XML_PATTERN" "PartMapper.xml is missing part-unit SQL pattern: $pattern" "Keep part-unit list/detail SQL aligned with docs/features/part-unit-db.md."
             }
         }
+        if ($content -match 'id="countPartUnits"') {
+            Add-Result "FAIL" "PART_UNIT_SQL_DUPLICATE_COUNT" "PartMapper.xml must not define a separate countPartUnits query." "Use summarizePartUnits.total_count for PageResultDto.totalElements."
+        }
         foreach ($forbidden in @("sales_status = #{salesStatus}", "u.sales_status = #{salesStatus}", "sales_status=#{salesStatus}", "u.sales_status=#{salesStatus}")) {
             if ($content -match [regex]::Escape($forbidden)) {
                 Add-Result "FAIL" "PART_UNIT_SQL_SALES_STATUS_FILTER" "Part-unit SQL must not filter by salesStatus." "Keep salesStatus display-only for part-unit search."
+            }
+        }
+    }
+
+    $schema = Join-Path $ProjectRoot "docs/sql/pcs-schema-ddl.sql"
+    if (Test-Path $schema) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $schema
+        foreach ($indexName in @("idx_pc_part_unit_list_default", "idx_pc_part_unit_list_inspection", "idx_pc_part_unit_list_unit_status")) {
+            if ($content -notmatch $indexName) {
+                Add-Result "FAIL" "PART_UNIT_SCHEMA_LIST_INDEX" "pcs-schema-ddl.sql is missing $indexName." "Keep all part-unit list indexes aligned with docs/features/part-unit-db.md."
+            }
+        }
+    }
+
+    $fixture = Join-Path $ProjectRoot "src/integrationTest/resources/pcs-category-part-test-schema.sql"
+    if (Test-Path $fixture) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $fixture
+        foreach ($indexName in @("idx_pc_part_unit_list_default", "idx_pc_part_unit_list_inspection", "idx_pc_part_unit_list_unit_status")) {
+            if ($content -notmatch $indexName) {
+                Add-Result "FAIL" "PART_UNIT_FIXTURE_LIST_INDEX" "Part-unit integration fixture is missing $indexName." "Keep integration schema aligned with docs/sql/pcs-schema-ddl.sql."
+            }
+        }
+    }
+
+    $indexAlter = Join-Path $ProjectRoot "docs/sql/pcs-part-unit-list-index-alter.sql"
+    if (Test-Path $indexAlter) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $indexAlter
+        foreach ($indexName in @("idx_pc_part_unit_list_default", "idx_pc_part_unit_list_inspection", "idx_pc_part_unit_list_unit_status")) {
+            if ($content -notmatch $indexName) {
+                Add-Result "FAIL" "PART_UNIT_INDEX_ALTER_PATTERN" "Part-unit index alter script is missing $indexName." "Keep existing DB migration notes aligned with docs/features/part-unit-db.md."
             }
         }
     }

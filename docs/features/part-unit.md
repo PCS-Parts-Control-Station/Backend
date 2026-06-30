@@ -38,7 +38,7 @@ Query:
 | `size` | 기본 20, 최대 100 |
 | `limit` | 기존 단순 목록 호환용 size 별칭 |
 
-검색 조건에는 `salesStatus`를 두지 않는다. 판매상태는 별도 검색 조건이나 별도 목록 컬럼으로 두지 않고, 화면의 `부품 상태` 표시값에 합쳐 보여준다.
+검색 조건에는 `salesStatus`를 두지 않는다. 판매상태와 최근 처리 정보는 별도 검색 조건이나 별도 목록 컬럼으로 두지 않고, 화면의 `부품 상태` 표시값에 `/`로 합쳐 보여준다.
 
 `partState` 의미:
 
@@ -52,6 +52,10 @@ Query:
 응답은 `PageResultDto<SearchPartUnitResponse, SearchPartUnitSummaryResponse>` 구조를 사용한다.
 
 목록 정렬은 `tb_pc_part_unit.updated_at DESC, tb_pc_part_unit.unit_id DESC` 기준이다. 관리번호는 사람이 보는 식별자이며 정렬 기준으로 사용하지 않는다.
+
+목록 조회의 `totalElements`는 `SearchPartUnitSummaryResponse.totalCount`를 사용한다. 같은 where 조건으로 별도 `countPartUnits` 쿼리를 추가하지 않는다.
+
+목록 SQL은 먼저 정렬 조건에 맞는 `unit_id` 페이지만 확정한 뒤, 그 결과에 대해서만 품목/분류/최근 입출고/최근 검수 정보를 붙인다. 최근 이력 서브쿼리가 전체 후보 관리번호에 대해 실행되지 않도록 한다.
 
 요약 필드:
 
@@ -111,19 +115,25 @@ src/main/resources/static/js/part-units.js
 - 필터는 검색어, 분류, 부품 상태만 둔다.
 - 판매상태는 검색 조건과 별도 목록 컬럼에서 제외하고 `부품 상태` 표시값에 합쳐 보여준다.
 - 분류 필터는 `parts.html`, `outbound-register.html`과 같은 `category-picker-button`과 분류 선택 모달을 사용한다.
-- 목록은 관리번호, 품목, 분류, 부품 상태, 최근 처리 순서로 보여준다.
-- 목록의 관리번호, 품목, 분류, 최근 처리는 한 줄로 표시하고 넘치는 글자는 말줄임 처리한다.
+- 목록은 관리번호, 품목, 분류, 부품 상태 순서로 보여준다.
+- 목록의 관리번호, 품목, 분류, 부품 상태는 한 줄로 표시하고 넘치는 글자는 말줄임 처리한다.
 - 목록의 관리번호 칸에서는 제조사 시리얼을 숨기고, 제조사 시리얼은 상세 패널에서 확인한다.
-- 목록의 `부품 상태`는 검수대기, 보류, 등급, 출고, 판매불가 같은 현재 관리 상태를 한 배지로 표시한다.
+- 목록의 `부품 상태`는 `검수/등급/출고 상태 / 판매상태 / 최근처리` 형식으로 한 배지에 표시한다. 예: `검수대기 / 보류 / 입출고 · 2026-06-08 05:30`.
+- 입고되어 아직 등급이 없거나 `grade=NONE`인 부품은 `부품 상태`의 첫 값으로 `검수대기`를 표시한다.
+- 목록 컬럼은 고정 비율을 사용해 행마다 관리번호, 품목, 분류, 부품 상태 시작점이 달라지지 않게 한다.
 - 행 클릭 또는 Enter/Space로 오른쪽 상세 패널을 연다.
 - 상세 패널은 배경 오버레이를 쓰지 않고, 닫기 버튼·Escape·패널 밖 클릭으로 닫는다.
 - 상세 패널은 상태 변경을 수행하지 않고 입출고 이력, 검수 이력, 출고 등록 화면으로 연결한다.
+- 상세 패널 본문은 품목 상세와 같은 공통 `side-detail-card`, `detail-list` 구조를 사용한다. 기본 정보와 처리 흐름을 별도 라운드 카드나 타일로 감싸지 않는다.
+- 관리번호는 상세 패널 제목에만 표시하고 본문 기본 정보에는 중복 표시하지 않는다.
 
 ## 주요 규칙
 
 - 목록과 상세 조회는 항상 `company_id` 범위를 지킨다.
 - 기본 목록은 `tb_pc_part_unit.active = true`인 관리번호만 조회한다.
 - 검색과 요약은 SQL에서 같은 조건으로 처리한다.
+- 목록 전체 건수는 summary의 `totalCount`와 같아야 하며, 별도 count 쿼리와 summary count를 중복 실행하지 않는다.
+- 목록 행은 `LIMIT/OFFSET`으로 확정된 관리번호에 대해서만 상세 컬럼과 최근 이력을 계산한다.
 - `salesStatus`는 검색 파라미터로 받지 않는다.
 - 존재하지 않거나 다른 업체의 `unitId` 상세 조회는 `PART_UNIT_NOT_FOUND`로 실패한다.
 - 부품 관리 API는 개별 부품의 상태, 등급, 판매상태를 변경하지 않는다.
@@ -147,5 +157,6 @@ src/main/resources/static/js/part-units.js
   - 목록 조회는 판매상태 검색 조건을 받지 않는다.
   - `partState`는 WAITING, 등급, OUTBOUND 조건으로 SQL에 전달된다.
   - 응답은 `PageResultDto<SearchPartUnitResponse, SearchPartUnitSummaryResponse>` 구조를 사용한다.
+  - `totalElements`는 summary의 `totalCount`를 사용하고, 별도 관리번호 count 쿼리는 호출하지 않는다.
   - 상세 조회는 업체 범위 검증 후 존재하지 않는 관리번호를 `PART_UNIT_NOT_FOUND`로 처리한다.
   - STAFF 권한은 조회 API를 막지 않는다. 상태 변경 API가 아니기 때문이다.

@@ -29,6 +29,7 @@ com.pcs.domain.partner
 - 출고 전표의 거래처는 `CUSTOMER` 또는 `BOTH`여야 한다.
 - 거래처 생성 요청의 `active`는 선택값이며, 보내지 않으면 거래 가능 상태로 저장한다.
 - 거래처 수정 요청의 `active`는 선택값이며, 보내면 같은 수정 트랜잭션에서 거래 가능 여부도 함께 저장한다.
+- 화면의 기본 거래처 수정 흐름은 `PATCH /api/workspaces/{companyCode}/partners/{partnerId}`를 사용하고, `/active` 단독 API는 외부 연동 또는 독립 상태 변경 용도로만 제공한다.
 - 거래처 `active` 의미는 `docs/ai/pcs-status-lifecycle-rules.md`의 `tb_trade_partner.active` 기준을 따른다.
 - 거래처 삭제 API는 초기 범위에서 만들지 않는다. 거래처를 업무에서 제외할 때는 `active = false`로 처리한다.
 - 거래처 목록의 페이징 기본 규칙은 `docs/ai/pcs-pagination-rules.md`를 따른다.

@@ -15,22 +15,26 @@
 }
 
 .part-unit-data-row {
-    grid-template-columns: minmax(230px, 1.45fr) minmax(320px, 1.72fr) minmax(180px, 1fr) max-content minmax(132px, 0.58fr);
-    min-width: 980px;
-    gap: 12px;
-    padding: 9px 18px;
+    grid-template-columns: 29% 35% 17% 19%;
+    min-width: 1180px;
+    gap: 0;
+    padding: 0 20px;
 }
 
 .part-unit-data-row.table-head {
-    padding-block: 10px;
+    min-height: 36px;
 }
 
 .part-unit-data-row:not(.table-head) {
-    min-height: 44px;
+    min-height: 48px;
 }
 
 .part-unit-data-row > * {
     min-width: 0;
+    width: 100%;
+    justify-self: stretch;
+    padding-right: 20px;
+    text-align: left;
 }
 
 .part-unit-data-row > span,
@@ -44,16 +48,28 @@
 }
 
 .part-unit-data-row > span[role="cell"] {
-    display: block;
+    display: flex;
+    align-items: center;
+    height: 100%;
 }
 
-.part-unit-data-row strong,
-.part-unit-data-row small {
+.part-unit-line {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.part-unit-line strong,
+.part-unit-muted {
     display: inline;
+    min-width: 0;
     vertical-align: baseline;
 }
 
-.part-unit-data-row small {
+.part-unit-muted {
     margin-left: 6px;
     color: var(--muted);
     font-size: 12px;
@@ -61,26 +77,27 @@
 }
 
 .part-unit-data-row > span:nth-child(4) {
-    justify-self: start;
-    overflow: visible;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-right: 0;
 }
 
-.part-unit-data-row > span:nth-child(4) .badge {
+.part-unit-status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    max-width: min(100%, 230px);
     min-height: 22px;
     padding: 0 8px;
-    line-height: 20px;
-}
-
-.part-unit-detail-drawer {
-    width: min(560px, 100%);
-}
-
-.part-unit-detail-panel {
-    padding: 22px;
-}
-
-.part-unit-current-card {
-    margin-bottom: 16px;
+    box-sizing: border-box;
+    overflow: hidden;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 @media (max-width: 840px) {

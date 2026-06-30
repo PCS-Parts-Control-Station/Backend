@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="/css/components/components.css?20260629_filter_actions">
     <link rel="stylesheet" href="/css/components/management-page.css?20260624_spec_item_compact">
     <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
-    <link rel="stylesheet" href="/css/pages/part-units.css?20260629_filter_form">
+    <link rel="stylesheet" href="/css/pages/part-units.css?20260630_fixed_status_layout">
 </head>
 <body class="has-collapsible-sidebar page-part-units workspace-page">
 <div class="workspace-layout">
@@ -139,7 +139,6 @@
                             <span role="columnheader">품목</span>
                             <span role="columnheader">분류</span>
                             <span role="columnheader">부품 상태</span>
-                            <span role="columnheader">최근 처리</span>
                         </div>
 
                         <div class="data-row management-data-row part-unit-data-row empty-data-row" role="row" data-part-unit-empty>
@@ -157,8 +156,8 @@
                 </section>
             </div>
 
-            <aside class="right-side-drawer management-detail-drawer part-unit-detail-drawer" data-part-unit-detail-drawer aria-labelledby="part-unit-detail-title" aria-hidden="true" tabindex="-1" hidden>
-                <div class="panel-card right-side-drawer-panel management-detail-drawer-panel part-unit-detail-panel">
+            <aside class="right-side-drawer management-detail-drawer" data-part-unit-detail-drawer aria-labelledby="part-unit-detail-title" aria-hidden="true" tabindex="-1" hidden>
+                <div class="panel-card right-side-drawer-panel management-detail-drawer-panel">
                     <div class="panel-title-bar">
                         <div>
                             <p class="page-kicker">개별 부품 상세</p>
@@ -169,7 +168,7 @@
                     </div>
 
                     <div class="drawer-scroll-body">
-                        <div class="side-detail-card part-unit-current-card">
+                        <div class="side-detail-card">
                             <strong data-detail-part>-</strong>
                             <p data-detail-model>-</p>
                             <div class="detail-badge-row">
@@ -177,54 +176,37 @@
                             </div>
                         </div>
 
-                        <section class="detail-section" aria-labelledby="unit-base-title">
-                            <div class="section-title-row">
-                                <h3 id="unit-base-title">기본 정보</h3>
+                        <dl class="detail-list">
+                            <div>
+                                <dt>제조사 시리얼</dt>
+                                <dd data-detail-serial>-</dd>
                             </div>
-                            <dl class="detail-list detail-field-grid">
-                                <div>
-                                    <dt>관리번호</dt>
-                                    <dd><code data-detail-code-inline>-</code></dd>
-                                </div>
-                                <div>
-                                    <dt>제조사 시리얼</dt>
-                                    <dd data-detail-serial>-</dd>
-                                </div>
-                                <div>
-                                    <dt>분류</dt>
-                                    <dd data-detail-category>-</dd>
-                                </div>
-                                <div>
-                                    <dt>최근 처리</dt>
-                                    <dd data-detail-updated>-</dd>
-                                </div>
-                            </dl>
-                        </section>
+                            <div>
+                                <dt>분류</dt>
+                                <dd data-detail-category>-</dd>
+                            </div>
+                            <div>
+                                <dt>최근 처리</dt>
+                                <dd data-detail-updated>-</dd>
+                            </div>
+                        </dl>
 
-                        <section class="detail-section" aria-labelledby="unit-flow-title">
-                            <div class="section-title-row">
-                                <h3 id="unit-flow-title">처리 흐름</h3>
-                                <span>최근순</span>
+                        <div class="section-title-row">
+                            <h3>처리 흐름</h3>
+                            <span>최근순</span>
+                        </div>
+                        <dl class="detail-list" data-detail-flow-list>
+                            <div>
+                                <dt>-</dt>
+                                <dd>입출고 이력과 검수 이력을 기준으로 표시합니다.</dd>
                             </div>
-                            <div class="process-flow-list" data-detail-flow-list>
-                                <article>
-                                    <strong data-detail-flow-title>-</strong>
-                                    <span data-detail-flow-status>입출고 이력과 검수 이력을 기준으로 표시합니다.</span>
-                                    <small data-detail-flow-meta>-</small>
-                                </article>
-                            </div>
-                        </section>
+                        </dl>
 
-                        <section class="detail-section" aria-labelledby="unit-actions-title">
-                            <div class="section-title-row">
-                                <h3 id="unit-actions-title">연결 업무</h3>
-                            </div>
-                            <div class="detail-action-grid">
-                                <a class="btn btn-secondary" data-route="history/stock">입출고 이력</a>
-                                <a class="btn btn-secondary" data-route="history/inspection">검수 이력</a>
-                                <a class="btn btn-primary" data-route="outbound/new">출고 등록</a>
-                            </div>
-                        </section>
+                        <div class="form-actions part-unit-detail-actions" aria-label="연결 업무">
+                            <a class="btn btn-secondary" data-route="history/stock">입출고 이력</a>
+                            <a class="btn btn-secondary" data-route="history/inspection">검수 이력</a>
+                            <a class="btn btn-primary" data-route="outbound/new">출고 등록</a>
+                        </div>
                     </div>
                 </div>
             </aside>
@@ -268,7 +250,7 @@
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
 <script src="/js/workspace-layout.js?20260624_quick_bar"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/pcs-common.js?20260629_category_picker"></script>
-<script src="/js/part-units.js?20260629_compact_status"></script>
+<script src="/js/pcs-common.js?20260630_category_all_pages"></script>
+<script src="/js/part-units.js?20260630_fixed_status"></script>
 </body>
 </html>

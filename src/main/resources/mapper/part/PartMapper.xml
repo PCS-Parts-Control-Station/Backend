@@ -220,30 +220,33 @@
         FROM (
             SELECT
                 <include refid="partUnitBaseColumns" />
-            FROM tb_pc_part_unit u
+            FROM (
+                SELECT
+                    u.company_id,
+                    u.unit_id
+                FROM tb_pc_part_unit u
+                JOIN tb_pc_part p
+                  ON p.company_id = u.company_id
+                 AND p.part_id = u.part_id
+                JOIN tb_part_category c
+                  ON c.company_id = p.company_id
+                 AND c.category_id = p.category_id
+                <include refid="partUnitSearchWhere" />
+                ORDER BY u.updated_at DESC, u.unit_id DESC
+                LIMIT #{size}
+                OFFSET #{offset}
+            ) page_units
+            JOIN tb_pc_part_unit u
+              ON u.company_id = page_units.company_id
+             AND u.unit_id = page_units.unit_id
             JOIN tb_pc_part p
               ON p.company_id = u.company_id
              AND p.part_id = u.part_id
             JOIN tb_part_category c
               ON c.company_id = p.company_id
              AND c.category_id = p.category_id
-            <include refid="partUnitSearchWhere" />
         ) base
         ORDER BY base.updated_at DESC, base.unit_id DESC
-        LIMIT #{size}
-        OFFSET #{offset}
-    </select>
-
-    <select id="countPartUnits" resultType="long">
-        SELECT COUNT(*)
-        FROM tb_pc_part_unit u
-        JOIN tb_pc_part p
-          ON p.company_id = u.company_id
-         AND p.part_id = u.part_id
-        JOIN tb_part_category c
-          ON c.company_id = p.company_id
-         AND c.category_id = p.category_id
-        <include refid="partUnitSearchWhere" />
     </select>
 
     <select id="summarizePartUnits" resultType="com.pcs.domain.part.dto.response.SearchPartUnitSummaryResponse">

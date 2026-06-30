@@ -48,13 +48,6 @@ public interface PartMapper {
             @Param("offset") int offset
     );
 
-    long countPartUnits(
-            @Param("companyId") Long companyId,
-            @Param("keyword") String keyword,
-            @Param("categoryId") Long categoryId,
-            @Param("partState") String partState
-    );
-
     SearchPartUnitSummaryResponse summarizePartUnits(
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,

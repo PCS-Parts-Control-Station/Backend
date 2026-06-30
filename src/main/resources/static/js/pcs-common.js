@@ -250,6 +250,48 @@
         return Array.isArray(data?.content) ? data.content : [];
     };
 
+    const loadAllCategories = async (companyCode, options = {}) => {
+        const pageSize = Math.max(1, Number(options.size || 100));
+        const apiOptions = typeof options.apiOptions === "function"
+            ? options.apiOptions(companyCode)
+            : options.apiOptions || {
+                authRedirect: true,
+                loginCompanyCode: companyCode
+            };
+        const allCategories = [];
+        let page = 0;
+        let totalPages = 1;
+
+        if (!companyCode || !window.PcsApi?.getData) {
+            return allCategories;
+        }
+
+        do {
+            const params = new URLSearchParams({
+                page: String(page),
+                size: String(pageSize)
+            });
+            const data = await window.PcsApi.getData(
+                `/api/workspaces/${encodeURIComponent(companyCode)}/categories?${params.toString()}`,
+                apiOptions
+            );
+            const content = normalizeListData(data);
+            allCategories.push(...content);
+
+            if (Array.isArray(data)) {
+                break;
+            }
+
+            const parsedTotalPages = Number(data?.totalPages);
+            totalPages = Number.isFinite(parsedTotalPages) && parsedTotalPages >= 0
+                ? parsedTotalPages
+                : page + 1;
+            page += 1;
+        } while (page < totalPages);
+
+        return allCategories;
+    };
+
     const bindCategoryPicker = (options = {}) => {
         const input = toElement(options.input);
         const label = toElement(options.label);
@@ -393,8 +435,15 @@
             appendEmpty(loadingMessage);
 
             try {
-                const data = await window.PcsApi.getData(apiUrl, buildApiOptions(companyCode));
-                categories = normalizeListData(data);
+                if (options.apiUrl || typeof options.apiUrl === "function") {
+                    const data = await window.PcsApi.getData(apiUrl, buildApiOptions(companyCode));
+                    categories = normalizeListData(data);
+                } else {
+                    categories = await loadAllCategories(companyCode, {
+                        size: pageSize,
+                        apiOptions: buildApiOptions
+                    });
+                }
                 loaded = true;
                 syncLabel();
                 render();
@@ -623,6 +672,9 @@
         bindEscapeClose,
         bindDismiss,
         bindDatasetDetailDrawer
+    };
+    window.PcsCategory = {
+        loadAll: loadAllCategories
     };
     window.PcsCategoryPicker = {
         bind: bindCategoryPicker

@@ -122,7 +122,17 @@ public class PartService {
         String normalizedPartState = normalizePartState(partState);
         PageQuery pageQuery = PageQuery.of(page, size, limit, PART_UNIT_DEFAULT_SIZE);
 
-        long totalElements = partMapper.countPartUnits(companyId, normalizedKeyword, categoryId, normalizedPartState);
+        SearchPartUnitSummaryResponse summary = partMapper.summarizePartUnits(
+                companyId,
+                normalizedKeyword,
+                categoryId,
+                normalizedPartState
+        );
+        if (summary == null) {
+            summary = new SearchPartUnitSummaryResponse(0, 0, 0);
+        }
+
+        long totalElements = summary.totalCount();
         List<SearchPartUnitResponse> items = totalElements == 0
                 ? List.of()
                 : partMapper.searchPartUnits(
@@ -133,12 +143,6 @@ public class PartService {
                         pageQuery.size(),
                         pageQuery.offset()
                 );
-        SearchPartUnitSummaryResponse summary = partMapper.summarizePartUnits(
-                companyId,
-                normalizedKeyword,
-                categoryId,
-                normalizedPartState
-        );
 
         return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, summary);
     }

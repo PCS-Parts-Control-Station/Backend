@@ -3,6 +3,7 @@ package com.pcs.domain.part.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -117,11 +118,10 @@ class PartServiceTest {
     @Test
     void searchPartUnits_usesDefaultPageSizeAndNormalizedPartState() {
         SearchPartUnitResponse unit = partUnitResponse(101L, "PCS-GPU-0001", PartGrade.A, SalesStatus.AVAILABLE);
-        when(partMapper.countPartUnits(COMPANY_ID, "RTX", CATEGORY_ID, "A")).thenReturn(1L);
-        when(partMapper.searchPartUnits(COMPANY_ID, "RTX", CATEGORY_ID, "A", 20, 0))
-                .thenReturn(List.of(unit));
         when(partMapper.summarizePartUnits(COMPANY_ID, "RTX", CATEGORY_ID, "A"))
                 .thenReturn(new SearchPartUnitSummaryResponse(1, 0, 1));
+        when(partMapper.searchPartUnits(COMPANY_ID, "RTX", CATEGORY_ID, "A", 20, 0))
+                .thenReturn(List.of(unit));
 
         var response = partService.searchPartUnits(COMPANY_ID, " RTX ", CATEGORY_ID, " a ", null, null, null);
 
@@ -130,7 +130,22 @@ class PartServiceTest {
         assertThat(response.size()).isEqualTo(20);
         assertThat(response.summary().totalCount()).isEqualTo(1);
         assertThat(response.summary().outboundAvailableCount()).isEqualTo(1);
-        verify(partMapper).searchPartUnits(COMPANY_ID, "RTX", CATEGORY_ID, "A", 20, 0);
+        InOrder inOrder = inOrder(partMapper);
+        inOrder.verify(partMapper).summarizePartUnits(COMPANY_ID, "RTX", CATEGORY_ID, "A");
+        inOrder.verify(partMapper).searchPartUnits(COMPANY_ID, "RTX", CATEGORY_ID, "A", 20, 0);
+    }
+
+    @Test
+    void searchPartUnits_skipsListQueryWhenSummaryIsEmpty() {
+        when(partMapper.summarizePartUnits(COMPANY_ID, null, null, null))
+                .thenReturn(new SearchPartUnitSummaryResponse(0, 0, 0));
+
+        var response = partService.searchPartUnits(COMPANY_ID, null, null, null, 0, 20, null);
+
+        assertThat(response.content()).isEmpty();
+        assertThat(response.totalElements()).isZero();
+        assertThat(response.summary().totalCount()).isZero();
+        verify(partMapper, never()).searchPartUnits(any(), any(), any(), any(), anyInt(), anyInt());
     }
 
     @Test
@@ -139,7 +154,8 @@ class PartServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.INVALID_INPUT_VALUE);
-        verify(partMapper, never()).countPartUnits(any(), any(), any(), any());
+        verify(partMapper, never()).summarizePartUnits(any(), any(), any(), any());
+        verify(partMapper, never()).searchPartUnits(any(), any(), any(), any(), anyInt(), anyInt());
     }
 
     @Test

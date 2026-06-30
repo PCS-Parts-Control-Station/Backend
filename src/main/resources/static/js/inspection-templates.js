@@ -774,8 +774,7 @@
     };
 
     const loadCategories = async () => {
-        const data = await window.PcsApi.getData(`${apiBase()}/categories?size=100`, apiOptions());
-        categories = data?.content || [];
+        categories = await window.PcsCategory.loadAll(getCompanyCode(), { apiOptions });
         populateCategorySelects();
     };
 

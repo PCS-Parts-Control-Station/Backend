@@ -53,6 +53,7 @@ The following features are currently connected to real Gradle test execution fro
 - `partner`
 - `category`
 - `part`
+- `part-unit`
 
 Current connected commands:
 
@@ -75,6 +76,8 @@ Current connected commands:
 .\gradlew.bat test --tests "com.pcs.domain.part.*"
 .\gradlew.bat integrationTest --tests "com.pcs.domain.part.*"
 ```
+
+`part-unit`은 별도 Java 최상위 패키지를 만들지 않고 `com.pcs.domain.part`를 공유하므로, 하네스는 같은 Gradle test filter로 실행하되 `Test-PartUnitFeature`에서 문서, SQL, 화면, 하네스 규칙을 별도로 검사한다.
 
 ## Adding A New Feature Test
 

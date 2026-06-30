@@ -1,5 +1,5 @@
 (function () {
-    const PAGE_SIZE = 20;
+    const PAGE_SIZE = 10;
 
     const filterForm = document.querySelector("[data-part-unit-filter-form]");
     const resetButton = document.querySelector("[data-part-unit-filter-reset]");
@@ -106,7 +106,7 @@
     const inspectionTypeLabel = (type) => LABELS.inspectionType[type] || type || "-";
     const inspectionResultLabel = (result) => LABELS.inspectionResult[result] || result || "-";
 
-    const partStatusLabel = (unit) => {
+    const workStatusLabel = (unit) => {
         if (!unit) {
             return "-";
         }
@@ -115,25 +115,33 @@
         if (unit.unitStatus === "OUTBOUND") {
             return "출고";
         }
-        if (unit.inspectionStatus === "WAITING") {
+        if (unit.inspectionStatus === "WAITING" || !unit.grade || unit.grade === "NONE") {
             return "검수대기";
-        }
-        if (unit.salesStatus === "UNAVAILABLE") {
-            return "판매불가";
-        }
-        if (unit.salesStatus === "HOLD") {
-            return "보류";
         }
         return gradeLabel(unit.grade);
     };
 
+    const recentLabel = (unit) => {
+        if (!unit?.recentEventLabel) {
+            return "이력 없음";
+        }
+        return `${unit.recentEventLabel} · ${formatDateTime(unit.recentEventAt)}`;
+    };
+
+    const partStatusLabel = (unit) => {
+        if (!unit) {
+            return "-";
+        }
+        return `${workStatusLabel(unit)} / ${salesLabel(unit.salesStatus)} / ${recentLabel(unit)}`;
+    };
+
     const statusBadgeClass = (label) => {
         const value = label || "";
-        if (value === "검수대기") return "badge-pending";
-        if (value === "불량" || value === "판매불가") return "badge-danger";
-        if (value === "출고" || value.includes("취소")) return "badge-inactive";
-        if (value === "C등급" || value === "보류") return "badge-warning";
-        if (value === "A등급" || value === "B등급") return "badge-available";
+        if (value.includes("판매불가") || value.includes("불량")) return "badge-danger";
+        if (value.includes("출고") || value.includes("취소") || value.includes("비활성")) return "badge-inactive";
+        if (value.includes("검수대기")) return "badge-pending";
+        if (value.includes("보류") || value.includes("C등급")) return "badge-warning";
+        if (value.includes("A등급") || value.includes("B등급") || value.includes("판매가능")) return "badge-available";
         return "badge-blue";
     };
 
@@ -192,9 +200,7 @@
 
         pageData.content.forEach((unit) => {
             const stateText = partStatusLabel(unit);
-            const recentText = unit.recentEventLabel
-                    ? `${unit.recentEventLabel} · ${formatDateTime(unit.recentEventAt)}`
-                    : "이력 없음";
+            const recentText = recentLabel(unit);
 
             const row = document.createElement("div");
             row.className = "data-row management-data-row part-unit-data-row";
@@ -212,11 +218,10 @@
             row.dataset.updated = recentText;
 
             row.append(
-                    cell("관리번호", `<strong>${escape(unit.internalSerialNo || "-")}</strong>`),
-                    cell("품목", `<strong>${escape(unit.partName || "-")}</strong><small>${escape(unit.manufacturer || "-")} · ${escape(unit.modelName || "-")}</small>`),
-                    cell("분류", escape(unit.categoryName || "-")),
-                    cell("부품 상태", `<em class="badge ${statusBadgeClass(stateText)}">${escape(stateText)}</em>`),
-                    cell("최근 처리", `<strong>${escape(recentText)}</strong>`)
+                    cell("관리번호", `<span class="part-unit-line"><strong>${escape(unit.internalSerialNo || "-")}</strong></span>`),
+                    cell("품목", `<span class="part-unit-line"><strong>${escape(unit.partName || "-")}</strong><span class="part-unit-muted">${escape(unit.manufacturer || "-")} · ${escape(unit.modelName || "-")}</span></span>`),
+                    cell("분류", `<span class="part-unit-line">${escape(unit.categoryName || "-")}</span>`),
+                    cell("부품 상태", `<em class="badge part-unit-status-pill ${statusBadgeClass(stateText)}">${escape(stateText)}</em>`)
             );
             table.append(row);
         });
@@ -302,15 +307,15 @@
 
         flowList.innerHTML = "";
         if (!events.length) {
-            const empty = document.createElement("article");
-            empty.innerHTML = "<strong>-</strong><span>표시할 이력이 없습니다.</span><small>-</small>";
+            const empty = document.createElement("div");
+            empty.innerHTML = "<dt>-</dt><dd>표시할 이력이 없습니다.</dd>";
             flowList.append(empty);
             return;
         }
 
         events.forEach((event) => {
-            const item = document.createElement("article");
-            item.innerHTML = `<strong>${escape(event.title)}</strong><span>${escape(event.status)}</span><small>${escape(event.meta)}</small>`;
+            const item = document.createElement("div");
+            item.innerHTML = `<dt>${escape(event.title)}</dt><dd>${escape(event.status)} · ${escape(event.meta)}</dd>`;
             flowList.append(item);
         });
     };
@@ -323,7 +328,6 @@
 
         const stateText = partStatusLabel(unit);
         setText(document.querySelector("[data-detail-code]"), unit.internalSerialNo);
-        setText(document.querySelector("[data-detail-code-inline]"), unit.internalSerialNo);
         setText(document.querySelector("[data-detail-subtitle]"), `${unit.partName || "-"} · ${unit.categoryName || "-"}`);
         setText(document.querySelector("[data-detail-part]"), unit.partName);
         setText(document.querySelector("[data-detail-model]"), `${unit.manufacturer || "-"} · ${unit.modelName || "-"}`);
@@ -365,10 +369,6 @@
         keepOpenSelector: "[data-part-unit-row]",
         fields: {
             code: "[data-detail-code]",
-            codeInline: {
-                target: "[data-detail-code-inline]",
-                source: "code"
-            },
             subtitle: {
                 target: "[data-detail-subtitle]",
                 value: (data) => `${data.part || "-"} · ${data.category || "-"}`
@@ -386,7 +386,7 @@
         onUpdate: (row, data) => {
             setBadge("[data-detail-unit-status]", data.unitStatus, statusBadgeClass(data.unitStatus));
             if (flowList) {
-                flowList.innerHTML = "<article><strong>-</strong><span>상세 이력을 불러오는 중입니다.</span><small>-</small></article>";
+                flowList.innerHTML = "<div><dt>-</dt><dd>상세 이력을 불러오는 중입니다.</dd></div>";
             }
             detailRequestId += 1;
             loadDetail(row.dataset.unitId, detailRequestId);

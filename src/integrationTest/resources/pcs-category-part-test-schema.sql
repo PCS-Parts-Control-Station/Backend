@@ -136,6 +136,9 @@ CREATE TABLE tb_pc_part_unit (
     CONSTRAINT uk_pc_part_unit_company_unit_id UNIQUE (company_id, unit_id),
     CONSTRAINT uk_pc_part_unit_company_part_unit_id UNIQUE (company_id, part_id, unit_id),
     INDEX idx_pc_part_unit_company_part (company_id, part_id),
+    INDEX idx_pc_part_unit_list_default (company_id, active, updated_at DESC, unit_id DESC),
+    INDEX idx_pc_part_unit_list_inspection (company_id, active, inspection_status, updated_at DESC, unit_id DESC),
+    INDEX idx_pc_part_unit_list_unit_status (company_id, active, unit_status, updated_at DESC, unit_id DESC),
     INDEX idx_pc_part_unit_company_status (company_id, unit_status, active),
     INDEX idx_pc_part_unit_work_status (company_id, inspection_status, sales_status, grade)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
