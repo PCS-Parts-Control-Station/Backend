@@ -12,8 +12,6 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface DashboardMapper {
 
-    boolean isCompanyActive(@Param("companyId") Long companyId);
-
     DashboardSummaryResponse summarize(
             @Param("companyId") Long companyId,
             @Param("todayStart") LocalDateTime todayStart,

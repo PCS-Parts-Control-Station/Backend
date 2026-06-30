@@ -763,15 +763,16 @@ size
 
 | Method | API | 설명 |
 |---|---|---|
-| GET | `/api/workspaces/{companyCode}/dashboard/summary` | 대시보드 요약 |
-| GET | `/api/workspaces/{companyCode}/dashboard/todos` | 우선 처리 목록 |
-| GET | `/api/workspaces/{companyCode}/dashboard/statistics` | 운영 통계 |
+| GET | `/api/workspaces/{companyCode}/dashboard` | 운영 현황 통합 조회 |
 
-통계 query 예시:
+초기 구현은 화면 진입 성능과 프론트 상태 관리를 단순하게 유지하기 위해 단일 API로 제공한다. 응답은 상단 요약, 우선 처리 목록, 재고 비율, 최근 처리 목록을 함께 포함한다.
+
+향후 집계가 무거워지거나 섹션별 캐시 정책이 달라지면 다음 API로 분리할 수 있다.
 
 ```text
-from
-to
+/dashboard/summary
+/dashboard/todos
+/dashboard/statistics
 ```
 
 ## 4. 도메인 매핑
