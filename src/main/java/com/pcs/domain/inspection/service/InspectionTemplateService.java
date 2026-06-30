@@ -26,6 +26,8 @@ import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.pagination.PageQuery;
+import com.pcs.global.util.TextNormalizer;
+import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -41,9 +43,14 @@ public class InspectionTemplateService {
     private static final int SORT_ORDER_STEP = 10;
 
     private final InspectionTemplateMapper inspectionTemplateMapper;
+    private final WorkspaceAccessValidator workspaceAccessValidator;
 
-    public InspectionTemplateService(InspectionTemplateMapper inspectionTemplateMapper) {
+    public InspectionTemplateService(
+            InspectionTemplateMapper inspectionTemplateMapper,
+            WorkspaceAccessValidator workspaceAccessValidator
+    ) {
         this.inspectionTemplateMapper = inspectionTemplateMapper;
+        this.workspaceAccessValidator = workspaceAccessValidator;
     }
 
     public PageResultDto<SearchInspectionTemplateResponse, SearchInspectionTemplateSummaryResponse> searchTemplates(
@@ -56,7 +63,7 @@ public class InspectionTemplateService {
             Integer limit
     ) {
         validateCompanyActive(companyId);
-        String normalizedKeyword = normalizeOptional(keyword);
+        String normalizedKeyword = TextNormalizer.optional(keyword);
         PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
 
         long totalElements = inspectionTemplateMapper.countTemplates(
@@ -97,7 +104,7 @@ public class InspectionTemplateService {
     ) {
         validateCompanyActive(companyId);
         validateCategory(companyId, request.categoryId());
-        String templateName = normalizeRequired(request.templateName());
+        String templateName = TextNormalizer.required(request.templateName());
         int version = normalizeVersion(request.version());
         validateTemplateDuplicate(companyId, request.categoryId(), templateName, version, null);
 
@@ -120,7 +127,7 @@ public class InspectionTemplateService {
     ) {
         InspectionTemplate template = validateActiveCompanyAndFindTemplate(companyId, templateId);
         validateCategory(companyId, request.categoryId());
-        String templateName = normalizeRequired(request.templateName());
+        String templateName = TextNormalizer.required(request.templateName());
         int version = normalizeVersion(request.version());
         validateTemplateDuplicate(companyId, request.categoryId(), templateName, version, templateId);
 
@@ -143,7 +150,7 @@ public class InspectionTemplateService {
             CreateInspectionTemplateItemRequest request
     ) {
         InspectionTemplate template = validateActiveCompanyAndFindTemplate(companyId, templateId);
-        String itemName = normalizeRequired(request.itemName());
+        String itemName = TextNormalizer.required(request.itemName());
         validateItemDuplicate(templateId, itemName, null);
 
         InspectionTemplateItem item = new InspectionTemplateItem(
@@ -168,7 +175,7 @@ public class InspectionTemplateService {
             UpdateInspectionTemplateItemRequest request
     ) {
         InspectionTemplateItem item = validateActiveCompanyAndFindItem(companyId, templateId, itemId);
-        String itemName = normalizeRequired(request.itemName());
+        String itemName = TextNormalizer.required(request.itemName());
         validateItemDuplicate(templateId, itemName, itemId);
 
         item.setItemGroup(request.itemGroup());
@@ -217,7 +224,7 @@ public class InspectionTemplateService {
             CreateInspectionTemplateOptionRequest request
     ) {
         InspectionTemplateItem item = validateActiveCompanyAndFindSelectItem(companyId, templateId, itemId);
-        String optionLabel = normalizeRequired(request.optionLabel());
+        String optionLabel = TextNormalizer.required(request.optionLabel());
         String optionValue = normalizeOptionValue(request.optionValue(), optionLabel);
         validateOptionDuplicate(itemId, optionLabel, optionValue, null);
 
@@ -241,7 +248,7 @@ public class InspectionTemplateService {
     ) {
         validateActiveCompanyAndFindSelectItem(companyId, templateId, itemId);
         InspectionTemplateItemOption option = findOptionOrThrow(companyId, templateId, itemId, optionId);
-        String optionLabel = normalizeRequired(request.optionLabel());
+        String optionLabel = TextNormalizer.required(request.optionLabel());
         String optionValue = normalizeOptionValue(request.optionValue(), optionLabel);
         validateOptionDuplicate(itemId, optionLabel, optionValue, optionId);
 
@@ -383,9 +390,7 @@ public class InspectionTemplateService {
     }
 
     private void validateCompanyActive(Long companyId) {
-        if (!inspectionTemplateMapper.isCompanyActive(companyId)) {
-            throw new BusinessException(ErrorCode.COMPANY_INACTIVE);
-        }
+        workspaceAccessValidator.validateCompanyActive(companyId);
     }
 
     private void validateCategory(Long companyId, Long categoryId) {
@@ -465,22 +470,8 @@ public class InspectionTemplateService {
         }
     }
 
-    private String normalizeRequired(String value) {
-        if (value == null || value.trim().isEmpty()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-        return value.trim();
-    }
-
-    private String normalizeOptional(String value) {
-        if (value == null || value.trim().isEmpty()) {
-            return null;
-        }
-        return value.trim();
-    }
-
     private String normalizeOptionValue(String optionValue, String optionLabel) {
-        String normalized = normalizeOptional(optionValue);
+        String normalized = TextNormalizer.optional(optionValue);
         return normalized == null ? optionLabel : normalized;
     }
 

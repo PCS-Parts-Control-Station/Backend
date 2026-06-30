@@ -46,6 +46,7 @@ import com.pcs.domain.stock.type.StockDocumentType;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
+import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -65,11 +66,14 @@ class StockServiceTest {
     @Mock
     private StockMapper stockMapper;
 
+    @Mock
+    private WorkspaceAccessValidator workspaceAccessValidator;
+
     private StockService stockService;
 
     @BeforeEach
     void setUp() {
-        stockService = new StockService(stockMapper);
+        stockService = new StockService(stockMapper, workspaceAccessValidator);
     }
 
     @Test
@@ -94,8 +98,6 @@ class StockServiceTest {
                 5L,
                 0L
         );
-
-        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
         when(stockMapper.countDocuments(
                 companyId,
                 StockDocumentType.INBOUND,
@@ -171,8 +173,6 @@ class StockServiceTest {
         );
         LocalDate dateFrom = LocalDate.of(2026, 6, 1);
         LocalDate dateTo = LocalDate.of(2026, 6, 30);
-
-        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
         when(stockMapper.countDocuments(
                 companyId,
                 StockDocumentType.OUTBOUND,
@@ -242,8 +242,6 @@ class StockServiceTest {
                 PartGrade.A,
                 SalesStatus.AVAILABLE
         );
-
-        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
         when(stockMapper.countOutboundCandidates(
                 companyId,
                 "RAM",
@@ -321,8 +319,6 @@ class StockServiceTest {
                 SalesStatus.HOLD,
                 true
         );
-
-        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
         when(stockMapper.findDocumentDetail(companyId, documentId)).thenReturn(document);
         when(stockMapper.findDocumentLines(companyId, documentId)).thenReturn(List.of(line));
         when(stockMapper.findDocumentUnits(companyId, documentId)).thenReturn(List.of(unit));
@@ -369,8 +365,6 @@ class StockServiceTest {
                 2,
                 "라인"
         );
-
-        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
         when(stockMapper.findDocumentForUpdate(companyId, documentId)).thenReturn(document);
         when(stockMapper.findOriginalInboundMovementsForUpdate(companyId, documentId)).thenReturn(List.of(movement));
         when(stockMapper.countInvalidInboundCancelUnits(companyId, documentId)).thenReturn(0);
@@ -428,8 +422,6 @@ class StockServiceTest {
                 3,
                 "출고 라인"
         );
-
-        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
         when(stockMapper.findDocumentForUpdate(companyId, documentId)).thenReturn(document);
         when(stockMapper.findOriginalOutboundMovementsForUpdate(companyId, documentId)).thenReturn(List.of(movement));
         when(stockMapper.countInvalidOutboundCancelUnits(companyId, documentId)).thenReturn(0);
@@ -477,8 +469,6 @@ class StockServiceTest {
         StockPart part = new StockPart();
         part.setPartId(partId);
         part.setPartCode("CPU-5600");
-
-        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
         when(stockMapper.findPartner(companyId, partnerId)).thenReturn(partner);
         when(stockMapper.existsDocumentNo(anyString())).thenReturn(false);
         when(stockMapper.findPart(companyId, partId)).thenReturn(part);
@@ -551,7 +541,6 @@ class StockServiceTest {
         part.setPartCode("GPU-RTX");
 
         String dateToken = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
-        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
         when(stockMapper.findPartner(companyId, partnerId)).thenReturn(partner);
         when(stockMapper.existsDocumentNo(anyString())).thenReturn(false);
         when(stockMapper.findPart(companyId, partId)).thenReturn(part);
@@ -613,7 +602,6 @@ class StockServiceTest {
         part.setPartCode("RAM-16G");
 
         String dateToken = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
-        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
         when(stockMapper.findPartner(companyId, partnerId)).thenReturn(partner);
         when(stockMapper.existsDocumentNo(anyString())).thenReturn(false);
         when(stockMapper.findPart(companyId, partId)).thenReturn(part);
@@ -716,8 +704,6 @@ class StockServiceTest {
                 PartGrade.A,
                 SalesStatus.AVAILABLE
         );
-
-        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
         when(stockMapper.findPartner(companyId, partnerId)).thenReturn(partner);
         when(stockMapper.existsDocumentNo(anyString())).thenReturn(false);
         when(stockMapper.findPart(companyId, partId)).thenReturn(part);
@@ -777,8 +763,6 @@ class StockServiceTest {
         partner.setPartnerId(partnerId);
         partner.setPartnerRole(PartnerRole.CUSTOMER);
         partner.setActive(true);
-
-        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
         when(stockMapper.findPartner(companyId, partnerId)).thenReturn(partner);
 
         BusinessException exception = assertThrows(
@@ -810,8 +794,6 @@ class StockServiceTest {
         partner.setPartnerId(partnerId);
         partner.setPartnerRole(PartnerRole.SUPPLIER);
         partner.setActive(true);
-
-        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
         when(stockMapper.findPartner(companyId, partnerId)).thenReturn(partner);
 
         BusinessException exception = assertThrows(
@@ -848,8 +830,6 @@ class StockServiceTest {
         StockPart part = new StockPart();
         part.setPartId(partId);
         part.setPartCode("RAM-DDR4-16G");
-
-        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
         when(stockMapper.findPartner(companyId, partnerId)).thenReturn(partner);
         when(stockMapper.existsDocumentNo(anyString())).thenReturn(false);
         when(stockMapper.findPart(companyId, partId)).thenReturn(part);
@@ -912,8 +892,6 @@ class StockServiceTest {
                 PartGrade.A,
                 SalesStatus.AVAILABLE
         );
-
-        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
         when(stockMapper.findPartner(companyId, partnerId)).thenReturn(partner);
         when(stockMapper.existsDocumentNo(anyString())).thenReturn(false);
         when(stockMapper.findPart(companyId, partId)).thenReturn(part);
@@ -959,8 +937,6 @@ class StockServiceTest {
         partner.setPartnerId(partnerId);
         partner.setPartnerRole(PartnerRole.BOTH);
         partner.setActive(true);
-
-        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
         when(stockMapper.findPartner(companyId, partnerId)).thenReturn(partner);
         when(stockMapper.existsDocumentNo(anyString())).thenReturn(true);
 
@@ -989,8 +965,6 @@ class StockServiceTest {
         partner.setPartnerId(partnerId);
         partner.setPartnerRole(PartnerRole.CUSTOMER);
         partner.setActive(true);
-
-        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
         when(stockMapper.findPartner(companyId, partnerId)).thenReturn(partner);
 
         BusinessException exception = assertThrows(
@@ -1018,8 +992,6 @@ class StockServiceTest {
         partner.setPartnerId(partnerId);
         partner.setPartnerRole(PartnerRole.BOTH);
         partner.setActive(true);
-
-        when(stockMapper.isCompanyActive(companyId)).thenReturn(true);
         when(stockMapper.findPartner(companyId, partnerId)).thenReturn(partner);
         when(stockMapper.existsDocumentNo(anyString())).thenReturn(true);
 

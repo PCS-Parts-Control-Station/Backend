@@ -27,6 +27,7 @@ import com.pcs.domain.inspection.type.InspectionInputType;
 import com.pcs.domain.inspection.type.InspectionItemGroup;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
+import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,11 +43,14 @@ class InspectionTemplateServiceTest {
     @Mock
     private InspectionTemplateMapper inspectionTemplateMapper;
 
+    @Mock
+    private WorkspaceAccessValidator workspaceAccessValidator;
+
     private InspectionTemplateService inspectionTemplateService;
 
     @BeforeEach
     void setUp() {
-        inspectionTemplateService = new InspectionTemplateService(inspectionTemplateMapper);
+        inspectionTemplateService = new InspectionTemplateService(inspectionTemplateMapper, workspaceAccessValidator);
     }
 
     @Test
@@ -58,8 +62,6 @@ class InspectionTemplateServiceTest {
                 1,
                 true
         );
-
-        when(inspectionTemplateMapper.isCompanyActive(companyId)).thenReturn(true);
         when(inspectionTemplateMapper.existsCategory(companyId, 10L)).thenReturn(true);
         when(inspectionTemplateMapper.existsTemplateVersion(
                 companyId,
@@ -89,8 +91,6 @@ class InspectionTemplateServiceTest {
         );
         InspectionTemplate template = template(100L, companyId, 10L, "그래픽카드 기본 검수", 1, true);
         SearchInspectionTemplateResponse summary = summary(100L, 10L, "그래픽카드", "그래픽카드 기본 검수");
-
-        when(inspectionTemplateMapper.isCompanyActive(companyId)).thenReturn(true);
         when(inspectionTemplateMapper.existsCategory(companyId, 10L)).thenReturn(true);
         when(inspectionTemplateMapper.existsTemplateVersion(companyId, 10L, "그래픽카드 기본 검수", 1, null))
                 .thenReturn(false);
@@ -118,8 +118,6 @@ class InspectionTemplateServiceTest {
         Long templateId = 100L;
         Long itemId = 200L;
         InspectionTemplateItem item = item(templateId, itemId, InspectionInputType.CHECK);
-
-        when(inspectionTemplateMapper.isCompanyActive(companyId)).thenReturn(true);
         when(inspectionTemplateMapper.findItemById(companyId, templateId, itemId)).thenReturn(item);
 
         BusinessException exception = assertThrows(
@@ -141,8 +139,6 @@ class InspectionTemplateServiceTest {
         Long companyId = 1L;
         SearchInspectionTemplateResponse row = summary(100L, 10L, "그래픽카드", "그래픽카드 기본 검수");
         var summary = new com.pcs.domain.inspection.dto.response.SearchInspectionTemplateSummaryResponse(1, 1, 3, 4);
-
-        when(inspectionTemplateMapper.isCompanyActive(companyId)).thenReturn(true);
         when(inspectionTemplateMapper.countTemplates(companyId, "그래픽", 10L, true)).thenReturn(1L);
         when(inspectionTemplateMapper.searchTemplates(companyId, "그래픽", 10L, true, 100, 100))
                 .thenReturn(List.of(row));
@@ -180,8 +176,6 @@ class InspectionTemplateServiceTest {
                 null,
                 null
         );
-
-        when(inspectionTemplateMapper.isCompanyActive(companyId)).thenReturn(true);
         when(inspectionTemplateMapper.findTemplateById(companyId, templateId)).thenReturn(template);
         when(inspectionTemplateMapper.existsItemName(templateId, "팬 소음", null)).thenReturn(false);
         when(inspectionTemplateMapper.nextItemSortOrder(templateId)).thenReturn(30);
@@ -214,8 +208,6 @@ class InspectionTemplateServiceTest {
         Long companyId = 1L;
         Long templateId = 100L;
         InspectionTemplate template = template(templateId, companyId, 10L, "그래픽카드 기본 검수", 1, true);
-
-        when(inspectionTemplateMapper.isCompanyActive(companyId)).thenReturn(true);
         when(inspectionTemplateMapper.findTemplateById(companyId, templateId)).thenReturn(template);
 
         inspectionTemplateService.updateTemplateActive(companyId, templateId, false);
@@ -238,8 +230,6 @@ class InspectionTemplateServiceTest {
                 null,
                 20
         );
-
-        when(inspectionTemplateMapper.isCompanyActive(companyId)).thenReturn(true);
         when(inspectionTemplateMapper.findItemById(companyId, templateId, itemId)).thenReturn(item);
         when(inspectionTemplateMapper.findOptionById(companyId, templateId, itemId, optionId)).thenReturn(option);
         when(inspectionTemplateMapper.existsOptionLabel(itemId, "팬 소음", optionId)).thenReturn(false);
@@ -270,8 +260,6 @@ class InspectionTemplateServiceTest {
         Long optionId = 300L;
         InspectionTemplateItem item = item(templateId, itemId, InspectionInputType.SELECT);
         InspectionTemplateItemOption option = option(itemId, optionId, "정상", "NORMAL", 10);
-
-        when(inspectionTemplateMapper.isCompanyActive(companyId)).thenReturn(true);
         when(inspectionTemplateMapper.findItemById(companyId, templateId, itemId)).thenReturn(item);
         when(inspectionTemplateMapper.findOptionById(companyId, templateId, itemId, optionId)).thenReturn(option);
 
@@ -298,8 +286,6 @@ class InspectionTemplateServiceTest {
                 GradeImpact.LOW,
                 InspectionFailPolicy.NONE
         );
-
-        when(inspectionTemplateMapper.isCompanyActive(companyId)).thenReturn(true);
         when(inspectionTemplateMapper.findItemById(companyId, templateId, itemId)).thenReturn(item);
         when(inspectionTemplateMapper.existsItemName(templateId, "소음 메모", itemId)).thenReturn(false);
         when(inspectionTemplateMapper.findTemplateSummaryById(companyId, templateId)).thenReturn(summary);
@@ -324,8 +310,6 @@ class InspectionTemplateServiceTest {
                 InspectionItemGroup.BASIC,
                 List.of(201L, 202L, 203L)
         );
-
-        when(inspectionTemplateMapper.isCompanyActive(companyId)).thenReturn(true);
         when(inspectionTemplateMapper.findTemplateById(companyId, templateId)).thenReturn(template);
         when(inspectionTemplateMapper.countItemsByTemplateGroup(templateId, InspectionItemGroup.BASIC)).thenReturn(3);
         when(inspectionTemplateMapper.countItemsByTemplateGroupAndIds(
@@ -360,8 +344,6 @@ class InspectionTemplateServiceTest {
                 InspectionItemGroup.BASIC,
                 List.of(201L, 202L)
         );
-
-        when(inspectionTemplateMapper.isCompanyActive(companyId)).thenReturn(true);
         when(inspectionTemplateMapper.findTemplateById(companyId, templateId)).thenReturn(template);
         when(inspectionTemplateMapper.countItemsByTemplateGroup(templateId, InspectionItemGroup.BASIC)).thenReturn(3);
 
@@ -383,8 +365,6 @@ class InspectionTemplateServiceTest {
                 InspectionItemGroup.BASIC,
                 List.of(201L, 201L)
         );
-
-        when(inspectionTemplateMapper.isCompanyActive(companyId)).thenReturn(true);
         when(inspectionTemplateMapper.findTemplateById(companyId, templateId)).thenReturn(template);
 
         BusinessException exception = assertThrows(
@@ -407,8 +387,6 @@ class InspectionTemplateServiceTest {
         UpdateInspectionTemplateOptionSortOrderRequest request = new UpdateInspectionTemplateOptionSortOrderRequest(
                 List.of(301L, 302L)
         );
-
-        when(inspectionTemplateMapper.isCompanyActive(companyId)).thenReturn(true);
         when(inspectionTemplateMapper.findItemById(companyId, templateId, itemId)).thenReturn(item);
         when(inspectionTemplateMapper.countOptionsByItemId(itemId)).thenReturn(2);
         when(inspectionTemplateMapper.countOptionsByItemIdAndIds(itemId, List.of(301L, 302L))).thenReturn(2);

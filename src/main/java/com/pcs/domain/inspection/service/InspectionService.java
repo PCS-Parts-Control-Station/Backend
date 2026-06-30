@@ -37,6 +37,8 @@ import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.pagination.PageQuery;
+import com.pcs.global.util.TextNormalizer;
+import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -55,9 +57,11 @@ public class InspectionService {
     private static final int DEFAULT_SIZE = 20;
 
     private final InspectionMapper inspectionMapper;
+    private final WorkspaceAccessValidator workspaceAccessValidator;
 
-    public InspectionService(InspectionMapper inspectionMapper) {
+    public InspectionService(InspectionMapper inspectionMapper, WorkspaceAccessValidator workspaceAccessValidator) {
         this.inspectionMapper = inspectionMapper;
+        this.workspaceAccessValidator = workspaceAccessValidator;
     }
 
     public PageResultDto<SearchWaitingInspectionDocumentResponse, SearchWaitingInspectionDocumentSummaryResponse> searchWaitingDocuments(
@@ -72,7 +76,7 @@ public class InspectionService {
             Integer limit
     ) {
         validateCompanyActive(companyId);
-        String normalizedKeyword = normalizeOptional(keyword);
+        String normalizedKeyword = TextNormalizer.optional(keyword);
         String normalizedInspectionStatus = normalizeInspectionStatus(inspectionStatus);
         PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
         LocalDateTime from = toStartOfDay(dateFrom);
@@ -267,7 +271,7 @@ public class InspectionService {
             Integer limit
     ) {
         validateCompanyActive(companyId);
-        String normalizedKeyword = normalizeOptional(keyword);
+        String normalizedKeyword = TextNormalizer.optional(keyword);
         PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
         LocalDateTime from = toStartOfDay(dateFrom);
         LocalDateTime to = toExclusiveEnd(dateTo);
@@ -329,7 +333,7 @@ public class InspectionService {
             Integer limit
     ) {
         validateCompanyActive(companyId);
-        String normalizedKeyword = normalizeOptional(keyword);
+        String normalizedKeyword = TextNormalizer.optional(keyword);
         PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
         LocalDateTime from = toStartOfDay(dateFrom);
         LocalDateTime to = toExclusiveEnd(dateTo);
@@ -489,7 +493,7 @@ public class InspectionService {
                 salesStatus,
                 result,
                 grade,
-                normalizeOptional(memo),
+                TextNormalizer.optional(memo),
                 inspectedAt
         );
         inspectionMapper.insertInspection(inspection);
@@ -575,9 +579,7 @@ public class InspectionService {
     }
 
     private void validateCompanyActive(Long companyId) {
-        if (!inspectionMapper.isCompanyActive(companyId)) {
-            throw new BusinessException(ErrorCode.COMPANY_INACTIVE);
-        }
+        workspaceAccessValidator.validateCompanyActive(companyId);
     }
 
     private void validateUniqueIds(List<Long> unitIds) {
@@ -599,7 +601,7 @@ public class InspectionService {
     }
 
     private String normalizeInspectionStatus(String inspectionStatus) {
-        String value = normalizeOptional(inspectionStatus);
+        String value = TextNormalizer.optional(inspectionStatus);
         if (value == null) {
             return null;
         }
@@ -607,13 +609,6 @@ public class InspectionService {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "지원하지 않는 검수 진행 상태입니다.");
         }
         return value;
-    }
-
-    private String normalizeOptional(String value) {
-        if (value == null || value.trim().isEmpty()) {
-            return null;
-        }
-        return value.trim();
     }
 
     private LocalDateTime toStartOfDay(LocalDate date) {

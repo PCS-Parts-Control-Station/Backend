@@ -24,7 +24,6 @@
     const resetSearchButton = document.querySelector("[data-candidate-reset]");
     const selectAllCandidatesButton = document.querySelector("[data-select-all-candidates]");
     const candidateTable = document.querySelector("[data-candidate-table]");
-    const candidateEmpty = document.querySelector("[data-candidate-empty]");
     const candidateSummary = document.querySelector("[data-candidate-summary]");
     const pagination = document.querySelector("[data-candidate-pagination]");
     const pageInfo = pagination?.querySelector("[data-page-info]");

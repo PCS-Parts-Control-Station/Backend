@@ -34,6 +34,8 @@ import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.pagination.PageQuery;
+import com.pcs.global.util.TextNormalizer;
+import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -49,16 +51,20 @@ import org.springframework.stereotype.Service;
 public class StockService {
 
     private static final DateTimeFormatter DATE_TOKEN_FORMATTER = DateTimeFormatter.BASIC_ISO_DATE;
+    private static final String INBOUND_DOCUMENT_PREFIX = "IN";
+    private static final String OUTBOUND_DOCUMENT_PREFIX = "OUT";
     private static final String DOCUMENT_RANDOM_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
     private static final int DOCUMENT_RANDOM_LENGTH = 16;
     private static final int DOCUMENT_NO_CREATE_MAX_ATTEMPT = 20;
     private static final int DEFAULT_SIZE = 20;
 
     private final StockMapper stockMapper;
+    private final WorkspaceAccessValidator workspaceAccessValidator;
     private final SecureRandom secureRandom = new SecureRandom();
 
-    public StockService(StockMapper stockMapper) {
+    public StockService(StockMapper stockMapper, WorkspaceAccessValidator workspaceAccessValidator) {
         this.stockMapper = stockMapper;
+        this.workspaceAccessValidator = workspaceAccessValidator;
     }
 
     public PageResultDto<SearchStockDocumentResponse, SearchStockDocumentSummaryResponse> searchDocuments(
@@ -73,11 +79,9 @@ public class StockService {
             Integer size,
             Integer limit
     ) {
-        if (!stockMapper.isCompanyActive(companyId)) {
-            throw new BusinessException(ErrorCode.COMPANY_INACTIVE);
-        }
+        validateCompanyActive(companyId);
 
-        String normalizedKeyword = normalizeOptional(keyword);
+        String normalizedKeyword = TextNormalizer.optional(keyword);
         PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
         long totalElements = stockMapper.countDocuments(
                 companyId,
@@ -124,11 +128,9 @@ public class StockService {
             Integer size,
             Integer limit
     ) {
-        if (!stockMapper.isCompanyActive(companyId)) {
-            throw new BusinessException(ErrorCode.COMPANY_INACTIVE);
-        }
+        validateCompanyActive(companyId);
 
-        String normalizedKeyword = normalizeOptional(keyword);
+        String normalizedKeyword = TextNormalizer.optional(keyword);
         PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
         long totalElements = stockMapper.countOutboundCandidates(
                 companyId,
@@ -153,9 +155,7 @@ public class StockService {
     }
 
     public StockDocumentDetailResponse getDocument(Long companyId, Long documentId) {
-        if (!stockMapper.isCompanyActive(companyId)) {
-            throw new BusinessException(ErrorCode.COMPANY_INACTIVE);
-        }
+        validateCompanyActive(companyId);
 
         StockDocumentDetailRow document = stockMapper.findDocumentDetail(companyId, documentId);
         if (document == null) {
@@ -185,9 +185,7 @@ public class StockService {
     }
 
     private StockDocumentDetailRow findCancelableDocument(Long companyId, Long documentId) {
-        if (!stockMapper.isCompanyActive(companyId)) {
-            throw new BusinessException(ErrorCode.COMPANY_INACTIVE);
-        }
+        validateCompanyActive(companyId);
 
         StockDocumentDetailRow document = stockMapper.findDocumentForUpdate(companyId, documentId);
         if (document == null) {
@@ -342,14 +340,12 @@ public class StockService {
             Long memberId,
             CreateInboundDocumentRequest request
     ) {
-        if (!stockMapper.isCompanyActive(companyId)) {
-            throw new BusinessException(ErrorCode.COMPANY_INACTIVE);
-        }
+        validateCompanyActive(companyId);
         validateInboundPartner(companyId, request.partnerId());
 
         String dateToken = LocalDate.now().format(DATE_TOKEN_FORMATTER);
-        String documentNo = createUniqueInboundDocumentNo(dateToken);
-        String documentReason = normalizeOptional(request.reason());
+        String documentNo = createUniqueDocumentNo(INBOUND_DOCUMENT_PREFIX, dateToken);
+        String documentReason = TextNormalizer.optional(request.reason());
 
         StockDocument document = new StockDocument(
                 companyId,
@@ -402,7 +398,7 @@ public class StockService {
                     quantity,
                     beforeQuantity,
                     afterQuantity,
-                    normalizeOptional(line.reason()),
+                    TextNormalizer.optional(line.reason()),
                     memberId
             );
             stockMapper.insertMovement(movement);
@@ -440,15 +436,13 @@ public class StockService {
             Long memberId,
             CreateOutboundDocumentRequest request
     ) {
-        if (!stockMapper.isCompanyActive(companyId)) {
-            throw new BusinessException(ErrorCode.COMPANY_INACTIVE);
-        }
+        validateCompanyActive(companyId);
         validateOutboundPartner(companyId, request.partnerId());
         validateOutboundLines(request.lines());
 
         String dateToken = LocalDate.now().format(DATE_TOKEN_FORMATTER);
-        String documentNo = createUniqueOutboundDocumentNo(dateToken);
-        String documentReason = normalizeOptional(request.reason());
+        String documentNo = createUniqueDocumentNo(OUTBOUND_DOCUMENT_PREFIX, dateToken);
+        String documentReason = TextNormalizer.optional(request.reason());
 
         StockDocument document = new StockDocument(
                 companyId,
@@ -499,7 +493,7 @@ public class StockService {
                     quantity,
                     currentQuantity,
                     afterQuantity,
-                    normalizeOptional(line.reason()),
+                    TextNormalizer.optional(line.reason()),
                     memberId
             );
             stockMapper.insertMovement(movement);
@@ -586,19 +580,24 @@ public class StockService {
     }
 
     private void validateInboundPartner(Long companyId, Long partnerId) {
-        StockPartner partner = stockMapper.findPartner(companyId, partnerId);
-        if (partner == null) {
-            throw new BusinessException(ErrorCode.PARTNER_NOT_FOUND);
-        }
-        if (!partner.isActive()) {
-            throw new BusinessException(ErrorCode.PARTNER_INACTIVE);
-        }
-        if (partner.getPartnerRole() != PartnerRole.SUPPLIER && partner.getPartnerRole() != PartnerRole.BOTH) {
-            throw new BusinessException(ErrorCode.PARTNER_INACTIVE, "입고에는 공급 가능한 거래처만 선택할 수 있습니다.");
-        }
+        validatePartner(
+                companyId,
+                partnerId,
+                PartnerRole.SUPPLIER,
+                "입고에는 공급 가능한 거래처만 선택할 수 있습니다."
+        );
     }
 
     private void validateOutboundPartner(Long companyId, Long partnerId) {
+        validatePartner(
+                companyId,
+                partnerId,
+                PartnerRole.CUSTOMER,
+                "출고에는 구매 가능한 거래처만 선택할 수 있습니다."
+        );
+    }
+
+    private void validatePartner(Long companyId, Long partnerId, PartnerRole requiredRole, String invalidRoleMessage) {
         StockPartner partner = stockMapper.findPartner(companyId, partnerId);
         if (partner == null) {
             throw new BusinessException(ErrorCode.PARTNER_NOT_FOUND);
@@ -606,9 +605,13 @@ public class StockService {
         if (!partner.isActive()) {
             throw new BusinessException(ErrorCode.PARTNER_INACTIVE);
         }
-        if (partner.getPartnerRole() != PartnerRole.CUSTOMER && partner.getPartnerRole() != PartnerRole.BOTH) {
-            throw new BusinessException(ErrorCode.PARTNER_INACTIVE, "출고에는 구매 가능한 거래처만 선택할 수 있습니다.");
+        if (partner.getPartnerRole() != requiredRole && partner.getPartnerRole() != PartnerRole.BOTH) {
+            throw new BusinessException(ErrorCode.PARTNER_INACTIVE, invalidRoleMessage);
         }
+    }
+
+    private void validateCompanyActive(Long companyId) {
+        workspaceAccessValidator.validateCompanyActive(companyId);
     }
 
     private void validateOutboundLines(List<CreateOutboundDocumentLineRequest> lines) {
@@ -635,9 +638,9 @@ public class StockService {
         }
     }
 
-    private String createUniqueInboundDocumentNo(String dateToken) {
+    private String createUniqueDocumentNo(String prefix, String dateToken) {
         for (int attempt = 0; attempt < DOCUMENT_NO_CREATE_MAX_ATTEMPT; attempt++) {
-            String documentNo = createInboundDocumentNo(dateToken);
+            String documentNo = createDocumentNo(prefix, dateToken);
             if (!stockMapper.existsDocumentNo(documentNo)) {
                 return documentNo;
             }
@@ -645,22 +648,8 @@ public class StockService {
         throw new BusinessException(ErrorCode.STOCK_DOCUMENT_NO_DUPLICATED);
     }
 
-    private String createInboundDocumentNo(String dateToken) {
-        return "IN-" + dateToken + "-" + randomDocumentToken();
-    }
-
-    private String createUniqueOutboundDocumentNo(String dateToken) {
-        for (int attempt = 0; attempt < DOCUMENT_NO_CREATE_MAX_ATTEMPT; attempt++) {
-            String documentNo = createOutboundDocumentNo(dateToken);
-            if (!stockMapper.existsDocumentNo(documentNo)) {
-                return documentNo;
-            }
-        }
-        throw new BusinessException(ErrorCode.STOCK_DOCUMENT_NO_DUPLICATED);
-    }
-
-    private String createOutboundDocumentNo(String dateToken) {
-        return "OUT-" + dateToken + "-" + randomDocumentToken();
+    private String createDocumentNo(String prefix, String dateToken) {
+        return prefix + "-" + dateToken + "-" + randomDocumentToken();
     }
 
     private String randomDocumentToken() {
@@ -719,21 +708,7 @@ public class StockService {
     }
 
     private String createInternalSerialNo(String partCode, String dateToken, int sequence) {
-        String normalizedPartCode = normalizeRequired(partCode, "PART");
+        String normalizedPartCode = TextNormalizer.requiredOrDefault(partCode, "PART");
         return normalizedPartCode + "-" + dateToken + "-" + String.format("%04d", sequence);
-    }
-
-    private String normalizeOptional(String value) {
-        if (value == null || value.trim().isEmpty()) {
-            return null;
-        }
-        return value.trim();
-    }
-
-    private String normalizeRequired(String value, String fallback) {
-        if (value == null || value.trim().isEmpty()) {
-            return fallback;
-        }
-        return value.trim();
     }
 }

@@ -129,12 +129,6 @@
 
     const isProblemInspection = (item) => item?.result === "FAIL" || item?.grade === "DEFECTIVE";
 
-    const typeBadgeClass = (type) => {
-        if (type === "CORRECTION") return "badge-warning";
-        if (type === "REINSPECTION") return "badge-info";
-        return "badge-blue";
-    };
-
     const resultBadgeClass = (result) => result === "FAIL" ? "badge-danger" : "badge-active";
 
     const gradeBadgeClass = (grade) => {
@@ -189,50 +183,13 @@
         return `no:${item.documentNo || "UNKNOWN"}`;
     };
 
-    const createDocumentGroups = (items) => {
-        const groups = new Map();
-
-        items.forEach((item) => {
-            const key = getDocumentKey(item);
-            if (!groups.has(key)) {
-                groups.set(key, {
-                    key,
-                    documentId: item.documentId,
-                    documentNo: item.documentNo || "-",
-                    latestAt: item.inspectedAt,
-                    inspections: 0,
-                    failCount: 0,
-                    unitIds: new Set(),
-                    parts: new Map()
-                });
-            }
-
-            const group = groups.get(key);
-            group.inspections += 1;
-            if (isProblemInspection(item)) {
-                group.failCount += 1;
-            }
-            if (item.unitId != null) {
-                group.unitIds.add(item.unitId);
-            }
-            if (String(item.inspectedAt || "") > String(group.latestAt || "")) {
-                group.latestAt = item.inspectedAt;
-            }
-
-            const partName = [item.partName, item.modelName].filter(Boolean).join(" ") || "품목 미확인";
-            group.parts.set(partName, (group.parts.get(partName) || 0) + 1);
-        });
-
-        return Array.from(groups.values());
-    };
-
     const summarizeParts = (group) => {
         if (group.partSummary) {
             return group.partSummary;
         }
         const parts = Array.from(group.parts.entries())
-                .sort((a, b) => b[1] - a[1])
-                .map(([name]) => name);
+            .sort((a, b) => b[1] - a[1])
+            .map(([name]) => name);
         if (!parts.length) {
             return "-";
         }
@@ -240,23 +197,6 @@
             return parts.join(" · ");
         }
         return `${parts.slice(0, 2).join(" · ")} 외 ${numberText(parts.length - 2)}개 품목`;
-    };
-
-    const summarizeRowsParts = (items) => {
-        const parts = new Map();
-        items.forEach((item) => {
-            const partName = [item.partName, item.modelName].filter(Boolean).join(" ") || "품목 미확인";
-            parts.set(partName, (parts.get(partName) || 0) + 1);
-        });
-        const sorted = Array.from(parts.entries()).sort((a, b) => b[1] - a[1]);
-        if (!sorted.length) {
-            return "-";
-        }
-        const names = sorted.map(([name]) => name);
-        if (names.length <= 2) {
-            return names.join(" · ");
-        }
-        return `${names.slice(0, 2).join(" · ")} 외 ${numberText(names.length - 2)}개 품목`;
     };
 
     const normalizeDocumentGroups = (items) => {
@@ -289,10 +229,10 @@
 
     const getPartCategoryText = (item) => {
         return item?.partCategoryName
-                || item?.categoryName
-                || item?.partCategory
-                || item?.category
-                || "분류 미지정";
+            || item?.categoryName
+            || item?.partCategory
+            || item?.category
+            || "분류 미지정";
     };
 
     const getUnitKey = (item) => {
@@ -336,7 +276,7 @@
         }
     };
 
-    const closeDetailPanel = ({ restoreFocus = true } = {}) => {
+    const closeDetailPanel = ({restoreFocus = true} = {}) => {
         if (!detailPanel || !detailPanelOpen) {
             return;
         }
@@ -402,7 +342,7 @@
             unitPageInfo.textContent = "1 / 1 페이지";
         }
         clearRows(unitTable);
-        closeDetailPanel({ restoreFocus: false });
+        closeDetailPanel({restoreFocus: false});
     };
 
     const updateUnitFilterControls = () => {
@@ -550,11 +490,11 @@
         });
 
         return Array.from(groups.values())
-                .map((group) => ({
-                    ...group,
-                    latest: getLatestInspection(group.rows)
-                }))
-                .sort((a, b) => String(b.latest?.inspectedAt || "").localeCompare(String(a.latest?.inspectedAt || "")));
+            .map((group) => ({
+                ...group,
+                latest: getLatestInspection(group.rows)
+            }))
+            .sort((a, b) => String(b.latest?.inspectedAt || "").localeCompare(String(a.latest?.inspectedAt || "")));
     };
 
     const updateSelectedDocumentRow = () => {
@@ -647,7 +587,7 @@
         const pageGroups = groups.slice(unitCurrentPage * UNIT_PAGE_SIZE, (unitCurrentPage + 1) * UNIT_PAGE_SIZE);
         pageGroups.forEach((group) => {
             const latest = group.latest || {};
-            const unitStatusBadge = renderUnitStatusBadge(group.unitStatus || latest.unitStatus, { hideInStock: true });
+            const unitStatusBadge = renderUnitStatusBadge(group.unitStatus || latest.unitStatus, {hideInStock: true});
             const row = document.createElement("div");
             row.className = "data-row document-data-row history-unit-row is-selectable";
             row.setAttribute("role", "row");
@@ -720,12 +660,12 @@
         }
 
         const itemsMarkup = itemResults.length
-                ? itemResults.map((item) => {
-                    const value = item.selectedOptionLabelSnapshot
-                            || item.valueText
-                            || (item.valueNumber != null ? String(item.valueNumber) : "-");
-                    const resultText = LABELS.result[item.result] || item.result || "-";
-                    return `
+            ? itemResults.map((item) => {
+                const value = item.selectedOptionLabelSnapshot
+                    || item.valueText
+                    || (item.valueNumber != null ? String(item.valueNumber) : "-");
+                const resultText = LABELS.result[item.result] || item.result || "-";
+                return `
                         <article class="history-result-item ${isProblemInspection(item) ? "is-problem" : ""}">
                             <header>
                                 <strong>${escapeHtml(item.itemNameSnapshot || "-")}</strong>
@@ -734,8 +674,8 @@
                             <p>${escapeHtml(value)}</p>
                         </article>
                     `;
-                }).join("")
-                : '<p class="history-empty-detail">항목별 결과가 없습니다.</p>';
+            }).join("")
+            : '<p class="history-empty-detail">항목별 결과가 없습니다.</p>';
 
         const memoMarkup = detail.memo ? `
             <section class="history-detail-section">
@@ -912,7 +852,7 @@
         activeGradeFilter = "";
         unitCurrentPage = 0;
         selectedDocumentRows = [];
-        closeDetailPanel({ restoreFocus: false });
+        closeDetailPanel({restoreFocus: false});
         updateSelectedDocumentRow();
         updateUnitFilterControls();
         if (resultFilterSelect) {
@@ -944,7 +884,7 @@
             let page = 0;
             let pageData;
             do {
-                pageData = await fetchHistoryPage(page, DETAIL_PAGE_SIZE, { documentId: group.documentId }, { includeFilter: false });
+                pageData = await fetchHistoryPage(page, DETAIL_PAGE_SIZE, {documentId: group.documentId}, {includeFilter: false});
                 rows.push(...pageData.content);
                 page += 1;
             } while (pageData.hasNext && page < MAX_DETAIL_PAGES);
@@ -1097,7 +1037,7 @@
         if (gradeFilterSelect) {
             gradeFilterSelect.value = "";
         }
-        closeDetailPanel({ restoreFocus: false });
+        closeDetailPanel({restoreFocus: false});
         renderPartGroups(selectedDocumentRows);
         updateUnitFilterCounts(getRowsForSelectedPart());
         renderUnitRows(selectedDocumentRows);
@@ -1141,7 +1081,7 @@
         activeHistoryFilter = button.dataset.historyFilter || "ALL";
         selectedManagementNumber = null;
         unitCurrentPage = 0;
-        closeDetailPanel({ restoreFocus: false });
+        closeDetailPanel({restoreFocus: false});
         updateUnitFilterControls();
         renderUnitRows(selectedDocumentRows);
     });
@@ -1150,7 +1090,7 @@
         activeResultFilter = resultFilterSelect.value;
         selectedManagementNumber = null;
         unitCurrentPage = 0;
-        closeDetailPanel({ restoreFocus: false });
+        closeDetailPanel({restoreFocus: false});
         renderUnitRows(selectedDocumentRows);
     });
 
@@ -1158,7 +1098,7 @@
         activeGradeFilter = gradeFilterSelect.value;
         selectedManagementNumber = null;
         unitCurrentPage = 0;
-        closeDetailPanel({ restoreFocus: false });
+        closeDetailPanel({restoreFocus: false});
         renderUnitRows(selectedDocumentRows);
     });
 
@@ -1168,39 +1108,19 @@
         }
         unitCurrentPage -= 1;
         selectedManagementNumber = null;
-        closeDetailPanel({ restoreFocus: false });
+        closeDetailPanel({restoreFocus: false});
         renderUnitRows(selectedDocumentRows);
     });
 
     unitNextButton?.addEventListener("click", () => {
         unitCurrentPage += 1;
         selectedManagementNumber = null;
-        closeDetailPanel({ restoreFocus: false });
+        closeDetailPanel({restoreFocus: false});
         renderUnitRows(selectedDocumentRows);
     });
 
     detailCloseButton?.addEventListener("click", () => closeDetailPanel());
 
-    document.addEventListener("click", (event) => {
-        if (!detailPanelOpen || !detailPanel) {
-            return;
-        }
-        if (!(event.target instanceof Element)) {
-            return;
-        }
-        if (detailPanel.contains(event.target)) {
-            return;
-        }
-        if (event.target.closest("[data-history-document-key], [data-history-unit-key]")) {
-            return;
-        }
-        closeDetailPanel({ restoreFocus: false });
-    });
-
-    document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && detailPanelOpen) {
-            closeDetailPanel();
-        }
     window.PcsDrawer?.bindDismiss({
         drawer: detailPanel,
         close: closeDetailPanel,
@@ -1210,12 +1130,12 @@
 
     prevButton.addEventListener("click", () => {
         if (currentPage > 0) {
-            loadDocumentGroups(currentPage - 1, { preserveScroll: true });
+            loadDocumentGroups(currentPage - 1, {preserveScroll: true});
         }
     });
 
     nextButton.addEventListener("click", () => {
-        loadDocumentGroups(currentPage + 1, { preserveScroll: true });
+        loadDocumentGroups(currentPage + 1, {preserveScroll: true});
     });
 
     initializePage();

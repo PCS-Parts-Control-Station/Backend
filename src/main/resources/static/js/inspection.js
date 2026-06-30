@@ -217,11 +217,6 @@
 
     const resultBadgeClass = (result) => result === "FAIL" ? "badge-danger" : "badge-active";
     const gradeBadgeClass = (grade) => grade === "DEFECTIVE" ? "badge-danger" : (grade === "NONE" ? "badge-warning" : "badge-blue");
-    const salesBadgeClass = (salesStatus) => {
-        if (salesStatus === "AVAILABLE") return "badge-active";
-        if (salesStatus === "UNAVAILABLE") return "badge-danger";
-        return "badge-warning";
-    };
     const typeBadgeClass = (type) => {
         if (type === "CORRECTION") return "badge-warning";
         if (type === "REINSPECTION") return "badge-blue";
@@ -814,10 +809,6 @@
             }
         }
         return null;
-    };
-
-    const findLineByMovementId = (movementId) => {
-        return (currentDocumentDetail?.lines || []).find((line) => String(line.movementId) === String(movementId)) || null;
     };
 
     const loadTemplatesForCategory = async (categoryId) => {
