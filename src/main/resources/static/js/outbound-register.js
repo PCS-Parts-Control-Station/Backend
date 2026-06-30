@@ -1,10 +1,16 @@
 (() => {
     const PAGE_SIZE = 20;
     const SELECT_ALL_PAGE_SIZE = 100;
-    const SELECTED_GROUP_COLLAPSE_THRESHOLD = 5;
 
     const form = document.querySelector("#outbound-form");
     const partnerSelect = document.querySelector("[data-partner-select]");
+    const openPartnerModalButton = document.querySelector("[data-open-partner-modal]");
+    const partnerModal = document.querySelector("[data-partner-modal]");
+    const closePartnerModalButtons = document.querySelectorAll("[data-close-partner-modal]");
+    const partnerSearchInput = document.querySelector("[data-partner-search]");
+    const partnerList = document.querySelector("[data-partner-list]");
+    const selectedPartnerName = document.querySelector("[data-selected-partner-name]");
+    const selectedPartnerMeta = document.querySelector("[data-selected-partner-meta]");
     const partnerMessage = document.querySelector("[data-partner-message]");
     const keywordInput = document.querySelector("[data-candidate-keyword]");
     const categoryFilter = document.querySelector("[data-category-filter]");
@@ -18,7 +24,6 @@
     const resetSearchButton = document.querySelector("[data-candidate-reset]");
     const selectAllCandidatesButton = document.querySelector("[data-select-all-candidates]");
     const candidateTable = document.querySelector("[data-candidate-table]");
-    const candidateEmpty = document.querySelector("[data-candidate-empty]");
     const candidateSummary = document.querySelector("[data-candidate-summary]");
     const pagination = document.querySelector("[data-candidate-pagination]");
     const pageInfo = pagination?.querySelector("[data-page-info]");
@@ -42,6 +47,8 @@
     let selectedUnits = new Map();
     let latestCandidates = [];
     let categoryOptions = [];
+    let partners = [];
+    let selectedPartner = null;
     let candidateSearchStarted = false;
     let currentRegisterStep = "1";
 
@@ -107,6 +114,86 @@
             return data;
         }
         return Array.isArray(data?.content) ? data.content : [];
+    };
+
+    const partnerRoleLabel = (role) => {
+        const normalizedRole = String(role || "").trim().toUpperCase();
+        const labels = {
+            CUSTOMER: "출고 거래처",
+            CLIENT: "출고 거래처",
+            BUYER: "출고 거래처",
+            BOTH: "공급/출고 거래처",
+        };
+        return labels[normalizedRole] || "";
+    };
+
+    const partnerMeta = (partner) => {
+        const code = partner.partnerCode || partner.code || "";
+        const role = partnerRoleLabel(partner.partnerRole);
+        return [code, role].filter(Boolean).join(" · ") || "출고 거래처";
+    };
+
+    const partnerSearchText = (partner) => [
+        partner.partnerName,
+        partner.partnerCode,
+        partner.code,
+        partner.representativeName,
+        partner.phoneNumber,
+        partner.tel,
+    ].filter(Boolean).join(" ").toLowerCase();
+
+    const updateSelectedPartnerView = () => {
+        const hasPartner = Boolean(selectedPartner);
+        if (partnerSelect) {
+            partnerSelect.value = hasPartner ? String(selectedPartner.partnerId) : "";
+        }
+        if (selectedPartnerName) {
+            selectedPartnerName.textContent = hasPartner ? selectedPartner.partnerName : "거래처 선택";
+        }
+        if (selectedPartnerMeta) {
+            selectedPartnerMeta.textContent = hasPartner ? partnerMeta(selectedPartner) : "거래처를 검색해 선택해 주세요.";
+        }
+        openPartnerModalButton?.classList.toggle("is-selected", hasPartner);
+    };
+
+    const renderPartnerList = () => {
+        if (!partnerList) {
+            return;
+        }
+
+        const keyword = partnerSearchInput?.value.trim().toLowerCase() || "";
+        const filteredPartners = keyword
+            ? partners.filter((partner) => partnerSearchText(partner).includes(keyword))
+            : partners;
+
+        if (!filteredPartners.length) {
+            partnerList.innerHTML = `
+                <p class="partner-modal-empty">
+                    ${partners.length ? "검색 결과가 없습니다." : "선택 가능한 출고 거래처가 없습니다."}
+                </p>
+            `;
+            return;
+        }
+
+        partnerList.innerHTML = filteredPartners.map((partner) => {
+            const selected = String(selectedPartner?.partnerId || "") === String(partner.partnerId);
+            return `
+                <button class="partner-modal-row${selected ? " is-selected" : ""}" type="button" data-partner-option="${escapeHtml(String(partner.partnerId))}">
+                    <span>
+                        <strong>${escapeHtml(partner.partnerName || "-")}</strong>
+                        <small>${escapeHtml(partnerMeta(partner))}</small>
+                    </span>
+                </button>
+            `;
+        }).join("");
+    };
+
+    const selectPartner = (partner) => {
+        selectedPartner = partner;
+        updateSelectedPartnerView();
+        setPartnerMessage("");
+        updateCurrentRegisterStep("1");
+        partnerModal?.close();
     };
 
     const syncCategoryFilterLabel = () => {
@@ -308,9 +395,8 @@
         const groups = selectedGroups();
 
         groups.forEach((group) => {
-            const shouldCollapse = group.units.length > SELECTED_GROUP_COLLAPSE_THRESHOLD;
-            const groupElement = document.createElement(shouldCollapse ? "details" : "section");
-            groupElement.className = `outbound-selected-group${shouldCollapse ? " is-collapsible" : ""}`;
+            const groupElement = document.createElement("details");
+            groupElement.className = "outbound-selected-group is-collapsible";
             groupElement.dataset.selectedGroup = "";
             groupElement.dataset.partId = group.partId;
             const metaHtml = group.meta && group.meta !== "-"
@@ -325,7 +411,7 @@
                     <div class="outbound-selected-group-actions">
                         <b>${group.units.length.toLocaleString("ko-KR")}개</b>
                         <button type="button" data-remove-group="${group.partId}">묶음 취소</button>
-                        ${shouldCollapse ? '<span class="outbound-selected-toggle-label" aria-hidden="true"></span>' : ""}
+                        <span class="outbound-selected-toggle-label" aria-hidden="true"></span>
                     </div>
                 </div>
             `;
@@ -345,9 +431,7 @@
                 </label>
                 </div>
             `;
-            groupElement.innerHTML = shouldCollapse
-                ? `<summary>${groupHeader}</summary>${groupBody}`
-                : `${groupHeader}${groupBody}`;
+            groupElement.innerHTML = `<summary>${groupHeader}</summary>${groupBody}`;
             selectedList.append(groupElement);
         });
 
@@ -590,7 +674,9 @@
         if (!partnerSelect) {
             return;
         }
-        partnerSelect.disabled = true;
+        if (openPartnerModalButton) {
+            openPartnerModalButton.disabled = true;
+        }
         setPartnerMessage("거래처를 불러오는 중입니다.");
 
         try {
@@ -599,20 +685,26 @@
                 limit: "100",
             });
             const data = await window.PcsApi.getData(`${apiBase()}/partners?${params.toString()}`, apiOptions());
-            const partners = normalizeListData(data).filter((partner) => {
+            partners = normalizeListData(data).filter((partner) => {
                 const role = partner.partnerRole || "";
                 return role === "CUSTOMER" || role === "BOTH";
             });
 
-            partnerSelect.innerHTML = '<option value="">출고 거래처 선택</option>';
-            partners.forEach((partner) => {
-                partnerSelect.append(new Option(partner.partnerName || "-", String(partner.partnerId)));
-            });
-            partnerSelect.disabled = partners.length === 0;
+            selectedPartner = partners.find((partner) => String(partner.partnerId) === String(partnerSelect.value || "")) || null;
+            updateSelectedPartnerView();
+            renderPartnerList();
+            if (openPartnerModalButton) {
+                openPartnerModalButton.disabled = partners.length === 0;
+            }
             setPartnerMessage(partners.length ? "" : "선택 가능한 출고 거래처가 없습니다.", partners.length ? "info" : "error");
         } catch (error) {
-            partnerSelect.innerHTML = '<option value="">거래처 조회 실패</option>';
-            partnerSelect.disabled = true;
+            partners = [];
+            selectedPartner = null;
+            updateSelectedPartnerView();
+            renderPartnerList();
+            if (openPartnerModalButton) {
+                openPartnerModalButton.disabled = true;
+            }
             setPartnerMessage(error?.message || "거래처를 불러오지 못했습니다.", "error");
         }
     };
@@ -643,6 +735,8 @@
     const resetAll = () => {
         selectedUnits = new Map();
         form.reset();
+        selectedPartner = null;
+        updateSelectedPartnerView();
         clearCategoryFilter();
         setSubmitMessage("");
         renderSelectedList();
@@ -690,6 +784,41 @@
         updateCurrentRegisterStep();
     });
     resetFormButton?.addEventListener("click", resetAll);
+
+    openPartnerModalButton?.addEventListener("click", () => {
+        renderPartnerList();
+        partnerModal?.showModal();
+        requestAnimationFrame(() => partnerSearchInput?.focus());
+    });
+
+    closePartnerModalButtons.forEach((button) => {
+        button.addEventListener("click", () => partnerModal?.close());
+    });
+
+    partnerModal?.addEventListener("click", (event) => {
+        if (event.target === partnerModal) {
+            partnerModal.close();
+        }
+    });
+
+    partnerSearchInput?.addEventListener("input", renderPartnerList);
+    partnerSearchInput?.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            renderPartnerList();
+        }
+    });
+
+    partnerList?.addEventListener("click", (event) => {
+        const option = event.target.closest("[data-partner-option]");
+        if (!option) {
+            return;
+        }
+        const partner = partners.find((candidate) => String(candidate.partnerId) === option.dataset.partnerOption);
+        if (partner) {
+            selectPartner(partner);
+        }
+    });
 
     selectedList.addEventListener("click", (event) => {
         const removeGroupButton = event.target.closest("[data-remove-group]");

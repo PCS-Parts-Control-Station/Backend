@@ -22,4 +22,9 @@ public final class TextNormalizer {
         }
         return normalized;
     }
+
+    public static String requiredOrDefault(String value, String fallback) {
+        String normalized = optional(value);
+        return normalized == null ? fallback : normalized;
+    }
 }

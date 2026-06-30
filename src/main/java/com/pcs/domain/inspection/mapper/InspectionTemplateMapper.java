@@ -14,8 +14,6 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface InspectionTemplateMapper {
 
-    boolean isCompanyActive(@Param("companyId") Long companyId);
-
     boolean existsCategory(@Param("companyId") Long companyId, @Param("categoryId") Long categoryId);
 
     List<SearchInspectionTemplateResponse> searchTemplates(

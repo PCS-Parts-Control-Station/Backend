@@ -24,8 +24,6 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface StockMapper {
 
-    boolean isCompanyActive(@Param("companyId") Long companyId);
-
     StockPartner findPartner(
             @Param("companyId") Long companyId,
             @Param("partnerId") Long partnerId

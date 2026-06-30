@@ -94,21 +94,26 @@
     const applyActiveRoute = () => {
         const activeRoute = getActiveRoute();
         const activeSidebarRoute = activeRoute === "categories" ? "parts" : activeRoute;
-        const currentPath = window.location.pathname;
 
         document.querySelectorAll(".sidebar-nav [data-route]").forEach((link) => {
             const route = link.dataset.route;
-            const routeRoot = route.split("/")[0];
-            const activeRoot = activeSidebarRoute.split("/")[0];
-            const isActive = route === activeSidebarRoute ||
-                             (routeRoot === activeRoot && ["inbound", "outbound"].includes(routeRoot)) ||
-                             (routeRoot === "inbound" && currentPath.includes("/inbound/")) ||
-                             (routeRoot === "outbound" && currentPath.includes("/outbound/"));
+            const isActive = route === activeSidebarRoute;
             link.classList.toggle("active", isActive);
             if (isActive) {
                 link.setAttribute("aria-current", "page");
             } else {
                 link.removeAttribute("aria-current");
+            }
+        });
+
+        document.querySelectorAll("[data-sidebar-subgroup]").forEach((group) => {
+            const toggle = group.querySelector("[data-sidebar-subgroup-toggle]");
+            const submenu = group.querySelector("[data-sidebar-submenu]");
+            const hasActiveLink = Boolean(group.querySelector("a.active"));
+            group.classList.toggle("is-open", hasActiveLink);
+            toggle?.setAttribute("aria-expanded", String(hasActiveLink));
+            if (submenu) {
+                submenu.hidden = !hasActiveLink;
             }
         });
     };
@@ -187,6 +192,12 @@
             activeRouteBlocked = true;
         }
 
+        document.querySelectorAll(".sidebar-subgroup").forEach((group) => {
+            const hasVisibleLink = Array.from(group.querySelectorAll("a[data-route]"))
+                .some((link) => !link.hidden);
+            group.hidden = !hasVisibleLink;
+        });
+
         document.querySelectorAll(".sidebar-group").forEach((group) => {
             const hasVisibleLink = Array.from(group.querySelectorAll("a[data-route]"))
                 .some((link) => !link.hidden);
@@ -196,6 +207,24 @@
         if (activeRouteBlocked && window.PcsApi?.redirectToInvalidAccess) {
             window.PcsApi.redirectToInvalidAccess({ code: "AUTH-005" }, companyCode);
         }
+    };
+
+    const bindSidebarSubgroups = () => {
+        document.querySelectorAll("[data-sidebar-subgroup]").forEach((group) => {
+            const toggle = group.querySelector("[data-sidebar-subgroup-toggle]");
+            const submenu = group.querySelector("[data-sidebar-submenu]");
+            if (!toggle || !submenu || toggle.dataset.bound === "true") {
+                return;
+            }
+
+            toggle.dataset.bound = "true";
+            toggle.addEventListener("click", () => {
+                const nextOpen = !group.classList.contains("is-open");
+                group.classList.toggle("is-open", nextOpen);
+                toggle.setAttribute("aria-expanded", String(nextOpen));
+                submenu.hidden = !nextOpen;
+            });
+        });
     };
 
     const bindSidebarToggle = () => {
@@ -390,6 +419,7 @@
         if (!placeholder) {
             applyWorkspaceContext();
             applyActiveRoute();
+            bindSidebarSubgroups();
             bindSidebarToggle();
             bindWorkspaceQuickBar();
             bindAccountActions();
@@ -414,6 +444,7 @@
 
         applyWorkspaceContext();
         applyActiveRoute();
+        bindSidebarSubgroups();
         bindSidebarToggle();
         bindWorkspaceQuickBar();
         bindAccountActions();

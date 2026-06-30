@@ -745,30 +745,6 @@
         });
     };
 
-    const renderCategoryOptions = (select, { includeAll = false } = {}) => {
-        if (!select) {
-            return;
-        }
-        const currentValue = select.value;
-        select.replaceChildren();
-
-        const placeholder = document.createElement("option");
-        placeholder.value = "";
-        placeholder.textContent = includeAll ? "전체" : "카테고리 선택";
-        select.append(placeholder);
-
-        categories.forEach((category) => {
-            const option = document.createElement("option");
-            option.value = String(category.categoryId);
-            option.textContent = category.categoryName || "-";
-            select.append(option);
-        });
-
-        if ([...select.options].some((option) => option.value === currentValue)) {
-            select.value = currentValue;
-        }
-    };
-
     const populateCategorySelects = () => {
         syncAllCategoryLabels();
     };

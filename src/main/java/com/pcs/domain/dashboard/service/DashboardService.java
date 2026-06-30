@@ -6,8 +6,7 @@ import com.pcs.domain.dashboard.dto.response.DashboardStockStatusResponse;
 import com.pcs.domain.dashboard.dto.response.DashboardSummaryResponse;
 import com.pcs.domain.dashboard.dto.response.DashboardTodoResponse;
 import com.pcs.domain.dashboard.mapper.DashboardMapper;
-import com.pcs.global.error.ErrorCode;
-import com.pcs.global.error.exception.BusinessException;
+import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,9 +19,11 @@ public class DashboardService {
     private static final int RECENT_ACTIVITY_SIZE = 20;
 
     private final DashboardMapper dashboardMapper;
+    private final WorkspaceAccessValidator workspaceAccessValidator;
 
-    public DashboardService(DashboardMapper dashboardMapper) {
+    public DashboardService(DashboardMapper dashboardMapper, WorkspaceAccessValidator workspaceAccessValidator) {
         this.dashboardMapper = dashboardMapper;
+        this.workspaceAccessValidator = workspaceAccessValidator;
     }
 
     public DashboardResponse getDashboard(Long companyId) {
@@ -47,9 +48,7 @@ public class DashboardService {
     }
 
     private void validateCompanyActive(Long companyId) {
-        if (!dashboardMapper.isCompanyActive(companyId)) {
-            throw new BusinessException(ErrorCode.COMPANY_INACTIVE);
-        }
+        workspaceAccessValidator.validateCompanyActive(companyId);
     }
 
     private DashboardSummaryResponse requireSummary(DashboardSummaryResponse summary) {

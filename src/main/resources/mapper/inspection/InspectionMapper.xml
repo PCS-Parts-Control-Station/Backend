@@ -4,15 +4,6 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.pcs.domain.inspection.mapper.InspectionMapper">
 
-    <select id="isCompanyActive" resultType="boolean">
-        SELECT EXISTS (
-            SELECT 1
-            FROM tb_company
-            WHERE company_id = #{companyId}
-              AND active = TRUE
-        )
-    </select>
-
     <sql id="waitingDocumentInnerWhere">
         WHERE d.company_id = #{companyId}
           AND d.document_type = 'INBOUND'
