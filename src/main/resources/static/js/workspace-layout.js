@@ -113,6 +113,36 @@
         });
     };
 
+    const applyStaffFallbackRoute = (session) => {
+        const normalizedRole = normalizeRole(session?.role);
+        if (normalizedRole !== "STAFF") {
+            return;
+        }
+        const staffPermissions = getStaffPermissions(session);
+        const activeRoute = getActiveRoute();
+
+        document.querySelectorAll(".sidebar-nav [data-route][data-staff-fallback-route]").forEach((navLink) => {
+            const route = navLink.dataset.route;
+            if (route !== activeRoute && !activeRoute.startsWith(`${route}/`)) {
+                return;
+            }
+            const anyPermissions = getStaffAnyPermissions(navLink);
+            const hasAnyPermission = anyPermissions.length === 0
+                    || anyPermissions.some((p) => staffPermissions.has(p));
+            if (!hasAnyPermission) {
+                return;
+            }
+            const routePermission = getRouteStaffPermission(activeRoute);
+            if (!routePermission || staffPermissions.has(routePermission)) {
+                return;
+            }
+            const fallbackRoute = navLink.dataset.staffFallbackRoute;
+            if (fallbackRoute && fallbackRoute !== activeRoute) {
+                window.location.href = `/w/${encodeURIComponent(companyCode)}/${fallbackRoute}`;
+            }
+        });
+    };
+
     const applyWorkspaceVisibility = (session) => {
         const normalizedRole = normalizeRole(session?.role);
         const staffPermissions = getStaffPermissions(session);
@@ -348,6 +378,7 @@
                 sessionName.textContent = `${me.name} (${me.role})`;
             }
             applyWorkspaceVisibility(me);
+            applyStaffFallbackRoute(me);
         } catch (error) {
             sessionName.textContent = "로그인 필요";
             applyWorkspaceVisibility(null);
