@@ -13,9 +13,8 @@ import com.pcs.domain.inspection.dto.response.SearchInspectionTemplateResponse;
 import com.pcs.domain.inspection.dto.response.SearchInspectionTemplateSummaryResponse;
 import com.pcs.domain.inspection.service.InspectionTemplateService;
 import com.pcs.global.dto.PageResultDto;
-import com.pcs.global.error.ErrorCode;
-import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.security.PcsPrincipal;
+import com.pcs.global.workspace.WorkspaceAccessValidator;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,9 +22,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class InspectionTemplateFacade {
 
     private final InspectionTemplateService inspectionTemplateService;
+    private final WorkspaceAccessValidator workspaceAccessValidator;
 
-    public InspectionTemplateFacade(InspectionTemplateService inspectionTemplateService) {
+    public InspectionTemplateFacade(
+            InspectionTemplateService inspectionTemplateService,
+            WorkspaceAccessValidator workspaceAccessValidator
+    ) {
         this.inspectionTemplateService = inspectionTemplateService;
+        this.workspaceAccessValidator = workspaceAccessValidator;
     }
 
     public PageResultDto<SearchInspectionTemplateResponse, SearchInspectionTemplateSummaryResponse> searchTemplates(
@@ -38,10 +42,9 @@ public class InspectionTemplateFacade {
             Integer size,
             Integer limit
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
+        PcsPrincipal checkedPrincipal = validatePrincipal(principal, pathCompanyCode);
         return inspectionTemplateService.searchTemplates(
-                principal.companyId(),
+                checkedPrincipal.companyId(),
                 keyword,
                 categoryId,
                 active,
@@ -56,9 +59,8 @@ public class InspectionTemplateFacade {
             String pathCompanyCode,
             Long templateId
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        return inspectionTemplateService.getTemplate(principal.companyId(), templateId);
+        PcsPrincipal checkedPrincipal = validatePrincipal(principal, pathCompanyCode);
+        return inspectionTemplateService.getTemplate(checkedPrincipal.companyId(), templateId);
     }
 
     @Transactional
@@ -67,9 +69,8 @@ public class InspectionTemplateFacade {
             String pathCompanyCode,
             CreateInspectionTemplateRequest request
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        return inspectionTemplateService.createTemplate(principal.companyId(), principal.memberId(), request);
+        PcsPrincipal checkedPrincipal = validatePrincipal(principal, pathCompanyCode);
+        return inspectionTemplateService.createTemplate(checkedPrincipal.companyId(), checkedPrincipal.memberId(), request);
     }
 
     @Transactional
@@ -79,9 +80,8 @@ public class InspectionTemplateFacade {
             Long templateId,
             UpdateInspectionTemplateRequest request
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        return inspectionTemplateService.updateTemplate(principal.companyId(), templateId, request);
+        PcsPrincipal checkedPrincipal = validatePrincipal(principal, pathCompanyCode);
+        return inspectionTemplateService.updateTemplate(checkedPrincipal.companyId(), templateId, request);
     }
 
     @Transactional
@@ -91,9 +91,8 @@ public class InspectionTemplateFacade {
             Long templateId,
             boolean active
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        inspectionTemplateService.updateTemplateActive(principal.companyId(), templateId, active);
+        PcsPrincipal checkedPrincipal = validatePrincipal(principal, pathCompanyCode);
+        inspectionTemplateService.updateTemplateActive(checkedPrincipal.companyId(), templateId, active);
     }
 
     @Transactional
@@ -103,9 +102,8 @@ public class InspectionTemplateFacade {
             Long templateId,
             CreateInspectionTemplateItemRequest request
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        return inspectionTemplateService.createItem(principal.companyId(), templateId, request);
+        PcsPrincipal checkedPrincipal = validatePrincipal(principal, pathCompanyCode);
+        return inspectionTemplateService.createItem(checkedPrincipal.companyId(), templateId, request);
     }
 
     @Transactional
@@ -116,9 +114,8 @@ public class InspectionTemplateFacade {
             Long itemId,
             UpdateInspectionTemplateItemRequest request
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        return inspectionTemplateService.updateItem(principal.companyId(), templateId, itemId, request);
+        PcsPrincipal checkedPrincipal = validatePrincipal(principal, pathCompanyCode);
+        return inspectionTemplateService.updateItem(checkedPrincipal.companyId(), templateId, itemId, request);
     }
 
     @Transactional
@@ -129,9 +126,8 @@ public class InspectionTemplateFacade {
             Long itemId,
             boolean active
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        inspectionTemplateService.updateItemActive(principal.companyId(), templateId, itemId, active);
+        PcsPrincipal checkedPrincipal = validatePrincipal(principal, pathCompanyCode);
+        inspectionTemplateService.updateItemActive(checkedPrincipal.companyId(), templateId, itemId, active);
     }
 
     @Transactional
@@ -141,9 +137,8 @@ public class InspectionTemplateFacade {
             Long templateId,
             UpdateInspectionTemplateItemSortOrderRequest request
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        return inspectionTemplateService.updateItemSortOrder(principal.companyId(), templateId, request);
+        PcsPrincipal checkedPrincipal = validatePrincipal(principal, pathCompanyCode);
+        return inspectionTemplateService.updateItemSortOrder(checkedPrincipal.companyId(), templateId, request);
     }
 
     @Transactional
@@ -154,9 +149,8 @@ public class InspectionTemplateFacade {
             Long itemId,
             CreateInspectionTemplateOptionRequest request
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        return inspectionTemplateService.createOption(principal.companyId(), templateId, itemId, request);
+        PcsPrincipal checkedPrincipal = validatePrincipal(principal, pathCompanyCode);
+        return inspectionTemplateService.createOption(checkedPrincipal.companyId(), templateId, itemId, request);
     }
 
     @Transactional
@@ -168,9 +162,8 @@ public class InspectionTemplateFacade {
             Long optionId,
             UpdateInspectionTemplateOptionRequest request
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        return inspectionTemplateService.updateOption(principal.companyId(), templateId, itemId, optionId, request);
+        PcsPrincipal checkedPrincipal = validatePrincipal(principal, pathCompanyCode);
+        return inspectionTemplateService.updateOption(checkedPrincipal.companyId(), templateId, itemId, optionId, request);
     }
 
     @Transactional
@@ -182,9 +175,8 @@ public class InspectionTemplateFacade {
             Long optionId,
             boolean active
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        inspectionTemplateService.updateOptionActive(principal.companyId(), templateId, itemId, optionId, active);
+        PcsPrincipal checkedPrincipal = validatePrincipal(principal, pathCompanyCode);
+        inspectionTemplateService.updateOptionActive(checkedPrincipal.companyId(), templateId, itemId, optionId, active);
     }
 
     @Transactional
@@ -195,23 +187,11 @@ public class InspectionTemplateFacade {
             Long itemId,
             UpdateInspectionTemplateOptionSortOrderRequest request
     ) {
-        validateAuthenticated(principal);
-        validateWorkspace(pathCompanyCode, principal.companyCode());
-        return inspectionTemplateService.updateOptionSortOrder(principal.companyId(), templateId, itemId, request);
+        PcsPrincipal checkedPrincipal = validatePrincipal(principal, pathCompanyCode);
+        return inspectionTemplateService.updateOptionSortOrder(checkedPrincipal.companyId(), templateId, itemId, request);
     }
 
-    private void validateAuthenticated(PcsPrincipal principal) {
-        if (principal == null) {
-            throw new BusinessException(ErrorCode.AUTH_REQUIRED);
-        }
-    }
-
-    private void validateWorkspace(String pathCompanyCode, String tokenCompanyCode) {
-        if (pathCompanyCode == null || pathCompanyCode.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "업체 코드가 필요합니다.");
-        }
-        if (!tokenCompanyCode.equals(pathCompanyCode.trim().toLowerCase())) {
-            throw new BusinessException(ErrorCode.AUTH_WORKSPACE_MISMATCH);
-        }
+    private PcsPrincipal validatePrincipal(PcsPrincipal principal, String pathCompanyCode) {
+        return workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
     }
 }

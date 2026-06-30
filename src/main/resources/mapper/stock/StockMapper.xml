@@ -4,15 +4,6 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.pcs.domain.stock.mapper.StockMapper">
 
-    <select id="isCompanyActive" resultType="boolean">
-        SELECT EXISTS (
-            SELECT 1
-            FROM tb_company
-            WHERE company_id = #{companyId}
-              AND active = TRUE
-        )
-    </select>
-
     <select id="findPartner" resultType="com.pcs.domain.stock.entity.StockPartner">
         SELECT
             partner_id,

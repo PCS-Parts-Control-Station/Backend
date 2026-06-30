@@ -37,6 +37,7 @@ import com.pcs.domain.part.type.SalesStatus;
 import com.pcs.domain.part.type.UnitStatus;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
+import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -53,11 +54,14 @@ class InspectionServiceTest {
     @Mock
     private InspectionMapper inspectionMapper;
 
+    @Mock
+    private WorkspaceAccessValidator workspaceAccessValidator;
+
     private InspectionService inspectionService;
 
     @BeforeEach
     void setUp() {
-        inspectionService = new InspectionService(inspectionMapper);
+        inspectionService = new InspectionService(inspectionMapper, workspaceAccessValidator);
     }
 
     @Test
@@ -84,8 +88,6 @@ class InspectionServiceTest {
                         null
                 ))
         );
-
-        when(inspectionMapper.isCompanyActive(companyId)).thenReturn(true);
         when(inspectionMapper.findPartUnitForUpdate(companyId, unitId)).thenReturn(waitingUnit(companyId, unitId));
         when(inspectionMapper.findActiveTemplate(companyId, templateId)).thenReturn(template(companyId, templateId));
         when(inspectionMapper.findActiveTemplateItems(templateId)).thenReturn(List.of(selectItem(templateId, itemId)));
@@ -127,8 +129,6 @@ class InspectionServiceTest {
                 null,
                 List.of()
         );
-
-        when(inspectionMapper.isCompanyActive(companyId)).thenReturn(true);
         when(inspectionMapper.findPartUnitForUpdate(companyId, unitId)).thenReturn(new InspectionPartUnitRow(
                 unitId,
                 companyId,
@@ -172,8 +172,6 @@ class InspectionServiceTest {
                         null
                 ))
         );
-
-        when(inspectionMapper.isCompanyActive(companyId)).thenReturn(true);
         when(inspectionMapper.findPartUnitForUpdate(companyId, unitId)).thenReturn(waitingUnit(companyId, unitId));
         when(inspectionMapper.findActiveTemplate(companyId, templateId)).thenReturn(template(companyId, templateId));
         when(inspectionMapper.findActiveTemplateItems(templateId)).thenReturn(List.of(selectItem(templateId, itemId)));
@@ -210,8 +208,6 @@ class InspectionServiceTest {
                 " 정정 사유 ",
                 List.of()
         );
-
-        when(inspectionMapper.isCompanyActive(companyId)).thenReturn(true);
         when(inspectionMapper.findInspection(companyId, baseInspectionId)).thenReturn(baseInspection);
         when(inspectionMapper.findPartUnitForUpdate(companyId, unitId)).thenReturn(completedUnit(companyId, unitId));
         when(inspectionMapper.findTemplate(companyId, templateId)).thenReturn(template(companyId, templateId));
@@ -266,8 +262,6 @@ class InspectionServiceTest {
                 "재검수 완료",
                 List.of()
         );
-
-        when(inspectionMapper.isCompanyActive(companyId)).thenReturn(true);
         when(inspectionMapper.findInspection(companyId, baseInspectionId)).thenReturn(baseInspection);
         when(inspectionMapper.findPartUnitForUpdate(companyId, unitId)).thenReturn(completedUnit(companyId, unitId));
         when(inspectionMapper.findTemplate(companyId, revisionTemplateId)).thenReturn(template(companyId, revisionTemplateId));
@@ -321,8 +315,6 @@ class InspectionServiceTest {
                 "홍길동",
                 LocalDateTime.of(2026, 6, 8, 10, 0)
         );
-
-        when(inspectionMapper.isCompanyActive(companyId)).thenReturn(true);
         when(inspectionMapper.countHistories(
                 companyId,
                 "RTX",
@@ -402,8 +394,6 @@ class InspectionServiceTest {
                 1,
                 LocalDateTime.of(2026, 6, 8, 10, 0)
         );
-
-        when(inspectionMapper.isCompanyActive(companyId)).thenReturn(true);
         when(inspectionMapper.countHistoryDocuments(
                 companyId,
                 "RAM",
@@ -498,8 +488,6 @@ class InspectionServiceTest {
                 "NORMAL",
                 null
         );
-
-        when(inspectionMapper.isCompanyActive(companyId)).thenReturn(true);
         when(inspectionMapper.findHistoryDetail(companyId, inspectionId)).thenReturn(row);
         when(inspectionMapper.findItemResults(inspectionId)).thenReturn(List.of(itemResult));
 

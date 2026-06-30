@@ -573,6 +573,20 @@
         updateSelectedRows();
     };
 
+    const shouldKeepDetailPanelOnClick = (target) => {
+        if (!detailDrawer?.classList.contains("is-open") || !(target instanceof Element)) {
+            return true;
+        }
+        if (cancelModal?.open) {
+            return true;
+        }
+        return Boolean(
+            target.closest("[data-inbound-detail-drawer]")
+            || target.closest("[data-document-id]")
+            || target.closest("[data-document-cancel]")
+        );
+    };
+
     const setCancelMessage = (message) => {
         if (!cancelFields.message) {
             return;
@@ -810,6 +824,13 @@
         close: closeDetailPanel,
         keepOpenSelector: "[data-document-id], [data-document-cancel], dialog",
         shouldIgnoreEscape: () => Boolean(cancelModal?.open)
+    });
+
+    document.addEventListener("click", (event) => {
+        if (shouldKeepDetailPanelOnClick(event.target)) {
+            return;
+        }
+        closeDetailPanel();
     });
 
     openCancelModalButton?.addEventListener("click", () => {
