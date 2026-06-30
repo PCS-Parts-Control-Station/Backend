@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -16,6 +17,7 @@ import com.pcs.domain.dashboard.dto.response.DashboardTodoResponse;
 import com.pcs.domain.dashboard.mapper.DashboardMapper;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
+import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,11 +32,14 @@ class DashboardServiceTest {
     @Mock
     private DashboardMapper dashboardMapper;
 
+    @Mock
+    private WorkspaceAccessValidator workspaceAccessValidator;
+
     private DashboardService dashboardService;
 
     @BeforeEach
     void setUp() {
-        dashboardService = new DashboardService(dashboardMapper);
+        dashboardService = new DashboardService(dashboardMapper, workspaceAccessValidator);
     }
 
     @Test
@@ -74,7 +79,6 @@ class DashboardServiceTest {
                 "inbound"
         );
 
-        when(dashboardMapper.isCompanyActive(companyId)).thenReturn(true);
         when(dashboardMapper.summarize(eq(companyId), any(), any())).thenReturn(summary);
         when(dashboardMapper.summarizeStockStatus(companyId)).thenReturn(stockStatus);
         when(dashboardMapper.findTodos(companyId, 20)).thenReturn(List.of(todo));
@@ -92,7 +96,9 @@ class DashboardServiceTest {
     @Test
     void getDashboard_fail_whenCompanyInactive() {
         Long companyId = 1L;
-        when(dashboardMapper.isCompanyActive(companyId)).thenReturn(false);
+        doThrow(new BusinessException(ErrorCode.COMPANY_INACTIVE))
+                .when(workspaceAccessValidator)
+                .validateCompanyActive(companyId);
 
         BusinessException exception = assertThrows(
                 BusinessException.class,
