@@ -8,8 +8,9 @@ tb_part_stock
 tb_part_spec_definition
 tb_part_spec_option
 tb_part_spec_value
-tb_pc_part_unit
 ```
+
+관리번호를 가진 실제 부품 조회 기준은 `docs/features/part-unit-db.md`가 담당한다.
 
 ## 품목 마스터 저장
 

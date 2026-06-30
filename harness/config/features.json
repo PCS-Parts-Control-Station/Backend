@@ -104,6 +104,21 @@
       ]
     },
     {
+      "name": "part-unit",
+      "dbChecks": ["part", "category", "stock", "inspection"],
+      "pathPatterns": [
+        "^src/main/java/com/pcs/domain/part/",
+        "^src/main/resources/mapper/part/",
+        "^src/test/java/com/pcs/domain/part/",
+        "^src/integrationTest/java/com/pcs/domain/part/",
+        "^src/integrationTest/resources/pcs-category-part-test-schema\\.sql$",
+        "^docs/features/part-unit(-db)?\\.md$",
+        "^src/main/resources/static/part-units\\.html$",
+        "^src/main/resources/static/js/part-units\\.js$",
+        "^src/main/resources/static/css/pages/part-units\\.css$"
+      ]
+    },
+    {
       "name": "stock",
       "dbChecks": ["stock", "part", "partner"],
       "pathPatterns": [

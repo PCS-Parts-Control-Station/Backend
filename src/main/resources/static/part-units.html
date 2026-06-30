@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PCS 부품 관리 화면입니다. 관리번호 단위로 개별 부품의 검수, 등급, 입출고 상태와 이력을 확인합니다.">
+    <title>PCS | 부품 관리</title>
+    <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/core/tokens.css?20260618_layers">
+    <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
+    <link rel="stylesheet" href="/css/layouts/workspace.css?20260624_quick_bar">
+    <link rel="stylesheet" href="/css/components/components.css?20260629_filter_actions">
+    <link rel="stylesheet" href="/css/components/management-page.css?20260624_spec_item_compact">
+    <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
+    <link rel="stylesheet" href="/css/pages/part-units.css?20260629_filter_form">
+</head>
+<body class="has-collapsible-sidebar page-part-units workspace-page">
+<div class="workspace-layout">
+    <div data-workspace-sidebar data-active-route="part-units"></div>
+
+    <div class="workspace-quick-bar" data-workspace-quick-bar data-watch-target=".workspace-header .header-actions" aria-hidden="true">
+        <button class="menu-toggle" type="button" data-sidebar-toggle aria-controls="workspace-sidebar" aria-expanded="false" aria-label="메뉴 열기">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M4 7h16" />
+                <path d="M4 12h16" />
+                <path d="M4 17h16" />
+            </svg>
+        </button>
+        <button class="workspace-quick-brand" type="button" data-scroll-top aria-label="부품 관리 화면 맨 위로 이동">
+            <span>부품 관리</span>
+        </button>
+        <div class="workspace-quick-actions">
+            <a class="btn btn-secondary" data-route="inspection">검수 관리</a>
+            <a class="btn btn-primary" data-route="outbound/new">출고 등록</a>
+        </div>
+    </div>
+
+    <main class="workspace-main part-units-page">
+        <header class="workspace-header">
+            <button class="menu-toggle" type="button" data-sidebar-toggle aria-controls="workspace-sidebar" aria-expanded="false" aria-label="메뉴 열기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M4 7h16" />
+                    <path d="M4 12h16" />
+                    <path d="M4 17h16" />
+                </svg>
+            </button>
+            <div class="page-title-row">
+                <span class="page-icon page-icon-document" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <path d="M4 7.5 12 3l8 4.5-8 4.5L4 7.5Z" />
+                        <path d="M4 7.5v9L12 21l8-4.5v-9" />
+                        <path d="M12 12v9" />
+                        <path d="M8.5 14.5h2" />
+                        <path d="M13.5 16.5h2" />
+                    </svg>
+                </span>
+                <div>
+                    <p class="page-kicker">관리번호 단위 추적</p>
+                    <h1>부품 관리</h1>
+                    <p class="page-description">관리번호 기준으로 검수대기, 등급, 출고 상태를 확인합니다.</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a class="btn btn-secondary" data-route="inbound/new" data-staff-permission="STAFF_INBOUND">입고 등록</a>
+                <a class="btn btn-secondary" data-route="inspection" data-staff-permission="STAFF_INSPECTION">검수 관리</a>
+                <a class="btn btn-primary" data-route="outbound/new" data-staff-permission="STAFF_OUTBOUND">출고 등록</a>
+            </div>
+        </header>
+
+        <section class="content-grid management-drawer-grid part-units-content-grid">
+            <div class="content-main">
+                <section class="filter-card management-filter-card part-units-filter-card" aria-labelledby="part-unit-filter-title">
+                    <div>
+                        <h2 id="part-unit-filter-title">부품 검색</h2>
+                        <p>관리번호, 제조사 시리얼, 품목명, 모델명으로 개별 부품을 찾습니다.</p>
+                    </div>
+                    <form class="filter-form management-filter-form management-filter-form-with-actions" action="#" method="get" autocomplete="off" data-part-unit-filter-form>
+                        <label>
+                            <span>검색어</span>
+                            <input type="search" name="keyword" placeholder="관리번호, 품목명, 모델명 검색" autocomplete="off">
+                        </label>
+                        <label>
+                            <span>부품 상태</span>
+                            <select name="partState">
+                                <option value="">전체</option>
+                                <option value="WAITING">검수대기</option>
+                                <option value="A">A등급</option>
+                                <option value="B">B등급</option>
+                                <option value="C">C등급</option>
+                                <option value="DEFECTIVE">불량</option>
+                                <option value="OUTBOUND">출고</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>분류</span>
+                            <button class="category-picker-button" type="button" data-open-part-unit-category-picker>
+                                <span data-part-unit-category-label>전체</span>
+                                <small>분류 선택</small>
+                            </button>
+                            <input type="hidden" name="categoryId" data-part-unit-category-filter>
+                        </label>
+                        <div class="management-filter-actions">
+                            <button class="btn btn-primary" type="submit">검색</button>
+                            <button class="btn btn-secondary" type="button" data-part-unit-filter-reset>초기화</button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="table-card part-units-table-card" aria-labelledby="part-unit-list-title">
+                    <div class="table-header inline-summary-header management-summary-header">
+                        <div>
+                            <h2 id="part-unit-list-title">부품 목록</h2>
+                            <p>품목 하나에 속한 실제 부품을 관리번호 단위로 구분합니다.</p>
+                        </div>
+                        <div class="list-summary-box" aria-label="부품 목록 요약">
+                            <dl class="list-summary summary-compact">
+                                <div>
+                                    <dt>조회</dt>
+                                    <dd data-summary-total>0</dd>
+                                </div>
+                                <div>
+                                    <dt>검수대기</dt>
+                                    <dd data-summary-waiting>0</dd>
+                                </div>
+                                <div>
+                                    <dt>출고가능</dt>
+                                    <dd data-summary-available>0</dd>
+                                </div>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <div class="data-table management-data-table part-units-table" role="table" aria-label="부품 목록" data-part-unit-table>
+                        <div class="data-row management-data-row part-unit-data-row table-head" role="row">
+                            <span role="columnheader">관리번호</span>
+                            <span role="columnheader">품목</span>
+                            <span role="columnheader">분류</span>
+                            <span role="columnheader">부품 상태</span>
+                            <span role="columnheader">최근 처리</span>
+                        </div>
+
+                        <div class="data-row management-data-row part-unit-data-row empty-data-row" role="row" data-part-unit-empty>
+                            <span role="cell" data-label="안내">부품 목록을 불러오는 중입니다.</span>
+                        </div>
+                    </div>
+
+                    <div class="pagination-bar" data-part-unit-pagination hidden>
+                        <p data-page-info>0건</p>
+                        <div class="pagination-actions">
+                            <button type="button" data-page-prev disabled>이전</button>
+                            <button type="button" data-page-next disabled>다음</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="right-side-drawer management-detail-drawer part-unit-detail-drawer" data-part-unit-detail-drawer aria-labelledby="part-unit-detail-title" aria-hidden="true" tabindex="-1" hidden>
+                <div class="panel-card right-side-drawer-panel management-detail-drawer-panel part-unit-detail-panel">
+                    <div class="panel-title-bar">
+                        <div>
+                            <p class="page-kicker">개별 부품 상세</p>
+                            <h2 id="part-unit-detail-title" data-detail-code>-</h2>
+                            <p data-detail-subtitle>-</p>
+                        </div>
+                        <button class="panel-link-button" type="button" data-close-part-unit-drawer>닫기</button>
+                    </div>
+
+                    <div class="drawer-scroll-body">
+                        <div class="side-detail-card part-unit-current-card">
+                            <strong data-detail-part>-</strong>
+                            <p data-detail-model>-</p>
+                            <div class="detail-badge-row">
+                                <em class="badge badge-inactive" data-detail-unit-status>-</em>
+                            </div>
+                        </div>
+
+                        <section class="detail-section" aria-labelledby="unit-base-title">
+                            <div class="section-title-row">
+                                <h3 id="unit-base-title">기본 정보</h3>
+                            </div>
+                            <dl class="detail-list detail-field-grid">
+                                <div>
+                                    <dt>관리번호</dt>
+                                    <dd><code data-detail-code-inline>-</code></dd>
+                                </div>
+                                <div>
+                                    <dt>제조사 시리얼</dt>
+                                    <dd data-detail-serial>-</dd>
+                                </div>
+                                <div>
+                                    <dt>분류</dt>
+                                    <dd data-detail-category>-</dd>
+                                </div>
+                                <div>
+                                    <dt>최근 처리</dt>
+                                    <dd data-detail-updated>-</dd>
+                                </div>
+                            </dl>
+                        </section>
+
+                        <section class="detail-section" aria-labelledby="unit-flow-title">
+                            <div class="section-title-row">
+                                <h3 id="unit-flow-title">처리 흐름</h3>
+                                <span>최근순</span>
+                            </div>
+                            <div class="process-flow-list" data-detail-flow-list>
+                                <article>
+                                    <strong data-detail-flow-title>-</strong>
+                                    <span data-detail-flow-status>입출고 이력과 검수 이력을 기준으로 표시합니다.</span>
+                                    <small data-detail-flow-meta>-</small>
+                                </article>
+                            </div>
+                        </section>
+
+                        <section class="detail-section" aria-labelledby="unit-actions-title">
+                            <div class="section-title-row">
+                                <h3 id="unit-actions-title">연결 업무</h3>
+                            </div>
+                            <div class="detail-action-grid">
+                                <a class="btn btn-secondary" data-route="history/stock">입출고 이력</a>
+                                <a class="btn btn-secondary" data-route="history/inspection">검수 이력</a>
+                                <a class="btn btn-primary" data-route="outbound/new">출고 등록</a>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </aside>
+        </section>
+    </main>
+</div>
+
+<dialog class="part-modal category-picker-modal" data-part-unit-category-picker-modal aria-labelledby="part-unit-category-picker-title">
+    <div class="part-modal-card">
+        <div class="part-modal-header">
+            <div>
+                <p class="page-kicker">분류 선택</p>
+                <h2 id="part-unit-category-picker-title">부품 분류를 선택합니다.</h2>
+                <p>관리번호 목록을 품목 분류 기준으로 좁혀 봅니다.</p>
+            </div>
+            <button class="modal-close-button" type="button" data-close-part-unit-category-picker aria-label="닫기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M6 6l12 12" />
+                    <path d="M18 6L6 18" />
+                </svg>
+            </button>
+        </div>
+        <div class="part-modal-fields">
+            <label>
+                <span>분류 검색</span>
+                <input type="search" data-part-unit-category-picker-search placeholder="분류명 검색" autocomplete="off">
+            </label>
+            <div class="category-picker-list" data-part-unit-category-picker-list>
+                <p class="spec-builder-empty">분류 목록을 불러오는 중입니다.</p>
+            </div>
+        </div>
+        <p class="field-message is-error modal-message" data-part-unit-category-picker-message role="status" aria-live="polite"></p>
+        <div class="part-modal-actions">
+            <button class="btn btn-secondary" type="button" data-clear-part-unit-category-picker>전체 분류</button>
+            <button class="btn btn-secondary" type="button" data-close-part-unit-category-picker>닫기</button>
+        </div>
+    </div>
+</dialog>
+
+<script src="/js/pcs-api.js?20260623_memory_token"></script>
+<script src="/js/pcs-pagination.js?20260527_pagination"></script>
+<script src="/js/workspace-layout.js?20260624_quick_bar"></script>
+<script src="/js/pcs-ui.js?20260527_1"></script>
+<script src="/js/pcs-common.js?20260629_category_picker"></script>
+<script src="/js/part-units.js?20260629_compact_status"></script>
+</body>
+</html>

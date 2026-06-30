@@ -14,14 +14,26 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.pcs.domain.member.type.MemberRole;
+import com.pcs.domain.inspection.type.InspectionResult;
+import com.pcs.domain.inspection.type.InspectionType;
 import com.pcs.domain.part.dto.request.CreatePartRequest;
 import com.pcs.domain.part.dto.request.PartSpecValueRequest;
 import com.pcs.domain.part.dto.request.UpdatePartRequest;
 import com.pcs.domain.part.dto.response.PartDetailResponse;
 import com.pcs.domain.part.dto.response.PartSpecValueResponse;
+import com.pcs.domain.part.dto.response.PartUnitDetailResponse;
+import com.pcs.domain.part.dto.response.PartUnitInspectionHistoryResponse;
+import com.pcs.domain.part.dto.response.PartUnitStockHistoryResponse;
 import com.pcs.domain.part.dto.response.SearchPartResponse;
 import com.pcs.domain.part.dto.response.SearchPartSummaryResponse;
+import com.pcs.domain.part.dto.response.SearchPartUnitResponse;
+import com.pcs.domain.part.dto.response.SearchPartUnitSummaryResponse;
 import com.pcs.domain.part.facade.PartFacade;
+import com.pcs.domain.part.type.InspectionStatus;
+import com.pcs.domain.part.type.PartGrade;
+import com.pcs.domain.part.type.SalesStatus;
+import com.pcs.domain.part.type.UnitStatus;
+import com.pcs.domain.stock.type.MovementType;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.GlobalExceptionHandler;
@@ -29,6 +41,7 @@ import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.security.PcsPrincipal;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -95,6 +108,54 @@ class PartApiControllerTest {
                 .andExpect(jsonPath("$.data.summary.totalStock").value(4));
 
         verify(partFacade).searchParts(principal, "acme", "RTX", 10L, true, 0, 20, null);
+    }
+
+    @Test
+    void searchPartUnits_returnsPagedUnitsWithSummaryAndIgnoresSalesStatusFilter() throws Exception {
+        SearchPartUnitResponse unit = partUnitResponse(101L, "PCS-GPU-0001", PartGrade.A, SalesStatus.AVAILABLE);
+        SearchPartUnitSummaryResponse summary = new SearchPartUnitSummaryResponse(1, 0, 1);
+        when(partFacade.searchPartUnits(principal, "acme", "RTX", 10L, "A", 0, 20, null))
+                .thenReturn(PageResultDto.of(List.of(unit), 0, 20, 1, summary));
+
+        mockMvc.perform(get("/api/workspaces/acme/part-units")
+                        .param("keyword", "RTX")
+                        .param("categoryId", "10")
+                        .param("partState", "A")
+                        .param("salesStatus", "UNAVAILABLE")
+                        .param("page", "0")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.content[0].internalSerialNo").value("PCS-GPU-0001"))
+                .andExpect(jsonPath("$.data.content[0].grade").value("A"))
+                .andExpect(jsonPath("$.data.content[0].salesStatus").value("AVAILABLE"))
+                .andExpect(jsonPath("$.data.summary.totalCount").value(1))
+                .andExpect(jsonPath("$.data.summary.outboundAvailableCount").value(1));
+
+        verify(partFacade).searchPartUnits(principal, "acme", "RTX", 10L, "A", 0, 20, null);
+    }
+
+    @Test
+    void getPartUnit_returnsDetailWithStockAndInspectionHistories() throws Exception {
+        when(partFacade.getPartUnit(principal, "acme", 101L)).thenReturn(partUnitDetail(101L));
+
+        mockMvc.perform(get("/api/workspaces/acme/part-units/101"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.unit.internalSerialNo").value("PCS-GPU-0001"))
+                .andExpect(jsonPath("$.data.stockHistories[0].documentNo").value("IN-20260101-0001"))
+                .andExpect(jsonPath("$.data.inspectionHistories[0].grade").value("A"));
+    }
+
+    @Test
+    void getPartUnit_returnsBusinessErrorWhenUnitNotFound() throws Exception {
+        doThrow(new BusinessException(ErrorCode.PART_UNIT_NOT_FOUND))
+                .when(partFacade).getPartUnit(principal, "acme", 999L);
+
+        mockMvc.perform(get("/api/workspaces/acme/part-units/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("PART-003"));
     }
 
     @Test
@@ -201,6 +262,67 @@ class PartApiControllerTest {
                 2,
                 stock,
                 active
+        );
+    }
+
+    private SearchPartUnitResponse partUnitResponse(
+            Long unitId,
+            String serialNo,
+            PartGrade grade,
+            SalesStatus salesStatus
+    ) {
+        LocalDateTime processedAt = LocalDateTime.of(2026, 1, 3, 9, 30);
+        return new SearchPartUnitResponse(
+                unitId,
+                serialNo,
+                "MFR-" + unitId,
+                20L,
+                10L,
+                "GPU",
+                "RTX 3060",
+                "RTX 3060 Ventus",
+                "MSI",
+                "GPU-MSI-001",
+                UnitStatus.IN_STOCK,
+                InspectionStatus.COMPLETED,
+                grade,
+                salesStatus,
+                processedAt.minusDays(2),
+                processedAt,
+                "IN-20260101-0001",
+                MovementType.INBOUND,
+                processedAt.minusDays(1),
+                301L,
+                InspectionType.INITIAL,
+                processedAt,
+                "검수",
+                processedAt
+        );
+    }
+
+    private PartUnitDetailResponse partUnitDetail(Long unitId) {
+        return new PartUnitDetailResponse(
+                partUnitResponse(unitId, "PCS-GPU-0001", PartGrade.A, SalesStatus.AVAILABLE),
+                List.of(new PartUnitStockHistoryResponse(
+                        201L,
+                        301L,
+                        "IN-20260101-0001",
+                        MovementType.INBOUND,
+                        null,
+                        UnitStatus.IN_STOCK,
+                        "Admin",
+                        LocalDateTime.of(2026, 1, 2, 10, 0)
+                )),
+                List.of(new PartUnitInspectionHistoryResponse(
+                        301L,
+                        InspectionType.INITIAL,
+                        InspectionResult.PASS,
+                        PartGrade.A,
+                        SalesStatus.AVAILABLE,
+                        "Admin",
+                        LocalDateTime.of(2026, 1, 3, 9, 30),
+                        "정상"
+                ))
         );
     }
 }

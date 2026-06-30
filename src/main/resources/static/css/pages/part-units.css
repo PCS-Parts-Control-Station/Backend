@@ -1,0 +1,103 @@
+@layer page {
+.part-units-page,
+.part-units-content-grid,
+.part-units-content-grid .content-main,
+.part-units-table-card {
+    min-width: 0;
+}
+
+.part-units-filter-card {
+    gap: 14px;
+}
+
+.part-units-table {
+    overflow-x: auto;
+}
+
+.part-unit-data-row {
+    grid-template-columns: minmax(230px, 1.45fr) minmax(320px, 1.72fr) minmax(180px, 1fr) max-content minmax(132px, 0.58fr);
+    min-width: 980px;
+    gap: 12px;
+    padding: 9px 18px;
+}
+
+.part-unit-data-row.table-head {
+    padding-block: 10px;
+}
+
+.part-unit-data-row:not(.table-head) {
+    min-height: 44px;
+}
+
+.part-unit-data-row > * {
+    min-width: 0;
+}
+
+.part-unit-data-row > span,
+.part-unit-data-row > span[role="cell"],
+.part-unit-data-row > span[role="columnheader"],
+.part-unit-data-row strong,
+.part-unit-data-row small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.part-unit-data-row > span[role="cell"] {
+    display: block;
+}
+
+.part-unit-data-row strong,
+.part-unit-data-row small {
+    display: inline;
+    vertical-align: baseline;
+}
+
+.part-unit-data-row small {
+    margin-left: 6px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.part-unit-data-row > span:nth-child(4) {
+    justify-self: start;
+    overflow: visible;
+}
+
+.part-unit-data-row > span:nth-child(4) .badge {
+    min-height: 22px;
+    padding: 0 8px;
+    line-height: 20px;
+}
+
+.part-unit-detail-drawer {
+    width: min(560px, 100%);
+}
+
+.part-unit-detail-panel {
+    padding: 22px;
+}
+
+.part-unit-current-card {
+    margin-bottom: 16px;
+}
+
+@media (max-width: 840px) {
+    .part-units-table {
+        overflow-x: visible;
+    }
+
+    .part-unit-data-row {
+        min-width: 0;
+        grid-template-columns: 1fr;
+        padding: 14px 16px;
+    }
+
+    .part-unit-data-row.table-head {
+        display: none;
+    }
+
+}
+
+}

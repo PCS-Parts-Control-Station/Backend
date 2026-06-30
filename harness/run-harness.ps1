@@ -1278,6 +1278,8 @@ function Invoke-FeatureChecks {
             Test-CategoryFeature
         } elseif ($selectedFeature -eq "part") {
             Test-PartFeature
+        } elseif ($selectedFeature -eq "part-unit") {
+            Test-PartUnitFeature
         } elseif ($selectedFeature -eq "stock") {
             Test-StockFeature
         } elseif ($selectedFeature -eq "inspection") {
@@ -1834,6 +1836,111 @@ function Test-PartFeature {
     Invoke-GradleTestCheck "PART_DB_INTEGRATION_TESTS" "Part DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.part.*")
 
     Add-Result "INFO" "PART_FEATURE" "Part feature checks completed."
+}
+
+function Test-PartUnitFeature {
+    foreach ($required in @(
+        @("docs/features/part-unit.md", "PART_UNIT_FEATURE_DOC"),
+        @("docs/features/part-unit-db.md", "PART_UNIT_DB_DOC"),
+        @("src/main/resources/static/part-units.html", "PART_UNIT_HTML"),
+        @("src/main/resources/static/css/pages/part-units.css", "PART_UNIT_CSS"),
+        @("src/main/resources/static/js/part-units.js", "PART_UNIT_JS"),
+        @("src/main/java/com/pcs/domain/part/api/PartApiController.java", "PART_UNIT_API"),
+        @("src/main/java/com/pcs/domain/part/facade/PartFacade.java", "PART_UNIT_FACADE"),
+        @("src/main/java/com/pcs/domain/part/service/PartService.java", "PART_UNIT_SERVICE"),
+        @("src/main/java/com/pcs/domain/part/mapper/PartMapper.java", "PART_UNIT_MAPPER"),
+        @("src/main/resources/mapper/part/PartMapper.xml", "PART_UNIT_MAPPER_XML"),
+        @("src/main/java/com/pcs/domain/part/dto/response/SearchPartUnitResponse.java", "PART_UNIT_SEARCH_RESPONSE"),
+        @("src/main/java/com/pcs/domain/part/dto/response/SearchPartUnitSummaryResponse.java", "PART_UNIT_SUMMARY_RESPONSE"),
+        @("src/main/java/com/pcs/domain/part/dto/response/PartUnitDetailResponse.java", "PART_UNIT_DETAIL_RESPONSE"),
+        @("src/main/java/com/pcs/domain/part/dto/response/PartUnitStockHistoryResponse.java", "PART_UNIT_STOCK_HISTORY_RESPONSE"),
+        @("src/main/java/com/pcs/domain/part/dto/response/PartUnitInspectionHistoryResponse.java", "PART_UNIT_INSPECTION_HISTORY_RESPONSE"),
+        @("src/test/java/com/pcs/domain/part/service/PartServiceTest.java", "PART_UNIT_SERVICE_TEST"),
+        @("src/test/java/com/pcs/domain/part/api/PartApiControllerTest.java", "PART_UNIT_API_TEST"),
+        @("src/integrationTest/java/com/pcs/domain/part/PartPersistenceIntegrationTest.java", "PART_UNIT_DB_INTEGRATION_TEST"),
+        @("src/integrationTest/resources/pcs-category-part-test-schema.sql", "PART_UNIT_DB_FIXTURE")
+    )) {
+        Test-PathRequired $required[0] $required[1] "Keep part-unit implementation aligned with docs/features/part-unit.md."
+    }
+
+    $controller = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/part/api/PartApiController.java"
+    if (Test-Path $controller) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $controller
+        foreach ($pattern in @("@RestController", "@AuthenticationPrincipal", "ApiResultDto", "PageResultDto", "/part-units", "/part-units/{unitId}")) {
+            if ($content -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "PART_UNIT_CONTROLLER_PATTERN" "PartApiController is missing part-unit API pattern: $pattern" "Expose list/detail part-unit APIs from PartApiController."
+            }
+        }
+        if ($content -match "salesStatus") {
+            Add-Result "FAIL" "PART_UNIT_CONTROLLER_SALES_STATUS_FILTER" "PartApiController must not accept salesStatus as a part-unit search condition." "Keep salesStatus display-only for part-unit search."
+        }
+    }
+
+    $service = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/part/service/PartService.java"
+    if (Test-Path $service) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $service
+        foreach ($pattern in @("searchPartUnits", "getPartUnit", "PageQuery", "PART_UNIT_NOT_FOUND", "WAITING", "OUTBOUND", "DEFECTIVE")) {
+            if ($content -notmatch $pattern) {
+                Add-Result "FAIL" "PART_UNIT_SERVICE_PATTERN" "PartService is missing part-unit service pattern: $pattern" "Validate partState and normalize paging in PartService."
+            }
+        }
+    }
+
+    $mapper = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/part/mapper/PartMapper.java"
+    if (Test-Path $mapper) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $mapper
+        foreach ($pattern in @("searchPartUnits", "countPartUnits", "summarizePartUnits", "findPartUnitById", "findPartUnitStockHistories", "findPartUnitInspectionHistories")) {
+            if ($content -notmatch $pattern) {
+                Add-Result "FAIL" "PART_UNIT_MAPPER_METHOD" "PartMapper is missing part-unit mapper method: $pattern" "Keep mapper interface aligned with PartMapper.xml."
+            }
+        }
+        if ($content -match '@Param\("salesStatus"\)') {
+            Add-Result "FAIL" "PART_UNIT_MAPPER_SALES_STATUS_FILTER" "PartMapper must not receive salesStatus as a part-unit search parameter." "Keep salesStatus display-only for part-unit search."
+        }
+    }
+
+    $mapperXml = Join-Path $ProjectRoot "src/main/resources/mapper/part/PartMapper.xml"
+    if (Test-Path $mapperXml) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $mapperXml
+        foreach ($pattern in @("tb_pc_part_unit", "tb_stock_movement_unit", "tb_stock_movement", "tb_stock_document", "tb_inspection", "tb_pc_part", "tb_part_category", "LIMIT", "OFFSET", "COUNT(*)", "summarizePartUnits")) {
+            if ($content -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "PART_UNIT_MAPPER_XML_PATTERN" "PartMapper.xml is missing part-unit SQL pattern: $pattern" "Keep part-unit list/detail SQL aligned with docs/features/part-unit-db.md."
+            }
+        }
+        foreach ($forbidden in @("sales_status = #{salesStatus}", "u.sales_status = #{salesStatus}", "sales_status=#{salesStatus}", "u.sales_status=#{salesStatus}")) {
+            if ($content -match [regex]::Escape($forbidden)) {
+                Add-Result "FAIL" "PART_UNIT_SQL_SALES_STATUS_FILTER" "Part-unit SQL must not filter by salesStatus." "Keep salesStatus display-only for part-unit search."
+            }
+        }
+    }
+
+    $html = Join-Path $ProjectRoot "src/main/resources/static/part-units.html"
+    if (Test-Path $html) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $html
+        foreach ($forbidden in @('id="salesStatus"', 'name="salesStatus"', 'data-filter="salesStatus"')) {
+            if ($content -match [regex]::Escape($forbidden)) {
+                Add-Result "FAIL" "PART_UNIT_HTML_SALES_STATUS_FILTER" "part-units.html must not render salesStatus as a search condition." "Keep salesStatus as a result/detail display field only."
+            }
+        }
+    }
+
+    $js = Join-Path $ProjectRoot "src/main/resources/static/js/part-units.js"
+    if (Test-Path $js) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $js
+        foreach ($pattern in @("/part-units", "window.PcsApi", "window.PcsPagination", "window.PcsCategoryPicker")) {
+            if ($content -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "PART_UNIT_JS_PATTERN" "part-units.js is missing required common/API pattern: $pattern" "Use existing frontend common helpers for part-unit page behavior."
+            }
+        }
+        if ($content -match "salesStatus=" -or $content -match "salesStatus:") {
+            Add-Result "FAIL" "PART_UNIT_JS_SALES_STATUS_FILTER" "part-units.js must not send salesStatus as a search condition." "Keep salesStatus display-only for part-unit search."
+        }
+    }
+
+    Invoke-GradleTestCheck "PART_UNIT_FEATURE_UNIT_API_TESTS" "Part-unit unit and API tests" @("test", "--tests", "com.pcs.domain.part.*")
+    Invoke-GradleTestCheck "PART_UNIT_FEATURE_DB_INTEGRATION_TESTS" "Part-unit DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.part.*")
+
+    Add-Result "INFO" "PART_UNIT_FEATURE" "Part-unit feature checks completed."
 }
 
 function Test-StockFeature {

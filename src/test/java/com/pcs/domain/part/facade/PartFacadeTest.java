@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.pcs.domain.member.type.MemberRole;
 import com.pcs.domain.part.dto.response.SearchPartSummaryResponse;
+import com.pcs.domain.part.dto.response.SearchPartUnitSummaryResponse;
 import com.pcs.domain.part.service.PartService;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
@@ -76,6 +77,36 @@ class PartFacadeTest {
         BusinessException exception = assertThrows(
                 BusinessException.class,
                 () -> partFacade.searchParts(principal, "other", null, null, true, 0, 20, null)
+        );
+
+        assertEquals(ErrorCode.AUTH_WORKSPACE_MISMATCH, exception.getErrorCode());
+    }
+
+    @Test
+    void searchPartUnits_success() {
+        PcsPrincipal principal = principal(1L, 10L, "acme");
+        SearchPartUnitSummaryResponse summary = new SearchPartUnitSummaryResponse(0, 0, 0);
+        when(workspaceAccessValidator.validateAuthenticatedWorkspace(principal, "acme")).thenReturn(principal);
+        when(partService.searchPartUnits(1L, "RTX", 10L, "WAITING", 0, 20, null))
+                .thenReturn(PageResultDto.of(List.of(), 0, 20, 0, summary));
+
+        var response = partFacade.searchPartUnits(principal, "acme", "RTX", 10L, "WAITING", 0, 20, null);
+
+        assertEquals(0, response.content().size());
+        assertEquals(summary, response.summary());
+        verify(partService).searchPartUnits(1L, "RTX", 10L, "WAITING", 0, 20, null);
+    }
+
+    @Test
+    void getPartUnit_failsWhenWorkspaceMismatch() {
+        PcsPrincipal principal = principal(1L, 10L, "acme");
+        doThrow(new BusinessException(ErrorCode.AUTH_WORKSPACE_MISMATCH))
+                .when(workspaceAccessValidator)
+                .validateAuthenticatedWorkspace(principal, "other");
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> partFacade.getPartUnit(principal, "other", 101L)
         );
 
         assertEquals(ErrorCode.AUTH_WORKSPACE_MISMATCH, exception.getErrorCode());

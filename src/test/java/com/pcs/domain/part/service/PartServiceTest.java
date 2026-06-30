@@ -16,19 +16,31 @@ import static org.mockito.Mockito.when;
 import com.pcs.domain.category.dto.response.CategorySpecDefinitionRow;
 import com.pcs.domain.category.dto.response.CategorySpecOptionResponse;
 import com.pcs.domain.category.mapper.PartSpecMapper;
+import com.pcs.domain.inspection.type.InspectionResult;
+import com.pcs.domain.inspection.type.InspectionType;
 import com.pcs.domain.part.dto.request.CreatePartRequest;
 import com.pcs.domain.part.dto.request.PartSpecValueRequest;
 import com.pcs.domain.part.dto.request.UpdatePartRequest;
+import com.pcs.domain.part.dto.response.PartUnitInspectionHistoryResponse;
+import com.pcs.domain.part.dto.response.PartUnitStockHistoryResponse;
 import com.pcs.domain.part.dto.response.PartSpecValueResponse;
 import com.pcs.domain.part.dto.response.SearchPartResponse;
 import com.pcs.domain.part.dto.response.SearchPartSummaryResponse;
+import com.pcs.domain.part.dto.response.SearchPartUnitResponse;
+import com.pcs.domain.part.dto.response.SearchPartUnitSummaryResponse;
 import com.pcs.domain.part.entity.PartSpecValue;
 import com.pcs.domain.part.entity.PcPart;
 import com.pcs.domain.part.mapper.PartMapper;
+import com.pcs.domain.part.type.InspectionStatus;
+import com.pcs.domain.part.type.PartGrade;
+import com.pcs.domain.part.type.SalesStatus;
+import com.pcs.domain.part.type.UnitStatus;
+import com.pcs.domain.stock.type.MovementType;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -100,6 +112,78 @@ class PartServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.COMPANY_INACTIVE);
+    }
+
+    @Test
+    void searchPartUnits_usesDefaultPageSizeAndNormalizedPartState() {
+        SearchPartUnitResponse unit = partUnitResponse(101L, "PCS-GPU-0001", PartGrade.A, SalesStatus.AVAILABLE);
+        when(partMapper.countPartUnits(COMPANY_ID, "RTX", CATEGORY_ID, "A")).thenReturn(1L);
+        when(partMapper.searchPartUnits(COMPANY_ID, "RTX", CATEGORY_ID, "A", 20, 0))
+                .thenReturn(List.of(unit));
+        when(partMapper.summarizePartUnits(COMPANY_ID, "RTX", CATEGORY_ID, "A"))
+                .thenReturn(new SearchPartUnitSummaryResponse(1, 0, 1));
+
+        var response = partService.searchPartUnits(COMPANY_ID, " RTX ", CATEGORY_ID, " a ", null, null, null);
+
+        assertThat(response.content()).containsExactly(unit);
+        assertThat(response.page()).isZero();
+        assertThat(response.size()).isEqualTo(20);
+        assertThat(response.summary().totalCount()).isEqualTo(1);
+        assertThat(response.summary().outboundAvailableCount()).isEqualTo(1);
+        verify(partMapper).searchPartUnits(COMPANY_ID, "RTX", CATEGORY_ID, "A", 20, 0);
+    }
+
+    @Test
+    void searchPartUnits_failsWhenPartStateIsInvalid() {
+        assertThatThrownBy(() -> partService.searchPartUnits(COMPANY_ID, null, null, "SOLD", null, null, null))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.INVALID_INPUT_VALUE);
+        verify(partMapper, never()).countPartUnits(any(), any(), any(), any());
+    }
+
+    @Test
+    void getPartUnit_returnsDetailWithRecentHistories() {
+        SearchPartUnitResponse unit = partUnitResponse(101L, "PCS-GPU-0001", PartGrade.A, SalesStatus.AVAILABLE);
+        PartUnitStockHistoryResponse stockHistory = new PartUnitStockHistoryResponse(
+                201L,
+                301L,
+                "IN-20260101-0001",
+                MovementType.INBOUND,
+                null,
+                UnitStatus.IN_STOCK,
+                "Admin",
+                LocalDateTime.of(2026, 1, 2, 10, 0)
+        );
+        PartUnitInspectionHistoryResponse inspectionHistory = new PartUnitInspectionHistoryResponse(
+                301L,
+                InspectionType.INITIAL,
+                InspectionResult.PASS,
+                PartGrade.A,
+                SalesStatus.AVAILABLE,
+                "Admin",
+                LocalDateTime.of(2026, 1, 3, 9, 30),
+                "정상"
+        );
+        when(partMapper.findPartUnitById(COMPANY_ID, 101L)).thenReturn(unit);
+        when(partMapper.findPartUnitStockHistories(COMPANY_ID, 101L, 10)).thenReturn(List.of(stockHistory));
+        when(partMapper.findPartUnitInspectionHistories(COMPANY_ID, 101L, 10)).thenReturn(List.of(inspectionHistory));
+
+        var response = partService.getPartUnit(COMPANY_ID, 101L);
+
+        assertThat(response.unit()).isEqualTo(unit);
+        assertThat(response.stockHistories()).containsExactly(stockHistory);
+        assertThat(response.inspectionHistories()).containsExactly(inspectionHistory);
+    }
+
+    @Test
+    void getPartUnit_failsWhenUnitDoesNotExistInCompany() {
+        when(partMapper.findPartUnitById(COMPANY_ID, 999L)).thenReturn(null);
+
+        assertThatThrownBy(() -> partService.getPartUnit(COMPANY_ID, 999L))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.PART_UNIT_NOT_FOUND);
     }
 
     @Test
@@ -375,6 +459,41 @@ class PartServiceTest {
                 2,
                 stock,
                 active
+        );
+    }
+
+    private SearchPartUnitResponse partUnitResponse(
+            Long unitId,
+            String serialNo,
+            PartGrade grade,
+            SalesStatus salesStatus
+    ) {
+        LocalDateTime processedAt = LocalDateTime.of(2026, 1, 3, 9, 30);
+        return new SearchPartUnitResponse(
+                unitId,
+                serialNo,
+                "MFR-" + unitId,
+                20L,
+                CATEGORY_ID,
+                "GPU",
+                "RTX 3060",
+                "RTX 3060 Ventus",
+                "MSI",
+                "GPU-MSI-001",
+                UnitStatus.IN_STOCK,
+                InspectionStatus.COMPLETED,
+                grade,
+                salesStatus,
+                processedAt.minusDays(2),
+                processedAt,
+                "IN-20260101-0001",
+                MovementType.INBOUND,
+                processedAt.minusDays(1),
+                301L,
+                InspectionType.INITIAL,
+                processedAt,
+                "검수",
+                processedAt
         );
     }
 

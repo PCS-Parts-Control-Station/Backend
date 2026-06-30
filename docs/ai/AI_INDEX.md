@@ -112,6 +112,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - 검수 등록 JS 작성 → `docs/features/inspection.md`
 - 검수 이력 JS 작성 → `docs/features/inspection-history.md`
 - 검수 템플릿 관리 JS 작성 → `docs/features/inspection-template.md`
+- 부품 관리 JS 작성 → `docs/features/part-unit.md` + `docs/ai/pcs-auth-client-rules.md`
 - 로그인 JS 작성 → `docs/features/auth.md` + `docs/ai/pcs-auth-client-rules.md`
 - 대시보드/거래처/품목 등 업무 화면 API 연동 → 해당 기능 문서 + `docs/ai/pcs-auth-client-rules.md`
 - 품목 관리/품목 분류/거래처 관리/사용자 관리 같은 관리형 페이지 JS 수정 → `docs/ai/pcs-frontend-js-rules.md`의 "관리형 페이지 JS 기준" + `src/main/resources/static/js/pcs-common.js` + `src/main/resources/static/js/pcs-pagination.js`
@@ -157,6 +158,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - Owner 회원가입 구현 → `docs/features/company.md`
 - 업체 로그인 구현 → `docs/features/auth.md`
 - 입고 전표 등록 구현 → `docs/features/stock.md`
+- 부품 관리 조회 API 구현 → `docs/features/part-unit.md` + `docs/features/part-unit-db.md`
 - 검수 이력 API 구현 → `docs/features/inspection-history.md` + `docs/ai/pcs-auth-client-rules.md`
 - 검수 템플릿 API 구현 → `docs/features/inspection-template.md` + `docs/ai/pcs-auth-client-rules.md`
 - 거래처/품목/입출고/검수 API 구현 → 해당 기능 문서 + `docs/ai/pcs-auth-client-rules.md`
@@ -182,6 +184,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - 재고 정합성 SQL 작성
 - 페이징 목록 SQL 작성 → `docs/ai/pcs-pagination-rules.md`
 - 품목 저장/수정 SQL 작성 → `docs/features/part.md` + `docs/features/part-db.md`
+- 부품 관리 조회 SQL 작성 → `docs/features/part-unit.md` + `docs/features/part-unit-db.md`
 - 사용자 관리 SQL 작성 → `docs/features/member.md` + `docs/features/member-db.md`
 - 마이페이지 계정 수정/비밀번호 SQL 작성 → `docs/features/mypage.md` + `docs/features/member-db.md`
 - 검수/검수 이력/검수 템플릿 SQL/DB 검증 작성 → `docs/features/inspection.md` + `docs/features/inspection-history.md` + `docs/features/inspection-template.md` + `docs/features/inspection-db.md`
@@ -249,6 +252,7 @@ SQL 참조 기준:
 예시:
 
 - 품목 관리 테스트 작성 → `docs/features/part.md` + `docs/features/part-db.md`
+- 부품 관리 테스트 작성 → `docs/features/part-unit.md` + `docs/features/part-unit-db.md`
 - 품목 분류 테스트 작성 → `docs/features/category.md` + `docs/features/category-db.md`
 - 권한 차단 테스트 작성 → 해당 기능 문서 + `docs/ai/pcs-permission-rules.md`
 

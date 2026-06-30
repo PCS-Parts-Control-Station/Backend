@@ -1,9 +1,15 @@
+DROP TABLE IF EXISTS tb_inspection;
+DROP TABLE IF EXISTS tb_stock_movement_unit;
+DROP TABLE IF EXISTS tb_stock_movement;
+DROP TABLE IF EXISTS tb_stock_document;
+DROP TABLE IF EXISTS tb_pc_part_unit;
 DROP TABLE IF EXISTS tb_part_spec_value;
 DROP TABLE IF EXISTS tb_part_stock;
 DROP TABLE IF EXISTS tb_pc_part;
 DROP TABLE IF EXISTS tb_part_spec_option;
 DROP TABLE IF EXISTS tb_part_spec_definition;
 DROP TABLE IF EXISTS tb_part_category;
+DROP TABLE IF EXISTS tb_member;
 DROP TABLE IF EXISTS tb_company;
 
 CREATE TABLE tb_company (
@@ -15,6 +21,23 @@ CREATE TABLE tb_company (
     updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     PRIMARY KEY (company_id),
     CONSTRAINT uk_company_code UNIQUE (company_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE tb_member (
+    member_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_id BIGINT NOT NULL,
+    login_id VARCHAR(50) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    role ENUM('OWNER', 'ADMIN', 'STAFF') NOT NULL,
+    owner_slot TINYINT NULL,
+    password_status ENUM('TEMPORARY', 'ACTIVE') NOT NULL DEFAULT 'ACTIVE',
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (member_id),
+    CONSTRAINT uk_member_company_login UNIQUE (company_id, login_id),
+    CONSTRAINT uk_member_company_member_id UNIQUE (company_id, member_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE tb_part_category (
@@ -93,6 +116,94 @@ CREATE TABLE tb_part_stock (
     CONSTRAINT chk_part_stock_quantity CHECK (quantity >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE tb_pc_part_unit (
+    unit_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_id BIGINT NOT NULL,
+    part_id BIGINT NOT NULL,
+    internal_serial_no VARCHAR(80) NOT NULL,
+    manufacturer_serial_no VARCHAR(120) NULL,
+    unit_status ENUM('IN_STOCK', 'OUTBOUND', 'DISPOSED', 'CANCELED') NOT NULL DEFAULT 'IN_STOCK',
+    grade ENUM('NONE', 'A', 'B', 'C', 'DEFECTIVE') NOT NULL DEFAULT 'NONE',
+    inspection_status ENUM('WAITING', 'COMPLETED') NOT NULL DEFAULT 'WAITING',
+    sales_status ENUM('HOLD', 'AVAILABLE', 'UNAVAILABLE') NOT NULL DEFAULT 'HOLD',
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_by BIGINT NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (unit_id),
+    CONSTRAINT uk_pc_part_unit_internal_serial UNIQUE (company_id, internal_serial_no),
+    CONSTRAINT uk_pc_part_unit_manufacturer_serial UNIQUE (company_id, manufacturer_serial_no),
+    CONSTRAINT uk_pc_part_unit_company_unit_id UNIQUE (company_id, unit_id),
+    CONSTRAINT uk_pc_part_unit_company_part_unit_id UNIQUE (company_id, part_id, unit_id),
+    INDEX idx_pc_part_unit_company_part (company_id, part_id),
+    INDEX idx_pc_part_unit_company_status (company_id, unit_status, active),
+    INDEX idx_pc_part_unit_work_status (company_id, inspection_status, sales_status, grade)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE tb_stock_document (
+    document_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_id BIGINT NOT NULL,
+    partner_id BIGINT NULL,
+    document_no VARCHAR(80) NOT NULL,
+    document_type ENUM('INBOUND', 'OUTBOUND') NOT NULL,
+    document_status ENUM('COMPLETED', 'CANCELED') NOT NULL DEFAULT 'COMPLETED',
+    reason VARCHAR(500) NULL,
+    processed_by BIGINT NOT NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (document_id),
+    CONSTRAINT uk_stock_document_document_no UNIQUE (document_no),
+    CONSTRAINT uk_stock_document_company_document_id UNIQUE (company_id, document_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE tb_stock_movement (
+    movement_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_id BIGINT NOT NULL,
+    document_id BIGINT NOT NULL,
+    part_id BIGINT NOT NULL,
+    movement_type ENUM('INBOUND', 'OUTBOUND', 'INBOUND_CANCEL', 'OUTBOUND_CANCEL') NOT NULL,
+    movement_status ENUM('COMPLETED', 'CANCELED') NOT NULL DEFAULT 'COMPLETED',
+    canceled_movement_id BIGINT NULL,
+    quantity INT NOT NULL,
+    before_quantity INT NOT NULL,
+    after_quantity INT NOT NULL,
+    reason VARCHAR(500) NULL,
+    processed_by BIGINT NOT NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (movement_id),
+    CONSTRAINT uk_stock_movement_company_movement_id UNIQUE (company_id, movement_id),
+    CONSTRAINT chk_stock_movement_quantity CHECK (quantity > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE tb_stock_movement_unit (
+    movement_unit_id BIGINT NOT NULL AUTO_INCREMENT,
+    movement_id BIGINT NOT NULL,
+    unit_id BIGINT NOT NULL,
+    before_unit_status ENUM('IN_STOCK', 'OUTBOUND', 'DISPOSED', 'CANCELED') NULL,
+    after_unit_status ENUM('IN_STOCK', 'OUTBOUND', 'DISPOSED', 'CANCELED') NOT NULL,
+    PRIMARY KEY (movement_unit_id),
+    CONSTRAINT uk_stock_movement_unit UNIQUE (movement_id, unit_id),
+    INDEX idx_stock_movement_unit_unit (unit_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE tb_inspection (
+    inspection_id BIGINT NOT NULL AUTO_INCREMENT,
+    company_id BIGINT NOT NULL,
+    unit_id BIGINT NOT NULL,
+    template_id BIGINT NULL,
+    inspected_by BIGINT NOT NULL,
+    inspection_type ENUM('INITIAL', 'CORRECTION', 'REINSPECTION') NOT NULL DEFAULT 'INITIAL',
+    original_inspection_id BIGINT NULL,
+    sales_status ENUM('HOLD', 'AVAILABLE', 'UNAVAILABLE') NOT NULL,
+    result ENUM('PASS', 'FAIL') NOT NULL,
+    grade ENUM('A', 'B', 'C', 'DEFECTIVE') NOT NULL,
+    memo VARCHAR(1000) NULL,
+    inspected_at DATETIME(6) NOT NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (inspection_id),
+    CONSTRAINT uk_inspection_company_inspection_id UNIQUE (company_id, inspection_id),
+    INDEX idx_inspection_company_unit_date (company_id, unit_id, inspected_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE tb_part_spec_value (
     spec_value_id BIGINT NOT NULL AUTO_INCREMENT,
     company_id BIGINT NOT NULL,
@@ -115,3 +226,8 @@ VALUES
     (1, 'ACME Parts', 'acme', TRUE),
     (2, 'Other Parts', 'other', TRUE),
     (3, 'Inactive Parts', 'inactive', FALSE);
+
+INSERT INTO tb_member (member_id, company_id, login_id, password_hash, name, role, owner_slot, active)
+VALUES
+    (7, 1, 'admin', '{noop}password', 'Admin', 'OWNER', 1, TRUE),
+    (8, 2, 'other-admin', '{noop}password', 'Other Admin', 'OWNER', 1, TRUE);
