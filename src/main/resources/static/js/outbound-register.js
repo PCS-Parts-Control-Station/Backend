@@ -233,29 +233,17 @@
         }
 
         categories.forEach((category) => {
-            const button = document.createElement("button");
-            button.type = "button";
-            button.className = "category-picker-option";
-            if (String(category.categoryId) === String(selectedCategoryId)) {
-                button.classList.add("is-selected");
-            }
-
-            const name = document.createElement("strong");
-            name.textContent = category.categoryName || "이름 없음";
-
-            const description = document.createElement("small");
-            description.textContent = category.description || "설명 없음";
-
-            button.append(name, description);
-            button.addEventListener("click", () => {
-                if (categoryFilter) {
-                    categoryFilter.value = String(category.categoryId);
+            const button = window.PcsCategoryPicker.createOption(category, {
+                selectedCategoryId,
+                onSelect: (selectedCategory) => {
+                    if (categoryFilter) {
+                        categoryFilter.value = String(selectedCategory.categoryId);
+                    }
+                    syncCategoryFilterLabel();
+                    categoryPickerModal?.close();
+                    loadCandidates(0);
                 }
-                syncCategoryFilterLabel();
-                categoryPickerModal?.close();
-                loadCandidates(0);
             });
-
             categoryPickerList.append(button);
         });
     };

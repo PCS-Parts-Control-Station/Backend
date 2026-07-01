@@ -1884,7 +1884,7 @@ function Test-PartUnitFeature {
     $service = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/part/service/PartService.java"
     if (Test-Path $service) {
         $content = Get-Content -Raw -Encoding UTF8 -Path $service
-        foreach ($pattern in @("searchPartUnits", "getPartUnit", "PageQuery", "PART_UNIT_NOT_FOUND", "WAITING", "OUTBOUND", "DEFECTIVE")) {
+        foreach ($pattern in @("searchPartUnits", "getPartUnit", "PageQuery", "PART_UNIT_NOT_FOUND", "HELD", "WAITING", "SALES_AVAILABLE", "SALES_UNAVAILABLE", "SALES_HOLD", "OUTBOUND", "DEFECTIVE")) {
             if ($content -notmatch $pattern) {
                 Add-Result "FAIL" "PART_UNIT_SERVICE_PATTERN" "PartService is missing part-unit service pattern: $pattern" "Validate partState and normalize paging in PartService."
             }
@@ -1913,7 +1913,7 @@ function Test-PartUnitFeature {
     $mapperXml = Join-Path $ProjectRoot "src/main/resources/mapper/part/PartMapper.xml"
     if (Test-Path $mapperXml) {
         $content = Get-Content -Raw -Encoding UTF8 -Path $mapperXml
-        foreach ($pattern in @("tb_pc_part_unit", "tb_stock_movement_unit", "tb_stock_movement", "tb_stock_document", "tb_inspection", "tb_pc_part", "tb_part_category", "LIMIT", "OFFSET", "COUNT(*)", "summarizePartUnits", "page_units")) {
+        foreach ($pattern in @("tb_pc_part_unit", "tb_stock_movement_unit", "tb_stock_movement", "tb_stock_document", "tb_inspection", "tb_pc_part", "tb_part_category", "documentId", "LIMIT", "OFFSET", "COUNT(*)", "summarizePartUnits", "page_units")) {
             if ($content -notmatch [regex]::Escape($pattern)) {
                 Add-Result "FAIL" "PART_UNIT_MAPPER_XML_PATTERN" "PartMapper.xml is missing part-unit SQL pattern: $pattern" "Keep part-unit list/detail SQL aligned with docs/features/part-unit-db.md."
             }
@@ -1966,12 +1966,25 @@ function Test-PartUnitFeature {
                 Add-Result "FAIL" "PART_UNIT_HTML_SALES_STATUS_FILTER" "part-units.html must not render salesStatus as a search condition." "Keep salesStatus as a result/detail display field only."
             }
         }
+        foreach ($forbidden in @('name="partState">', '부품 상태</span>\s*<select')) {
+            if ($content -match [regex]::Escape($forbidden)) {
+                Add-Result "FAIL" "PART_UNIT_HTML_STATE_SELECT_FILTER" "part-units.html must not render partState as a select filter." "Use clickable summary cards as the part-unit state filter."
+            }
+        }
+        if ($content -match '<select[^>]*name="partState"') {
+            Add-Result "FAIL" "PART_UNIT_HTML_STATE_SELECT_FILTER" "part-units.html must not render partState as a select filter." "Use clickable summary cards as the part-unit state filter."
+        }
+        foreach ($pattern in @("data-part-state-filter", "data-part-unit-document-picker-modal", "data-open-part-unit-document-picker", "name=`"documentId`"", "name=`"partState`"")) {
+            if ($content -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "PART_UNIT_HTML_INTERACTIVE_FILTER" "part-units.html is missing interactive filter markup: $pattern" "Keep summary state buttons and document picker aligned with docs/features/part-unit.md."
+            }
+        }
     }
 
     $js = Join-Path $ProjectRoot "src/main/resources/static/js/part-units.js"
     if (Test-Path $js) {
         $content = Get-Content -Raw -Encoding UTF8 -Path $js
-        foreach ($pattern in @("/part-units", "window.PcsApi", "window.PcsPagination", "window.PcsCategoryPicker")) {
+        foreach ($pattern in @("/part-units", "/stock/documents", "window.PcsApi", "window.PcsPagination", "window.PcsCategoryPicker", "data-part-state-filter", "documentId")) {
             if ($content -notmatch [regex]::Escape($pattern)) {
                 Add-Result "FAIL" "PART_UNIT_JS_PATTERN" "part-units.js is missing required common/API pattern: $pattern" "Use existing frontend common helpers for part-unit page behavior."
             }

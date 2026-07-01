@@ -292,6 +292,42 @@
         return allCategories;
     };
 
+    const categoryId = (category) => category?.categoryId ?? category?.id ?? "";
+
+    const categoryName = (category) => category?.categoryName || category?.name || "이름 없음";
+
+    const categoryDescription = (category) => category?.description || "설명 없음";
+
+    const categoryPartCount = (category) => Number(category?.partCount ?? category?.partsCount ?? 0);
+
+    const createCategoryPickerOption = (category, options = {}) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "category-picker-option";
+
+        const currentCategoryId = categoryId(category);
+        if (String(currentCategoryId) === String(options.selectedCategoryId || "")) {
+            button.classList.add("is-selected");
+        }
+
+        const name = document.createElement("strong");
+        name.textContent = categoryName(category);
+
+        const count = document.createElement("span");
+        count.className = "category-picker-count";
+        count.textContent = `품목 ${number(categoryPartCount(category))}개`;
+
+        const description = document.createElement("small");
+        description.textContent = categoryDescription(category);
+
+        button.append(name, count, description);
+        if (typeof options.onSelect === "function") {
+            button.addEventListener("click", () => options.onSelect(category, currentCategoryId));
+        }
+
+        return button;
+    };
+
     const bindCategoryPicker = (options = {}) => {
         const input = toElement(options.input);
         const label = toElement(options.label);
@@ -313,9 +349,6 @@
         let loaded = categories.length > 0;
         let loading = false;
 
-        const categoryId = (category) => category?.categoryId ?? category?.id ?? "";
-        const categoryName = (category) => category?.categoryName || category?.name || "이름 없음";
-        const categoryDescription = (category) => category?.description || "설명 없음";
         const selectedValue = () => input?.value || "";
         const selectedCategory = () => categories.find((category) => String(categoryId(category)) === String(selectedValue())) || null;
 
@@ -374,28 +407,15 @@
             }
 
             filteredCategories.forEach((category) => {
-                const button = document.createElement("button");
-                button.type = "button";
-                button.className = "category-picker-option";
-                if (String(categoryId(category)) === String(selectedCategoryId)) {
-                    button.classList.add("is-selected");
-                }
-
-                const name = document.createElement("strong");
-                name.textContent = categoryName(category);
-
-                const description = document.createElement("small");
-                description.textContent = categoryDescription(category);
-
-                button.append(name, description);
-                button.addEventListener("click", () => {
-                    setValue(categoryId(category), {
-                        emitChange: true,
-                        close: true
-                    });
-                });
-
-                list.append(button);
+                list.append(createCategoryPickerOption(category, {
+                    selectedCategoryId,
+                    onSelect: (selectedCategory, selectedCategoryIdValue) => {
+                        setValue(selectedCategoryIdValue, {
+                            emitChange: true,
+                            close: true
+                        });
+                    }
+                }));
             });
         };
 
@@ -677,6 +697,7 @@
         loadAll: loadAllCategories
     };
     window.PcsCategoryPicker = {
-        bind: bindCategoryPicker
+        bind: bindCategoryPicker,
+        createOption: createCategoryPickerOption
     };
 })(window);

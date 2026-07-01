@@ -18,12 +18,22 @@
     const summaryGradeC = document.querySelector("[data-summary-grade-c]");
     const summaryDefective = document.querySelector("[data-summary-defective]");
     const summaryOutbound = document.querySelector("[data-summary-outbound]");
+    const partStateInput = filterForm?.elements.partState;
+    const stateFilterCards = Array.from(document.querySelectorAll("[data-part-state-filter]"));
+    const documentInput = filterForm?.elements.documentId;
+    const documentLabel = document.querySelector("[data-part-unit-document-label]");
+    const documentPickerModal = document.querySelector("[data-part-unit-document-picker-modal]");
+    const documentPickerSearch = document.querySelector("[data-part-unit-document-picker-search]");
+    const documentPickerList = document.querySelector("[data-part-unit-document-picker-list]");
+    const documentPickerMessage = document.querySelector("[data-part-unit-document-picker-message]");
     const flowList = document.querySelector("[data-detail-flow-list]");
     const nextFlowAction = document.querySelector("[data-next-flow-action]");
     const searchButton = filterForm?.querySelector("button[type='submit']");
 
     let currentPage = 0;
     let detailRequestId = 0;
+    let documentSearchTimer = null;
+    let selectedDocument = null;
 
     const escape = window.PcsHtml?.escape || ((value) => String(value ?? ""));
     const setText = window.PcsHtml?.setText || ((element, value, fallback = "-") => {
@@ -119,6 +129,52 @@
         return code ? `/w/${encodeURIComponent(code)}/${route}` : "#";
     };
 
+    const normalizeListData = (data) => {
+        if (Array.isArray(data)) {
+            return data;
+        }
+        if (Array.isArray(data?.content)) {
+            return data.content;
+        }
+        if (Array.isArray(data?.items)) {
+            return data.items;
+        }
+        return [];
+    };
+
+    const documentTypeLabel = (type) => {
+        if (type === "INBOUND") return "입고";
+        if (type === "OUTBOUND") return "출고";
+        return type || "-";
+    };
+
+    const syncStateCards = () => {
+        const selectedState = partStateInput?.value || "";
+        stateFilterCards.forEach((card) => {
+            const selected = card.dataset.partStateFilter === selectedState;
+            card.classList.toggle("is-selected", selected);
+            card.setAttribute("aria-pressed", String(selected));
+        });
+    };
+
+    const setPartState = (partState) => {
+        if (!partStateInput) {
+            return;
+        }
+        partStateInput.value = partState || "";
+        syncStateCards();
+    };
+
+    const setSelectedDocument = (document = null) => {
+        selectedDocument = document;
+        if (documentInput) {
+            documentInput.value = document?.documentId ? String(document.documentId) : "";
+        }
+        if (documentLabel) {
+            documentLabel.textContent = document?.documentNo || "전체";
+        }
+    };
+
     const workStatusLabel = (unit) => {
         if (!unit) {
             return "-";
@@ -186,6 +242,7 @@
         setText(summaryGradeC, formatNumber(summary.gradeCCount || 0), "0");
         setText(summaryDefective, formatNumber(summary.defectiveCount || 0), "0");
         setText(summaryOutbound, formatNumber(summary.outboundCount || 0), "0");
+        syncStateCards();
     };
 
     const setLoading = (loading) => {
@@ -469,6 +526,146 @@
         loadFailureMessage: "분류를 불러오지 못했습니다."
     });
 
+    const setDocumentMessage = (message = "") => {
+        if (documentPickerMessage) {
+            documentPickerMessage.textContent = message;
+        }
+    };
+
+    const renderEmptyDocumentPicker = (message) => {
+        if (!documentPickerList) {
+            return;
+        }
+        documentPickerList.innerHTML = "";
+        const empty = document.createElement("p");
+        empty.className = "spec-builder-empty";
+        empty.textContent = message;
+        documentPickerList.append(empty);
+    };
+
+    const renderDocumentPicker = (documents) => {
+        if (!documentPickerList) {
+            return;
+        }
+        documentPickerList.innerHTML = "";
+        if (!documents.length) {
+            renderEmptyDocumentPicker("검색된 전표가 없습니다.");
+            return;
+        }
+
+        documents.forEach((stockDocument) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "category-picker-option";
+            if (String(stockDocument.documentId) === String(documentInput?.value || "")) {
+                button.classList.add("is-selected");
+            }
+
+            const name = document.createElement("strong");
+            name.textContent = stockDocument.documentNo || "-";
+
+            const count = document.createElement("span");
+            count.className = "category-picker-count";
+            count.textContent = `${documentTypeLabel(stockDocument.documentType)} · ${formatNumber(stockDocument.totalQuantity || 0)}개`;
+
+            const description = document.createElement("small");
+            description.textContent = [
+                stockDocument.partnerName || "거래처 없음",
+                stockDocument.firstPartName || "품목 없음",
+                formatDateTime(stockDocument.createdAt)
+            ].join(" · ");
+
+            button.append(name, count, description);
+            button.addEventListener("click", () => {
+                setSelectedDocument(stockDocument);
+                documentPickerModal?.close();
+            });
+            documentPickerList.append(button);
+        });
+    };
+
+    const loadDocuments = async () => {
+        const base = apiBase();
+        if (!base || !window.PcsApi?.getData) {
+            renderEmptyDocumentPicker("워크스페이스 정보를 확인할 수 없습니다.");
+            return;
+        }
+
+        const params = new URLSearchParams({
+            documentStatus: "COMPLETED",
+            size: "20"
+        });
+        const keyword = documentPickerSearch?.value.trim();
+        if (keyword) {
+            params.set("keyword", keyword);
+        }
+
+        setDocumentMessage("");
+        renderEmptyDocumentPicker("전표 목록을 불러오는 중입니다.");
+        try {
+            const data = await window.PcsApi.getData(
+                    `${base}/stock/documents?${params.toString()}`,
+                    apiOptions()
+            );
+            renderDocumentPicker(normalizeListData(data));
+        } catch (error) {
+            setDocumentMessage(error?.message || "전표를 불러오지 못했습니다.");
+            renderEmptyDocumentPicker("전표를 불러오지 못했습니다.");
+        }
+    };
+
+    const openDocumentPicker = () => {
+        if (!documentPickerModal) {
+            return;
+        }
+        if (documentPickerSearch) {
+            documentPickerSearch.value = "";
+        }
+        setDocumentMessage("");
+        if (typeof documentPickerModal.showModal === "function" && !documentPickerModal.open) {
+            documentPickerModal.showModal();
+        }
+        loadDocuments();
+        window.setTimeout(() => documentPickerSearch?.focus(), 0);
+    };
+
+    document.querySelectorAll("[data-open-part-unit-document-picker]").forEach((button) => {
+        button.addEventListener("click", openDocumentPicker);
+    });
+    document.querySelectorAll("[data-close-part-unit-document-picker]").forEach((button) => {
+        button.addEventListener("click", () => documentPickerModal?.close());
+    });
+    document.querySelectorAll("[data-clear-part-unit-document-picker]").forEach((button) => {
+        button.addEventListener("click", () => {
+            setSelectedDocument(null);
+            documentPickerModal?.close();
+        });
+    });
+    documentPickerModal?.addEventListener("click", (event) => {
+        if (event.target === documentPickerModal) {
+            documentPickerModal.close();
+        }
+    });
+    documentPickerSearch?.addEventListener("input", () => {
+        window.clearTimeout(documentSearchTimer);
+        documentSearchTimer = window.setTimeout(loadDocuments, 220);
+    });
+
+    stateFilterCards.forEach((card) => {
+        const apply = () => {
+            const nextState = card.dataset.partStateFilter || "";
+            setPartState(nextState);
+            loadPartUnits(0);
+        };
+        card.addEventListener("click", apply);
+        card.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                apply();
+            }
+        });
+    });
+
     filterForm?.addEventListener("submit", (event) => {
         event.preventDefault();
         loadPartUnits(0);
@@ -476,6 +673,8 @@
 
     resetButton?.addEventListener("click", () => {
         filterForm?.reset();
+        setPartState("");
+        setSelectedDocument(null);
         categoryPicker?.setValue("");
         loadPartUnits(0);
     });
@@ -491,5 +690,6 @@
     });
 
     categoryPicker?.load();
+    syncStateCards();
     loadPartUnits(0);
 })();

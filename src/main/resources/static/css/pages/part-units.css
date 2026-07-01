@@ -48,6 +48,28 @@
     border-radius: var(--radius);
     background: rgba(255, 255, 255, 0.92);
     box-shadow: var(--shadow-sm);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.part-unit-summary-card[role="button"] {
+    cursor: pointer;
+    user-select: none;
+}
+
+.part-unit-summary-card[role="button"]:hover {
+    border-color: rgba(37, 99, 235, 0.42);
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.08);
+    transform: translateY(-1px);
+}
+
+.part-unit-summary-card[role="button"]:focus-visible {
+    outline: 2px solid rgba(37, 99, 235, 0.48);
+    outline-offset: 2px;
+}
+
+.part-unit-summary-card.is-selected {
+    border-color: rgba(37, 99, 235, 0.72);
+    box-shadow: inset 3px 0 0 var(--cyan), var(--shadow-sm);
 }
 
 .part-unit-summary-card dt,

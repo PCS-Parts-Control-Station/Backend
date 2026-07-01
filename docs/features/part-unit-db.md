@@ -37,10 +37,12 @@ tb_member
 - `company_id`는 `tb_pc_part_unit`, `tb_pc_part`, `tb_part_category` 조인 조건에 모두 포함한다.
 - 기본 조건은 `tb_pc_part_unit.active = true`이다.
 - 검색어는 관리번호, 제조사 시리얼, 품목명, 모델명, 제조사, 품목코드, 분류명에 적용한다.
+- `documentId`는 `tb_stock_movement_unit -> tb_stock_movement`에 연결된 전표 기준으로 필터한다.
 - `categoryId`는 `tb_pc_part.category_id` 기준으로 필터한다.
 - `partState` 조건은 `docs/features/part-unit.md`의 목록 검색 표를 따른다.
 - 목록 정렬은 `tb_pc_part_unit.updated_at DESC, tb_pc_part_unit.unit_id DESC`이다.
-- summary는 목록 검색과 같은 where 조건으로 계산하고, `total_count`를 `PageResultDto.totalElements`의 원천으로 사용한다.
+- 목록 전체 건수는 `partState`까지 포함한 where 조건으로 계산하고, 해당 `total_count`를 `PageResultDto.totalElements`의 원천으로 사용한다.
+- 화면 통계 카드는 `partState`를 제외한 검색어, 전표, 분류 조건으로 계산한다. 통계 카드 자체가 상태 필터이므로 현재 선택된 상태가 다른 통계 숫자를 0으로 만들면 안 된다.
 - summary의 `held_count`는 `unit_status = IN_STOCK` 전체가 아니라 `waiting_count + sales_available_count + sales_unavailable_count`와 같은 업무상 보유 기준이다. 검수완료 후 `sales_status = HOLD`인 판매보류 부품은 별도 참고 통계로만 집계한다.
 - 별도 `countPartUnits` 쿼리를 두지 않는다. 같은 where 조건의 `COUNT(*)`를 summary와 중복 실행하지 않는다.
 - 목록 SQL은 `unit_id` 페이지만 먼저 `ORDER BY updated_at DESC, unit_id DESC LIMIT/OFFSET`으로 확정하고, 확정된 관리번호에 대해서만 상세 컬럼과 최근 이력 컬럼을 조회한다.
@@ -92,7 +94,9 @@ idx_pc_part_unit_work_status
 - Required checks:
   - 관리번호 목록 검색은 `tb_pc_part_unit` 기준으로 페이징된다.
   - keyword와 categoryId 조건으로 다른 관리번호가 제외된다.
+  - documentId 조건으로 해당 전표에 포함되지 않은 관리번호가 제외된다.
   - `partState=WAITING`은 검수대기 관리번호만 반환한다.
+  - `partState=HELD`, `SALES_AVAILABLE`, `SALES_UNAVAILABLE`, `SALES_HOLD`는 각각 업무상 보유, 판매가능, 판매불가, 판매보류 기준으로 반환한다.
   - `partState=A`는 검수완료 A등급 관리번호만 반환한다.
   - `partState=OUTBOUND`은 출고 상태 관리번호만 반환한다.
   - 판매상태는 검색 조건에 없고, 응답 필드로만 내려온다.
