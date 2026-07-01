@@ -85,7 +85,7 @@ class PartFacadeTest {
     @Test
     void searchPartUnits_success() {
         PcsPrincipal principal = principal(1L, 10L, "acme");
-        SearchPartUnitSummaryResponse summary = new SearchPartUnitSummaryResponse(0, 0, 0);
+        SearchPartUnitSummaryResponse summary = new SearchPartUnitSummaryResponse(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
         when(workspaceAccessValidator.validateAuthenticatedWorkspace(principal, "acme")).thenReturn(principal);
         when(partService.searchPartUnits(1L, "RTX", 10L, "WAITING", 0, 20, null))
                 .thenReturn(PageResultDto.of(List.of(), 0, 20, 0, summary));

@@ -119,7 +119,7 @@ class PartServiceTest {
     void searchPartUnits_usesDefaultPageSizeAndNormalizedPartState() {
         SearchPartUnitResponse unit = partUnitResponse(101L, "PCS-GPU-0001", PartGrade.A, SalesStatus.AVAILABLE);
         when(partMapper.summarizePartUnits(COMPANY_ID, "RTX", CATEGORY_ID, "A"))
-                .thenReturn(new SearchPartUnitSummaryResponse(1, 0, 1));
+                .thenReturn(new SearchPartUnitSummaryResponse(1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1));
         when(partMapper.searchPartUnits(COMPANY_ID, "RTX", CATEGORY_ID, "A", 20, 0))
                 .thenReturn(List.of(unit));
 
@@ -129,6 +129,9 @@ class PartServiceTest {
         assertThat(response.page()).isZero();
         assertThat(response.size()).isEqualTo(20);
         assertThat(response.summary().totalCount()).isEqualTo(1);
+        assertThat(response.summary().heldCount()).isEqualTo(1);
+        assertThat(response.summary().salesAvailableCount()).isEqualTo(1);
+        assertThat(response.summary().gradeACount()).isEqualTo(1);
         assertThat(response.summary().outboundAvailableCount()).isEqualTo(1);
         InOrder inOrder = inOrder(partMapper);
         inOrder.verify(partMapper).summarizePartUnits(COMPANY_ID, "RTX", CATEGORY_ID, "A");
@@ -138,7 +141,7 @@ class PartServiceTest {
     @Test
     void searchPartUnits_skipsListQueryWhenSummaryIsEmpty() {
         when(partMapper.summarizePartUnits(COMPANY_ID, null, null, null))
-                .thenReturn(new SearchPartUnitSummaryResponse(0, 0, 0));
+                .thenReturn(new SearchPartUnitSummaryResponse(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
 
         var response = partService.searchPartUnits(COMPANY_ID, null, null, null, 0, 20, null);
 

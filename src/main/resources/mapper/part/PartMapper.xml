@@ -253,10 +253,83 @@
         SELECT
             COUNT(*) AS total_count,
             COALESCE(SUM(CASE
-                WHEN u.inspection_status = 'WAITING'
+                WHEN u.unit_status = 'IN_STOCK'
+                 AND (
+                    u.inspection_status = 'WAITING'
+                    OR (
+                        u.inspection_status = 'COMPLETED'
+                        AND u.sales_status = 'AVAILABLE'
+                        AND u.grade &lt;&gt; 'DEFECTIVE'
+                    )
+                    OR (
+                        u.inspection_status = 'COMPLETED'
+                        AND u.sales_status = 'UNAVAILABLE'
+                    )
+                 )
+                THEN 1
+                ELSE 0
+            END), 0) AS held_count,
+            COALESCE(SUM(CASE
+                WHEN u.unit_status = 'IN_STOCK'
+                 AND u.inspection_status = 'WAITING'
                 THEN 1
                 ELSE 0
             END), 0) AS waiting_count,
+            COALESCE(SUM(CASE
+                WHEN u.unit_status = 'IN_STOCK'
+                 AND u.inspection_status = 'COMPLETED'
+                 AND u.sales_status = 'AVAILABLE'
+                 AND u.grade &lt;&gt; 'DEFECTIVE'
+                THEN 1
+                ELSE 0
+            END), 0) AS sales_available_count,
+            COALESCE(SUM(CASE
+                WHEN u.unit_status = 'IN_STOCK'
+                 AND u.inspection_status = 'COMPLETED'
+                 AND u.sales_status = 'HOLD'
+                THEN 1
+                ELSE 0
+            END), 0) AS sales_hold_count,
+            COALESCE(SUM(CASE
+                WHEN u.unit_status = 'IN_STOCK'
+                 AND u.inspection_status = 'COMPLETED'
+                 AND u.sales_status = 'UNAVAILABLE'
+                THEN 1
+                ELSE 0
+            END), 0) AS sales_unavailable_count,
+            COALESCE(SUM(CASE
+                WHEN u.unit_status = 'IN_STOCK'
+                 AND u.inspection_status = 'COMPLETED'
+                 AND u.grade = 'A'
+                THEN 1
+                ELSE 0
+            END), 0) AS grade_a_count,
+            COALESCE(SUM(CASE
+                WHEN u.unit_status = 'IN_STOCK'
+                 AND u.inspection_status = 'COMPLETED'
+                 AND u.grade = 'B'
+                THEN 1
+                ELSE 0
+            END), 0) AS grade_b_count,
+            COALESCE(SUM(CASE
+                WHEN u.unit_status = 'IN_STOCK'
+                 AND u.inspection_status = 'COMPLETED'
+                 AND u.grade = 'C'
+                THEN 1
+                ELSE 0
+            END), 0) AS grade_c_count,
+            COALESCE(SUM(CASE
+                WHEN u.unit_status = 'IN_STOCK'
+                 AND u.inspection_status = 'COMPLETED'
+                 AND u.grade = 'DEFECTIVE'
+                THEN 1
+                ELSE 0
+            END), 0) AS defective_count,
+            COALESCE(SUM(CASE
+                WHEN u.unit_status = 'OUTBOUND'
+                THEN 1
+                ELSE 0
+            END), 0) AS outbound_count,
             COALESCE(SUM(CASE
                 WHEN u.unit_status = 'IN_STOCK'
                  AND u.inspection_status = 'COMPLETED'

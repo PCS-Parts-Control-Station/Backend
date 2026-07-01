@@ -222,7 +222,9 @@ class PartPersistenceIntegrationTest extends MariaDbIntegrationTest {
         var all = partService.searchPartUnits(1L, "PCS-GPU", category.categoryId(), null, 0, 20, null);
         assertThat(all.content()).hasSize(3);
         assertThat(all.summary().totalCount()).isEqualTo(3);
+        assertThat(all.summary().heldCount()).isEqualTo(2);
         assertThat(all.summary().waitingCount()).isEqualTo(1);
+        assertThat(all.summary().salesHoldCount()).isZero();
         assertThat(all.summary().outboundAvailableCount()).isEqualTo(1);
 
         var firstPage = partService.searchPartUnits(1L, "PCS-GPU", category.categoryId(), null, 0, 2, null);

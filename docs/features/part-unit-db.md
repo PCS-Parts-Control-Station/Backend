@@ -41,6 +41,7 @@ tb_member
 - `partState` 조건은 `docs/features/part-unit.md`의 목록 검색 표를 따른다.
 - 목록 정렬은 `tb_pc_part_unit.updated_at DESC, tb_pc_part_unit.unit_id DESC`이다.
 - summary는 목록 검색과 같은 where 조건으로 계산하고, `total_count`를 `PageResultDto.totalElements`의 원천으로 사용한다.
+- summary의 `held_count`는 `unit_status = IN_STOCK` 전체가 아니라 `waiting_count + sales_available_count + sales_unavailable_count`와 같은 업무상 보유 기준이다. 검수완료 후 `sales_status = HOLD`인 판매보류 부품은 별도 참고 통계로만 집계한다.
 - 별도 `countPartUnits` 쿼리를 두지 않는다. 같은 where 조건의 `COUNT(*)`를 summary와 중복 실행하지 않는다.
 - 목록 SQL은 `unit_id` 페이지만 먼저 `ORDER BY updated_at DESC, unit_id DESC LIMIT/OFFSET`으로 확정하고, 확정된 관리번호에 대해서만 상세 컬럼과 최근 이력 컬럼을 조회한다.
 - 기본 목록 정렬은 `idx_pc_part_unit_list_default (company_id, active, updated_at DESC, unit_id DESC)` 인덱스가 받쳐야 한다.
@@ -95,7 +96,9 @@ idx_pc_part_unit_work_status
   - `partState=A`는 검수완료 A등급 관리번호만 반환한다.
   - `partState=OUTBOUND`은 출고 상태 관리번호만 반환한다.
   - 판매상태는 검색 조건에 없고, 응답 필드로만 내려온다.
-  - summary의 `totalCount`, `waitingCount`, `outboundAvailableCount`는 목록 where 조건과 같은 기준으로 계산된다.
+  - summary의 `totalCount`, `heldCount`, `waitingCount`, `salesAvailableCount`, `salesHoldCount`, `salesUnavailableCount`, `gradeACount`, `gradeBCount`, `gradeCCount`, `defectiveCount`, `outboundCount`, `outboundAvailableCount`는 목록 where 조건과 같은 기준으로 계산된다.
+  - `heldCount`는 `waitingCount + salesAvailableCount + salesUnavailableCount`와 같은 값이어야 한다.
+  - 출고 통계인 `outboundCount`를 제외한 화면 통계는 `unit_status = IN_STOCK`인 보유 부품만 집계한다. 단, `salesHoldCount`는 보유 중인 참고 통계지만 `heldCount`에는 포함하지 않는다.
   - 페이징된 목록은 `updated_at DESC, unit_id DESC` 순서를 유지하고, summary의 `totalCount`는 현재 페이지 크기가 아니라 전체 조건 건수를 반환한다.
   - 기본, 검수상태, 출고상태 목록 인덱스가 DDL과 통합 테스트 fixture에 모두 존재한다.
   - 상세 조회는 같은 회사 관리번호만 반환하고, 다른 회사 관리번호는 `PART_UNIT_NOT_FOUND`로 실패한다.

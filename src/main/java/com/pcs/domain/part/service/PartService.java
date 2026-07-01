@@ -129,7 +129,7 @@ public class PartService {
                 normalizedPartState
         );
         if (summary == null) {
-            summary = new SearchPartUnitSummaryResponse(0, 0, 0);
+            summary = new SearchPartUnitSummaryResponse(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
         }
 
         long totalElements = summary.totalCount();

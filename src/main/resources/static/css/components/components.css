@@ -738,8 +738,10 @@ label {
 
 .right-assist-panel {
     position: sticky;
-    top: 20px;
+    top: var(--right-assist-panel-top, 92px);
+    z-index: 20;
     align-self: start;
+    overflow: visible;
 }
 
 .management-drawer-grid {
@@ -998,6 +1000,8 @@ label {
 @media (max-width: 1180px) {
 .right-assist-panel {
         position: static;
+        top: auto;
+        z-index: auto;
     }
 }
 

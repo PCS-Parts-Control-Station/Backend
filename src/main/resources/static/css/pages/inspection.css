@@ -1,16 +1,4 @@
 @layer page {
-.inspection-rule-panel {
-    margin-top: 18px;
-}
-
-.inspection-page .side-panel {
-    position: sticky;
-    top: 20px;
-    max-height: calc(100vh - 40px);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-}
-
 .inspection-page {
     --inspection-document-table-min: 900px;
     --inspection-history-table-min: 820px;
@@ -2206,13 +2194,6 @@
 .inspection-page.has-collapsible-sidebar .content-grid {
         grid-template-columns: minmax(0, 1fr) 336px;
     }
-
-.inspection-page .side-panel {
-        position: sticky;
-        top: 20px;
-        max-height: calc(100vh - 40px);
-        overflow-y: auto;
-    }
 }
 
 @media (max-width: 860px) {
@@ -2535,14 +2516,6 @@
 
 .inspection-history-row .row-actions {
         grid-row: 5;
-    }
-}
-
-@media (max-width: 860px) {
-.inspection-page .side-panel {
-        position: static;
-        max-height: none;
-        overflow: visible;
     }
 }
 

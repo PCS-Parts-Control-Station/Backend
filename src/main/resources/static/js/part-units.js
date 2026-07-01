@@ -8,10 +8,18 @@
     const pageInfo = pagination?.querySelector("[data-page-info]");
     const prevButton = pagination?.querySelector("[data-page-prev]");
     const nextButton = pagination?.querySelector("[data-page-next]");
-    const summaryTotal = document.querySelector("[data-summary-total]");
+    const summaryHeld = document.querySelector("[data-summary-held]");
     const summaryWaiting = document.querySelector("[data-summary-waiting]");
-    const summaryAvailable = document.querySelector("[data-summary-available]");
+    const summarySalesAvailable = document.querySelector("[data-summary-sales-available]");
+    const summarySalesHold = document.querySelector("[data-summary-sales-hold]");
+    const summarySalesUnavailable = document.querySelector("[data-summary-sales-unavailable]");
+    const summaryGradeA = document.querySelector("[data-summary-grade-a]");
+    const summaryGradeB = document.querySelector("[data-summary-grade-b]");
+    const summaryGradeC = document.querySelector("[data-summary-grade-c]");
+    const summaryDefective = document.querySelector("[data-summary-defective]");
+    const summaryOutbound = document.querySelector("[data-summary-outbound]");
     const flowList = document.querySelector("[data-detail-flow-list]");
+    const nextFlowAction = document.querySelector("[data-next-flow-action]");
     const searchButton = filterForm?.querySelector("button[type='submit']");
 
     let currentPage = 0;
@@ -106,6 +114,11 @@
     const inspectionTypeLabel = (type) => LABELS.inspectionType[type] || type || "-";
     const inspectionResultLabel = (result) => LABELS.inspectionResult[result] || result || "-";
 
+    const workspaceRoute = (route) => {
+        const code = companyCode();
+        return code ? `/w/${encodeURIComponent(code)}/${route}` : "#";
+    };
+
     const workStatusLabel = (unit) => {
         if (!unit) {
             return "-";
@@ -163,9 +176,16 @@
     };
 
     const updateSummary = (summary = {}) => {
-        setText(summaryTotal, formatNumber(summary.totalCount || 0), "0");
+        setText(summaryHeld, formatNumber(summary.heldCount || 0), "0");
         setText(summaryWaiting, formatNumber(summary.waitingCount || 0), "0");
-        setText(summaryAvailable, formatNumber(summary.outboundAvailableCount || 0), "0");
+        setText(summarySalesAvailable, formatNumber(summary.salesAvailableCount || summary.outboundAvailableCount || 0), "0");
+        setText(summarySalesHold, formatNumber(summary.salesHoldCount || 0), "0");
+        setText(summarySalesUnavailable, formatNumber(summary.salesUnavailableCount || 0), "0");
+        setText(summaryGradeA, formatNumber(summary.gradeACount || 0), "0");
+        setText(summaryGradeB, formatNumber(summary.gradeBCount || 0), "0");
+        setText(summaryGradeC, formatNumber(summary.gradeCCount || 0), "0");
+        setText(summaryDefective, formatNumber(summary.defectiveCount || 0), "0");
+        setText(summaryOutbound, formatNumber(summary.outboundCount || 0), "0");
     };
 
     const setLoading = (loading) => {
@@ -221,7 +241,7 @@
                     cell("관리번호", `<span class="part-unit-line"><strong>${escape(unit.internalSerialNo || "-")}</strong></span>`),
                     cell("품목", `<span class="part-unit-line"><strong>${escape(unit.partName || "-")}</strong><span class="part-unit-muted">${escape(unit.manufacturer || "-")} · ${escape(unit.modelName || "-")}</span></span>`),
                     cell("분류", `<span class="part-unit-line">${escape(unit.categoryName || "-")}</span>`),
-                    cell("부품 상태", `<em class="badge part-unit-status-pill ${statusBadgeClass(stateText)}">${escape(stateText)}</em>`)
+                    cell("부품 상태", `<span class="part-unit-status-text">${escape(stateText)}</span>`)
             );
             table.append(row);
         });
@@ -302,22 +322,66 @@
         }));
 
         const events = [...stockEvents, ...inspectionEvents]
-                .sort((a, b) => dateValue(b.at) - dateValue(a.at))
-                .slice(0, 6);
+                .sort((a, b) => dateValue(a.at) - dateValue(b.at));
 
         flowList.innerHTML = "";
         if (!events.length) {
-            const empty = document.createElement("div");
-            empty.innerHTML = "<dt>-</dt><dd>표시할 이력이 없습니다.</dd>";
+            const empty = document.createElement("article");
+            empty.innerHTML = "<strong>-</strong><span>표시할 이력이 없습니다.</span><small>-</small>";
             flowList.append(empty);
             return;
         }
 
         events.forEach((event) => {
-            const item = document.createElement("div");
-            item.innerHTML = `<dt>${escape(event.title)}</dt><dd>${escape(event.status)} · ${escape(event.meta)}</dd>`;
+            const item = document.createElement("article");
+            item.innerHTML = `<strong>${escape(event.title)}</strong><span>${escape(event.status)}</span><small>${escape(event.meta)}</small>`;
             flowList.append(item);
         });
+    };
+
+    const hideNextFlowAction = () => {
+        if (!nextFlowAction) {
+            return;
+        }
+        nextFlowAction.hidden = true;
+        nextFlowAction.removeAttribute("href");
+        nextFlowAction.textContent = "";
+    };
+
+    const showNextFlowAction = (label, route) => {
+        if (!nextFlowAction) {
+            return;
+        }
+        nextFlowAction.textContent = label;
+        nextFlowAction.href = workspaceRoute(route);
+        nextFlowAction.hidden = false;
+    };
+
+    const updateNextFlowAction = (detail) => {
+        const unit = detail?.unit;
+        if (!unit) {
+            hideNextFlowAction();
+            return;
+        }
+
+        if (["OUTBOUND", "CANCELED", "DISPOSED"].includes(unit.unitStatus)) {
+            hideNextFlowAction();
+            return;
+        }
+
+        const inspectionCompleted = unit.inspectionStatus === "COMPLETED"
+                || (detail.inspectionHistories || []).length > 0;
+        if (!inspectionCompleted) {
+            showNextFlowAction("검수하러 가기", "inspection");
+            return;
+        }
+
+        if (unit.salesStatus === "AVAILABLE") {
+            showNextFlowAction("출고하러 가기", "outbound/new");
+            return;
+        }
+
+        hideNextFlowAction();
     };
 
     const updateDetailFields = (detail) => {
@@ -332,10 +396,9 @@
         setText(document.querySelector("[data-detail-part]"), unit.partName);
         setText(document.querySelector("[data-detail-model]"), `${unit.manufacturer || "-"} · ${unit.modelName || "-"}`);
         setText(document.querySelector("[data-detail-serial]"), unit.manufacturerSerialNo);
-        setText(document.querySelector("[data-detail-category]"), unit.categoryName);
-        setText(document.querySelector("[data-detail-updated]"), unit.recentEventLabel ? `${unit.recentEventLabel} · ${formatDateTime(unit.recentEventAt)}` : "-");
         setBadge("[data-detail-unit-status]", stateText, statusBadgeClass(stateText));
         renderFlow(detail);
+        updateNextFlowAction(detail);
     };
 
     const loadDetail = async (unitId, requestId) => {
@@ -379,15 +442,14 @@
                 value: (data) => `${data.maker || "-"} · ${data.model || "-"}`
             },
             serial: "[data-detail-serial]",
-            category: "[data-detail-category]",
-            updated: "[data-detail-updated]",
             unitStatus: "[data-detail-unit-status]"
         },
         onUpdate: (row, data) => {
             setBadge("[data-detail-unit-status]", data.unitStatus, statusBadgeClass(data.unitStatus));
             if (flowList) {
-                flowList.innerHTML = "<div><dt>-</dt><dd>상세 이력을 불러오는 중입니다.</dd></div>";
+                flowList.innerHTML = "<article><strong>-</strong><span>상세 이력을 불러오는 중입니다.</span><small>-</small></article>";
             }
+            hideNextFlowAction();
             detailRequestId += 1;
             loadDetail(row.dataset.unitId, detailRequestId);
         }
