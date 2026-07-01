@@ -514,18 +514,37 @@
     };
 
     const updateUnitPagination = (totalElements) => {
-        const totalPages = Math.max(1, Math.ceil(totalElements / UNIT_PAGE_SIZE));
+        const totalPages = Math.ceil(totalElements / UNIT_PAGE_SIZE);
+        const pageData = {
+            totalElements,
+            totalPages,
+            page: unitCurrentPage,
+            hasPrevious: unitCurrentPage > 0,
+            hasNext: unitCurrentPage < totalPages - 1
+        };
+
+        if (window.PcsPagination) {
+            window.PcsPagination.updateControls({
+                pageData,
+                container: unitPagination,
+                info: unitPageInfo,
+                prevButton: unitPrevButton,
+                nextButton: unitNextButton,
+                onPageClick: (page) => {
+                    unitCurrentPage = page;
+                    selectedManagementNumber = null;
+                    closeDetailPanel({restoreFocus: false});
+                    renderUnitRows(selectedDocumentRows);
+                }
+            });
+            return;
+        }
+
         if (unitPagination) {
             unitPagination.hidden = totalElements <= UNIT_PAGE_SIZE;
         }
         if (unitPageInfo) {
-            unitPageInfo.textContent = `${numberText(unitCurrentPage + 1)} / ${numberText(totalPages)} 페이지 · 총 ${numberText(totalElements)}개`;
-        }
-        if (unitPrevButton) {
-            unitPrevButton.disabled = unitCurrentPage <= 0;
-        }
-        if (unitNextButton) {
-            unitNextButton.disabled = unitCurrentPage >= totalPages - 1;
+            unitPageInfo.textContent = `${numberText(unitCurrentPage + 1)} / ${numberText(Math.max(1, totalPages))} 페이지 · 총 ${numberText(totalElements)}개`;
         }
     };
 
@@ -755,7 +774,8 @@
             container: pagination,
             info: pageInfo,
             prevButton,
-            nextButton
+            nextButton,
+            onPageClick: (page) => loadDocumentGroups(page, { preserveScroll: true })
         });
     };
 

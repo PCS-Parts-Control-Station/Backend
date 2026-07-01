@@ -18,6 +18,14 @@
     const lineEmpty = document.querySelector("[data-line-empty]");
     const keywordInput = document.querySelector("[data-part-keyword]");
     const categorySelect = document.querySelector("[data-part-category]");
+    const categoryLabel = document.querySelector("[data-part-category-label]");
+    const openCategoryPickerButton = document.querySelector("[data-open-category-picker]");
+    const categoryPickerModal = document.querySelector("[data-category-picker-modal]");
+    const closeCategoryPickerButtons = document.querySelectorAll("[data-close-category-picker]");
+    const clearCategoryPickerButton = document.querySelector("[data-clear-category-picker]");
+    const categoryPickerSearch = document.querySelector("[data-category-picker-search]");
+    const categoryPickerList = document.querySelector("[data-category-picker-list]");
+    const categoryPickerMessage = document.querySelector("[data-category-picker-message]");
     const searchButton = document.querySelector("[data-part-search]");
     const partSearchMessage = document.querySelector("[data-part-search-message]");
     const selectedName = document.querySelector("[data-selected-part-name]");
@@ -55,6 +63,7 @@
     let partners = [];
     let selectedPartner = null;
     let pendingInbound = null;
+    let categoryOptions = [];
     let currentRegisterStep = "1";
     let partSearchStarted = false;
 
@@ -245,6 +254,99 @@
             return data;
         }
         return Array.isArray(data?.content) ? data.content : [];
+    };
+
+    const syncCategoryLabel = () => {
+        if (!categoryLabel) {
+            return;
+        }
+
+        const selected = categoryOptions.find((category) => String(category.categoryId) === String(categorySelect?.value || ""));
+        categoryLabel.textContent = selected?.categoryName || "전체 분류";
+    };
+
+    const matchesCategoryKeyword = (category, keyword) => {
+        if (!keyword) {
+            return true;
+        }
+
+        const target = `${category.categoryName || ""} ${category.description || ""}`.toLowerCase();
+        return target.includes(keyword.toLowerCase());
+    };
+
+    const renderCategoryPickerList = () => {
+        if (!categoryPickerList) {
+            return;
+        }
+
+        const keyword = categoryPickerSearch?.value.trim() || "";
+        const selectedCategoryId = categorySelect?.value || "";
+        const categories = categoryOptions.filter((category) => matchesCategoryKeyword(category, keyword));
+
+        categoryPickerList.innerHTML = "";
+        if (!categories.length) {
+            const empty = document.createElement("p");
+            empty.className = "spec-builder-empty";
+            empty.textContent = keyword ? "검색된 분류가 없습니다." : "등록된 분류가 없습니다.";
+            categoryPickerList.append(empty);
+            return;
+        }
+
+        categories.forEach((category) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "category-picker-option";
+            if (String(category.categoryId) === String(selectedCategoryId)) {
+                button.classList.add("is-selected");
+            }
+
+            const name = document.createElement("strong");
+            name.textContent = category.categoryName || "이름 없음";
+
+            const description = document.createElement("small");
+            description.textContent = category.description || "설명 없음";
+
+            button.append(name, description);
+            button.addEventListener("click", () => {
+                if (categorySelect) {
+                    categorySelect.value = String(category.categoryId);
+                }
+                syncCategoryLabel();
+                categoryPickerModal?.close();
+                partSearchStarted = true;
+                updateCurrentRegisterStep("2");
+                filterParts();
+            });
+
+            categoryPickerList.append(button);
+        });
+    };
+
+    const openCategoryPicker = () => {
+        if (!categoryPickerModal) {
+            return;
+        }
+
+        if (categoryPickerSearch) {
+            categoryPickerSearch.value = "";
+        }
+        if (categoryPickerMessage) {
+            categoryPickerMessage.textContent = "";
+        }
+        renderCategoryPickerList();
+        categoryPickerModal.showModal();
+        window.setTimeout(() => categoryPickerSearch?.focus(), 0);
+    };
+
+    const clearCategoryFilter = () => {
+        if (categorySelect) {
+            categorySelect.value = "";
+        }
+        syncCategoryLabel();
+        partSearchStarted = true;
+        updateCurrentRegisterStep("2");
+        filterParts();
+        categoryPickerModal?.close();
     };
 
     const dateToken = () => {
@@ -520,12 +622,14 @@
 
     const renderCategories = (categories) => {
         const normalizedCategories = normalizeListData(categories);
+        categoryOptions = normalizedCategories;
         if (categorySelect) {
-            categorySelect.innerHTML = '<option value="">전체 분류</option>';
-            normalizedCategories.forEach((category) => {
-                categorySelect.append(new Option(category.categoryName || "-", String(category.categoryId)));
-            });
-            categorySelect.disabled = false;
+            categorySelect.value = "";
+            syncCategoryLabel();
+        }
+        if (openCategoryPickerButton) {
+            openCategoryPickerButton.disabled = normalizedCategories.length === 0;
+            openCategoryPickerButton.title = normalizedCategories.length === 0 ? "등록된 분류가 없습니다." : "";
         }
         if (newPartCategorySelect) {
             newPartCategorySelect.innerHTML = '<option value="">분류 선택</option>';
@@ -546,6 +650,7 @@
         }
         if (categorySelect && part.categoryId) {
             categorySelect.value = String(part.categoryId);
+            syncCategoryLabel();
         }
         const option = createPartOption({
             id: String(part.partId),
@@ -641,9 +746,9 @@
         const api = window.PcsApi;
 
         if (!companyCode || !api) {
-            if (categorySelect) {
-                categorySelect.innerHTML = '<option value="">분류 조회 불가</option>';
-                categorySelect.disabled = true;
+            if (openCategoryPickerButton) {
+                openCategoryPickerButton.disabled = true;
+                openCategoryPickerButton.title = "분류 목록을 불러올 수 없습니다.";
             }
             if (newPartCategorySelect) {
                 newPartCategorySelect.innerHTML = '<option value="">분류 조회 불가</option>';
@@ -656,9 +761,9 @@
             return;
         }
 
-        if (categorySelect) {
-            categorySelect.disabled = true;
-            categorySelect.innerHTML = '<option value="">분류 불러오는 중</option>';
+        if (openCategoryPickerButton) {
+            openCategoryPickerButton.disabled = true;
+            openCategoryPickerButton.title = "분류 목록을 불러오는 중입니다.";
         }
         if (newPartCategorySelect) {
             newPartCategorySelect.disabled = true;
@@ -677,9 +782,9 @@
             });
             renderCategories(data);
         } catch (error) {
-            if (categorySelect) {
-                categorySelect.innerHTML = '<option value="">분류 조회 실패</option>';
-                categorySelect.disabled = true;
+            if (openCategoryPickerButton) {
+                openCategoryPickerButton.disabled = true;
+                openCategoryPickerButton.title = "분류 목록을 불러올 수 없습니다.";
             }
             if (newPartCategorySelect) {
                 newPartCategorySelect.innerHTML = '<option value="">분류 조회 실패</option>';
@@ -759,9 +864,10 @@
             searchParts();
         }
     });
-    categorySelect.addEventListener("change", () => {
+    categorySelect?.addEventListener("change", () => {
         partSearchStarted = true;
         updateCurrentRegisterStep("2");
+        syncCategoryLabel();
         filterParts();
     });
     addButton.addEventListener("click", addLine);
@@ -813,6 +919,24 @@
         const partner = partners.find((candidate) => String(candidate.partnerId) === option.dataset.partnerOption);
         if (partner) {
             selectPartner(partner);
+        }
+    });
+
+    openCategoryPickerButton?.addEventListener("click", openCategoryPicker);
+    closeCategoryPickerButtons.forEach((button) => {
+        button.addEventListener("click", () => categoryPickerModal?.close());
+    });
+    clearCategoryPickerButton?.addEventListener("click", clearCategoryFilter);
+    categoryPickerSearch?.addEventListener("input", renderCategoryPickerList);
+    categoryPickerSearch?.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            renderCategoryPickerList();
+        }
+    });
+    categoryPickerModal?.addEventListener("click", (event) => {
+        if (event.target === categoryPickerModal) {
+            categoryPickerModal.close();
         }
     });
 

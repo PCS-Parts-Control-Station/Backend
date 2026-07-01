@@ -521,6 +521,7 @@
             info: pageInfo,
             prevButton,
             nextButton,
+            onPageClick: (page) => loadCandidates(page, { preserveScroll: true })
         });
     };
 

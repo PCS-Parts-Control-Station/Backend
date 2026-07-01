@@ -250,6 +250,7 @@
             info: pageInfo,
             prevButton,
             nextButton,
+            onPageClick: (page) => loadDocuments(page, { preserveScroll: true })
         });
     };
 

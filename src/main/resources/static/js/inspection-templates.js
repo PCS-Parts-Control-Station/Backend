@@ -156,7 +156,19 @@
                 container: pagination,
                 info: pageInfo,
                 prevButton,
-                nextButton
+                nextButton,
+                onPageClick: async (page) => {
+                    try {
+                        const execute = () => loadTemplates({ page });
+                        if (window.PcsPagination?.withPreservedScroll) {
+                            await window.PcsPagination.withPreservedScroll(execute);
+                            return;
+                        }
+                        await execute();
+                    } catch (error) {
+                        handleApiError(error, "페이지 조회에 실패했습니다.");
+                    }
+                }
             });
             return;
         }
@@ -1619,7 +1631,12 @@
             return;
         }
         try {
-            await loadTemplates({ page: templatePageData.page - 1 });
+            const execute = () => loadTemplates({ page: templatePageData.page - 1 });
+            if (window.PcsPagination?.withPreservedScroll) {
+                await window.PcsPagination.withPreservedScroll(execute);
+                return;
+            }
+            await execute();
         } catch (error) {
             handleApiError(error, "이전 페이지 조회에 실패했습니다.");
         }
@@ -1630,7 +1647,12 @@
             return;
         }
         try {
-            await loadTemplates({ page: templatePageData.page + 1 });
+            const execute = () => loadTemplates({ page: templatePageData.page + 1 });
+            if (window.PcsPagination?.withPreservedScroll) {
+                await window.PcsPagination.withPreservedScroll(execute);
+                return;
+            }
+            await execute();
         } catch (error) {
             handleApiError(error, "다음 페이지 조회에 실패했습니다.");
         }

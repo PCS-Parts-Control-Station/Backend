@@ -124,9 +124,11 @@
                                 </label>
                                 <label>
                                     <span>품목 분류</span>
-                                    <select data-part-category>
-                                        <option value="">전체 분류</option>
-                                    </select>
+                                    <button class="category-picker-button inbound-category-picker-button" type="button" data-open-category-picker>
+                                        <span data-part-category-label>전체 분류</span>
+                                        <small>분류 선택</small>
+                                    </button>
+                                    <input type="hidden" data-part-category>
                                 </label>
                                 <button class="btn btn-primary" type="button" data-part-search>검색</button>
                             </div>
@@ -347,10 +349,42 @@
     </form>
 </dialog>
 
+<dialog class="part-modal category-picker-modal inbound-category-picker-modal" data-category-picker-modal aria-labelledby="inbound-category-picker-title">
+    <div class="part-modal-card">
+        <div class="part-modal-header">
+            <div>
+                <p class="page-kicker">분류 선택</p>
+                <h2 id="inbound-category-picker-title">품목 분류를 선택합니다.</h2>
+                <p>입고할 품목을 분류 기준으로 좁혀 봅니다.</p>
+            </div>
+            <button class="modal-close-button" type="button" data-close-category-picker aria-label="닫기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M6 6l12 12" />
+                    <path d="M18 6 6 18" />
+                </svg>
+            </button>
+        </div>
+        <div class="part-modal-fields">
+            <label>
+                <span>분류 검색</span>
+                <input type="search" data-category-picker-search placeholder="예: RAM" autocomplete="off">
+            </label>
+            <div class="category-picker-list" data-category-picker-list>
+                <p class="spec-builder-empty">분류 목록을 불러오는 중입니다.</p>
+            </div>
+        </div>
+        <p class="field-message is-error modal-message" data-category-picker-message role="status" aria-live="polite"></p>
+        <div class="part-modal-actions">
+            <button class="btn btn-secondary" type="button" data-clear-category-picker>전체로 보기</button>
+            <button class="btn btn-secondary" type="button" data-close-category-picker>닫기</button>
+        </div>
+    </div>
+</dialog>
+
 <script src="/js/pcs-api.js?20260623_memory_token"></script>
 <script src="/js/workspace-layout.js?20260624_quick_bar"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/inbound-register.js?20260623_partner_modal"></script>
+<script src="/js/inbound-register.js?20260630_category_modal"></script>
 
 </body>
 </html>

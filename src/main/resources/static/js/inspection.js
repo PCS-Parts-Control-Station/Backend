@@ -483,7 +483,11 @@
             container: documentPagination,
             info: documentPageInfo,
             prevButton: documentPrevButton,
-            nextButton: documentNextButton
+            nextButton: documentNextButton,
+            onPageClick: (page) => {
+                const scrollPosition = window.PcsPagination?.captureScroll?.();
+                loadWaitingDocuments(page, { preserveScroll: scrollPosition });
+            }
         });
     };
 
@@ -500,7 +504,13 @@
             container: historyPagination,
             info: historyPageInfo,
             prevButton: historyPrevButton,
-            nextButton: historyNextButton
+            nextButton: historyNextButton,
+            onPageClick: (page) => {
+                historyStepActive = true;
+                updateCurrentSideStep();
+                const scrollPosition = window.PcsPagination?.captureScroll?.();
+                loadHistories(page, { preserveScroll: scrollPosition });
+            }
         });
     };
 
@@ -1856,9 +1866,18 @@
         saveHistoryWorkflow();
     });
 
+    const applyInitialSearchParams = () => {
+        const params = new URLSearchParams(window.location.search);
+        const keyword = params.get("documentNo") || params.get("keyword");
+        if (keyword && filterForm?.elements.keyword) {
+            filterForm.elements.keyword.value = keyword;
+        }
+    };
+
     const init = async () => {
         window.PcsUi?.consumeFlashToast?.();
         clearInspectionForm();
+        applyInitialSearchParams();
         await Promise.all([
             loadPartners(),
             loadWaitingDocuments(),
