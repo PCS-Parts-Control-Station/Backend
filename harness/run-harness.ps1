@@ -940,26 +940,30 @@ function Test-WorkspaceNavigation {
     $layoutScript = Get-Content -Raw -Encoding UTF8 -Path $layoutScriptPath
     $layoutStyle = Get-Content -Raw -Encoding UTF8 -Path $layoutStylePath
 
-    if ($fragment -match 'data-route="categories"') {
-        Add-Result "FAIL" "WORKSPACE_CATEGORY_SIDEBAR_DUPLICATED" "The category route is exposed as an independent sidebar item." "Keep one item-management entry and expose categories from the parts page."
-    }
-
-    foreach ($pattern in @(
+    foreach ($forbiddenSidebarRoute in @(
         'data-route="parts"',
-        'data-staff-any-permissions="STAFF_PART_CREATE,STAFF_CATEGORY_MANAGE"',
-        'data-staff-fallback-route="categories"'
+        'data-route="categories"'
     )) {
-        if ($fragment -notmatch [regex]::Escape($pattern)) {
-            Add-Result "FAIL" "WORKSPACE_PART_NAV_INVALID" "workspace-sidebar.html is missing $pattern." "Preserve the combined item-management navigation contract."
+        if ($fragment -match [regex]::Escape($forbiddenSidebarRoute)) {
+            Add-Result "FAIL" "WORKSPACE_ITEM_MASTER_SIDEBAR_DUPLICATED" "workspace-sidebar.html exposes $forbiddenSidebarRoute as an independent sidebar item." "Keep item master and category entry points inside the work pages, not in the sidebar."
         }
     }
 
     foreach ($pattern in @(
+        'data-route="part-units"'
+    )) {
+        if ($fragment -notmatch [regex]::Escape($pattern)) {
+            Add-Result "FAIL" "WORKSPACE_PART_UNIT_NAV_INVALID" "workspace-sidebar.html is missing $pattern." "Use part-unit management as the sidebar entry point for item-related work."
+        }
+    }
+
+    foreach ($pattern in @(
+        'data-route="part-units"',
         'data-route="categories"',
         'data-staff-permission="STAFF_CATEGORY_MANAGE"'
     )) {
         if ($parts -notmatch [regex]::Escape($pattern)) {
-            Add-Result "FAIL" "WORKSPACE_CATEGORY_ENTRY_MISSING" "parts.html is missing $pattern." "Expose category management from the parts page header."
+            Add-Result "FAIL" "WORKSPACE_ITEM_ENTRY_MISSING" "parts.html is missing $pattern." "Expose part-unit and category management from the parts page header."
         }
     }
 
@@ -976,12 +980,11 @@ function Test-WorkspaceNavigation {
     }
 
     foreach ($pattern in @(
-        'getStaffAnyPermissions',
-        'applyStaffFallbackRoute',
-        'activeRoute === "categories" ? "parts" : activeRoute'
+        'const applyActiveRoute',
+        'const activeSidebarRoute = activeRoute'
     )) {
         if ($layoutScript -notmatch [regex]::Escape($pattern)) {
-            Add-Result "FAIL" "WORKSPACE_NAV_SCRIPT_INVALID" "workspace-layout.js is missing $pattern." "Preserve permission fallback and parent active-state behavior."
+            Add-Result "FAIL" "WORKSPACE_NAV_SCRIPT_INVALID" "workspace-layout.js is missing $pattern." "Keep sidebar active-state behavior aligned with the visible sidebar routes."
         }
     }
 

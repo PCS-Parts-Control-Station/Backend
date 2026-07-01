@@ -93,7 +93,7 @@
 
     const applyActiveRoute = () => {
         const activeRoute = getActiveRoute();
-        const activeSidebarRoute = activeRoute === "categories" ? "parts" : activeRoute;
+        const activeSidebarRoute = activeRoute;
 
         document.querySelectorAll(".sidebar-nav [data-route]").forEach((link) => {
             const route = link.dataset.route;
@@ -114,36 +114,6 @@
             toggle?.setAttribute("aria-expanded", String(hasActiveLink));
             if (submenu) {
                 submenu.hidden = !hasActiveLink;
-            }
-        });
-    };
-
-    const applyStaffFallbackRoute = (session) => {
-        const normalizedRole = normalizeRole(session?.role);
-        if (normalizedRole !== "STAFF") {
-            return;
-        }
-        const staffPermissions = getStaffPermissions(session);
-        const activeRoute = getActiveRoute();
-
-        document.querySelectorAll(".sidebar-nav [data-route][data-staff-fallback-route]").forEach((navLink) => {
-            const route = navLink.dataset.route;
-            if (route !== activeRoute && !activeRoute.startsWith(`${route}/`)) {
-                return;
-            }
-            const anyPermissions = getStaffAnyPermissions(navLink);
-            const hasAnyPermission = anyPermissions.length === 0
-                    || anyPermissions.some((p) => staffPermissions.has(p));
-            if (!hasAnyPermission) {
-                return;
-            }
-            const routePermission = getRouteStaffPermission(activeRoute);
-            if (!routePermission || staffPermissions.has(routePermission)) {
-                return;
-            }
-            const fallbackRoute = navLink.dataset.staffFallbackRoute;
-            if (fallbackRoute && fallbackRoute !== activeRoute) {
-                window.location.href = `/w/${encodeURIComponent(companyCode)}/${fallbackRoute}`;
             }
         });
     };
@@ -407,7 +377,6 @@
                 sessionName.textContent = `${me.name} (${me.role})`;
             }
             applyWorkspaceVisibility(me);
-            applyStaffFallbackRoute(me);
         } catch (error) {
             sessionName.textContent = "로그인 필요";
             applyWorkspaceVisibility(null);
