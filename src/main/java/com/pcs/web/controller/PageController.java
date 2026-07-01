@@ -66,6 +66,11 @@ public class PageController {
         return "forward:/history-inspection.html";
     }
 
+    @GetMapping("/w/{companyCode}/documents")
+    public String documents() {
+        return "forward:/documents.html";
+    }
+
     @GetMapping("/w/{companyCode}/inbound")
     public String inbound() {
         return "forward:/inbound.html";
