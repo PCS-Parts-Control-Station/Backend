@@ -670,12 +670,16 @@
         }
 
         try {
-            const params = new URLSearchParams({ limit: "100" });
-            const data = await api.getData(`/api/workspaces/${encodeURIComponent(companyCode)}/categories?${params.toString()}`, {
-                authRedirect: true,
-                loginCompanyCode: companyCode,
+            if (!window.PcsCategory?.loadAll) {
+                throw new Error("분류 전체 로딩 공통 함수를 찾을 수 없습니다.");
+            }
+            const categories = await window.PcsCategory.loadAll(companyCode, {
+                apiOptions: {
+                    authRedirect: true,
+                    loginCompanyCode: companyCode,
+                },
             });
-            renderCategories(data);
+            renderCategories(categories);
         } catch (error) {
             if (categorySelect) {
                 categorySelect.innerHTML = '<option value="">분류 조회 실패</option>';

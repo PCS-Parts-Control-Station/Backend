@@ -94,6 +94,7 @@ layer 순서는 아래 한 곳에서만 선언한다.
 - 공통 `.btn`, `.field`, `.panel-card`, `.data-row`를 페이지 CSS에서 다시 정의하지 않는다.
 - 오른쪽 사이드바 기본 구조는 `right-side-drawer`, `right-side-drawer-panel`, `drawer-scroll-body`, `right-side-scroll-list`, `right-assist-panel`을 사용한다.
 - 페이지 CSS에서 오른쪽 사이드바의 `position`, `right`, `width`, `height`, `transform`, `visibility`, `box-shadow`, 패널 자체 `overflow-y`를 다시 정의하지 않는다.
+- 오른쪽 사이드바의 저장, 초기화, 수정, 삭제, 취소 버튼 영역은 공통 `form-actions` 규칙을 따른다. 페이지 CSS에서 별도 하단 고정 구조를 중복 구현하지 않는다.
 - 전표 라인, 사양 항목처럼 반복 항목이 길어지는 영역은 `right-side-scroll-list`를 붙이고, 드로어 루트와 패널에는 스크롤을 만들지 않는다.
 - 공통 컴포넌트의 실제 페이지 차이만 modifier 또는 페이지 범위 선택자로 보정한다.
 - 반응형 전체 골격은 layout이, 컴포넌트 내부 전환은 components가, 한 페이지의 예외만 page가 담당한다.

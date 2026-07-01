@@ -16,6 +16,9 @@
       "pathPatterns": [
         "^src/main/java/com/pcs/domain/company/",
         "^src/main/resources/mapper/company/",
+        "^src/test/java/com/pcs/domain/company/",
+        "^src/integrationTest/java/com/pcs/domain/company/",
+        "^src/integrationTest/resources/pcs-account-test-schema\\.sql$",
         "^docs/features/company(-db)?\\.md$",
         "^src/main/resources/static/(company-register|company-complete)\\.html$",
         "^src/main/resources/static/js/(company-register|company-complete)\\.js$",
@@ -28,7 +31,10 @@
       "pathPatterns": [
         "^src/main/java/com/pcs/domain/member/",
         "^src/main/resources/mapper/member/",
-        "^docs/features/member(-db)?\\.md$",
+        "^src/test/java/com/pcs/domain/member/",
+        "^src/integrationTest/java/com/pcs/domain/member/",
+        "^src/integrationTest/resources/pcs-account-test-schema\\.sql$",
+        "^docs/features/(member|mypage)(-db)?\\.md$",
         "^src/main/resources/static/(users|mypage)\\.html$",
         "^src/main/resources/static/js/(users|mypage)\\.js$",
         "^src/main/resources/static/css/pages/(users|mypage)\\.css$"
@@ -41,6 +47,10 @@
         "^src/main/java/com/pcs/domain/auth/",
         "^src/main/java/com/pcs/global/(jwt|security|auth)/",
         "^src/main/resources/mapper/auth/",
+        "^src/test/java/com/pcs/domain/auth/",
+        "^src/test/java/com/pcs/global/(jwt|security)/",
+        "^src/integrationTest/java/com/pcs/domain/auth/",
+        "^src/integrationTest/resources/pcs-account-test-schema\\.sql$",
         "^docs/features/auth(-db)?\\.md$",
         "^src/main/resources/static/(login|workspace-login)\\.html$",
         "^src/main/resources/static/js/(login|workspace-login|pcs-api)\\.js$",
@@ -54,6 +64,9 @@
       "pathPatterns": [
         "^src/main/java/com/pcs/domain/partner/",
         "^src/main/resources/mapper/partner/",
+        "^src/test/java/com/pcs/domain/partner/",
+        "^src/integrationTest/java/com/pcs/domain/partner/",
+        "^src/integrationTest/resources/pcs-account-test-schema\\.sql$",
         "^docs/features/partner(-db)?\\.md$",
         "^src/main/resources/static/partners\\.html$",
         "^src/main/resources/static/js/partners\\.js$",
@@ -66,6 +79,9 @@
       "pathPatterns": [
         "^src/main/java/com/pcs/domain/category/",
         "^src/main/resources/mapper/category/",
+        "^src/test/java/com/pcs/domain/category/",
+        "^src/integrationTest/java/com/pcs/domain/category/",
+        "^src/integrationTest/resources/pcs-category-part-test-schema\\.sql$",
         "^docs/features/category(-db)?\\.md$",
         "^src/main/resources/static/categories\\.html$",
         "^src/main/resources/static/js/categories\\.js$",
@@ -78,10 +94,29 @@
       "pathPatterns": [
         "^src/main/java/com/pcs/domain/part/",
         "^src/main/resources/mapper/part/",
+        "^src/test/java/com/pcs/domain/part/",
+        "^src/integrationTest/java/com/pcs/domain/part/",
+        "^src/integrationTest/resources/pcs-category-part-test-schema\\.sql$",
         "^docs/features/part(-db)?\\.md$",
         "^src/main/resources/static/parts\\.html$",
         "^src/main/resources/static/js/parts\\.js$",
         "^src/main/resources/static/css/pages/parts\\.css$"
+      ]
+    },
+    {
+      "name": "part-unit",
+      "dbChecks": ["part", "category", "stock", "inspection"],
+      "pathPatterns": [
+        "^src/main/java/com/pcs/domain/part/",
+        "^src/main/resources/mapper/part/",
+        "^src/test/java/com/pcs/domain/part/",
+        "^src/integrationTest/java/com/pcs/domain/part/",
+        "^src/integrationTest/resources/pcs-category-part-test-schema\\.sql$",
+        "^docs/features/part-unit(-db)?\\.md$",
+        "^docs/sql/(pcs-schema-ddl|pcs-part-unit-list-index-alter)\\.sql$",
+        "^src/main/resources/static/part-units\\.html$",
+        "^src/main/resources/static/js/part-units\\.js$",
+        "^src/main/resources/static/css/pages/part-units\\.css$"
       ]
     },
     {

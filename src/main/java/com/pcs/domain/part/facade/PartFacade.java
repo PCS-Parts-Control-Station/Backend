@@ -3,8 +3,11 @@ package com.pcs.domain.part.facade;
 import com.pcs.domain.part.dto.request.CreatePartRequest;
 import com.pcs.domain.part.dto.request.UpdatePartRequest;
 import com.pcs.domain.part.dto.response.PartDetailResponse;
+import com.pcs.domain.part.dto.response.PartUnitDetailResponse;
 import com.pcs.domain.part.dto.response.SearchPartResponse;
 import com.pcs.domain.part.dto.response.SearchPartSummaryResponse;
+import com.pcs.domain.part.dto.response.SearchPartUnitResponse;
+import com.pcs.domain.part.dto.response.SearchPartUnitSummaryResponse;
 import com.pcs.domain.part.service.PartService;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.security.PcsPrincipal;
@@ -43,6 +46,37 @@ public class PartFacade {
     ) {
         PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
         return partService.getPart(checkedPrincipal.companyId(), partId);
+    }
+
+    public PageResultDto<SearchPartUnitResponse, SearchPartUnitSummaryResponse> searchPartUnits(
+            PcsPrincipal principal,
+            String pathCompanyCode,
+            String keyword,
+            Long categoryId,
+            String partState,
+            Integer page,
+            Integer size,
+            Integer limit
+    ) {
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
+        return partService.searchPartUnits(
+                checkedPrincipal.companyId(),
+                keyword,
+                categoryId,
+                partState,
+                page,
+                size,
+                limit
+        );
+    }
+
+    public PartUnitDetailResponse getPartUnit(
+            PcsPrincipal principal,
+            String pathCompanyCode,
+            Long unitId
+    ) {
+        PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
+        return partService.getPartUnit(checkedPrincipal.companyId(), unitId);
     }
 
     public PartDetailResponse createPart(

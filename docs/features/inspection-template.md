@@ -43,7 +43,7 @@ src/main/resources/static/js/inspection-templates.js
 
 화면은 서버 Model을 받지 않고 JS가 `/api/workspaces/{companyCode}/**` API를 호출한다.
 
-카테고리 선택지는 하드코딩하지 않는다. `GET /api/workspaces/{companyCode}/categories?size=100` 응답의 `categoryId`, `categoryName`을 사용한다.
+카테고리 선택지는 하드코딩하지 않는다. 화면은 `PcsCategory.loadAll(companyCode)` 공통 함수를 사용해 `/categories?page={page}&size=100` 전체 페이지를 순회하고, 응답의 `categoryId`, `categoryName`을 사용한다.
 
 화면 구성:
 

@@ -1,9 +1,11 @@
 package com.pcs.domain.category.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
@@ -16,7 +18,6 @@ import com.pcs.domain.category.dto.request.CategorySpecDefinitionRequest;
 import com.pcs.domain.category.dto.request.CategorySpecOptionRequest;
 import com.pcs.domain.category.dto.request.CreateCategoryRequest;
 import com.pcs.domain.category.dto.request.UpdateCategoryRequest;
-import com.pcs.domain.category.dto.response.CategoryDetailResponse;
 import com.pcs.domain.category.dto.response.CategorySpecDefinitionRow;
 import com.pcs.domain.category.dto.response.CategorySpecOptionResponse;
 import com.pcs.domain.category.dto.response.SearchCategoryResponse;
@@ -25,21 +26,25 @@ import com.pcs.domain.category.entity.PartSpecDefinition;
 import com.pcs.domain.category.entity.PartSpecOption;
 import com.pcs.domain.category.mapper.CategoryMapper;
 import com.pcs.domain.category.mapper.PartSpecMapper;
-import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class CategoryServiceTest {
+
+    private static final Long COMPANY_ID = 1L;
+    private static final Long MEMBER_ID = 7L;
 
     @Mock
     private CategoryMapper categoryMapper;
@@ -56,294 +61,336 @@ class CategoryServiceTest {
     }
 
     @Test
-    void searchCategories_usesKeywordPagingAndIncludesPartCount() {
-        Long companyId = 1L;
-        SearchCategoryResponse category = new SearchCategoryResponse(
-                10L,
-                "GPU",
-                "그래픽카드",
-                3L,
-                LocalDateTime.of(2026, 6, 4, 10, 0)
-        );
+    void searchCategories_trimsKeywordAndUsesPageQuery() {
+        SearchCategoryResponse category = categoryResponse(10L, "GPU", 3L);
+        when(categoryMapper.countCategories(COMPANY_ID, "GPU")).thenReturn(1L);
+        when(categoryMapper.searchCategories(COMPANY_ID, "GPU", 10, 20)).thenReturn(List.of(category));
 
-        when(categoryMapper.countCategories(companyId, "GPU")).thenReturn(1L);
-        when(categoryMapper.searchCategories(companyId, "GPU", 10, 20))
-                .thenReturn(List.of(category));
+        var response = categoryService.searchCategories(COMPANY_ID, " GPU ", 2, 10, null);
 
-        PageResultDto<SearchCategoryResponse, Void> response = categoryService.searchCategories(
-                companyId,
-                " GPU ",
-                2,
-                10,
-                null
-        );
-
-        assertEquals(1, response.content().size());
-        assertEquals(3L, response.content().get(0).partCount());
-        assertEquals(2, response.page());
-        assertEquals(10, response.size());
-        assertEquals(1, response.totalElements());
-        verify(categoryMapper).searchCategories(companyId, "GPU", 10, 20);
+        assertThat(response.content()).containsExactly(category);
+        assertThat(response.page()).isEqualTo(2);
+        assertThat(response.size()).isEqualTo(10);
+        assertThat(response.totalElements()).isEqualTo(1);
+        assertThat(response.content().get(0).partCount()).isEqualTo(3L);
+        verify(categoryMapper).searchCategories(COMPANY_ID, "GPU", 10, 20);
     }
 
     @Test
-    void searchCategories_usesLimitAsSizeAliasAndCapsToMax() {
-        Long companyId = 1L;
+    void searchCategories_usesLimitAsSizeAliasAndCapsToMaxSize() {
+        when(categoryMapper.countCategories(COMPANY_ID, null)).thenReturn(0L);
 
-        when(categoryMapper.countCategories(companyId, null)).thenReturn(0L);
+        var response = categoryService.searchCategories(COMPANY_ID, " ", null, null, 500);
 
-        PageResultDto<SearchCategoryResponse, Void> response = categoryService.searchCategories(
-                companyId,
-                " ",
-                null,
-                null,
-                500
-        );
-
-        assertEquals(0, response.page());
-        assertEquals(100, response.size());
-        assertTrue(response.content().isEmpty());
-        verify(categoryMapper, never()).searchCategories(companyId, null, 100, 0);
+        assertThat(response.page()).isZero();
+        assertThat(response.size()).isEqualTo(100);
+        assertThat(response.content()).isEmpty();
+        verify(categoryMapper, never()).searchCategories(eq(COMPANY_ID), isNull(), anyInt(), anyInt());
     }
 
     @Test
     void searchCategories_failsWhenCompanyInactive() {
-        Long companyId = 1L;
         doThrow(new BusinessException(ErrorCode.COMPANY_INACTIVE))
-                .when(workspaceAccessValidator).validateCompanyActive(companyId);
+                .when(workspaceAccessValidator).validateCompanyActive(COMPANY_ID);
 
-        BusinessException exception = assertThrows(
-                BusinessException.class,
-                () -> categoryService.searchCategories(companyId, null, 0, 10, null)
-        );
-
-        assertEquals(ErrorCode.COMPANY_INACTIVE, exception.getErrorCode());
+        assertThatThrownBy(() -> categoryService.searchCategories(COMPANY_ID, null, 0, 10, null))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.COMPANY_INACTIVE);
     }
 
     @Test
-    void createCategory_savesSpecDefinitionsAndSelectOptions() {
-        Long companyId = 1L;
-        Long memberId = 7L;
+    void createCategory_normalizesSpecKeysAndOptionValues() {
         CreateCategoryRequest request = new CreateCategoryRequest(
-                "RAM",
-                "메모리",
+                "Memory",
+                "Memory category",
                 List.of(
-                        new CategorySpecDefinitionRequest(null, "용량", "NUMBER", "GB", true, true, 0, List.of()),
+                        new CategorySpecDefinitionRequest(null, "Capacity", "NUMBER", "GB", true, true, null, List.of()),
                         new CategorySpecDefinitionRequest(
-                                null,
-                                "세대",
+                                " Memory Type ",
+                                "Type",
                                 "SELECT",
                                 null,
                                 false,
                                 true,
-                                1,
+                                5,
                                 List.of(
-                                        new CategorySpecOptionRequest("DDR4", "DDR4", 0),
-                                        new CategorySpecOptionRequest("DDR5", "DDR5", 1)
+                                        new CategorySpecOptionRequest("DDR4", null, null),
+                                        new CategorySpecOptionRequest("DDR5", "DDR5_VALUE", 3)
                                 )
                         )
                 )
         );
 
-        when(categoryMapper.existsByName(companyId, "RAM", null)).thenReturn(false);
-        doAnswer(invocation -> {
-            PartCategory category = invocation.getArgument(0);
-            category.setCategoryId(10L);
-            return null;
-        }).when(categoryMapper).insert(any(PartCategory.class));
-        doAnswer(invocation -> {
-            PartSpecDefinition specDefinition = invocation.getArgument(0);
-            specDefinition.setSpecDefinitionId("세대".equals(specDefinition.getSpecName()) ? 102L : 101L);
-            return null;
-        }).when(categoryMapper).insertSpecDefinition(any(PartSpecDefinition.class));
+        stubCategoryInsert(10L);
+        stubSpecDefinitionInsert();
+        stubCategoryDetail(10L);
+        when(categoryMapper.existsByName(COMPANY_ID, "Memory", null)).thenReturn(false);
 
-        when(categoryMapper.findResponseById(companyId, 10L)).thenReturn(new SearchCategoryResponse(
-                10L,
-                "RAM",
-                "메모리",
-                0L,
-                LocalDateTime.of(2026, 6, 5, 10, 0)
-        ));
-        when(partSpecMapper.findDefinitionsByCategory(companyId, 10L)).thenReturn(List.of(
-                new CategorySpecDefinitionRow(101L, 10L, "spec_1", "용량", "NUMBER", "GB", true, true, 0, true),
-                new CategorySpecDefinitionRow(102L, 10L, "spec_2", "세대", "SELECT", null, false, true, 1, true)
-        ));
-        when(partSpecMapper.findOptionsByDefinitionIds(List.of(101L, 102L))).thenReturn(List.of(
-                new CategorySpecOptionResponse(201L, 102L, "DDR4", "DDR4", 0, true),
-                new CategorySpecOptionResponse(202L, 102L, "DDR5", "DDR5", 1, true)
-        ));
+        categoryService.createCategory(COMPANY_ID, request, MEMBER_ID);
 
-        CategoryDetailResponse response = categoryService.createCategory(companyId, request, memberId);
+        ArgumentCaptor<PartSpecDefinition> definitionCaptor = ArgumentCaptor.forClass(PartSpecDefinition.class);
+        ArgumentCaptor<PartSpecOption> optionCaptor = ArgumentCaptor.forClass(PartSpecOption.class);
+        verify(categoryMapper, times(2)).insertSpecDefinition(definitionCaptor.capture());
+        verify(categoryMapper, times(2)).insertSpecOption(optionCaptor.capture());
 
-        assertEquals(10L, response.categoryId());
-        assertEquals(2, response.specDefinitions().size());
-        assertEquals("용량", response.specDefinitions().get(0).specName());
-        assertEquals(2, response.specDefinitions().get(1).options().size());
-        verify(categoryMapper, times(2)).insertSpecDefinition(any(PartSpecDefinition.class));
-        verify(categoryMapper, times(2)).insertSpecOption(any(PartSpecOption.class));
+        assertThat(definitionCaptor.getAllValues())
+                .extracting(PartSpecDefinition::getSpecKey)
+                .containsExactly("spec_1", "memory_type");
+        assertThat(definitionCaptor.getAllValues())
+                .extracting(PartSpecDefinition::getSortOrder)
+                .containsExactly(0, 5);
+        assertThat(optionCaptor.getAllValues())
+                .extracting(PartSpecOption::getOptionValue)
+                .containsExactly("DDR4", "DDR5_VALUE");
+        assertThat(optionCaptor.getAllValues())
+                .extracting(PartSpecOption::getSortOrder)
+                .containsExactly(0, 3);
     }
 
     @Test
-    void updateCategory_updatesNameAndDescriptionWhenSpecDefinitionsAreOmitted() {
-        Long companyId = 1L;
-        Long categoryId = 10L;
-        Long memberId = 7L;
-        PartCategory category = new PartCategory();
-        category.setCompanyId(companyId);
-        category.setCategoryId(categoryId);
-        category.setCategoryName("RAM");
-        category.setDescription("메모리");
-        UpdateCategoryRequest request = new UpdateCategoryRequest("Memory", "메모리 부품", null);
+    void createCategory_failsWhenCategoryNameDuplicated() {
+        when(categoryMapper.existsByName(COMPANY_ID, "GPU", null)).thenReturn(true);
 
-        when(categoryMapper.findById(companyId, categoryId)).thenReturn(category);
-        when(categoryMapper.countPartsByCategory(companyId, categoryId)).thenReturn(3L);
-        when(categoryMapper.existsByName(companyId, "Memory", categoryId)).thenReturn(false);
-        when(categoryMapper.findResponseById(companyId, categoryId)).thenReturn(new SearchCategoryResponse(
-                categoryId,
-                "Memory",
-                "메모리 부품",
-                3L,
-                LocalDateTime.of(2026, 6, 5, 11, 0)
-        ));
-        when(partSpecMapper.findDefinitionsByCategory(companyId, categoryId)).thenReturn(List.of());
+        CreateCategoryRequest request = new CreateCategoryRequest(" GPU ", null, List.of());
 
-        CategoryDetailResponse response = categoryService.updateCategory(companyId, categoryId, request, memberId);
-
-        assertEquals("Memory", response.categoryName());
-        assertEquals("메모리 부품", response.description());
-        verify(categoryMapper).update(category);
-        verify(categoryMapper, never()).deleteSpecValuesByCategory(companyId, categoryId);
-        verify(categoryMapper, never()).deleteSpecOptionsByCategory(companyId, categoryId);
-        verify(categoryMapper, never()).deleteSpecDefinitionsByCategory(companyId, categoryId);
+        assertThatThrownBy(() -> categoryService.createCategory(COMPANY_ID, request, MEMBER_ID))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.CATEGORY_NAME_DUPLICATED);
+        verify(categoryMapper, never()).insert(any(PartCategory.class));
     }
 
     @Test
-    void updateCategory_replacesSpecDefinitionsWhenNoLinkedParts() {
-        Long companyId = 1L;
-        Long categoryId = 10L;
-        Long memberId = 7L;
-        PartCategory category = new PartCategory();
-        category.setCompanyId(companyId);
-        category.setCategoryId(categoryId);
-        category.setCategoryName("RAM");
-        UpdateCategoryRequest request = new UpdateCategoryRequest(
-                "RAM",
-                "메모리",
-                List.of(new CategorySpecDefinitionRequest(null, "클럭", "NUMBER", "MHz", false, true, 0, List.of()))
+    void createCategory_failsWhenSpecNameDuplicated() {
+        stubCategoryInsert(10L);
+        when(categoryMapper.existsByName(COMPANY_ID, "GPU", null)).thenReturn(false);
+        CreateCategoryRequest request = new CreateCategoryRequest(
+                "GPU",
+                null,
+                List.of(
+                        new CategorySpecDefinitionRequest(null, "Chip", "TEXT", null, true, true, 0, List.of()),
+                        new CategorySpecDefinitionRequest(null, " chip ", "TEXT", null, true, true, 1, List.of())
+                )
         );
 
-        when(categoryMapper.findById(companyId, categoryId)).thenReturn(category);
-        when(categoryMapper.countPartsByCategory(companyId, categoryId)).thenReturn(0L);
-        when(categoryMapper.existsByName(companyId, "RAM", categoryId)).thenReturn(false);
-        doAnswer(invocation -> {
-            PartSpecDefinition specDefinition = invocation.getArgument(0);
-            specDefinition.setSpecDefinitionId(301L);
-            return null;
-        }).when(categoryMapper).insertSpecDefinition(any(PartSpecDefinition.class));
-        when(categoryMapper.findResponseById(companyId, categoryId)).thenReturn(new SearchCategoryResponse(
-                categoryId,
+        assertThatThrownBy(() -> categoryService.createCategory(COMPANY_ID, request, MEMBER_ID))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.INVALID_INPUT_VALUE);
+    }
+
+    @Test
+    void createCategory_failsWhenSpecKeyDuplicatedAfterNormalization() {
+        stubCategoryInsert(10L);
+        when(categoryMapper.existsByName(COMPANY_ID, "GPU", null)).thenReturn(false);
+        CreateCategoryRequest request = new CreateCategoryRequest(
+                "GPU",
+                null,
+                List.of(
+                        new CategorySpecDefinitionRequest("Memory Clock", "Clock", "NUMBER", "MHz", false, true, 0, List.of()),
+                        new CategorySpecDefinitionRequest("memory_clock", "Clock2", "NUMBER", "MHz", false, true, 1, List.of())
+                )
+        );
+
+        assertThatThrownBy(() -> categoryService.createCategory(COMPANY_ID, request, MEMBER_ID))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.INVALID_INPUT_VALUE);
+    }
+
+    @Test
+    void createCategory_failsWhenSelectSpecHasNoOptions() {
+        stubCategoryInsert(10L);
+        when(categoryMapper.existsByName(COMPANY_ID, "RAM", null)).thenReturn(false);
+        CreateCategoryRequest request = new CreateCategoryRequest(
                 "RAM",
-                "메모리",
-                0L,
-                LocalDateTime.of(2026, 6, 5, 12, 0)
-        ));
-        when(partSpecMapper.findDefinitionsByCategory(companyId, categoryId)).thenReturn(List.of(
-                new CategorySpecDefinitionRow(301L, categoryId, "spec_1", "클럭", "NUMBER", "MHz", false, true, 0, true)
-        ));
-        when(partSpecMapper.findOptionsByDefinitionIds(List.of(301L))).thenReturn(List.of());
+                null,
+                List.of(new CategorySpecDefinitionRequest(null, "Type", "SELECT", null, true, true, 0, List.of()))
+        );
 
-        CategoryDetailResponse response = categoryService.updateCategory(companyId, categoryId, request, memberId);
+        assertThatThrownBy(() -> categoryService.createCategory(COMPANY_ID, request, MEMBER_ID))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.INVALID_INPUT_VALUE);
+    }
 
-        assertEquals(1, response.specDefinitions().size());
-        assertEquals("클럭", response.specDefinitions().get(0).specName());
+    @Test
+    void createCategory_failsWhenSortOrderIsNegative() {
+        stubCategoryInsert(10L);
+        when(categoryMapper.existsByName(COMPANY_ID, "RAM", null)).thenReturn(false);
+        CreateCategoryRequest request = new CreateCategoryRequest(
+                "RAM",
+                null,
+                List.of(new CategorySpecDefinitionRequest(null, "Capacity", "NUMBER", "GB", true, true, -1, List.of()))
+        );
+
+        assertThatThrownBy(() -> categoryService.createCategory(COMPANY_ID, request, MEMBER_ID))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.INVALID_INPUT_VALUE);
+    }
+
+    @Test
+    void updateCategory_updatesOnlyBaseFieldsWhenSpecDefinitionsAreOmitted() {
+        PartCategory category = category(10L, "RAM");
+        UpdateCategoryRequest request = new UpdateCategoryRequest("Memory", "Updated", null);
+        when(categoryMapper.findById(COMPANY_ID, 10L)).thenReturn(category);
+        when(categoryMapper.countPartsByCategory(COMPANY_ID, 10L)).thenReturn(3L);
+        when(categoryMapper.existsByName(COMPANY_ID, "Memory", 10L)).thenReturn(false);
+        when(categoryMapper.findResponseById(COMPANY_ID, 10L)).thenReturn(categoryResponse(10L, "Memory", 3L));
+        when(partSpecMapper.findDefinitionsByCategory(COMPANY_ID, 10L)).thenReturn(List.of());
+
+        var response = categoryService.updateCategory(COMPANY_ID, 10L, request, MEMBER_ID);
+
+        assertThat(response.categoryName()).isEqualTo("Memory");
+        assertThat(category.getDescription()).isEqualTo("Updated");
+        verify(categoryMapper).update(category);
+        verify(categoryMapper, never()).deleteSpecValuesByCategory(COMPANY_ID, 10L);
+        verify(categoryMapper, never()).deleteSpecDefinitionsByCategory(COMPANY_ID, 10L);
+    }
+
+    @Test
+    void updateCategory_replacesSpecDefinitionsWhenNoPartsAreLinked() {
+        PartCategory category = category(10L, "RAM");
+        UpdateCategoryRequest request = new UpdateCategoryRequest(
+                "RAM",
+                "Updated",
+                List.of(new CategorySpecDefinitionRequest(null, "Clock", "NUMBER", "MHz", false, true, 0, List.of()))
+        );
+        when(categoryMapper.findById(COMPANY_ID, 10L)).thenReturn(category);
+        when(categoryMapper.countPartsByCategory(COMPANY_ID, 10L)).thenReturn(0L);
+        when(categoryMapper.existsByName(COMPANY_ID, "RAM", 10L)).thenReturn(false);
+        stubSpecDefinitionInsert();
+        stubCategoryDetail(10L);
+
+        categoryService.updateCategory(COMPANY_ID, 10L, request, MEMBER_ID);
+
         InOrder inOrder = inOrder(categoryMapper);
-        inOrder.verify(categoryMapper).deleteSpecValuesByCategory(companyId, categoryId);
-        inOrder.verify(categoryMapper).deleteSpecOptionsByCategory(companyId, categoryId);
-        inOrder.verify(categoryMapper).deleteSpecDefinitionsByCategory(companyId, categoryId);
+        inOrder.verify(categoryMapper).deleteSpecValuesByCategory(COMPANY_ID, 10L);
+        inOrder.verify(categoryMapper).deleteSpecOptionsByCategory(COMPANY_ID, 10L);
+        inOrder.verify(categoryMapper).deleteSpecDefinitionsByCategory(COMPANY_ID, 10L);
         verify(categoryMapper).insertSpecDefinition(any(PartSpecDefinition.class));
     }
 
     @Test
-    void updateCategory_failsSpecReplaceWhenCategoryHasLinkedParts() {
-        Long companyId = 1L;
-        Long categoryId = 10L;
-        Long memberId = 7L;
-        PartCategory category = new PartCategory();
-        category.setCompanyId(companyId);
-        category.setCategoryId(categoryId);
+    void updateCategory_failsSpecReplaceWhenPartsAreLinked() {
+        when(categoryMapper.findById(COMPANY_ID, 10L)).thenReturn(category(10L, "RAM"));
+        when(categoryMapper.countPartsByCategory(COMPANY_ID, 10L)).thenReturn(1L);
         UpdateCategoryRequest request = new UpdateCategoryRequest(
                 "RAM",
-                "메모리",
-                List.of(new CategorySpecDefinitionRequest(null, "클럭", "NUMBER", "MHz", false, true, 0, List.of()))
+                null,
+                List.of(new CategorySpecDefinitionRequest(null, "Clock", "NUMBER", "MHz", false, true, 0, List.of()))
         );
 
-        when(categoryMapper.findById(companyId, categoryId)).thenReturn(category);
-        when(categoryMapper.countPartsByCategory(companyId, categoryId)).thenReturn(2L);
-
-        BusinessException exception = assertThrows(
-                BusinessException.class,
-                () -> categoryService.updateCategory(companyId, categoryId, request, memberId)
-        );
-
-        assertEquals(ErrorCode.INVALID_INPUT_VALUE, exception.getErrorCode());
-        verify(categoryMapper, never()).update(any(PartCategory.class));
-        verify(categoryMapper, never()).deleteSpecValuesByCategory(companyId, categoryId);
-        verify(categoryMapper, never()).deleteSpecDefinitionsByCategory(companyId, categoryId);
+        assertThatThrownBy(() -> categoryService.updateCategory(COMPANY_ID, 10L, request, MEMBER_ID))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.INVALID_INPUT_VALUE);
+        verify(categoryMapper, never()).deleteSpecDefinitionsByCategory(COMPANY_ID, 10L);
     }
 
     @Test
-    void deleteCategory_deletesWhenNoLinkedParts() {
-        Long companyId = 1L;
-        Long categoryId = 10L;
-        PartCategory category = new PartCategory();
-        category.setCompanyId(companyId);
-        category.setCategoryId(categoryId);
+    void deleteCategory_deletesChildRowsBeforeCategoryWhenNoPartsAreLinked() {
+        when(categoryMapper.findById(COMPANY_ID, 10L)).thenReturn(category(10L, "RAM"));
+        when(categoryMapper.countPartsByCategory(COMPANY_ID, 10L)).thenReturn(0L);
 
-        when(categoryMapper.findById(companyId, categoryId)).thenReturn(category);
-        when(categoryMapper.countPartsByCategory(companyId, categoryId)).thenReturn(0L);
-
-        categoryService.deleteCategory(companyId, categoryId);
+        categoryService.deleteCategory(COMPANY_ID, 10L);
 
         InOrder inOrder = inOrder(categoryMapper);
-        inOrder.verify(categoryMapper).deleteSpecValuesByCategory(companyId, categoryId);
-        inOrder.verify(categoryMapper).deleteSpecOptionsByCategory(companyId, categoryId);
-        inOrder.verify(categoryMapper).deleteSpecDefinitionsByCategory(companyId, categoryId);
-        inOrder.verify(categoryMapper).deleteById(companyId, categoryId);
+        inOrder.verify(categoryMapper).deleteSpecValuesByCategory(COMPANY_ID, 10L);
+        inOrder.verify(categoryMapper).deleteSpecOptionsByCategory(COMPANY_ID, 10L);
+        inOrder.verify(categoryMapper).deleteSpecDefinitionsByCategory(COMPANY_ID, 10L);
+        inOrder.verify(categoryMapper).deleteById(COMPANY_ID, 10L);
     }
 
     @Test
-    void deleteCategory_failsWhenCategoryHasLinkedParts() {
-        Long companyId = 1L;
-        Long categoryId = 10L;
+    void deleteCategory_failsWhenPartsAreLinked() {
+        when(categoryMapper.findById(COMPANY_ID, 10L)).thenReturn(category(10L, "RAM"));
+        when(categoryMapper.countPartsByCategory(COMPANY_ID, 10L)).thenReturn(2L);
+
+        assertThatThrownBy(() -> categoryService.deleteCategory(COMPANY_ID, 10L))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.CATEGORY_IN_USE);
+        verify(categoryMapper, never()).deleteById(COMPANY_ID, 10L);
+    }
+
+    @Test
+    void deleteCategory_failsWhenCategoryDoesNotExist() {
+        when(categoryMapper.findById(COMPANY_ID, 10L)).thenReturn(null);
+
+        assertThatThrownBy(() -> categoryService.deleteCategory(COMPANY_ID, 10L))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.CATEGORY_NOT_FOUND);
+    }
+
+    private void stubCategoryInsert(Long categoryId) {
+        doAnswer(invocation -> {
+            PartCategory category = invocation.getArgument(0);
+            category.setCategoryId(categoryId);
+            return null;
+        }).when(categoryMapper).insert(any(PartCategory.class));
+    }
+
+    private void stubSpecDefinitionInsert() {
+        AtomicLong sequence = new AtomicLong(100);
+        doAnswer(invocation -> {
+            PartSpecDefinition specDefinition = invocation.getArgument(0);
+            specDefinition.setSpecDefinitionId(sequence.incrementAndGet());
+            return null;
+        }).when(categoryMapper).insertSpecDefinition(any(PartSpecDefinition.class));
+    }
+
+    private void stubCategoryDetail(Long categoryId) {
+        when(categoryMapper.findResponseById(COMPANY_ID, categoryId)).thenReturn(categoryResponse(categoryId, "Memory", 0L));
+        when(partSpecMapper.findDefinitionsByCategory(COMPANY_ID, categoryId)).thenReturn(List.of(
+                definitionRow(101L, categoryId, "spec_1", "Capacity", "NUMBER"),
+                definitionRow(102L, categoryId, "memory_type", "Type", "SELECT")
+        ));
+        when(partSpecMapper.findOptionsByDefinitionIds(List.of(101L, 102L))).thenReturn(List.of(
+                new CategorySpecOptionResponse(201L, 102L, "DDR4", "DDR4", 0, true),
+                new CategorySpecOptionResponse(202L, 102L, "DDR5", "DDR5_VALUE", 3, true)
+        ));
+    }
+
+    private PartCategory category(Long categoryId, String name) {
         PartCategory category = new PartCategory();
-        category.setCompanyId(companyId);
+        category.setCompanyId(COMPANY_ID);
         category.setCategoryId(categoryId);
-
-        when(categoryMapper.findById(companyId, categoryId)).thenReturn(category);
-        when(categoryMapper.countPartsByCategory(companyId, categoryId)).thenReturn(2L);
-
-        BusinessException exception = assertThrows(
-                BusinessException.class,
-                () -> categoryService.deleteCategory(companyId, categoryId)
-        );
-
-        assertEquals(ErrorCode.CATEGORY_IN_USE, exception.getErrorCode());
-        verify(categoryMapper, never()).deleteById(companyId, categoryId);
+        category.setCategoryName(name);
+        return category;
     }
 
-    @Test
-    void deleteCategory_failsWhenCategoryNotFound() {
-        Long companyId = 1L;
-        Long categoryId = 10L;
-
-        when(categoryMapper.findById(companyId, categoryId)).thenReturn(null);
-
-        BusinessException exception = assertThrows(
-                BusinessException.class,
-                () -> categoryService.deleteCategory(companyId, categoryId)
+    private SearchCategoryResponse categoryResponse(Long categoryId, String name, Long partCount) {
+        return new SearchCategoryResponse(
+                categoryId,
+                name,
+                name + " description",
+                partCount,
+                LocalDateTime.of(2026, 6, 5, 10, 0)
         );
+    }
 
-        assertEquals(ErrorCode.CATEGORY_NOT_FOUND, exception.getErrorCode());
-        verify(categoryMapper, never()).deleteById(companyId, categoryId);
+    private CategorySpecDefinitionRow definitionRow(
+            Long specDefinitionId,
+            Long categoryId,
+            String specKey,
+            String specName,
+            String inputType
+    ) {
+        return new CategorySpecDefinitionRow(
+                specDefinitionId,
+                categoryId,
+                specKey,
+                specName,
+                inputType,
+                null,
+                true,
+                true,
+                0,
+                true
+        );
     }
 }

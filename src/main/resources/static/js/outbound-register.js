@@ -654,8 +654,10 @@
             return;
         }
         try {
-            const data = await window.PcsApi.getData(`${apiBase()}/categories?size=100`, apiOptions());
-            categoryOptions = normalizeListData(data);
+            if (!window.PcsCategory?.loadAll) {
+                throw new Error("분류 전체 로딩 공통 함수를 찾을 수 없습니다.");
+            }
+            categoryOptions = await window.PcsCategory.loadAll(getCompanyCode(), { apiOptions });
             syncCategoryFilterLabel();
             renderCategoryPickerList();
         } catch (error) {

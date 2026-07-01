@@ -150,3 +150,14 @@ pcsRefreshToken={token}; HttpOnly; SameSite=Strict; Path=/api/auth
 - refresh token 저장, 로그인 이력 저장, 로그인 성공 시 `tb_member.last_login_at` 갱신을 확인한다.
 - 업무 화면 JS는 `docs/ai/pcs-auth-client-rules.md` 기준으로 인증 API를 호출한다.
 - URL 업체 코드가 존재하지 않거나 로그인 계정의 업체와 다르면 공통 잘못된 접근 페이지로 이동한다.
+
+## Test Coverage
+
+- Unit/facade tests: `AuthServiceTest`, `AuthFacadeTest`
+- API tests: `AuthApiControllerTest`
+- Required checks:
+  - workspace login accepts `/w` company code body and `/w/{companyCode}` path flow
+  - refresh token is stored in HttpOnly cookie and rotated on refresh
+  - logout revokes the refresh-token family and expires the cookie
+  - `/me` rejects missing principal and returns current session data
+  - URL company code and JWT company identity must match

@@ -9,8 +9,13 @@ import com.pcs.domain.part.dto.request.PartSpecValueRequest;
 import com.pcs.domain.part.dto.request.UpdatePartRequest;
 import com.pcs.domain.part.dto.response.PartDetailResponse;
 import com.pcs.domain.part.dto.response.PartSpecValueResponse;
+import com.pcs.domain.part.dto.response.PartUnitDetailResponse;
+import com.pcs.domain.part.dto.response.PartUnitInspectionHistoryResponse;
+import com.pcs.domain.part.dto.response.PartUnitStockHistoryResponse;
 import com.pcs.domain.part.dto.response.SearchPartResponse;
 import com.pcs.domain.part.dto.response.SearchPartSummaryResponse;
+import com.pcs.domain.part.dto.response.SearchPartUnitResponse;
+import com.pcs.domain.part.dto.response.SearchPartUnitSummaryResponse;
 import com.pcs.domain.part.entity.PartSpecValue;
 import com.pcs.domain.part.entity.PcPart;
 import com.pcs.domain.part.mapper.PartMapper;
@@ -41,6 +46,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class PartService {
 
     private static final int MAX_CODE_ATTEMPT = 999;
+    private static final int PART_UNIT_DEFAULT_SIZE = 20;
+    private static final int PART_UNIT_HISTORY_LIMIT = 10;
+    private static final Set<String> PART_UNIT_STATE_FILTERS = Set.of(
+            "WAITING",
+            "A",
+            "B",
+            "C",
+            "DEFECTIVE",
+            "OUTBOUND"
+    );
 
     private final PartMapper partMapper;
     private final PartSpecMapper partSpecMapper;
@@ -92,9 +107,68 @@ public class PartService {
         return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, summary);
     }
 
+    public PageResultDto<SearchPartUnitResponse, SearchPartUnitSummaryResponse> searchPartUnits(
+            Long companyId,
+            String keyword,
+            Long categoryId,
+            String partState,
+            Integer page,
+            Integer size,
+            Integer limit
+    ) {
+        validateCompanyActive(companyId);
+
+        String normalizedKeyword = TextNormalizer.optional(keyword);
+        String normalizedPartState = normalizePartState(partState);
+        PageQuery pageQuery = PageQuery.of(page, size, limit, PART_UNIT_DEFAULT_SIZE);
+
+        SearchPartUnitSummaryResponse summary = partMapper.summarizePartUnits(
+                companyId,
+                normalizedKeyword,
+                categoryId,
+                normalizedPartState
+        );
+        if (summary == null) {
+            summary = new SearchPartUnitSummaryResponse(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        }
+
+        long totalElements = summary.totalCount();
+        List<SearchPartUnitResponse> items = totalElements == 0
+                ? List.of()
+                : partMapper.searchPartUnits(
+                        companyId,
+                        normalizedKeyword,
+                        categoryId,
+                        normalizedPartState,
+                        pageQuery.size(),
+                        pageQuery.offset()
+                );
+
+        return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, summary);
+    }
+
     public PartDetailResponse getPart(Long companyId, Long partId) {
         validateCompanyActive(companyId);
         return getPartDetail(companyId, partId);
+    }
+
+    public PartUnitDetailResponse getPartUnit(Long companyId, Long unitId) {
+        validateCompanyActive(companyId);
+        SearchPartUnitResponse unit = partMapper.findPartUnitById(companyId, unitId);
+        if (unit == null) {
+            throw new BusinessException(ErrorCode.PART_UNIT_NOT_FOUND);
+        }
+        List<PartUnitStockHistoryResponse> stockHistories = partMapper.findPartUnitStockHistories(
+                companyId,
+                unitId,
+                PART_UNIT_HISTORY_LIMIT
+        );
+        List<PartUnitInspectionHistoryResponse> inspectionHistories = partMapper.findPartUnitInspectionHistories(
+                companyId,
+                unitId,
+                PART_UNIT_HISTORY_LIMIT
+        );
+        return new PartUnitDetailResponse(unit, stockHistories, inspectionHistories);
     }
 
     @Transactional
@@ -195,6 +269,18 @@ public class PartService {
             throw new BusinessException(ErrorCode.CATEGORY_NOT_FOUND);
         }
         return categoryName;
+    }
+
+    private String normalizePartState(String partState) {
+        String normalized = TextNormalizer.optional(partState);
+        if (normalized == null) {
+            return null;
+        }
+        String upper = normalized.toUpperCase(Locale.ROOT);
+        if (!PART_UNIT_STATE_FILTERS.contains(upper)) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "부품 상태 검색 조건이 올바르지 않습니다.");
+        }
+        return upper;
     }
 
     private List<PartSpecValue> normalizeSpecValues(

@@ -43,3 +43,13 @@ com.pcs.domain.company
 - Owner 회원가입 + 회사 생성은 단일 트랜잭션으로 처리한다.
 - 회사 생성 실패 시 Owner와 회사 연결이 부분 저장되면 안 된다.
 - `companyCode` 중복 예외는 `docs/ai/pcs-backend-common-rules.md` 기준의 ErrorCode로 처리한다.
+
+## Test Coverage
+
+- Unit/facade tests: `CompanyFacadeTest`
+- API tests: `OwnerSignupApiControllerTest`, `WorkspacePublicApiControllerTest`
+- Required checks:
+  - company signup creates company and OWNER account in one flow
+  - duplicate company code and business registration number are rejected
+  - owner company read/update is OWNER-only
+  - public workspace info rejects inactive or missing company codes

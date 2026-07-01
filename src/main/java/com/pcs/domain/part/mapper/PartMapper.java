@@ -1,8 +1,12 @@
 package com.pcs.domain.part.mapper;
 
 import com.pcs.domain.part.dto.response.PartSpecValueResponse;
+import com.pcs.domain.part.dto.response.PartUnitInspectionHistoryResponse;
+import com.pcs.domain.part.dto.response.PartUnitStockHistoryResponse;
 import com.pcs.domain.part.dto.response.SearchPartResponse;
 import com.pcs.domain.part.dto.response.SearchPartSummaryResponse;
+import com.pcs.domain.part.dto.response.SearchPartUnitResponse;
+import com.pcs.domain.part.dto.response.SearchPartUnitSummaryResponse;
 import com.pcs.domain.part.entity.PartSpecValue;
 import com.pcs.domain.part.entity.PcPart;
 import java.util.List;
@@ -33,6 +37,39 @@ public interface PartMapper {
             @Param("keyword") String keyword,
             @Param("categoryId") Long categoryId,
             @Param("active") Boolean active
+    );
+
+    List<SearchPartUnitResponse> searchPartUnits(
+            @Param("companyId") Long companyId,
+            @Param("keyword") String keyword,
+            @Param("categoryId") Long categoryId,
+            @Param("partState") String partState,
+            @Param("size") int size,
+            @Param("offset") int offset
+    );
+
+    SearchPartUnitSummaryResponse summarizePartUnits(
+            @Param("companyId") Long companyId,
+            @Param("keyword") String keyword,
+            @Param("categoryId") Long categoryId,
+            @Param("partState") String partState
+    );
+
+    SearchPartUnitResponse findPartUnitById(
+            @Param("companyId") Long companyId,
+            @Param("unitId") Long unitId
+    );
+
+    List<PartUnitStockHistoryResponse> findPartUnitStockHistories(
+            @Param("companyId") Long companyId,
+            @Param("unitId") Long unitId,
+            @Param("size") int size
+    );
+
+    List<PartUnitInspectionHistoryResponse> findPartUnitInspectionHistories(
+            @Param("companyId") Long companyId,
+            @Param("unitId") Long unitId,
+            @Param("size") int size
     );
 
     PcPart findById(

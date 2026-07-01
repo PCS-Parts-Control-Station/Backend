@@ -1,0 +1,226 @@
+@layer page {
+.part-units-page,
+.part-units-content-grid,
+.part-units-content-grid .content-main,
+.part-units-table-card {
+    min-width: 0;
+}
+
+.part-units-filter-card {
+    gap: 14px;
+}
+
+.part-unit-summary-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(112px, 0.18fr);
+    gap: 14px;
+    align-items: stretch;
+}
+
+.part-unit-summary-group {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+    margin: 0;
+}
+
+.part-unit-summary-group.is-operational {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(190px, 1.15fr) repeat(3, minmax(150px, 1fr));
+}
+
+.part-unit-summary-group.is-grade {
+    grid-template-columns: repeat(5, minmax(112px, 1fr));
+}
+
+.part-unit-summary-group.is-outbound {
+    grid-template-columns: minmax(100px, 1fr);
+}
+
+.part-unit-summary-card {
+    display: grid;
+    align-content: center;
+    gap: 9px;
+    min-width: 0;
+    min-height: 86px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: var(--shadow-sm);
+}
+
+.part-unit-summary-card dt,
+.part-unit-summary-card dd {
+    margin: 0;
+    line-height: 1;
+}
+
+.part-unit-summary-card dt {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.part-unit-summary-card dd {
+    color: var(--navy);
+    font-size: 25px;
+    font-weight: 800;
+}
+
+.part-unit-summary-card.is-primary {
+    border-color: rgba(37, 99, 235, 0.22);
+    background: var(--blue-soft, #eff6ff);
+}
+
+.part-unit-summary-card.is-primary dd,
+.part-unit-summary-card.is-available dd {
+    color: var(--cyan-dark);
+}
+
+.part-unit-summary-card.is-pending dd,
+.part-unit-summary-card.is-hold dd {
+    color: #b45309;
+}
+
+.part-unit-summary-card.is-danger dd {
+    color: var(--red);
+}
+
+.part-unit-summary-card.is-muted {
+    background: rgba(248, 250, 252, 0.92);
+}
+
+.part-unit-summary-card.is-muted dd {
+    color: var(--muted);
+}
+
+.part-units-table {
+    overflow-x: auto;
+}
+
+.part-unit-data-row {
+    grid-template-columns: 29% 35% 17% 19%;
+    min-width: 1180px;
+    gap: 0;
+    padding: 0 20px;
+}
+
+.part-unit-data-row.table-head {
+    min-height: 36px;
+}
+
+.part-unit-data-row:not(.table-head) {
+    min-height: 48px;
+}
+
+.part-unit-data-row > * {
+    min-width: 0;
+    width: 100%;
+    justify-self: stretch;
+    padding-right: 20px;
+    text-align: left;
+}
+
+.part-unit-data-row > span,
+.part-unit-data-row > span[role="cell"],
+.part-unit-data-row > span[role="columnheader"],
+.part-unit-data-row strong,
+.part-unit-data-row small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.part-unit-data-row > span[role="cell"] {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.part-unit-line {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.part-unit-line strong,
+.part-unit-muted {
+    display: inline;
+    min-width: 0;
+    vertical-align: baseline;
+}
+
+.part-unit-muted {
+    margin-left: 6px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.part-unit-data-row > span:nth-child(4) {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-right: 0;
+}
+
+.part-unit-status-text {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    color: inherit;
+    font: inherit;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 1180px) {
+    .part-unit-summary-layout {
+        grid-template-columns: minmax(0, 1fr) minmax(112px, 0.24fr);
+    }
+
+    .part-unit-summary-group.is-operational {
+        grid-template-columns: repeat(4, minmax(132px, 1fr));
+    }
+
+    .part-unit-summary-group.is-grade {
+        grid-template-columns: repeat(5, minmax(88px, 1fr));
+    }
+}
+
+@media (max-width: 840px) {
+    .part-unit-summary-layout {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .part-unit-summary-group.is-operational,
+    .part-unit-summary-group.is-grade {
+        grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+    }
+
+    .part-unit-summary-group.is-outbound {
+        grid-template-columns: minmax(132px, 0.45fr);
+    }
+
+    .part-units-table {
+        overflow-x: visible;
+    }
+
+    .part-unit-data-row {
+        min-width: 0;
+        grid-template-columns: 1fr;
+        padding: 14px 16px;
+    }
+
+    .part-unit-data-row.table-head {
+        display: none;
+    }
+
+}
+
+}

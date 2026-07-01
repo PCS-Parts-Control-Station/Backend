@@ -114,3 +114,13 @@ ADMIN/STAFF에는 `0` 같은 값을 넣지 않고 `NULL`을 유지한다.
 
 실행 명령과 `-DbFeature member` 사용 기준은 `docs/ai/pcs-harness-rules.md`를 따른다.  
 회사 등록처럼 `tb_member` 구조만 확인하면 `member.md`의 사용자 관리 기능 전체가 아니라 이 문서의 DB 규칙만 검사한다.
+
+## DB Integration Test Coverage
+
+- Integration test: `MemberPersistenceIntegrationTest`
+- Schema fixture: `src/integrationTest/resources/pcs-account-test-schema.sql`
+- Required checks:
+  - temporary-password users are persisted with hashed password
+  - member search scope follows OWNER/ADMIN role rules
+  - disabled STAFF permissions are persisted per company
+  - temporary password issue and password change revoke refresh tokens

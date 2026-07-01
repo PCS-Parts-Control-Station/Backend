@@ -69,6 +69,7 @@ src/main/resources/static/js/inspection.js
 - 상태 변경 시 `tb_part_status_history`를 저장한다.
 - 검수 항목 결과는 저장 시점의 항목명과 선택지 라벨/값 snapshot을 함께 저장한다.
 - 과거 검수 결과는 템플릿, 항목, 선택지가 수정되거나 중지되어도 snapshot 기준으로 유지한다.
+- 관리번호 단위 통합 조회 화면은 `docs/features/part-unit.md`를 따르며, 이 문서는 검수 상태·등급·판매상태 변경과 검수 이력 저장만 담당한다.
 
 ## 검수 템플릿 기반 입력
 
