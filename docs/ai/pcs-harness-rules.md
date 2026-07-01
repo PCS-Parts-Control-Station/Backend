@@ -108,6 +108,20 @@ inspection
 .\harness\run-feedback-loop.ps1 -Mode gate -DbFeature member
 ```
 
+## Codex 작업 중 하네스 실행 제한
+
+- Codex 작업 중에는 변경 범위에 맞는 최소 하네스만 실행한다.
+- 문서 수정, 주석 수정, 단순 문구 수정만 있으면 하네스를 실행하지 않는다.
+- JS만 수정한 경우 JS 문법 검사와 관련 feature 검사만 우선한다.
+- Java만 수정한 경우 `compileJava`와 관련 feature 검사만 우선한다.
+- DB, Mapper, DDL을 수정한 경우에만 DB 검사를 실행한다.
+- `agent-failures.md`는 전체 파일을 읽지 않고 최신 FAIL 1건만 확인한다.
+- 동일 FAIL은 최대 2회까지만 자동 수정/재검증한다.
+- 이번 변경과 무관한 기존 FAIL/WARN은 별도 보고하고 자동 수정하지 않는다.
+- WARN은 즉시 실패가 아니다.
+- 이번 변경과 직접 관련된 WARN만 우선 검토한다.
+- 기존 WARN 전체 정리는 사용자가 명시적으로 요청한 경우에만 수행한다.
+
 ## Feature 검사 추가 방법
 
 새 기능을 하네스에서 직접 검사하려면 아래 순서를 따른다.

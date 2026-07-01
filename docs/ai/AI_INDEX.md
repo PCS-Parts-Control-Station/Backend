@@ -97,11 +97,11 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - `docs/ai/pcs-project-structure-reference.md`
 - `docs/ai/pcs-frontend-js-rules.md`
 - 화면 문구 또는 필드명이 바뀌면 `docs/ai/pcs-terminology-rules.md`
-- 필요한 경우 `docs/ai/pcs-api-spec.md`
 - 페이징 목록이면 `docs/ai/pcs-pagination-rules.md`
 - 등록/수정 완료 피드백이나 토스트를 다루면 `docs/ai/design/modal-dialog.md`
 - 해당 기능 문서 1개
 - 로그인 후 업무 화면에서 인증 API를 호출하면 `docs/ai/pcs-auth-client-rules.md`도 확인
+- 신규 API 경로를 연결하거나 기존 경로가 불확실할 때만 `docs/ai/pcs-api-spec.md`의 대상 라우트 섹션을 검색해서 확인
 
 예시:
 
@@ -142,13 +142,19 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - `docs/ai/pcs-agent-context.md`
 - `docs/ai/pcs-project-structure-reference.md`
 - `docs/ai/pcs-backend-common-rules.md`
-- `docs/ai/pcs-api-spec.md`
 - 요청/응답 필드와 화면 용어가 다르면 `docs/ai/pcs-terminology-rules.md`
 - 목록 API 또는 페이징 API면 `docs/ai/pcs-pagination-rules.md`
 - 권한/role 분기가 있으면 `docs/ai/pcs-permission-rules.md`
 - `active`, 사용 중지, 상태 보존을 다루면 `docs/ai/pcs-status-lifecycle-rules.md`
 - 해당 기능 문서 1개
 - `/api/workspaces/{companyCode}/**`처럼 인증이 필요한 API면 `docs/ai/pcs-auth-client-rules.md`도 확인
+
+조건부 문서:
+
+- 신규 API 경로를 추가하거나 기존 API 경로가 불확실할 때만 `docs/ai/pcs-api-spec.md`를 확인한다.
+- `pcs-api-spec.md`는 전체 파일을 읽지 않는다.
+- 먼저 도메인명, API 경로, DTO명으로 검색하고 관련 섹션만 읽는다.
+- 단순 내부 로직 수정, Service 검증 수정, Mapper SQL 수정에는 `pcs-api-spec.md`를 읽지 않는다.
 
 예시:
 
@@ -166,11 +172,18 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 읽을 문서:
 
 - `docs/ai/pcs-project-structure-reference.md`
-- `docs/sql/pcs-schema-ddl.sql`
 - 화면 용어와 DB 컬럼명이 다르면 `docs/ai/pcs-terminology-rules.md`
 - 해당 기능 문서 1개
 - DB 검증 기준이 있으면 `docs/features/{feature}-db.md`
 - `active` 의미나 상태 보존 기준을 판단해야 하면 `docs/ai/pcs-status-lifecycle-rules.md`
+
+조건부 문서:
+
+- `docs/sql/pcs-schema-ddl.sql`은 기본 필수 문서가 아니라 조건부 문서로 둔다.
+- 신규 테이블, 신규 컬럼, 조인 대상, 인덱스, 제약 조건 확인이 필요할 때만 `docs/sql/pcs-schema-ddl.sql`을 확인한다.
+- `pcs-schema-ddl.sql`은 전체 파일을 읽지 않는다.
+- 먼저 대상 테이블명으로 검색하고 해당 `CREATE TABLE`, 관련 `KEY`, 관련 `CHECK` 범위만 확인한다.
+- 단순 WHERE 조건, ORDER BY, Mapper resultMap 수정이면 대상 Mapper XML과 feature-db 문서를 우선한다.
 
 예시:
 
@@ -187,7 +200,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 
 SQL 참조 기준:
 
-- 기본 DB 구조 확인은 `docs/sql/pcs-schema-ddl.sql`만 본다.
+- 기본 DB 구조 확인이 필요한 경우에만 `docs/sql/pcs-schema-ddl.sql`의 대상 테이블 블록을 본다.
 - `docs/sql/*-alter.sql` 파일은 과거 수동 반영 기록이므로, 사용자가 직접 지정하거나 특정 컬럼 변경 이력을 확인할 때만 본다.
 - DDL과 feature DB 문서가 충돌하면 먼저 실제 DB/DDL 기준을 확인하고 feature DB 문서를 최신화한다.
 
@@ -271,6 +284,11 @@ SQL 참조 기준:
 - 위 문서 선택 규칙에 적힌 필수 문서와 조건부 문서만 읽는다.
 - 조건부 문서는 해당 조건에 맞을 때만 읽는다. 예: 페이징이면 `pcs-pagination-rules.md`, 인증 API면 `pcs-auth-client-rules.md`.
 - feature 문서는 기본적으로 해당 도메인 문서 1개만 읽고, DB 작업이면 같은 도메인의 `{feature}-db.md`만 추가로 읽는다.
-- `pcs-api-spec.md`와 `pcs-schema-ddl.sql`은 크므로 API 흐름이나 DB 구조 확인이 필요한 경우에만 읽는다.
+- 큰 문서는 전체 파일을 읽지 않는다.
+- `pcs-api-spec.md`는 신규/불확실한 API 경로 확인이 필요할 때만 대상 API 경로, 도메인명, DTO명으로 먼저 검색한다.
+- `pcs-schema-ddl.sql`은 DB 구조 확인이 필요할 때만 대상 테이블명으로 먼저 검색한다.
+- 공통 JS/CSS/Java 파일은 해당 기능이 직접 사용할 때만 읽는다.
+- 전체 리팩토링, 전체 중복 제거, 전체 문서 재정리는 사용자가 명시적으로 요청한 경우에만 한다.
+- 작은 수정은 대상 파일과 직접 관련된 규칙 문서만 확인한다.
 - 이미 읽은 문서라도 내용이 불확실하면 전체 재독해보다 관련 섹션만 확인한다.
-- 작업 완료 후 참조한 문서를 명시한다.
+- 작업 완료 후 실제로 참조한 문서만 짧게 적는다.
