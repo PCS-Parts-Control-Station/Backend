@@ -43,7 +43,7 @@ tb_member
 - 목록 정렬은 `tb_pc_part_unit.updated_at DESC, tb_pc_part_unit.unit_id DESC`이다.
 - 목록 전체 건수는 `partState`까지 포함한 where 조건으로 계산하고, 해당 `total_count`를 `PageResultDto.totalElements`의 원천으로 사용한다.
 - 화면 통계 카드는 `partState`를 제외한 검색어, 전표, 분류 조건으로 계산한다. 통계 카드 자체가 상태 필터이므로 현재 선택된 상태가 다른 통계 숫자를 0으로 만들면 안 된다.
-- summary의 `held_count`는 `unit_status = IN_STOCK` 전체가 아니라 `waiting_count + sales_available_count + sales_unavailable_count`와 같은 업무상 보유 기준이다. 검수완료 후 `sales_status = HOLD`인 판매보류 부품은 별도 참고 통계로만 집계한다.
+- summary의 `held_count`는 `unit_status = IN_STOCK` 전체가 아니라 `waiting_count + sales_available_count + sales_unavailable_count + sales_hold_count`와 같은 업무상 보유 기준이다.
 - 별도 `countPartUnits` 쿼리를 두지 않는다. 같은 where 조건의 `COUNT(*)`를 summary와 중복 실행하지 않는다.
 - 목록 SQL은 `unit_id` 페이지만 먼저 `ORDER BY updated_at DESC, unit_id DESC LIMIT/OFFSET`으로 확정하고, 확정된 관리번호에 대해서만 상세 컬럼과 최근 이력 컬럼을 조회한다.
 - 기본 목록 정렬은 `idx_pc_part_unit_list_default (company_id, active, updated_at DESC, unit_id DESC)` 인덱스가 받쳐야 한다.
@@ -57,6 +57,7 @@ tb_member
 - 최근 검수 이력은 `tb_inspection`에서 조회한다.
 - 최근 검수 이력 정렬은 `tb_inspection.inspected_at DESC, tb_inspection.inspection_id DESC`이다.
 - 목록의 최근 처리 표시값은 최근 입출고 이력과 최근 검수 이력 중 더 최근인 값을 사용한다.
+- 최근 처리 표시값이 입출고 이력일 때는 `movement_type` 기준으로 `입고`, `출고`, `입고취소`, `출고취소`를 구분한다. 화면에 `입출고`처럼 뭉뚱그린 라벨을 내려주지 않는다.
 - 상세의 이력 목록은 각 10건 이내로 제한한다.
 
 ## 제약 조건 참조
@@ -101,8 +102,9 @@ idx_pc_part_unit_work_status
   - `partState=OUTBOUND`은 출고 상태 관리번호만 반환한다.
   - 판매상태는 검색 조건에 없고, 응답 필드로만 내려온다.
   - summary의 `totalCount`, `heldCount`, `waitingCount`, `salesAvailableCount`, `salesHoldCount`, `salesUnavailableCount`, `gradeACount`, `gradeBCount`, `gradeCCount`, `defectiveCount`, `outboundCount`, `outboundAvailableCount`는 목록 where 조건과 같은 기준으로 계산된다.
-  - `heldCount`는 `waitingCount + salesAvailableCount + salesUnavailableCount`와 같은 값이어야 한다.
-  - 출고 통계인 `outboundCount`를 제외한 화면 통계는 `unit_status = IN_STOCK`인 보유 부품만 집계한다. 단, `salesHoldCount`는 보유 중인 참고 통계지만 `heldCount`에는 포함하지 않는다.
+  - `heldCount`는 `waitingCount + salesAvailableCount + salesUnavailableCount + salesHoldCount`와 같은 값이어야 한다.
+  - 출고 통계인 `outboundCount`를 제외한 화면 통계는 `unit_status = IN_STOCK`인 보유 부품만 집계한다.
   - 페이징된 목록은 `updated_at DESC, unit_id DESC` 순서를 유지하고, summary의 `totalCount`는 현재 페이지 크기가 아니라 전체 조건 건수를 반환한다.
+  - 최근 처리 표시값은 최근 stock movement가 최신이면 `movement_type`에 맞는 입고/출고 라벨을 반환하고, 최근 검수가 최신이면 `검수`를 반환한다.
   - 기본, 검수상태, 출고상태 목록 인덱스가 DDL과 통합 테스트 fixture에 모두 존재한다.
   - 상세 조회는 같은 회사 관리번호만 반환하고, 다른 회사 관리번호는 `PART_UNIT_NOT_FOUND`로 실패한다.

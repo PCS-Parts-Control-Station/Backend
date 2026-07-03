@@ -121,7 +121,7 @@ class PartServiceTest {
         when(partMapper.summarizePartUnits(COMPANY_ID, "RTX", 77L, CATEGORY_ID, "A"))
                 .thenReturn(new SearchPartUnitSummaryResponse(1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1));
         when(partMapper.summarizePartUnits(COMPANY_ID, "RTX", 77L, CATEGORY_ID, null))
-                .thenReturn(new SearchPartUnitSummaryResponse(3, 2, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1));
+                .thenReturn(new SearchPartUnitSummaryResponse(3, 3, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1));
         when(partMapper.searchPartUnits(COMPANY_ID, "RTX", 77L, CATEGORY_ID, "A", 20, 0))
                 .thenReturn(List.of(unit));
 
@@ -131,7 +131,7 @@ class PartServiceTest {
         assertThat(response.page()).isZero();
         assertThat(response.size()).isEqualTo(20);
         assertThat(response.summary().totalCount()).isEqualTo(1);
-        assertThat(response.summary().heldCount()).isEqualTo(2);
+        assertThat(response.summary().heldCount()).isEqualTo(3);
         assertThat(response.summary().salesAvailableCount()).isEqualTo(1);
         assertThat(response.summary().gradeACount()).isEqualTo(1);
         assertThat(response.summary().gradeBCount()).isEqualTo(1);

@@ -45,7 +45,7 @@ Query:
 
 | 값 | 조건 |
 |---|---|
-| `HELD` | 업무상 보유 기준. `검수대기 + 판매가능 + 판매불가` |
+| `HELD` | 업무상 보유 기준. `검수대기 + 판매가능 + 판매불가 + 판매보류` |
 | `WAITING` | `inspection_status = WAITING` |
 | `SALES_AVAILABLE` | `unit_status = IN_STOCK`, `inspection_status = COMPLETED`, `sales_status = AVAILABLE`, `grade != DEFECTIVE` |
 | `SALES_UNAVAILABLE` | `unit_status = IN_STOCK`, `inspection_status = COMPLETED`, `sales_status = UNAVAILABLE` |
@@ -67,7 +67,7 @@ Query:
 | 이름 | 설명 |
 |---|---|
 | `totalCount` | 현재 `partState`까지 포함한 조회 조건에 맞는 관리번호 수. 페이지 전체 건수의 원천 |
-| `heldCount` | `partState`를 제외한 현재 검색어, 전표, 분류 조건 안의 업무상 보유 관리번호 수. `waitingCount + salesAvailableCount + salesUnavailableCount` 기준이며 `salesHoldCount`는 제외 |
+| `heldCount` | `partState`를 제외한 현재 검색어, 전표, 분류 조건 안의 업무상 보유 관리번호 수. `waitingCount + salesAvailableCount + salesUnavailableCount + salesHoldCount` 기준 |
 | `waitingCount` | `partState`를 제외한 조건 안의 검수대기 관리번호 수. 출고된 부품을 제외하고 `unit_status = IN_STOCK` 기준 |
 | `salesAvailableCount` | `partState`를 제외한 조건 안의 판매가능 관리번호 수. 출고된 부품을 제외하고 보유 기준으로 계산 |
 | `salesHoldCount` | `partState`를 제외한 조건 안의 판매보류 관리번호 수. 출고된 부품과 검수대기 부품을 제외하고 검수완료 기준으로 계산 |
@@ -79,7 +79,7 @@ Query:
 | `outboundCount` | `partState`를 제외한 조건 안의 출고 관리번호 수 |
 | `outboundAvailableCount` | 기존 API 호환 필드. `salesAvailableCount`와 같은 기준 |
 
-출고 통계를 제외한 화면 통계는 현재 보유 중인 부품 관리 목적에 맞춰 출고된 부품을 제외하고 계산한다. 다만 화면의 `보유부품`은 업무 흐름 기준 대표값이므로 `검수대기 + 판매가능 + 판매불가`만 더한다. `판매보류`는 검수 결과 참고 통계로만 표시하고 `보유부품`에는 포함하지 않는다.
+출고 통계를 제외한 화면 통계는 현재 보유 중인 부품 관리 목적에 맞춰 출고된 부품을 제외하고 계산한다. 화면의 `보유부품`은 업무 흐름 기준 대표값이므로 `검수대기 + 판매가능 + 판매불가 + 판매보류`를 더한다.
 
 목록 응답 주요 필드:
 
@@ -96,7 +96,7 @@ Query:
 | `salesStatus` | 판매상태 |
 | `lastStockDocumentNo`, `lastStockMovementType`, `lastStockProcessedAt` | 최근 입출고 이력 |
 | `lastInspectionId`, `lastInspectionType`, `lastInspectedAt` | 최근 검수 이력 |
-| `recentEventLabel`, `recentEventAt` | 화면의 최근 처리 표시용 값 |
+| `recentEventLabel`, `recentEventAt` | 화면의 최근 처리 표시용 값. 입출고 이력은 `입고`, `출고`, `입고취소`, `출고취소`처럼 movement type 기준으로 구분 |
 
 ## 상세 조회
 
@@ -134,11 +134,13 @@ src/main/resources/static/js/part-units.js
 - 판매상태는 검색 조건과 별도 목록 컬럼에서 제외하고 `부품 상태` 표시값에 합쳐 보여준다.
 - 분류 필터는 `parts.html`, `outbound-register.html`과 같은 `category-picker-button`과 분류 선택 모달을 사용한다.
 - 목록은 관리번호, 품목, 분류, 부품 상태 순서로 보여준다.
-- 상단 통계는 제목이나 설명 박스 없이 카드만 배치한다. 첫 묶음은 `보유부품`, `검수대기`, `판매가능`, `판매불가`, 둘째 묶음은 `A등급`, `B등급`, `C등급`, `불량`, `판매보류`, 마지막 묶음은 `출고`로 둔다.
+- 화면 목록은 한 페이지에 15개씩 조회한다.
+- 상단 통계는 제목이나 설명 박스 없이 카드만 배치한다. 첫 묶음은 `보유부품`, `검수대기`, `판매가능`, `판매불가`, `판매보류`로 둔다. 둘째 영역은 `등급 현황` 제목 아래 `A등급`, `B등급`, `C등급`, `불량`을 한 줄로 배치하고, `기타 상태` 제목 아래 `출고`를 배치한다.
 - 목록의 관리번호, 품목, 분류, 부품 상태는 한 줄로 표시하고 넘치는 글자는 말줄임 처리한다.
 - 목록의 관리번호 칸에서는 제조사 시리얼을 숨기고, 제조사 시리얼은 상세 패널에서 확인한다.
-- 목록의 `부품 상태`는 `검수/등급/출고 상태 / 판매상태 / 최근처리` 형식으로 한 배지에 표시한다. 예: `검수대기 / 보류 / 입출고 · 2026-06-08 05:30`.
+- 목록의 `부품 상태`는 `검수/등급/출고 상태 / 판매상태 / 최근처리` 형식으로 한 배지에 표시한다. 예: `검수대기 / 보류 / 입고 · 2026-06-08 05:30`.
 - 입고되어 아직 등급이 없거나 `grade=NONE`인 부품은 `부품 상태`의 첫 값으로 `검수대기`를 표시한다.
+- 출고된 부품은 첫 값으로 `출고`가 아니라 검수 등급을 표시하고, 최근 처리에는 `출고 · 처리일시`를 표시한다.
 - 목록 컬럼은 고정 비율을 사용해 행마다 관리번호, 품목, 분류, 부품 상태 시작점이 달라지지 않게 한다.
 - 행 클릭 또는 Enter/Space로 오른쪽 상세 패널을 연다.
 - 상세 패널은 배경 오버레이를 쓰지 않고, 닫기 버튼·Escape·패널 밖 클릭으로 닫는다.

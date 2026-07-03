@@ -1,5 +1,6 @@
 (function () {
-    const PAGE_SIZE = 10;
+    const PAGE_SIZE = 15;
+    const DEFAULT_PART_STATE = "HELD";
 
     const filterForm = document.querySelector("[data-part-unit-filter-form]");
     const resetButton = document.querySelector("[data-part-unit-filter-reset]");
@@ -182,7 +183,7 @@
         if (unit.unitStatus === "CANCELED") return "입고취소";
         if (unit.unitStatus === "DISPOSED") return "비활성";
         if (unit.unitStatus === "OUTBOUND") {
-            return "출고";
+            return unit.grade && unit.grade !== "NONE" ? gradeLabel(unit.grade) : "출고";
         }
         if (unit.inspectionStatus === "WAITING" || !unit.grade || unit.grade === "NONE") {
             return "검수대기";
@@ -673,7 +674,7 @@
 
     resetButton?.addEventListener("click", () => {
         filterForm?.reset();
-        setPartState("");
+        setPartState(DEFAULT_PART_STATE);
         setSelectedDocument(null);
         categoryPicker?.setValue("");
         loadPartUnits(0);
@@ -690,6 +691,7 @@
     });
 
     categoryPicker?.load();
+    setPartState(partStateInput?.value || DEFAULT_PART_STATE);
     syncStateCards();
     loadPartUnits(0);
 })();

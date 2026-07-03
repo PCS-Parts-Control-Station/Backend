@@ -11,6 +11,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 8px;
     min-height: var(--control-height);
     padding: 0 18px;
     border: 1px solid transparent;
@@ -20,6 +21,14 @@
     line-height: 1;
     white-space: nowrap;
     cursor: pointer;
+}
+
+.btn svg {
+    flex: 0 0 auto;
+    width: 1em;
+    height: 1em;
+    fill: currentColor;
+    stroke: none;
 }
 
 .btn-primary {
@@ -260,6 +269,7 @@ label {
     justify-content: space-between;
     gap: 12px;
     width: 100%;
+    min-width: 0;
     min-height: var(--control-height);
     padding: 0 14px;
     border: 1px solid var(--line-strong);
@@ -267,6 +277,7 @@ label {
     background: var(--surface);
     color: var(--ink);
     cursor: pointer;
+    overflow: hidden;
     text-align: left;
 }
 
@@ -278,6 +289,7 @@ label {
 }
 
 .category-picker-button span {
+    flex: 1 1 auto;
     min-width: 0;
     overflow: hidden;
     color: var(--text);
@@ -289,9 +301,13 @@ label {
 
 .category-picker-button small {
     flex: 0 0 auto;
+    max-width: 46%;
+    overflow: hidden;
     color: var(--muted);
     font-size: 12px;
     font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .table-card {
@@ -503,6 +519,17 @@ label {
 
 .field-message.is-error {
     color: var(--red);
+}
+
+html.pcs-modal-scroll-locked,
+body.pcs-modal-scroll-locked {
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
+body.pcs-modal-scroll-locked,
+.has-collapsible-sidebar.pcs-modal-scroll-locked {
+    padding-right: var(--pcs-modal-scrollbar-compensation, 0);
 }
 
 .part-modal {

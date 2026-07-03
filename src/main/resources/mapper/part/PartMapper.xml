@@ -120,6 +120,10 @@
                       u.inspection_status = 'COMPLETED'
                       AND u.sales_status = 'UNAVAILABLE'
                   )
+                  OR (
+                      u.inspection_status = 'COMPLETED'
+                      AND u.sales_status = 'HOLD'
+                  )
               )
             </when>
             <when test="partState == 'WAITING'">
@@ -238,10 +242,22 @@
             WHEN base.last_stock_processed_at IS NULL
             THEN '검수'
             WHEN base.last_inspected_at IS NULL
-            THEN '입출고'
+            THEN CASE base.last_stock_movement_type
+                    WHEN 'INBOUND' THEN '입고'
+                    WHEN 'OUTBOUND' THEN '출고'
+                    WHEN 'INBOUND_CANCEL' THEN '입고취소'
+                    WHEN 'OUTBOUND_CANCEL' THEN '출고취소'
+                    ELSE '입출고'
+                 END
             WHEN base.last_inspected_at &gt;= base.last_stock_processed_at
             THEN '검수'
-            ELSE '입출고'
+            ELSE CASE base.last_stock_movement_type
+                    WHEN 'INBOUND' THEN '입고'
+                    WHEN 'OUTBOUND' THEN '출고'
+                    WHEN 'INBOUND_CANCEL' THEN '입고취소'
+                    WHEN 'OUTBOUND_CANCEL' THEN '출고취소'
+                    ELSE '입출고'
+                 END
         END AS recent_event_label,
         CASE
             WHEN base.last_stock_processed_at IS NULL
@@ -308,6 +324,10 @@
                     OR (
                         u.inspection_status = 'COMPLETED'
                         AND u.sales_status = 'UNAVAILABLE'
+                    )
+                    OR (
+                        u.inspection_status = 'COMPLETED'
+                        AND u.sales_status = 'HOLD'
                     )
                  )
                 THEN 1
