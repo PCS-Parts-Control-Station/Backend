@@ -11,11 +11,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/core/tokens.css?20260618_layers">
     <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
-    <link rel="stylesheet" href="/css/layouts/workspace.css?20260624_quick_bar">
-    <link rel="stylesheet" href="/css/components/components.css?20260629_filter_actions">
+    <link rel="stylesheet" href="/css/layouts/workspace.css?20260703_quick_bar_no_overlap">
+    <link rel="stylesheet" href="/css/components/components.css?20260703_button_icons">
     <link rel="stylesheet" href="/css/components/management-page.css?20260624_spec_item_compact">
     <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
-    <link rel="stylesheet" href="/css/pages/part-units.css?20260701_summary_stats_v4">
+    <link rel="stylesheet" href="/css/pages/part-units.css?20260701_summary_color_unified">
 </head>
 <body class="has-collapsible-sidebar page-part-units workspace-page">
 <div class="workspace-layout">
@@ -33,7 +33,12 @@
             <span>부품 관리</span>
         </button>
         <div class="workspace-quick-actions">
-            <a class="btn btn-secondary" data-route="parts">품목 관리</a>
+            <a class="btn btn-secondary" data-route="parts">
+                <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                    <path fill-rule="evenodd" d="M2.5 2a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5zM4 6h6V5H4zm7 0h1V5h-1zm-1 2.5H4v-1h6zm1 0h1v-1h-1zM10 11H4v-1h6zm1 0h1v-1h-1z" clip-rule="evenodd"></path>
+                </svg>
+                <span>품목 관리</span>
+            </a>
             <a class="btn btn-primary" data-route="inbound/new" data-staff-permission="STAFF_INBOUND">입고 등록</a>
         </div>
     </div>
@@ -48,13 +53,9 @@
                 </svg>
             </button>
             <div class="page-title-row">
-                <span class="page-icon page-icon-document" aria-hidden="true">
+                <span class="page-icon page-icon-solid page-icon-part" aria-hidden="true">
                     <svg viewBox="0 0 24 24" focusable="false">
-                        <path d="M4 7.5 12 3l8 4.5-8 4.5L4 7.5Z" />
-                        <path d="M4 7.5v9L12 21l8-4.5v-9" />
-                        <path d="M12 12v9" />
-                        <path d="M8.5 14.5h2" />
-                        <path d="M13.5 16.5h2" />
+                        <path d="m17.578 4.432l-2-1.05C13.822 2.461 12.944 2 12 2s-1.822.46-3.578 1.382l-.321.169l8.923 5.099l4.016-2.01c-.646-.732-1.688-1.279-3.462-2.21m4.17 3.534l-3.998 2V13a.75.75 0 0 1-1.5 0v-2.286l-3.5 1.75v9.44c.718-.179 1.535-.607 2.828-1.286l2-1.05c2.151-1.129 3.227-1.693 3.825-2.708c.597-1.014.597-2.277.597-4.8v-.117c0-1.893 0-3.076-.252-3.978M11.25 21.904v-9.44l-8.998-4.5C2 8.866 2 10.05 2 11.941v.117c0 2.525 0 3.788.597 4.802c.598 1.015 1.674 1.58 3.825 2.709l2 1.049c1.293.679 2.11 1.107 2.828 1.286M2.96 6.641l9.04 4.52l3.411-1.705l-8.886-5.078l-.103.054c-1.773.93-2.816 1.477-3.462 2.21"></path>
                     </svg>
                 </span>
                 <div>
@@ -64,7 +65,12 @@
                 </div>
             </div>
             <div class="header-actions">
-                <a class="btn btn-secondary" data-route="parts">품목 관리</a>
+                <a class="btn btn-secondary" data-route="parts">
+                    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                        <path fill-rule="evenodd" d="M2.5 2a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5zM4 6h6V5H4zm7 0h1V5h-1zm-1 2.5H4v-1h6zm1 0h1v-1h-1zM10 11H4v-1h6zm1 0h1v-1h-1z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span>품목 관리</span>
+                </a>
                 <a class="btn btn-primary" data-route="inbound/new" data-staff-permission="STAFF_INBOUND">입고 등록</a>
             </div>
         </header>
@@ -73,51 +79,59 @@
             <div class="content-main">
                 <section class="part-unit-summary-layout" aria-label="부품 관리 통계">
                     <dl class="part-unit-summary-group is-operational" aria-label="보유 및 업무 통계">
-                        <div class="part-unit-summary-card is-primary">
+                        <div class="part-unit-summary-card is-primary is-selected" data-part-state-filter="HELD" role="button" tabindex="0" aria-pressed="true">
                             <dt>보유부품</dt>
                             <dd data-summary-held>0</dd>
                         </div>
-                        <div class="part-unit-summary-card is-pending">
+                        <div class="part-unit-summary-card is-pending" data-part-state-filter="WAITING" role="button" tabindex="0" aria-pressed="false">
                             <dt>검수대기</dt>
                             <dd data-summary-waiting>0</dd>
                         </div>
-                        <div class="part-unit-summary-card is-available">
+                        <div class="part-unit-summary-card is-available" data-part-state-filter="SALES_AVAILABLE" role="button" tabindex="0" aria-pressed="false">
                             <dt>판매가능</dt>
                             <dd data-summary-sales-available>0</dd>
                         </div>
-                        <div class="part-unit-summary-card is-danger">
+                        <div class="part-unit-summary-card is-danger" data-part-state-filter="SALES_UNAVAILABLE" role="button" tabindex="0" aria-pressed="false">
                             <dt>판매불가</dt>
                             <dd data-summary-sales-unavailable>0</dd>
                         </div>
-                    </dl>
-                    <dl class="part-unit-summary-group is-grade" aria-label="검수 결과 통계">
-                        <div class="part-unit-summary-card">
-                            <dt>A등급</dt>
-                            <dd data-summary-grade-a>0</dd>
-                        </div>
-                        <div class="part-unit-summary-card">
-                            <dt>B등급</dt>
-                            <dd data-summary-grade-b>0</dd>
-                        </div>
-                        <div class="part-unit-summary-card">
-                            <dt>C등급</dt>
-                            <dd data-summary-grade-c>0</dd>
-                        </div>
-                        <div class="part-unit-summary-card is-danger">
-                            <dt>불량</dt>
-                            <dd data-summary-defective>0</dd>
-                        </div>
-                        <div class="part-unit-summary-card is-hold">
+                        <div class="part-unit-summary-card is-hold" data-part-state-filter="SALES_HOLD" role="button" tabindex="0" aria-pressed="false">
                             <dt>판매보류</dt>
                             <dd data-summary-sales-hold>0</dd>
                         </div>
                     </dl>
-                    <dl class="part-unit-summary-group is-outbound" aria-label="출고 통계">
-                        <div class="part-unit-summary-card is-muted">
-                            <dt>출고</dt>
-                            <dd data-summary-outbound>0</dd>
-                        </div>
-                    </dl>
+                    <div class="part-unit-summary-detail-grid">
+                        <section class="part-unit-summary-panel" aria-labelledby="part-unit-grade-summary-title">
+                            <h2 id="part-unit-grade-summary-title">등급 현황</h2>
+                            <dl class="part-unit-summary-group is-grade" aria-label="검수 결과 통계">
+                                <div class="part-unit-summary-card" data-part-state-filter="A" role="button" tabindex="0" aria-pressed="false">
+                                    <dt>A등급</dt>
+                                    <dd data-summary-grade-a>0</dd>
+                                </div>
+                                <div class="part-unit-summary-card" data-part-state-filter="B" role="button" tabindex="0" aria-pressed="false">
+                                    <dt>B등급</dt>
+                                    <dd data-summary-grade-b>0</dd>
+                                </div>
+                                <div class="part-unit-summary-card" data-part-state-filter="C" role="button" tabindex="0" aria-pressed="false">
+                                    <dt>C등급</dt>
+                                    <dd data-summary-grade-c>0</dd>
+                                </div>
+                                <div class="part-unit-summary-card is-danger" data-part-state-filter="DEFECTIVE" role="button" tabindex="0" aria-pressed="false">
+                                    <dt>불량</dt>
+                                    <dd data-summary-defective>0</dd>
+                                </div>
+                            </dl>
+                        </section>
+                        <section class="part-unit-summary-panel" aria-labelledby="part-unit-other-summary-title">
+                            <h2 id="part-unit-other-summary-title">기타 상태</h2>
+                            <dl class="part-unit-summary-group is-outbound" aria-label="출고 통계">
+                                <div class="part-unit-summary-card is-muted" data-part-state-filter="OUTBOUND" role="button" tabindex="0" aria-pressed="false">
+                                    <dt>출고</dt>
+                                    <dd data-summary-outbound>0</dd>
+                                </div>
+                            </dl>
+                        </section>
+                    </div>
                 </section>
 
                 <section class="filter-card management-filter-card part-units-filter-card" aria-labelledby="part-unit-filter-title">
@@ -131,16 +145,12 @@
                             <input type="search" name="keyword" placeholder="관리번호, 품목명, 모델명 검색" autocomplete="off">
                         </label>
                         <label>
-                            <span>부품 상태</span>
-                            <select name="partState">
-                                <option value="">전체</option>
-                                <option value="WAITING">검수대기</option>
-                                <option value="A">A등급</option>
-                                <option value="B">B등급</option>
-                                <option value="C">C등급</option>
-                                <option value="DEFECTIVE">불량</option>
-                                <option value="OUTBOUND">출고</option>
-                            </select>
+                            <span>전표</span>
+                            <button class="category-picker-button" type="button" data-open-part-unit-document-picker>
+                                <span data-part-unit-document-label>전체</span>
+                                <small>전표 선택</small>
+                            </button>
+                            <input type="hidden" name="documentId" data-part-unit-document-filter>
                         </label>
                         <label>
                             <span>분류</span>
@@ -150,6 +160,7 @@
                             </button>
                             <input type="hidden" name="categoryId" data-part-unit-category-filter>
                         </label>
+                        <input type="hidden" name="partState" value="HELD" data-part-unit-state-filter>
                         <div class="management-filter-actions">
                             <button class="btn btn-primary" type="submit">검색</button>
                             <button class="btn btn-secondary" type="button" data-part-unit-filter-reset>초기화</button>
@@ -273,11 +284,43 @@
     </div>
 </dialog>
 
+<dialog class="part-modal category-picker-modal" data-part-unit-document-picker-modal aria-labelledby="part-unit-document-picker-title">
+    <div class="part-modal-card">
+        <div class="part-modal-header">
+            <div>
+                <p class="page-kicker">전표 선택</p>
+                <h2 id="part-unit-document-picker-title">전표를 선택합니다.</h2>
+                <p>입고 또는 출고 전표에 포함된 부품만 좁혀 봅니다.</p>
+            </div>
+            <button class="modal-close-button" type="button" data-close-part-unit-document-picker aria-label="닫기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M6 6l12 12" />
+                    <path d="M18 6L6 18" />
+                </svg>
+            </button>
+        </div>
+        <div class="part-modal-fields">
+            <label>
+                <span>전표 검색</span>
+                <input type="search" data-part-unit-document-picker-search placeholder="전표번호, 거래처, 품목명 검색" autocomplete="off">
+            </label>
+            <div class="category-picker-list" data-part-unit-document-picker-list>
+                <p class="spec-builder-empty">전표 목록을 불러오는 중입니다.</p>
+            </div>
+        </div>
+        <p class="field-message is-error modal-message" data-part-unit-document-picker-message role="status" aria-live="polite"></p>
+        <div class="part-modal-actions">
+            <button class="btn btn-secondary" type="button" data-clear-part-unit-document-picker>전체 전표</button>
+            <button class="btn btn-secondary" type="button" data-close-part-unit-document-picker>닫기</button>
+        </div>
+    </div>
+</dialog>
+
 <script src="/js/pcs-api.js?20260623_memory_token"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
 <script src="/js/workspace-layout.js?20260624_quick_bar"></script>
-<script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/pcs-common.js?20260630_category_all_pages"></script>
-<script src="/js/part-units.js?20260701_summary_stats_v2"></script>
+<script src="/js/pcs-ui.js?20260703_modal_scroll_lock"></script>
+<script src="/js/pcs-common.js?20260701_category_count"></script>
+<script src="/js/part-units.js?20260703_held_default"></script>
 </body>
 </html>

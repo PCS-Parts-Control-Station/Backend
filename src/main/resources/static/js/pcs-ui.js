@@ -2,6 +2,10 @@
     const FLASH_TOAST_KEY = "pcsFlashToast";
     const DEFAULT_TOAST_DURATION = 3000;
     const TOAST_TYPES = new Set(["info", "success", "warning", "error"]);
+    const MODAL_SCROLL_LOCK_CLASS = "pcs-modal-scroll-locked";
+    const MODAL_SCROLLBAR_COMPENSATION = "--pcs-modal-scrollbar-compensation";
+
+    let modalScrollLocked = false;
 
     const normalizeToast = (options) => {
         const payload = typeof options === "string" ? { message: options } : (options || {});
@@ -98,9 +102,91 @@
         return payload;
     };
 
+    const hasOpenDialog = () => Boolean(document.querySelector("dialog[open]"));
+
+    const scrollbarWidth = () => Math.max(0, window.innerWidth - document.documentElement.clientWidth);
+
+    const lockModalScroll = () => {
+        if (modalScrollLocked || !document.body) {
+            return;
+        }
+
+        const compensation = scrollbarWidth();
+        document.documentElement.classList.add(MODAL_SCROLL_LOCK_CLASS);
+        document.body.classList.add(MODAL_SCROLL_LOCK_CLASS);
+        document.body.style.setProperty(MODAL_SCROLLBAR_COMPENSATION, `${compensation}px`);
+        modalScrollLocked = true;
+    };
+
+    const unlockModalScroll = () => {
+        if (!modalScrollLocked || hasOpenDialog()) {
+            return;
+        }
+
+        document.documentElement.classList.remove(MODAL_SCROLL_LOCK_CLASS);
+        document.body?.classList.remove(MODAL_SCROLL_LOCK_CLASS);
+        document.body?.style.removeProperty(MODAL_SCROLLBAR_COMPENSATION);
+        modalScrollLocked = false;
+    };
+
+    const syncModalScrollLock = () => {
+        if (hasOpenDialog()) {
+            lockModalScroll();
+            return;
+        }
+        unlockModalScroll();
+    };
+
+    const bindDialogScrollLock = () => {
+        if (!window.HTMLDialogElement?.prototype) {
+            return;
+        }
+
+        const dialogPrototype = window.HTMLDialogElement.prototype;
+        const originalShowModal = dialogPrototype.showModal;
+        const originalClose = dialogPrototype.close;
+
+        if (typeof originalShowModal === "function" && !originalShowModal.__pcsScrollLockPatched) {
+            const patchedShowModal = function (...args) {
+                const result = originalShowModal.apply(this, args);
+                syncModalScrollLock();
+                return result;
+            };
+            patchedShowModal.__pcsScrollLockPatched = true;
+            dialogPrototype.showModal = patchedShowModal;
+        }
+
+        if (typeof originalClose === "function" && !originalClose.__pcsScrollLockPatched) {
+            const patchedClose = function (...args) {
+                const result = originalClose.apply(this, args);
+                window.setTimeout(syncModalScrollLock, 0);
+                return result;
+            };
+            patchedClose.__pcsScrollLockPatched = true;
+            dialogPrototype.close = patchedClose;
+        }
+
+        document.addEventListener("close", () => window.setTimeout(syncModalScrollLock, 0), true);
+        document.addEventListener("cancel", () => window.setTimeout(syncModalScrollLock, 0), true);
+
+        if (window.MutationObserver) {
+            const observer = new MutationObserver(syncModalScrollLock);
+            observer.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ["open"],
+                subtree: true
+            });
+        }
+
+        syncModalScrollLock();
+    };
+
+    bindDialogScrollLock();
+
     window.PcsUi = {
         toast,
         setFlashToast,
-        consumeFlashToast
+        consumeFlashToast,
+        syncModalScrollLock
     };
 })(window, document);

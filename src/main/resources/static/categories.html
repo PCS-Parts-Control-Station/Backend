@@ -12,8 +12,8 @@
 
     <link rel="stylesheet" href="/css/core/tokens.css?20260618_layers">
     <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
-    <link rel="stylesheet" href="/css/layouts/workspace.css?20260624_quick_bar">
-    <link rel="stylesheet" href="/css/components/components.css?20260623_drawer_clip_fix">
+    <link rel="stylesheet" href="/css/layouts/workspace.css?20260703_quick_bar_no_overlap">
+    <link rel="stylesheet" href="/css/components/components.css?20260703_button_icons">
     <link rel="stylesheet" href="/css/components/management-page.css?20260624_spec_item_compact">
     <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
     <link rel="stylesheet" href="/css/pages/categories.css?20260623_category_drawer">
@@ -34,7 +34,12 @@
             <span>품목 분류</span>
         </button>
         <div class="workspace-quick-actions">
-            <a class="btn btn-secondary" data-route="parts">품목 관리</a>
+            <a class="btn btn-secondary" data-route="parts">
+                <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                    <path fill-rule="evenodd" d="M2.5 2a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5zM4 6h6V5H4zm7 0h1V5h-1zm-1 2.5H4v-1h6zm1 0h1v-1h-1zM10 11H4v-1h6zm1 0h1v-1h-1z" clip-rule="evenodd"></path>
+                </svg>
+                <span>품목 관리</span>
+            </a>
             <button class="btn btn-primary" type="button" data-category-create-drawer data-staff-permission="STAFF_CATEGORY_MANAGE" aria-controls="category-detail-drawer" aria-expanded="false">분류 등록</button>
         </div>
     </div>
@@ -48,13 +53,25 @@
                     <path d="M4 17h16" />
                 </svg>
             </button>
-            <div>
+            <div class="page-title-row">
+                <span class="page-icon page-icon-solid page-icon-category" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <path d="M7.425 9.475L11.15 3.4q.15-.25.375-.363T12 2.925t.475.113t.375.362l3.725 6.075q.15.25.15.525t-.125.5t-.35.363t-.525.137h-7.45q-.3 0-.525-.137T7.4 10.5t-.125-.5t.15-.525M17.5 22q-1.875 0-3.187-1.312T13 17.5t1.313-3.187T17.5 13t3.188 1.313T22 17.5t-1.312 3.188T17.5 22M3 20.5v-6q0-.425.288-.712T4 13.5h6q.425 0 .713.288T11 14.5v6q0 .425-.288.713T10 21.5H4q-.425 0-.712-.288T3 20.5"></path>
+                    </svg>
+                </span>
+                <div>
                 <p class="page-kicker">기준 정보 관리</p>
                 <h1>품목 분류</h1>
                 <p class="page-description">CPU, RAM, GPU, SSD 등 품목 분류 기준과 입력받을 사양 항목을 관리합니다.</p>
+                </div>
             </div>
             <div class="header-actions">
-                <a class="btn btn-secondary" data-route="parts">품목 관리</a>
+                <a class="btn btn-secondary" data-route="parts">
+                    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                        <path fill-rule="evenodd" d="M2.5 2a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5zM4 6h6V5H4zm7 0h1V5h-1zm-1 2.5H4v-1h6zm1 0h1v-1h-1zM10 11H4v-1h6zm1 0h1v-1h-1z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span>품목 관리</span>
+                </a>
                 <button class="btn btn-primary" type="button" data-category-create-drawer data-staff-permission="STAFF_CATEGORY_MANAGE" aria-controls="category-detail-drawer" aria-expanded="false">분류 등록</button>
             </div>
         </header>
@@ -325,7 +342,7 @@
 <script src="/js/pcs-api.js?20260623_memory_token"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
 <script src="/js/workspace-layout.js?20260624_quick_bar"></script>
-<script src="/js/pcs-ui.js?20260527_1"></script>
+<script src="/js/pcs-ui.js?20260703_modal_scroll_lock"></script>
 <script src="/js/pcs-common.js?20260625_right_drawer_v2"></script>
 <script src="/js/categories.js?20260625_right_drawer_v2"></script>
 </body>

@@ -87,14 +87,14 @@ class PartFacadeTest {
         PcsPrincipal principal = principal(1L, 10L, "acme");
         SearchPartUnitSummaryResponse summary = new SearchPartUnitSummaryResponse(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
         when(workspaceAccessValidator.validateAuthenticatedWorkspace(principal, "acme")).thenReturn(principal);
-        when(partService.searchPartUnits(1L, "RTX", 10L, "WAITING", 0, 20, null))
+        when(partService.searchPartUnits(1L, "RTX", 77L, 10L, "WAITING", 0, 20, null))
                 .thenReturn(PageResultDto.of(List.of(), 0, 20, 0, summary));
 
-        var response = partFacade.searchPartUnits(principal, "acme", "RTX", 10L, "WAITING", 0, 20, null);
+        var response = partFacade.searchPartUnits(principal, "acme", "RTX", 77L, 10L, "WAITING", 0, 20, null);
 
         assertEquals(0, response.content().size());
         assertEquals(summary, response.summary());
-        verify(partService).searchPartUnits(1L, "RTX", 10L, "WAITING", 0, 20, null);
+        verify(partService).searchPartUnits(1L, "RTX", 77L, 10L, "WAITING", 0, 20, null);
     }
 
     @Test

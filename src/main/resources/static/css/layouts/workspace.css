@@ -108,12 +108,35 @@
 .sidebar-subgroup-toggle {
     display: flex;
     align-items: center;
+    gap: 9px;
     min-height: 42px;
     padding: 0 12px;
     border-radius: var(--radius);
     color: var(--muted);
     font-size: 14px;
     font-weight: 800;
+}
+
+.sidebar-nav-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    color: currentColor;
+}
+
+.sidebar-nav-icon svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+    stroke: none;
+}
+
+.sidebar-nav-icon path {
+    fill: currentColor;
+    stroke: none;
 }
 
 .sidebar-subgroup-toggle {
@@ -389,6 +412,16 @@
     stroke-linejoin: round;
 }
 
+.page-icon-solid svg {
+    fill: currentColor;
+    stroke: none;
+}
+
+.page-icon-solid path {
+    fill: currentColor;
+    stroke: none;
+}
+
 .page-kicker {
     margin-bottom: 8px;
     color: var(--cyan);
@@ -429,7 +462,7 @@
     right: 0;
     z-index: 44;
     display: grid;
-    grid-template-columns: var(--quick-menu-size) minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     gap: 12px;
     width: 100%;
@@ -459,6 +492,8 @@
 }
 
 .workspace-quick-bar .menu-toggle {
+    grid-column: 1;
+    justify-self: start;
     display: inline-flex;
     width: var(--quick-menu-size);
     height: var(--quick-menu-size);
@@ -471,12 +506,12 @@
 }
 
 .workspace-quick-brand {
-    position: absolute;
-    top: 50%;
-    left: 50%;
+    grid-column: 2;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    justify-self: center;
+    max-width: 100%;
     min-width: 124px;
     height: var(--quick-title-height);
     min-height: var(--quick-title-height);
@@ -489,7 +524,15 @@
     font-weight: 800;
     line-height: 1;
     cursor: pointer;
-    transform: translate(-50%, -50%);
+}
+
+.workspace-quick-brand span {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .workspace-quick-brand:hover {
@@ -497,11 +540,28 @@
 }
 
 .workspace-quick-actions {
+    grid-column: 3;
+    justify-self: end;
     display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: 8px;
     min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.workspace-quick-actions .btn {
+    min-width: 0;
+    max-width: 100%;
+    padding-right: 16px;
+    padding-left: 16px;
+}
+
+.workspace-quick-actions .btn {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .content-grid {
@@ -763,15 +823,35 @@
         grid-template-columns: 1fr 1fr;
     }
 
-.workspace-quick-bar {
+    .workspace-quick-bar {
         width: 100%;
         padding-right: 16px;
         padding-left: 16px;
-        grid-template-columns: var(--quick-menu-size) minmax(0, 1fr) auto;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     }
 
-.header-actions > * {
+    .header-actions > * {
         width: 100%;
+    }
+
+    .workspace-quick-brand {
+        justify-self: center;
+        min-width: 0;
+        padding-right: 10px;
+        padding-left: 10px;
+    }
+
+    .workspace-quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+        justify-content: stretch;
+        width: 100%;
+    }
+
+    .workspace-quick-actions .btn {
+        width: 100%;
+        padding-right: 12px;
+        padding-left: 12px;
     }
 
 .has-collapsible-sidebar .table-header.inline-summary-header {
@@ -803,18 +883,28 @@
         --quick-menu-size: 44px;
         --quick-title-height: 44px;
         --quick-title-font-size: 15px;
-        grid-template-columns: var(--quick-menu-size) minmax(0, 1fr) auto;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
         gap: 8px;
         padding: 6px 10px;
     }
 
 .workspace-quick-bar .menu-toggle {
+        grid-column: 1;
+        grid-row: 1;
         width: var(--quick-menu-size);
         height: var(--quick-menu-size);
         min-height: var(--quick-menu-size);
     }
 
+.workspace-quick-brand {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
 .workspace-quick-actions {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
         gap: 5px;
     }
 

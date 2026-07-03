@@ -83,6 +83,17 @@
         <if test="categoryId != null">
           AND p.category_id = #{categoryId}
         </if>
+        <if test="documentId != null">
+          AND EXISTS (
+              SELECT 1
+              FROM tb_stock_movement_unit f_smu
+              JOIN tb_stock_movement f_sm
+                ON f_sm.company_id = u.company_id
+               AND f_sm.movement_id = f_smu.movement_id
+              WHERE f_smu.unit_id = u.unit_id
+                AND f_sm.document_id = #{documentId}
+          )
+        </if>
         <if test="keyword != null and keyword != ''">
           AND (
               u.internal_serial_no LIKE CONCAT('%', #{keyword}, '%')
@@ -96,13 +107,50 @@
         </if>
         <if test="partState != null and partState != ''">
           <choose>
+            <when test="partState == 'HELD'">
+              AND u.unit_status = 'IN_STOCK'
+              AND (
+                  u.inspection_status = 'WAITING'
+                  OR (
+                      u.inspection_status = 'COMPLETED'
+                      AND u.sales_status = 'AVAILABLE'
+                      AND u.grade &lt;&gt; 'DEFECTIVE'
+                  )
+                  OR (
+                      u.inspection_status = 'COMPLETED'
+                      AND u.sales_status = 'UNAVAILABLE'
+                  )
+                  OR (
+                      u.inspection_status = 'COMPLETED'
+                      AND u.sales_status = 'HOLD'
+                  )
+              )
+            </when>
             <when test="partState == 'WAITING'">
+              AND u.unit_status = 'IN_STOCK'
               AND u.inspection_status = 'WAITING'
+            </when>
+            <when test="partState == 'SALES_AVAILABLE'">
+              AND u.unit_status = 'IN_STOCK'
+              AND u.inspection_status = 'COMPLETED'
+              AND u.sales_status = 'AVAILABLE'
+              AND u.grade &lt;&gt; 'DEFECTIVE'
+            </when>
+            <when test="partState == 'SALES_UNAVAILABLE'">
+              AND u.unit_status = 'IN_STOCK'
+              AND u.inspection_status = 'COMPLETED'
+              AND u.sales_status = 'UNAVAILABLE'
+            </when>
+            <when test="partState == 'SALES_HOLD'">
+              AND u.unit_status = 'IN_STOCK'
+              AND u.inspection_status = 'COMPLETED'
+              AND u.sales_status = 'HOLD'
             </when>
             <when test="partState == 'OUTBOUND'">
               AND u.unit_status = 'OUTBOUND'
             </when>
             <otherwise>
+              AND u.unit_status = 'IN_STOCK'
               AND u.inspection_status = 'COMPLETED'
               AND u.grade = #{partState}
             </otherwise>
@@ -194,10 +242,22 @@
             WHEN base.last_stock_processed_at IS NULL
             THEN '검수'
             WHEN base.last_inspected_at IS NULL
-            THEN '입출고'
+            THEN CASE base.last_stock_movement_type
+                    WHEN 'INBOUND' THEN '입고'
+                    WHEN 'OUTBOUND' THEN '출고'
+                    WHEN 'INBOUND_CANCEL' THEN '입고취소'
+                    WHEN 'OUTBOUND_CANCEL' THEN '출고취소'
+                    ELSE '입출고'
+                 END
             WHEN base.last_inspected_at &gt;= base.last_stock_processed_at
             THEN '검수'
-            ELSE '입출고'
+            ELSE CASE base.last_stock_movement_type
+                    WHEN 'INBOUND' THEN '입고'
+                    WHEN 'OUTBOUND' THEN '출고'
+                    WHEN 'INBOUND_CANCEL' THEN '입고취소'
+                    WHEN 'OUTBOUND_CANCEL' THEN '출고취소'
+                    ELSE '입출고'
+                 END
         END AS recent_event_label,
         CASE
             WHEN base.last_stock_processed_at IS NULL
@@ -264,6 +324,10 @@
                     OR (
                         u.inspection_status = 'COMPLETED'
                         AND u.sales_status = 'UNAVAILABLE'
+                    )
+                    OR (
+                        u.inspection_status = 'COMPLETED'
+                        AND u.sales_status = 'HOLD'
                     )
                  )
                 THEN 1

@@ -49,7 +49,11 @@ public class PartService {
     private static final int PART_UNIT_DEFAULT_SIZE = 20;
     private static final int PART_UNIT_HISTORY_LIMIT = 10;
     private static final Set<String> PART_UNIT_STATE_FILTERS = Set.of(
+            "HELD",
             "WAITING",
+            "SALES_AVAILABLE",
+            "SALES_UNAVAILABLE",
+            "SALES_HOLD",
             "A",
             "B",
             "C",
@@ -110,6 +114,7 @@ public class PartService {
     public PageResultDto<SearchPartUnitResponse, SearchPartUnitSummaryResponse> searchPartUnits(
             Long companyId,
             String keyword,
+            Long documentId,
             Long categoryId,
             String partState,
             Integer page,
@@ -125,6 +130,7 @@ public class PartService {
         SearchPartUnitSummaryResponse summary = partMapper.summarizePartUnits(
                 companyId,
                 normalizedKeyword,
+                documentId,
                 categoryId,
                 normalizedPartState
         );
@@ -133,18 +139,53 @@ public class PartService {
         }
 
         long totalElements = summary.totalCount();
+        SearchPartUnitSummaryResponse statsSummary = summary;
+        if (normalizedPartState != null) {
+            SearchPartUnitSummaryResponse withoutStateSummary = partMapper.summarizePartUnits(
+                    companyId,
+                    normalizedKeyword,
+                    documentId,
+                    categoryId,
+                    null
+            );
+            if (withoutStateSummary != null) {
+                statsSummary = withTotalCount(withoutStateSummary, totalElements);
+            }
+        }
+
         List<SearchPartUnitResponse> items = totalElements == 0
                 ? List.of()
                 : partMapper.searchPartUnits(
                         companyId,
                         normalizedKeyword,
+                        documentId,
                         categoryId,
                         normalizedPartState,
                         pageQuery.size(),
                         pageQuery.offset()
                 );
 
-        return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, summary);
+        return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, statsSummary);
+    }
+
+    private SearchPartUnitSummaryResponse withTotalCount(
+            SearchPartUnitSummaryResponse summary,
+            long totalCount
+    ) {
+        return new SearchPartUnitSummaryResponse(
+                totalCount,
+                summary.heldCount(),
+                summary.waitingCount(),
+                summary.salesAvailableCount(),
+                summary.salesHoldCount(),
+                summary.salesUnavailableCount(),
+                summary.gradeACount(),
+                summary.gradeBCount(),
+                summary.gradeCCount(),
+                summary.defectiveCount(),
+                summary.outboundCount(),
+                summary.outboundAvailableCount()
+        );
     }
 
     public PartDetailResponse getPart(Long companyId, Long partId) {

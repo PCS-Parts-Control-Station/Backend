@@ -32,21 +32,26 @@ Query:
 | 이름 | 설명 |
 |---|---|
 | `keyword` | 관리번호, 제조사 시리얼, 품목명, 제조사 모델명, 제조사, 품목코드 검색 |
+| `documentId` | 입출고 전표 필터. 해당 전표에 포함된 관리번호만 조회 |
 | `categoryId` | 품목 분류 필터 |
-| `partState` | `WAITING`, `A`, `B`, `C`, `DEFECTIVE`, `OUTBOUND` |
+| `partState` | 통계 카드 클릭으로 적용되는 상태 필터 |
 | `page` | 0부터 시작 |
 | `size` | 기본 20, 최대 100 |
 | `limit` | 기존 단순 목록 호환용 size 별칭 |
 
-검색 조건에는 `salesStatus`를 두지 않는다. 판매상태와 최근 처리 정보는 별도 검색 조건이나 별도 목록 컬럼으로 두지 않고, 화면의 `부품 상태` 표시값에 `/`로 합쳐 보여준다.
+검색 조건에는 화면 select 형태의 `부품 상태` 필터와 `salesStatus`를 두지 않는다. 부품 상태는 상단 통계 카드를 클릭해 `partState`로 적용한다. 판매상태와 최근 처리 정보는 별도 검색 조건이나 별도 목록 컬럼으로 두지 않고, 화면의 `부품 상태` 표시값에 `/`로 합쳐 보여준다.
 
 `partState` 의미:
 
 | 값 | 조건 |
 |---|---|
+| `HELD` | 업무상 보유 기준. `검수대기 + 판매가능 + 판매불가 + 판매보류` |
 | `WAITING` | `inspection_status = WAITING` |
-| `A`, `B`, `C` | `inspection_status = COMPLETED`이고 `grade`가 같은 값 |
-| `DEFECTIVE` | `inspection_status = COMPLETED`이고 `grade = DEFECTIVE` |
+| `SALES_AVAILABLE` | `unit_status = IN_STOCK`, `inspection_status = COMPLETED`, `sales_status = AVAILABLE`, `grade != DEFECTIVE` |
+| `SALES_UNAVAILABLE` | `unit_status = IN_STOCK`, `inspection_status = COMPLETED`, `sales_status = UNAVAILABLE` |
+| `SALES_HOLD` | `unit_status = IN_STOCK`, `inspection_status = COMPLETED`, `sales_status = HOLD` |
+| `A`, `B`, `C` | `unit_status = IN_STOCK`, `inspection_status = COMPLETED`이고 `grade`가 같은 값 |
+| `DEFECTIVE` | `unit_status = IN_STOCK`, `inspection_status = COMPLETED`이고 `grade = DEFECTIVE` |
 | `OUTBOUND` | `unit_status = OUTBOUND` |
 
 응답은 `PageResultDto<SearchPartUnitResponse, SearchPartUnitSummaryResponse>` 구조를 사용한다.
@@ -61,20 +66,20 @@ Query:
 
 | 이름 | 설명 |
 |---|---|
-| `totalCount` | 조회 조건에 맞는 관리번호 수 |
-| `heldCount` | 조회 조건 안의 업무상 보유 관리번호 수. `waitingCount + salesAvailableCount + salesUnavailableCount` 기준이며 `salesHoldCount`는 제외 |
-| `waitingCount` | 조회 조건 안의 검수대기 관리번호 수. 출고된 부품을 제외하고 `unit_status = IN_STOCK` 기준 |
-| `salesAvailableCount` | 조회 조건 안의 판매가능 관리번호 수. 출고된 부품을 제외하고 보유 기준으로 계산 |
-| `salesHoldCount` | 조회 조건 안의 판매보류 관리번호 수. 출고된 부품과 검수대기 부품을 제외하고 검수완료 기준으로 계산 |
-| `salesUnavailableCount` | 조회 조건 안의 판매불가 관리번호 수. 출고된 부품과 검수대기 부품을 제외하고 검수완료 기준으로 계산 |
-| `gradeACount` | 조회 조건 안의 A등급 관리번호 수. 출고된 부품을 제외하고 보유 기준으로 계산 |
-| `gradeBCount` | 조회 조건 안의 B등급 관리번호 수. 출고된 부품을 제외하고 보유 기준으로 계산 |
-| `gradeCCount` | 조회 조건 안의 C등급 관리번호 수. 출고된 부품을 제외하고 보유 기준으로 계산 |
-| `defectiveCount` | 조회 조건 안의 불량 관리번호 수. 출고된 부품을 제외하고 보유 기준으로 계산 |
-| `outboundCount` | 조회 조건 안의 출고 관리번호 수 |
+| `totalCount` | 현재 `partState`까지 포함한 조회 조건에 맞는 관리번호 수. 페이지 전체 건수의 원천 |
+| `heldCount` | `partState`를 제외한 현재 검색어, 전표, 분류 조건 안의 업무상 보유 관리번호 수. `waitingCount + salesAvailableCount + salesUnavailableCount + salesHoldCount` 기준 |
+| `waitingCount` | `partState`를 제외한 조건 안의 검수대기 관리번호 수. 출고된 부품을 제외하고 `unit_status = IN_STOCK` 기준 |
+| `salesAvailableCount` | `partState`를 제외한 조건 안의 판매가능 관리번호 수. 출고된 부품을 제외하고 보유 기준으로 계산 |
+| `salesHoldCount` | `partState`를 제외한 조건 안의 판매보류 관리번호 수. 출고된 부품과 검수대기 부품을 제외하고 검수완료 기준으로 계산 |
+| `salesUnavailableCount` | `partState`를 제외한 조건 안의 판매불가 관리번호 수. 출고된 부품과 검수대기 부품을 제외하고 검수완료 기준으로 계산 |
+| `gradeACount` | `partState`를 제외한 조건 안의 A등급 관리번호 수. 출고된 부품을 제외하고 보유 기준으로 계산 |
+| `gradeBCount` | `partState`를 제외한 조건 안의 B등급 관리번호 수. 출고된 부품을 제외하고 보유 기준으로 계산 |
+| `gradeCCount` | `partState`를 제외한 조건 안의 C등급 관리번호 수. 출고된 부품을 제외하고 보유 기준으로 계산 |
+| `defectiveCount` | `partState`를 제외한 조건 안의 불량 관리번호 수. 출고된 부품을 제외하고 보유 기준으로 계산 |
+| `outboundCount` | `partState`를 제외한 조건 안의 출고 관리번호 수 |
 | `outboundAvailableCount` | 기존 API 호환 필드. `salesAvailableCount`와 같은 기준 |
 
-출고 통계를 제외한 화면 통계는 현재 보유 중인 부품 관리 목적에 맞춰 출고된 부품을 제외하고 계산한다. 다만 화면의 `보유부품`은 업무 흐름 기준 대표값이므로 `검수대기 + 판매가능 + 판매불가`만 더한다. `판매보류`는 검수 결과 참고 통계로만 표시하고 `보유부품`에는 포함하지 않는다.
+출고 통계를 제외한 화면 통계는 현재 보유 중인 부품 관리 목적에 맞춰 출고된 부품을 제외하고 계산한다. 화면의 `보유부품`은 업무 흐름 기준 대표값이므로 `검수대기 + 판매가능 + 판매불가 + 판매보류`를 더한다.
 
 목록 응답 주요 필드:
 
@@ -91,7 +96,7 @@ Query:
 | `salesStatus` | 판매상태 |
 | `lastStockDocumentNo`, `lastStockMovementType`, `lastStockProcessedAt` | 최근 입출고 이력 |
 | `lastInspectionId`, `lastInspectionType`, `lastInspectedAt` | 최근 검수 이력 |
-| `recentEventLabel`, `recentEventAt` | 화면의 최근 처리 표시용 값 |
+| `recentEventLabel`, `recentEventAt` | 화면의 최근 처리 표시용 값. 입출고 이력은 `입고`, `출고`, `입고취소`, `출고취소`처럼 movement type 기준으로 구분 |
 
 ## 상세 조회
 
@@ -121,15 +126,21 @@ src/main/resources/static/js/part-units.js
 
 - 사이드바 관리 메뉴에는 `부품 관리`로 표시한다.
 - `품목`은 모델/마스터 정보이고, `부품`은 관리번호를 가진 실제 개별 물건이다.
-- 필터는 검색어, 분류, 부품 상태만 둔다.
+- 필터는 검색어, 전표 선택, 분류 선택만 둔다.
+- 부품 상태 select는 두지 않는다. 상단 통계 카드가 상태 필터 버튼 역할을 한다.
+- 통계 카드는 `보유부품`, `검수대기`, `판매가능`, `판매불가`, `A등급`, `B등급`, `C등급`, `불량`, `판매보류`, `출고` 모두 클릭 가능해야 한다.
+- 통계 카드 클릭 시 기존 검색어, 전표, 분류 조건은 유지하고 해당 `partState`만 바꿔 즉시 검색한다.
+- 전표 선택은 분류 선택처럼 모달로 열고, 전표번호/거래처/품목명 기준으로 검색한 뒤 선택한다.
 - 판매상태는 검색 조건과 별도 목록 컬럼에서 제외하고 `부품 상태` 표시값에 합쳐 보여준다.
 - 분류 필터는 `parts.html`, `outbound-register.html`과 같은 `category-picker-button`과 분류 선택 모달을 사용한다.
 - 목록은 관리번호, 품목, 분류, 부품 상태 순서로 보여준다.
-- 상단 통계는 제목이나 설명 박스 없이 카드만 배치한다. 첫 묶음은 `보유부품`, `검수대기`, `판매가능`, `판매불가`, 둘째 묶음은 `A등급`, `B등급`, `C등급`, `불량`, `판매보류`, 마지막 묶음은 `출고`로 둔다.
+- 화면 목록은 한 페이지에 15개씩 조회한다.
+- 상단 통계는 제목이나 설명 박스 없이 카드만 배치한다. 첫 묶음은 `보유부품`, `검수대기`, `판매가능`, `판매불가`, `판매보류`로 둔다. 둘째 영역은 `등급 현황` 제목 아래 `A등급`, `B등급`, `C등급`, `불량`을 한 줄로 배치하고, `기타 상태` 제목 아래 `출고`를 배치한다.
 - 목록의 관리번호, 품목, 분류, 부품 상태는 한 줄로 표시하고 넘치는 글자는 말줄임 처리한다.
 - 목록의 관리번호 칸에서는 제조사 시리얼을 숨기고, 제조사 시리얼은 상세 패널에서 확인한다.
-- 목록의 `부품 상태`는 `검수/등급/출고 상태 / 판매상태 / 최근처리` 형식으로 한 배지에 표시한다. 예: `검수대기 / 보류 / 입출고 · 2026-06-08 05:30`.
+- 목록의 `부품 상태`는 `검수/등급/출고 상태 / 판매상태 / 최근처리` 형식으로 한 배지에 표시한다. 예: `검수대기 / 보류 / 입고 · 2026-06-08 05:30`.
 - 입고되어 아직 등급이 없거나 `grade=NONE`인 부품은 `부품 상태`의 첫 값으로 `검수대기`를 표시한다.
+- 출고된 부품은 첫 값으로 `출고`가 아니라 검수 등급을 표시하고, 최근 처리에는 `출고 · 처리일시`를 표시한다.
 - 목록 컬럼은 고정 비율을 사용해 행마다 관리번호, 품목, 분류, 부품 상태 시작점이 달라지지 않게 한다.
 - 행 클릭 또는 Enter/Space로 오른쪽 상세 패널을 연다.
 - 상세 패널은 배경 오버레이를 쓰지 않고, 닫기 버튼·Escape·패널 밖 클릭으로 닫는다.
@@ -143,8 +154,9 @@ src/main/resources/static/js/part-units.js
 
 - 목록과 상세 조회는 항상 `company_id` 범위를 지킨다.
 - 기본 목록은 `tb_pc_part_unit.active = true`인 관리번호만 조회한다.
-- 검색과 요약은 SQL에서 같은 조건으로 처리한다.
-- 목록 전체 건수는 summary의 `totalCount`와 같아야 하며, 별도 count 쿼리와 summary count를 중복 실행하지 않는다.
+- 목록 전체 건수 요약은 목록 검색과 같은 조건으로 처리한다.
+- 목록 전체 건수는 현재 `partState`까지 포함한 summary의 `totalCount`와 같아야 한다.
+- 통계 카드 숫자는 `partState`를 제외한 검색어, 전표, 분류 조건 기준으로 계산한다. 그래야 상태 필터를 바꿀 때 기존 검색 조건을 유지한 채 다른 상태로 즉시 전환할 수 있다.
 - 목록 행은 `LIMIT/OFFSET`으로 확정된 관리번호에 대해서만 상세 컬럼과 최근 이력을 계산한다.
 - `salesStatus`는 검색 파라미터로 받지 않는다.
 - 존재하지 않거나 다른 업체의 `unitId` 상세 조회는 `PART_UNIT_NOT_FOUND`로 실패한다.
@@ -165,9 +177,10 @@ src/main/resources/static/js/part-units.js
 - Unit/service tests: `src/test/java/com/pcs/domain/part/service/PartServiceTest.java`
 - API tests: `src/test/java/com/pcs/domain/part/api/PartApiControllerTest.java`
 - Required checks:
-  - 목록 조회는 keyword, categoryId, partState, page, size, limit 조건을 Facade와 Service로 전달한다.
-  - 목록 조회는 판매상태 검색 조건을 받지 않는다.
-  - `partState`는 WAITING, 등급, OUTBOUND 조건으로 SQL에 전달된다.
+- 목록 조회는 keyword, categoryId, partState, page, size, limit 조건을 Facade와 Service로 전달한다.
+- 목록 조회는 documentId 조건을 Facade와 Service로 전달한다.
+- 목록 조회는 판매상태 검색 조건을 받지 않는다.
+- `partState`는 HELD, WAITING, 판매상태 계열, 등급, OUTBOUND 조건으로 SQL에 전달된다.
   - 응답은 `PageResultDto<SearchPartUnitResponse, SearchPartUnitSummaryResponse>` 구조를 사용한다.
   - `totalElements`는 summary의 `totalCount`를 사용하고, 별도 관리번호 count 쿼리는 호출하지 않는다.
   - 상세 조회는 업체 범위 검증 후 존재하지 않는 관리번호를 `PART_UNIT_NOT_FOUND`로 처리한다.
