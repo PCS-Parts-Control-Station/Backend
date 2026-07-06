@@ -3,8 +3,11 @@ package com.pcs.domain.part.api;
 import com.pcs.domain.part.dto.request.CreatePartRequest;
 import com.pcs.domain.part.dto.request.UpdatePartRequest;
 import com.pcs.domain.part.dto.response.PartDetailResponse;
+import com.pcs.domain.part.dto.response.PartUnitDetailResponse;
 import com.pcs.domain.part.dto.response.SearchPartResponse;
 import com.pcs.domain.part.dto.response.SearchPartSummaryResponse;
+import com.pcs.domain.part.dto.response.SearchPartUnitResponse;
+import com.pcs.domain.part.dto.response.SearchPartUnitSummaryResponse;
 import com.pcs.domain.part.facade.PartFacade;
 import com.pcs.global.dto.ApiResultDto;
 import com.pcs.global.dto.PageResultDto;
@@ -56,6 +59,32 @@ public class PartApiController {
         return ResponseEntity.ok(ApiResultDto.ok(response));
     }
 
+    @GetMapping("/workspaces/{companyCode}/part-units")
+    public ResponseEntity<ApiResultDto<PageResultDto<SearchPartUnitResponse, SearchPartUnitSummaryResponse>>> searchPartUnits(
+            @PathVariable String companyCode,
+            @AuthenticationPrincipal PcsPrincipal principal,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long documentId,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String partState,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) Integer limit
+    ) {
+        PageResultDto<SearchPartUnitResponse, SearchPartUnitSummaryResponse> response = partFacade.searchPartUnits(
+                principal,
+                companyCode,
+                keyword,
+                documentId,
+                categoryId,
+                partState,
+                page,
+                size,
+                limit
+        );
+        return ResponseEntity.ok(ApiResultDto.ok(response));
+    }
+
     @PostMapping("/workspaces/{companyCode}/parts")
     public ResponseEntity<ApiResultDto<PartDetailResponse>> createPart(
             @PathVariable String companyCode,
@@ -75,6 +104,16 @@ public class PartApiController {
             @AuthenticationPrincipal PcsPrincipal principal
     ) {
         PartDetailResponse response = partFacade.getPart(principal, companyCode, partId);
+        return ResponseEntity.ok(ApiResultDto.ok(response));
+    }
+
+    @GetMapping("/workspaces/{companyCode}/part-units/{unitId}")
+    public ResponseEntity<ApiResultDto<PartUnitDetailResponse>> getPartUnit(
+            @PathVariable String companyCode,
+            @PathVariable Long unitId,
+            @AuthenticationPrincipal PcsPrincipal principal
+    ) {
+        PartUnitDetailResponse response = partFacade.getPartUnit(principal, companyCode, unitId);
         return ResponseEntity.ok(ApiResultDto.ok(response));
     }
 

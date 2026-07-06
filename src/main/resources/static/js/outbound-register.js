@@ -236,29 +236,17 @@
         }
 
         categories.forEach((category) => {
-            const button = document.createElement("button");
-            button.type = "button";
-            button.className = "category-picker-option";
-            if (String(category.categoryId) === String(selectedCategoryId)) {
-                button.classList.add("is-selected");
-            }
-
-            const name = document.createElement("strong");
-            name.textContent = category.categoryName || "이름 없음";
-
-            const description = document.createElement("small");
-            description.textContent = category.description || "설명 없음";
-
-            button.append(name, description);
-            button.addEventListener("click", () => {
-                if (categoryFilter) {
-                    categoryFilter.value = String(category.categoryId);
+            const button = window.PcsCategoryPicker.createOption(category, {
+                selectedCategoryId,
+                onSelect: (selectedCategory) => {
+                    if (categoryFilter) {
+                        categoryFilter.value = String(selectedCategory.categoryId);
+                    }
+                    syncCategoryFilterLabel();
+                    categoryPickerModal?.close();
+                    loadCandidates(0);
                 }
-                syncCategoryFilterLabel();
-                categoryPickerModal?.close();
-                loadCandidates(0);
             });
-
             categoryPickerList.append(button);
         });
     };
@@ -660,8 +648,10 @@
             return;
         }
         try {
-            const data = await window.PcsApi.getData(`${apiBase()}/categories?size=100`, apiOptions());
-            categoryOptions = normalizeListData(data);
+            if (!window.PcsCategory?.loadAll) {
+                throw new Error("분류 전체 로딩 공통 함수를 찾을 수 없습니다.");
+            }
+            categoryOptions = await window.PcsCategory.loadAll(getCompanyCode(), { apiOptions });
             syncCategoryFilterLabel();
             renderCategoryPickerList();
         } catch (error) {

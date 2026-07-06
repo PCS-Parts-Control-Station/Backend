@@ -11,15 +11,54 @@ $TrackedFilesPath = Join-Path $ReportDir "codex-stop-tracked-files.txt"
 $FeedbackPath = Join-Path $ReportDir "agent-failures.md"
 $FeedbackLoopPath = Join-Path $HarnessDir "run-feedback-loop.ps1"
 
+function Test-IsWindowsHost {
+    if (Get-Variable -Name IsWindows -Scope Global -ErrorAction SilentlyContinue) {
+        return $IsWindows
+    }
+
+    return $env:OS -eq "Windows_NT"
+}
+
+function Get-GitCommandPath {
+    $gitCommand = Get-Command git -ErrorAction SilentlyContinue
+    if ($gitCommand) {
+        return $gitCommand.Source
+    }
+
+    if (Test-IsWindowsHost) {
+        $candidates = @(
+            (Join-Path $env:ProgramFiles "Git/cmd/git.exe"),
+            (Join-Path $env:ProgramFiles "Git/bin/git.exe")
+        )
+
+        $programFilesX86 = ${env:ProgramFiles(x86)}
+        if (-not [string]::IsNullOrWhiteSpace($programFilesX86)) {
+            $candidates += @(
+                (Join-Path $programFilesX86 "Git/cmd/git.exe"),
+                (Join-Path $programFilesX86 "Git/bin/git.exe")
+            )
+        }
+
+        foreach ($candidate in $candidates) {
+            if (Test-Path $candidate) {
+                return $candidate
+            }
+        }
+    }
+
+    throw "Git command was not found. Install Git or add git to PATH."
+}
+
 function Invoke-GitLines {
     param([string[]] $Arguments)
 
+    $gitCommand = Get-GitCommandPath
     $stderrPath = Join-Path ([System.IO.Path]::GetTempPath()) ("pcs-codex-git-{0}.log" -f [guid]::NewGuid())
     $previousErrorActionPreference = $ErrorActionPreference
 
     try {
         $ErrorActionPreference = "Continue"
-        $output = & git -C $ProjectRoot @Arguments 2> $stderrPath
+        $output = & $gitCommand -C $ProjectRoot @Arguments 2> $stderrPath
         $exitCode = $LASTEXITCODE
     } finally {
         $ErrorActionPreference = $previousErrorActionPreference
@@ -28,7 +67,7 @@ function Invoke-GitLines {
     if ($exitCode -ne 0) {
         $stderr = if (Test-Path $stderrPath) { Get-Content -Raw -Path $stderrPath } else { "" }
         Remove-Item -Force -Path $stderrPath -ErrorAction SilentlyContinue
-        throw "Git command failed: git $($Arguments -join ' ')`n$stderr"
+        throw "Git command failed: $gitCommand $($Arguments -join ' ')`n$stderr"
     }
 
     Remove-Item -Force -Path $stderrPath -ErrorAction SilentlyContinue

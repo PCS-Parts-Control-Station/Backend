@@ -316,6 +316,481 @@
         };
     };
 
+    const toElement = (target) => {
+        if (!target) {
+            return null;
+        }
+        if (target instanceof Element || target === document) {
+            return target;
+        }
+        if (typeof target === "string") {
+            return document.querySelector(target);
+        }
+        return null;
+    };
+
+    const toElements = (target) => {
+        if (!target) {
+            return [];
+        }
+        if (target instanceof Element) {
+            return [target];
+        }
+        if (typeof target === "string") {
+            return Array.from(document.querySelectorAll(target));
+        }
+        return Array.from(target);
+    };
+
+    const setText = (element, value, fallback = "-") => {
+        if (!element) {
+            return;
+        }
+        const nextValue = value === null || value === undefined || value === "" ? fallback : String(value);
+        element.textContent = nextValue;
+        element.title = nextValue;
+    };
+
+    const resolveFieldTarget = (field) => {
+        if (!field) {
+            return null;
+        }
+        if (field instanceof Element || typeof field === "string") {
+            return toElement(field);
+        }
+        return toElement(field.target);
+    };
+
+    const resolveFieldValue = (field, key, data, row) => {
+        if (field && typeof field === "object" && !(field instanceof Element)) {
+            if (typeof field.value === "function") {
+                return field.value(data, row);
+            }
+            return data[field.source || field.key || key];
+        }
+        return data[key];
+    };
+
+    const normalizeListData = (data) => {
+        if (Array.isArray(data)) {
+            return data;
+        }
+        return Array.isArray(data?.content) ? data.content : [];
+    };
+
+    const loadAllCategories = async (companyCode, options = {}) => {
+        const pageSize = Math.max(1, Number(options.size || 100));
+        const apiOptions = typeof options.apiOptions === "function"
+            ? options.apiOptions(companyCode)
+            : options.apiOptions || {
+                authRedirect: true,
+                loginCompanyCode: companyCode
+            };
+        const allCategories = [];
+        let page = 0;
+        let totalPages = 1;
+
+        if (!companyCode || !window.PcsApi?.getData) {
+            return allCategories;
+        }
+
+        do {
+            const params = new URLSearchParams({
+                page: String(page),
+                size: String(pageSize)
+            });
+            const data = await window.PcsApi.getData(
+                `/api/workspaces/${encodeURIComponent(companyCode)}/categories?${params.toString()}`,
+                apiOptions
+            );
+            const content = normalizeListData(data);
+            allCategories.push(...content);
+
+            if (Array.isArray(data)) {
+                break;
+            }
+
+            const parsedTotalPages = Number(data?.totalPages);
+            totalPages = Number.isFinite(parsedTotalPages) && parsedTotalPages >= 0
+                ? parsedTotalPages
+                : page + 1;
+            page += 1;
+        } while (page < totalPages);
+
+        return allCategories;
+    };
+
+    const categoryId = (category) => category?.categoryId ?? category?.id ?? "";
+
+    const categoryName = (category) => category?.categoryName || category?.name || "이름 없음";
+
+    const categoryDescription = (category) => category?.description || "설명 없음";
+
+    const categoryPartCount = (category) => Number(category?.partCount ?? category?.partsCount ?? 0);
+
+    const createCategoryPickerOption = (category, options = {}) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "category-picker-option";
+
+        const currentCategoryId = categoryId(category);
+        if (String(currentCategoryId) === String(options.selectedCategoryId || "")) {
+            button.classList.add("is-selected");
+        }
+
+        const name = document.createElement("strong");
+        name.textContent = categoryName(category);
+
+        const count = document.createElement("span");
+        count.className = "category-picker-count";
+        count.textContent = `품목 ${number(categoryPartCount(category))}개`;
+
+        const description = document.createElement("small");
+        description.textContent = categoryDescription(category);
+
+        button.append(name, count, description);
+        if (typeof options.onSelect === "function") {
+            button.addEventListener("click", () => options.onSelect(category, currentCategoryId));
+        }
+
+        return button;
+    };
+
+    const bindCategoryPicker = (options = {}) => {
+        const input = toElement(options.input);
+        const label = toElement(options.label);
+        const modal = toElement(options.modal);
+        const search = toElement(options.search);
+        const list = toElement(options.list);
+        const message = toElement(options.message);
+        const openButtons = toElements(options.openButtons);
+        const closeButtons = toElements(options.closeButtons);
+        const clearButtons = toElements(options.clearButtons);
+        const defaultLabel = options.defaultLabel || "전체";
+        const loadingMessage = options.loadingMessage || "분류 목록을 불러오는 중입니다.";
+        const emptyMessage = options.emptyMessage || "등록된 분류가 없습니다.";
+        const noResultMessage = options.noResultMessage || "검색된 분류가 없습니다.";
+        const loadFailureMessage = options.loadFailureMessage || "분류를 불러오지 못했습니다.";
+        const pageSize = options.size || 100;
+
+        let categories = normalizeListData(options.categories || []);
+        let loaded = categories.length > 0;
+        let loading = false;
+
+        const selectedValue = () => input?.value || "";
+        const selectedCategory = () => categories.find((category) => String(categoryId(category)) === String(selectedValue())) || null;
+
+        const setMessage = (text = "") => {
+            if (message) {
+                message.textContent = text;
+            }
+        };
+
+        const appendEmpty = (text) => {
+            if (!list) {
+                return;
+            }
+
+            list.innerHTML = "";
+            const empty = document.createElement("p");
+            empty.className = "spec-builder-empty";
+            empty.textContent = text;
+            list.append(empty);
+        };
+
+        const syncLabel = () => {
+            if (!label) {
+                return;
+            }
+            label.textContent = selectedCategory() ? categoryName(selectedCategory()) : defaultLabel;
+        };
+
+        const matchesKeyword = (category, keyword) => {
+            if (!keyword) {
+                return true;
+            }
+
+            const target = `${categoryName(category)} ${categoryDescription(category)}`.toLowerCase();
+            return target.includes(keyword.toLowerCase());
+        };
+
+        const render = () => {
+            if (!list) {
+                return;
+            }
+
+            if (!loaded && loading) {
+                appendEmpty(loadingMessage);
+                return;
+            }
+
+            const keyword = search?.value.trim() || "";
+            const selectedCategoryId = selectedValue();
+            const filteredCategories = categories.filter((category) => matchesKeyword(category, keyword));
+            list.innerHTML = "";
+
+            if (filteredCategories.length === 0) {
+                appendEmpty(keyword ? noResultMessage : emptyMessage);
+                return;
+            }
+
+            filteredCategories.forEach((category) => {
+                list.append(createCategoryPickerOption(category, {
+                    selectedCategoryId,
+                    onSelect: (selectedCategory, selectedCategoryIdValue) => {
+                        setValue(selectedCategoryIdValue, {
+                            emitChange: true,
+                            close: true
+                        });
+                    }
+                }));
+            });
+        };
+
+        const buildApiUrl = (companyCode) => {
+            if (typeof options.apiUrl === "function") {
+                return options.apiUrl(companyCode);
+            }
+            if (options.apiUrl) {
+                return options.apiUrl;
+            }
+            if (!companyCode) {
+                return "";
+            }
+            return `/api/workspaces/${encodeURIComponent(companyCode)}/categories?size=${pageSize}`;
+        };
+
+        const buildApiOptions = (companyCode) => ({
+            authRedirect: true,
+            loginCompanyCode: companyCode,
+            ...(typeof options.apiOptions === "function" ? options.apiOptions(companyCode) : options.apiOptions || {})
+        });
+
+        const load = async () => {
+            const companyCode = options.companyCode || getCompanyCode();
+            const apiUrl = buildApiUrl(companyCode);
+
+            if (!apiUrl || !window.PcsApi?.getData) {
+                categories = [];
+                loaded = true;
+                appendEmpty(loadFailureMessage);
+                syncLabel();
+                return categories;
+            }
+
+            loading = true;
+            setMessage("");
+            appendEmpty(loadingMessage);
+
+            try {
+                if (options.apiUrl || typeof options.apiUrl === "function") {
+                    const data = await window.PcsApi.getData(apiUrl, buildApiOptions(companyCode));
+                    categories = normalizeListData(data);
+                } else {
+                    categories = await loadAllCategories(companyCode, {
+                        size: pageSize,
+                        apiOptions: buildApiOptions
+                    });
+                }
+                loaded = true;
+                syncLabel();
+                render();
+                return categories;
+            } catch (error) {
+                categories = [];
+                loaded = true;
+                setMessage(error?.message || loadFailureMessage);
+                syncLabel();
+                render();
+                return categories;
+            } finally {
+                loading = false;
+            }
+        };
+
+        function setValue(value, setOptions = {}) {
+            if (input) {
+                input.value = value ? String(value) : "";
+            }
+            syncLabel();
+            render();
+
+            if (setOptions.close && modal) {
+                modal.close();
+            }
+            if (setOptions.emitChange && typeof options.onChange === "function") {
+                options.onChange(input?.value || "", selectedCategory());
+            }
+        }
+
+        const open = () => {
+            if (!modal) {
+                return;
+            }
+
+            if (search) {
+                search.value = "";
+            }
+            setMessage("");
+            render();
+            if (typeof modal.showModal === "function" && !modal.open) {
+                modal.showModal();
+            }
+            if (!loaded && !loading) {
+                load();
+            }
+            window.setTimeout(() => search?.focus(), 0);
+        };
+
+        const close = () => {
+            modal?.close();
+        };
+
+        openButtons.forEach((button) => button.addEventListener("click", open));
+        closeButtons.forEach((button) => button.addEventListener("click", close));
+        clearButtons.forEach((button) => {
+            button.addEventListener("click", () => {
+                setValue("", {
+                    emitChange: true,
+                    close: true
+                });
+            });
+        });
+        search?.addEventListener("input", render);
+        modal?.addEventListener("click", (event) => {
+            if (event.target === modal) {
+                close();
+            }
+        });
+
+        syncLabel();
+        render();
+
+        return {
+            load,
+            render,
+            open,
+            close,
+            setValue,
+            getValue: selectedValue,
+            getSelectedCategory: selectedCategory
+        };
+    };
+
+    const bindDatasetDetailDrawer = (options = {}) => {
+        const drawer = toElement(options.drawer);
+        const container = toElement(options.container) || document;
+        const rowSelector = options.rowSelector || "";
+        const fields = options.fields || {};
+        const closeButtons = toElements(options.closeButtons);
+        const activeClass = options.activeClass || "is-selected";
+        const keepOpenSelector = options.keepOpenSelector || rowSelector;
+        const clearSelectionOnClose = options.clearSelectionOnClose !== false;
+
+        if (!drawer || !rowSelector) {
+            return {
+                open: () => {},
+                close: () => {},
+                update: () => {}
+            };
+        }
+
+        const findRows = () => Array.from(container.querySelectorAll(rowSelector));
+
+        const setDrawerOpen = (isOpen) => {
+            if (isOpen) {
+                drawer.hidden = false;
+            }
+            drawer.classList.toggle("is-open", isOpen);
+            drawer.setAttribute("aria-hidden", String(!isOpen));
+        };
+
+        const open = () => setDrawerOpen(true);
+
+        const clearSelection = () => {
+            findRows().forEach((row) => {
+                row.classList.remove(activeClass);
+                row.removeAttribute("aria-selected");
+            });
+        };
+
+        const close = () => {
+            setDrawerOpen(false);
+            if (clearSelectionOnClose) {
+                clearSelection();
+            }
+        };
+
+        const update = (row) => {
+            if (!row) {
+                return;
+            }
+
+            findRows().forEach((item) => {
+                const isSelected = item === row;
+                item.classList.toggle(activeClass, isSelected);
+                item.setAttribute("aria-selected", String(isSelected));
+            });
+
+            const data = row.dataset || {};
+            Object.entries(fields).forEach(([key, field]) => {
+                const target = resolveFieldTarget(field);
+                const value = resolveFieldValue(field, key, data, row);
+                const fallback = field && typeof field === "object" && !(field instanceof Element)
+                        ? field.fallback || "-"
+                        : "-";
+                setText(target, value, fallback);
+            });
+
+            if (typeof options.onUpdate === "function") {
+                options.onUpdate(row, data);
+            }
+            open();
+        };
+
+        container.addEventListener("click", (event) => {
+            const target = event.target;
+            const row = target instanceof Element ? target.closest(rowSelector) : null;
+            if (!row || !container.contains(row)) {
+                return;
+            }
+            update(row);
+        });
+
+        container.addEventListener("keydown", (event) => {
+            if (event.key !== "Enter" && event.key !== " ") {
+                return;
+            }
+
+            const target = event.target;
+            const row = target instanceof Element ? target.closest(rowSelector) : null;
+            if (!row || !container.contains(row)) {
+                return;
+            }
+
+            event.preventDefault();
+            update(row);
+        });
+
+        closeButtons.forEach((button) => {
+            button.addEventListener("click", () => close());
+        });
+
+        bindDismiss({
+            drawer,
+            close,
+            keepOpenSelector,
+            isOpen: options.isOpen,
+            shouldIgnoreEscape: options.shouldIgnoreEscape
+        });
+
+        return {
+            open,
+            close,
+            update
+        };
+    };
+
     window.PcsWorkspace = {
         getCompanyCode,
         updateWorkspaceLinks
@@ -325,7 +800,8 @@
         number
     };
     window.PcsHtml = {
-        escape: escapeHtml
+        escape: escapeHtml,
+        setText
     };
     window.PcsFeedback = {
         toast
@@ -361,6 +837,14 @@
         setOpen: setDrawerOpen,
         bindOutsideClose,
         bindEscapeClose,
-        bindDismiss
+        bindDismiss,
+        bindDatasetDetailDrawer
+    };
+    window.PcsCategory = {
+        loadAll: loadAllCategories
+    };
+    window.PcsCategoryPicker = {
+        bind: bindCategoryPicker,
+        createOption: createCategoryPickerOption
     };
 })(window);

@@ -80,3 +80,16 @@
 - 연결된 품목이 없는 분류 행은 삭제할 수 있다.
 - 실제 서비스에서는 삭제 전 `tb_pc_part` 연결 수를 확인하고, 연결된 품목이 있으면 `CATEGORY_IN_USE`로 실패해야 한다.
 - 분류 삭제 또는 사양 항목 교체 시 `tb_part_spec_value` -> `tb_part_spec_option` -> `tb_part_spec_definition` 순서로 하위 데이터를 먼저 정리해야 한다.
+
+## DB 통합 테스트 기준
+
+- 실제 MariaDB에서 `tb_part_category` 등록, 수정, 삭제 SQL이 동작해야 한다.
+- `UNIQUE(company_id, category_name)` 제약으로 같은 업체의 중복 분류명이 막혀야 한다.
+- 다른 업체는 같은 분류명을 사용할 수 있어야 한다.
+- 목록 검색 SQL은 이름/설명 keyword, page, size 조건을 처리해야 한다.
+- 목록과 상세 조회의 `partCount`는 `tb_pc_part` 기준으로 정확히 집계되어야 한다.
+- 사양 정의는 `sort_order ASC, spec_definition_id ASC` 순서로 조회되어야 한다.
+- 선택지는 `spec_definition_id ASC, sort_order ASC, option_id ASC` 순서로 조회되어야 한다.
+- 분류 삭제 시 사양값, 선택지, 사양 정의, 분류 순서로 삭제되어 FK 오류가 없어야 한다.
+- 연결 품목이 있는 분류는 서비스 계층에서 삭제가 차단되어야 한다.
+- 조회와 삭제는 항상 `company_id` 범위를 지켜 다른 업체 데이터가 섞이지 않아야 한다.

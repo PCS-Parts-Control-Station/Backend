@@ -276,26 +276,13 @@
     };
 
     const createCategoryPickerOption = (category, selectedCategoryId) => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "category-picker-option";
-        if (String(category.categoryId) === String(selectedCategoryId)) {
-            button.classList.add("is-selected");
-        }
-
-        const name = document.createElement("strong");
-        name.textContent = category.categoryName || "이름 없음";
-
-        const description = document.createElement("small");
-        description.textContent = category.description || "설명 없음";
-
-        button.append(name, description);
-        button.addEventListener("click", () => {
-            setCategoryValue(activeCategoryPickerMode, category.categoryId);
-            closeCategoryPicker();
+        return window.PcsCategoryPicker.createOption(category, {
+            selectedCategoryId,
+            onSelect: (selectedCategory) => {
+                setCategoryValue(activeCategoryPickerMode, selectedCategory.categoryId);
+                closeCategoryPicker();
+            }
         });
-
-        return button;
     };
 
     const renderCategoryPickerList = () => {
@@ -762,8 +749,7 @@
     };
 
     const loadCategories = async () => {
-        const data = await window.PcsApi.getData(`${apiBase()}/categories?size=100`, apiOptions());
-        categories = data?.content || [];
+        categories = await window.PcsCategory.loadAll(getCompanyCode(), { apiOptions });
         populateCategorySelects();
     };
 

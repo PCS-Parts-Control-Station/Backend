@@ -79,7 +79,7 @@ button, input { font: inherit; }
 }
 
 .login-left h1 {
-    color: var(--cyan-dark);
+    color: var(--ink);
     font-size: clamp(28px, 3vw, 36px);
     font-weight: 800;
     line-height: 1.22;
@@ -105,7 +105,7 @@ button, input { font: inherit; }
 }
 
 .guide-label {
-    color: var(--cyan-dark);
+    color: var(--ink);
     font-size: 13px;
     font-weight: 900;
     letter-spacing: 0.04em;
@@ -292,7 +292,7 @@ button, input { font: inherit; }
 }
 
 .guide-card-label {
-    color: var(--cyan-dark);
+    color: var(--ink);
     font-size: 12px;
     font-weight: 900;
 }

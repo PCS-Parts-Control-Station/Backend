@@ -67,3 +67,12 @@ staffPermissions
 - `memberId`를 요청 body나 query에서 받지 않는다.
 - 비밀번호 해시는 응답에 노출하지 않는다.
 - 비밀번호 변경과 refresh token 폐기는 Facade 트랜잭션 안에서 함께 처리한다.
+
+## Test Coverage
+
+- Covered by: `MemberServiceTest`, `MemberApiControllerTest`, `MemberPersistenceIntegrationTest`
+- Required checks:
+  - current member can read and update only own profile
+  - password change validates current password and confirmation
+  - successful password change activates temporary-password account
+  - successful password change revokes existing refresh tokens

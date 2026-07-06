@@ -10,6 +10,10 @@
         'COMPANY-001',
         'COMPANY-003'
     ]);
+    const FORBIDDEN_ERROR_CODES = new Set([
+        'AUTH-005',
+        'AUTH-008'
+    ]);
     const PASSWORD_CHANGE_REQUIRED_CODE = 'MEMBER-005';
 
     let refreshPromise = null;
@@ -60,6 +64,10 @@
         return WORKSPACE_ERROR_CODES.has(error?.code);
     };
 
+    const isForbiddenError = (error) => {
+        return error?.status === 403 || FORBIDDEN_ERROR_CODES.has(error?.code);
+    };
+
     const getCompanyCodeFromPath = () => {
         const match = window.location.pathname.match(/^\/w\/([^/]+)/);
         return match ? decodeURIComponent(match[1]) : '';
@@ -67,6 +75,9 @@
 
     const workspaceErrorType = (error) => {
         if (error?.code === 'AUTH-006') {
+            return 'access';
+        }
+        if (FORBIDDEN_ERROR_CODES.has(error?.code)) {
             return 'access';
         }
         if (error?.code === 'COMPANY-003') {
@@ -217,7 +228,17 @@
         const retryOnAuthError = options.retryOnAuthError !== false;
         const authRedirect = options.authRedirect === true;
         const loginCompanyCode = options.loginCompanyCode || '';
+        const requestMethod = String(options.method || 'GET').toUpperCase();
         const { body, hasJsonBody } = normalizeBody(options.body);
+        const shouldRedirectAccessError = (error) => {
+            if (options.workspaceErrorRedirect === false) {
+                return false;
+            }
+            if (isWorkspaceAccessError(error)) {
+                return true;
+            }
+            return requestMethod === 'GET' && isForbiddenError(error);
+        };
 
         const execute = async () => {
             const response = await fetch(url, {
@@ -237,7 +258,7 @@
                 throw error;
             }
 
-            if (options.workspaceErrorRedirect !== false && isWorkspaceAccessError(error)) {
+            if (shouldRedirectAccessError(error)) {
                 redirectToInvalidAccess(error, loginCompanyCode);
                 throw error;
             }
@@ -250,11 +271,16 @@
                 await refreshAccessToken();
                 return await execute();
             } catch (refreshError) {
-                if (options.workspaceErrorRedirect !== false && isWorkspaceAccessError(refreshError)) {
+                if (refreshError?.code === PASSWORD_CHANGE_REQUIRED_CODE) {
+                    redirectToPasswordChange(loginCompanyCode);
+                    throw refreshError;
+                }
+
+                if (shouldRedirectAccessError(refreshError)) {
                     redirectToInvalidAccess(refreshError, loginCompanyCode);
                     throw refreshError;
                 }
-                if (authRedirect) {
+                if (authRedirect && isAuthError(refreshError)) {
                     redirectToLogin(loginCompanyCode);
                 }
                 throw refreshError;

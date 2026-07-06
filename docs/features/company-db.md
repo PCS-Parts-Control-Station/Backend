@@ -87,3 +87,12 @@ tb_member.chk_member_owner_slot
 
 실행 명령과 `-Feature`, `-DbFeature` 조합 기준은 `docs/ai/pcs-harness-rules.md`를 따른다.  
 회사 등록 검증 시에는 `company.md`, `company-db.md`, `member-db.md`, `checkdb.md` 기준을 함께 확인한다.
+
+## DB Integration Test Coverage
+
+- Integration test: `CompanyPersistenceIntegrationTest`
+- Schema fixture: `src/integrationTest/resources/pcs-account-test-schema.sql`
+- Required checks:
+  - `tb_company` and OWNER `tb_member` are persisted together
+  - unique company code and business registration constraints are enforced
+  - non-OWNER users cannot update owner company information

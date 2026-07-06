@@ -85,3 +85,13 @@
 - 거래처 수정 요청에 `active`가 없으면 기존 거래 가능 여부를 유지한다.
 - 거래 가능 여부만 단독 변경해야 하는 경우 별도 active API를 사용할 수 있다.
 - 거래처는 하드 삭제하지 않는다. 업무 제외는 `active = FALSE`로 처리한다.
+## DB Integration Test Coverage
+
+- Integration test: `PartnerPersistenceIntegrationTest`
+- Schema fixture: `src/integrationTest/resources/pcs-account-test-schema.sql`
+- Required checks:
+  - partner rows are stored in `tb_trade_partner` with company scope
+  - search filters support keyword, type, role, active, and pagination
+  - `SUPPLIER` and `CUSTOMER` role filters include `BOTH`
+  - duplicate partner name is blocked per company
+  - active status can be changed without hard deleting the row

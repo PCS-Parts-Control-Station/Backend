@@ -66,3 +66,15 @@ com.pcs.domain.member
 - 권한 변경은 `docs/ai/pcs-permission-rules.md` 기준으로 인증 사용자 권한 검증을 거쳐야 한다.
 - 비밀번호 해시는 Service 계층 밖으로 노출하지 않는다.
 - 사용자 관리에 새로운 활성 여부 변경 API를 추가할 때는 `member.md`, `member-db.md`, `auth-db.md`, 권한 규칙을 함께 갱신한다.
+
+## Test Coverage
+
+- Unit/service tests: `MemberServiceTest`, `StaffPermissionServiceTest`
+- API tests: `MemberApiControllerTest`
+- Required checks:
+  - OWNER can manage ADMIN and STAFF users
+  - ADMIN can manage STAFF users only
+  - STAFF cannot access user-management APIs
+  - temporary password issue returns raw password once and stores only hash
+  - STAFF common permission settings store disabled permissions only
+  - mypage name/password changes are limited to the authenticated member
