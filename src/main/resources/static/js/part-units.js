@@ -28,7 +28,8 @@
     const documentPickerList = document.querySelector("[data-part-unit-document-picker-list]");
     const documentPickerMessage = document.querySelector("[data-part-unit-document-picker-message]");
     const flowList = document.querySelector("[data-detail-flow-list]");
-    const nextFlowAction = document.querySelector("[data-next-flow-action]");
+    const stockHistoryAction = document.querySelector("[data-stock-history-action]");
+    const inspectionHistoryAction = document.querySelector("[data-inspection-history-action]");
     const searchButton = filterForm?.querySelector("button[type='submit']");
 
     let currentPage = 0;
@@ -84,6 +85,12 @@
         const code = companyCode();
         return code ? `/api/workspaces/${encodeURIComponent(code)}` : "";
     };
+    const workspaceRoute = (route, params = null) => {
+        const code = companyCode();
+        const query = params?.toString();
+        const path = code ? `/w/${encodeURIComponent(code)}/${route}` : `/${route}`;
+        return query ? `${path}?${query}` : path;
+    };
     const apiOptions = () => ({
         authRedirect: true,
         loginCompanyCode: companyCode()
@@ -121,14 +128,10 @@
     const gradeLabel = (grade) => LABELS.grade[grade] || grade || "-";
     const unitLabel = (status) => LABELS.unit[status] || status || "-";
     const salesLabel = (status) => LABELS.sales[status] || status || "-";
+    const partSalesLabel = (unit) => unit?.unitStatus === "OUTBOUND" ? "판매완료" : salesLabel(unit?.salesStatus);
     const movementLabel = (type) => LABELS.movement[type] || type || "-";
     const inspectionTypeLabel = (type) => LABELS.inspectionType[type] || type || "-";
     const inspectionResultLabel = (result) => LABELS.inspectionResult[result] || result || "-";
-
-    const workspaceRoute = (route) => {
-        const code = companyCode();
-        return code ? `/w/${encodeURIComponent(code)}/${route}` : "#";
-    };
 
     const normalizeListData = (data) => {
         if (Array.isArray(data)) {
@@ -202,11 +205,12 @@
         if (!unit) {
             return "-";
         }
-        return `${workStatusLabel(unit)} / ${salesLabel(unit.salesStatus)} / ${recentLabel(unit)}`;
+        return `${workStatusLabel(unit)} / ${partSalesLabel(unit)} / ${recentLabel(unit)}`;
     };
 
     const statusBadgeClass = (label) => {
         const value = label || "";
+        if (value.includes("판매완료")) return "badge-available";
         if (value.includes("판매불가") || value.includes("불량")) return "badge-danger";
         if (value.includes("출고") || value.includes("취소") || value.includes("비활성")) return "badge-inactive";
         if (value.includes("검수대기")) return "badge-pending";
@@ -361,6 +365,168 @@
         await execute();
     };
 
+    const hasCompletedInspection = (detail) => {
+        const unit = detail?.unit;
+        return unit?.inspectionStatus === "COMPLETED"
+                || Boolean(unit?.lastInspectionId)
+                || (detail?.inspectionHistories || []).length > 0;
+    };
+
+    const hasOutboundHistory = (detail) => {
+        const unit = detail?.unit;
+        return unit?.unitStatus === "OUTBOUND"
+                || (detail?.stockHistories || []).some((history) => String(history.movementType || "").startsWith("OUTBOUND"));
+    };
+
+    const findInboundStockContext = (detail) => {
+        const histories = detail?.stockHistories || [];
+        return histories.find((history) => history.documentId && history.movementId && history.movementType === "INBOUND")
+                || histories.find((history) => history.documentId && history.movementId && String(history.movementType || "").startsWith("INBOUND"));
+    };
+
+    const inspectionRoute = (detail) => {
+        const context = findInboundStockContext(detail);
+        const unitId = detail?.unit?.unitId;
+        if (!context || !unitId) {
+            return "inspection";
+        }
+        const params = new URLSearchParams({
+            documentId: String(context.documentId),
+            movementId: String(context.movementId),
+            unitId: String(unitId)
+        });
+        return `inspection?${params.toString()}`;
+    };
+
+    const outboundRoute = (detail) => {
+        const unit = detail?.unit;
+        if (!unit?.unitId) {
+            return "outbound/new";
+        }
+
+        const params = new URLSearchParams({
+            unitId: String(unit.unitId)
+        });
+        if (unit.partId) {
+            params.set("partId", String(unit.partId));
+        }
+        if (unit.categoryId) {
+            params.set("categoryId", String(unit.categoryId));
+        }
+        if (unit.internalSerialNo) {
+            params.set("keyword", unit.internalSerialNo);
+        }
+
+        return `outbound/new?${params.toString()}`;
+    };
+
+    const stockHistoryRoute = (detail, options = {}) => {
+        const unit = detail?.unit;
+        const params = new URLSearchParams();
+        const keyword = unit?.internalSerialNo || unit?.manufacturerSerialNo || "";
+        if (keyword) {
+            params.set("keyword", keyword);
+        }
+        if (options.inboundOnly) {
+            params.set("documentType", "INBOUND");
+        }
+        return workspaceRoute("history/stock", params);
+    };
+
+    const createFlowArticle = ({ title, status, meta, actionLabel, route, note, variant }) => {
+        const item = document.createElement("article");
+        if (variant) {
+            item.classList.add(variant);
+        }
+
+        const titleElement = document.createElement("strong");
+        titleElement.textContent = title || "-";
+        item.append(titleElement);
+
+        if (status !== null && status !== undefined && status !== "") {
+            const statusElement = document.createElement("span");
+            statusElement.textContent = status;
+            item.append(statusElement);
+        }
+
+        if (meta) {
+            const metaElement = document.createElement("small");
+            metaElement.textContent = meta;
+            item.append(metaElement);
+        }
+
+        if (actionLabel || note) {
+            const actionRow = document.createElement("div");
+            actionRow.className = "process-flow-action-row";
+
+            if (actionLabel && route) {
+                const action = document.createElement("a");
+                action.className = "btn btn-primary process-flow-action-button";
+                action.href = workspaceRoute(route);
+                action.textContent = actionLabel;
+                actionRow.append(action);
+            }
+
+            if (note) {
+                const noteElement = document.createElement("em");
+                noteElement.className = "process-flow-status-note";
+                noteElement.textContent = note;
+                actionRow.append(noteElement);
+            }
+
+            item.append(actionRow);
+        }
+
+        return item;
+    };
+
+    const nextFlowStep = (detail) => {
+        const unit = detail?.unit;
+        if (!unit) {
+            return null;
+        }
+
+        if (["OUTBOUND", "CANCELED", "DISPOSED"].includes(unit.unitStatus)) {
+            return null;
+        }
+
+        if (!hasCompletedInspection(detail)) {
+            return {
+                title: "검수",
+                status: "검수 전",
+                actionLabel: "검수하러가기",
+                route: inspectionRoute(detail),
+                variant: "is-next"
+            };
+        }
+
+        if (unit.salesStatus === "AVAILABLE") {
+            return {
+                title: "출고",
+                status: "판매가능",
+                actionLabel: "출고하러가기",
+                route: outboundRoute(detail),
+                variant: "is-next"
+            };
+        }
+
+        if (unit.salesStatus === "UNAVAILABLE") {
+            return {
+                title: "판매불가상태입니다.",
+                variant: "is-blocked"
+            };
+        }
+
+        if (unit.salesStatus === "HOLD") {
+            return {
+                title: "판매보류상태입니다.",
+                variant: "is-blocked"
+            };
+        }
+
+        return null;
+    };
+
     const renderFlow = (detail) => {
         if (!flowList) {
             return;
@@ -381,65 +547,46 @@
 
         const events = [...stockEvents, ...inspectionEvents]
                 .sort((a, b) => dateValue(a.at) - dateValue(b.at));
+        const nextStep = nextFlowStep(detail);
 
         flowList.innerHTML = "";
-        if (!events.length) {
-            const empty = document.createElement("article");
-            empty.innerHTML = "<strong>-</strong><span>표시할 이력이 없습니다.</span><small>-</small>";
-            flowList.append(empty);
+        if (!events.length && !nextStep) {
+            flowList.append(createFlowArticle({
+                title: "-",
+                status: "표시할 이력이 없습니다.",
+                meta: "-"
+            }));
             return;
         }
 
         events.forEach((event) => {
-            const item = document.createElement("article");
-            item.innerHTML = `<strong>${escape(event.title)}</strong><span>${escape(event.status)}</span><small>${escape(event.meta)}</small>`;
-            flowList.append(item);
+            flowList.append(createFlowArticle(event));
         });
+
+        if (nextStep) {
+            flowList.append(createFlowArticle(nextStep));
+        }
     };
 
-    const hideNextFlowAction = () => {
-        if (!nextFlowAction) {
-            return;
+    const resetDetailActions = () => {
+        if (stockHistoryAction) {
+            stockHistoryAction.textContent = "입고이력";
+            stockHistoryAction.href = workspaceRoute("history/stock");
         }
-        nextFlowAction.hidden = true;
-        nextFlowAction.removeAttribute("href");
-        nextFlowAction.textContent = "";
+        if (inspectionHistoryAction) {
+            inspectionHistoryAction.hidden = true;
+        }
     };
 
-    const showNextFlowAction = (label, route) => {
-        if (!nextFlowAction) {
-            return;
+    const updateDetailActions = (detail) => {
+        if (stockHistoryAction) {
+            const inboundOnly = !hasOutboundHistory(detail);
+            stockHistoryAction.textContent = inboundOnly ? "입고이력" : "입출고이력";
+            stockHistoryAction.href = stockHistoryRoute(detail, { inboundOnly });
         }
-        nextFlowAction.textContent = label;
-        nextFlowAction.href = workspaceRoute(route);
-        nextFlowAction.hidden = false;
-    };
-
-    const updateNextFlowAction = (detail) => {
-        const unit = detail?.unit;
-        if (!unit) {
-            hideNextFlowAction();
-            return;
+        if (inspectionHistoryAction) {
+            inspectionHistoryAction.hidden = !hasCompletedInspection(detail);
         }
-
-        if (["OUTBOUND", "CANCELED", "DISPOSED"].includes(unit.unitStatus)) {
-            hideNextFlowAction();
-            return;
-        }
-
-        const inspectionCompleted = unit.inspectionStatus === "COMPLETED"
-                || (detail.inspectionHistories || []).length > 0;
-        if (!inspectionCompleted) {
-            showNextFlowAction("검수하러 가기", "inspection");
-            return;
-        }
-
-        if (unit.salesStatus === "AVAILABLE") {
-            showNextFlowAction("출고하러 가기", "outbound/new");
-            return;
-        }
-
-        hideNextFlowAction();
     };
 
     const updateDetailFields = (detail) => {
@@ -456,7 +603,7 @@
         setText(document.querySelector("[data-detail-serial]"), unit.manufacturerSerialNo);
         setBadge("[data-detail-unit-status]", stateText, statusBadgeClass(stateText));
         renderFlow(detail);
-        updateNextFlowAction(detail);
+        updateDetailActions(detail);
     };
 
     const loadDetail = async (unitId, requestId) => {
@@ -507,7 +654,7 @@
             if (flowList) {
                 flowList.innerHTML = "<article><strong>-</strong><span>상세 이력을 불러오는 중입니다.</span><small>-</small></article>";
             }
-            hideNextFlowAction();
+            resetDetailActions();
             detailRequestId += 1;
             loadDetail(row.dataset.unitId, detailRequestId);
         }

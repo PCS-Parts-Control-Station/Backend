@@ -58,6 +58,22 @@
               OR p.part_name LIKE CONCAT('%', #{keyword}, '%')
               OR p.model_name LIKE CONCAT('%', #{keyword}, '%')
               OR p.part_code LIKE CONCAT('%', #{keyword}, '%')
+              OR EXISTS (
+                  SELECT 1
+                  FROM tb_stock_movement km
+                  JOIN tb_stock_movement_unit kmu
+                    ON kmu.movement_id = km.movement_id
+                  JOIN tb_pc_part_unit ku
+                    ON ku.company_id = km.company_id
+                   AND ku.unit_id = kmu.unit_id
+                  WHERE km.company_id = d.company_id
+                    AND km.document_id = d.document_id
+                    AND km.canceled_movement_id IS NULL
+                    AND (
+                        ku.internal_serial_no LIKE CONCAT('%', #{keyword}, '%')
+                        OR ku.manufacturer_serial_no LIKE CONCAT('%', #{keyword}, '%')
+                    )
+              )
           )
         </if>
     </sql>

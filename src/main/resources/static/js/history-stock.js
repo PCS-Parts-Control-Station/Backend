@@ -463,6 +463,30 @@
         dateTo.value = end.toISOString().slice(0, 10);
     };
 
+    const applyInitialQueryFilters = () => {
+        const params = new URLSearchParams(window.location.search);
+        const supportedFields = ["keyword", "documentType", "documentStatus", "dateFrom", "dateTo"];
+        const hasInitialFilter = supportedFields.some((field) => params.has(field));
+        if (!hasInitialFilter) {
+            return false;
+        }
+
+        supportedFields.forEach((field) => {
+            const control = filterForm.elements[field];
+            if (control) {
+                control.value = params.get(field) || "";
+            }
+        });
+
+        if (params.has("keyword") && !params.has("dateFrom") && filterForm.elements.dateFrom) {
+            filterForm.elements.dateFrom.value = "";
+        }
+        if (params.has("keyword") && !params.has("dateTo") && filterForm.elements.dateTo) {
+            filterForm.elements.dateTo.value = "";
+        }
+        return true;
+    };
+
     filterForm.addEventListener("submit", (event) => {
         event.preventDefault();
         void loadDocuments(0);
@@ -546,6 +570,7 @@
                 }
             }
             setDefaultDates();
+            applyInitialQueryFilters();
             await loadDocuments(0);
         } catch (error) {
             setEmptyMessage(error.message || "업체 주소를 확인할 수 없습니다.");
