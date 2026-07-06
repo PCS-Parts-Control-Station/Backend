@@ -63,6 +63,9 @@ management-detail-drawer
 - `management-detail-drawer`와 `management-detail-drawer-panel` 자체에는 세로 스크롤을 만들지 않는다.
 - 드로어 안에서 내용이 길어지는 경우 제목/닫기 버튼 아래의 `drawer-scroll-body`만 세로 스크롤을 가진다.
 - 등록/상세/수정 모드의 제목 영역은 고정된 판단 영역으로 유지하고, 긴 폼·상세 목록·하위 항목 목록만 `drawer-scroll-body` 안에 둔다.
+- 등록/상세/수정 모드의 저장, 초기화, 수정, 삭제, 취소 버튼은 `form-actions`를 사용하고 드로어 하단에 고정된 액션 영역처럼 유지한다.
+- 개별 부품 상세처럼 다른 업무로 이동하는 주요 연결 액션도 `form-actions`를 사용해 드로어 하단에 유지한다.
+- 드로어 하단 액션은 좌측 정렬을 기본으로 하며, 페이지별 CSS에서 오른쪽 정렬이나 별도 footer 구조로 재정의하지 않는다.
 - 품목 분류의 분류명/설명 입력은 드로어 안에 두고, 반복적으로 길어질 수 있는 사양 항목 입력은 모달로 분리한다.
 
 ## 공통 클래스
@@ -72,6 +75,8 @@ management-detail-drawer
 ```text
 management-filter-card
 management-filter-form
+management-filter-form-with-actions
+management-filter-actions
 management-filter-form-compact
 management-data-row
 management-summary-header

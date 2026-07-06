@@ -1,4 +1,4 @@
-﻿<aside class="workspace-sidebar" id="workspace-sidebar" aria-label="업무 메뉴">
+<aside class="workspace-sidebar" id="workspace-sidebar" aria-label="업무 메뉴">
     <a class="sidebar-brand" href="/">
         <img src="/images/parts-control-station-icon.svg" alt="" width="38" height="38">
         <span>
@@ -12,15 +12,51 @@
 
         <div class="sidebar-group">
             <div class="sidebar-group-title">업무</div>
-            <a data-route="inbound/new" data-staff-permission="STAFF_INBOUND">입고</a>
-            <a data-route="inspection" data-staff-permission="STAFF_INSPECTION">검수</a>
-            <a data-route="outbound/new" data-staff-permission="STAFF_OUTBOUND">출고</a>
+            <a data-route="inbound/new" data-staff-permission="STAFF_INBOUND">
+                <span class="sidebar-nav-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="18" height="18" focusable="false">
+                        <path fill="currentColor" d="M20.955 8.804v2.21a.75.75 0 1 1-1.5 0v-2.21a2 2 0 0 0-.13-.76l-7.3 4.38v8.19a1.6 1.6 0 0 0 .33-.14l2.53-1.4a.76.76 0 0 1 1 .29a.75.75 0 0 1-.3 1l-2.52 1.4a3.7 3.7 0 0 1-1.81.47a3.8 3.8 0 0 1-1.82-.47l-5.95-3.3a3.79 3.79 0 0 1-1.92-3.27v-6.39c0-.669.18-1.325.52-1.9q.086-.155.2-.29a3.56 3.56 0 0 1 1.2-1.08l6-3.31a3.81 3.81 0 0 1 3.62 0l6 3.31c.42.231.789.548 1.08.93q.067.069.12.15q.114.135.2.29c.32.58.476 1.237.45 1.9"></path>
+                        <path fill="currentColor" d="M22.435 16.424a.75.75 0 0 1-.75.75h-1.76v1.75a.75.75 0 1 1-1.5 0v-1.75h-1.72a.75.75 0 1 1 0-1.5h1.74v-1.75a.75.75 0 1 1 1.5 0v1.75h1.76a.76.76 0 0 1 .73.75"></path>
+                    </svg>
+                </span>
+                <span>입고</span>
+            </a>
+            <a data-route="inspection" data-staff-permission="STAFF_INSPECTION">
+                <span class="sidebar-nav-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="18" height="18" focusable="false">
+                        <g transform="translate(2 2) scale(1.25)">
+                            <path fill="currentColor" fill-rule="evenodd" d="M6 1v4.48c0 .168 0 .338-.023.51q-.032.227-.103.444c-.055.165-.13.317-.204.47l-1.52 3.09h7.7l-1.5-3.06l-.018-.036c-.074-.152-.15-.304-.204-.469a2.5 2.5 0 0 1-.103-.444c-.023-.172-.023-.342-.023-.511V.994h-4zm6.35 10H3.66l-.974 1.98c-.29.59-.476.972-.588 1.26c-.09.233-.093.32-.094.332a.5.5 0 0 0 .205.329c.012.005.091.04.34.062c.311.029.736.03 1.39.03h8.12c.658 0 1.08-.001 1.39-.03c.25-.022.33-.057.34-.062a.5.5 0 0 0 .205-.33v.003v-.002l.001-.004v.004c0-.013-.005-.1-.094-.332c-.112-.292-.298-.673-.588-1.26L12.339 11zm-1.34-5.56V1h.499a.5.5 0 0 0 0-1h-7a.5.5 0 0 0 0 1h.495v4.44c0 .208 0 .312-.014.413q-.018.136-.062.266a3 3 0 0 1-.17.377l-2.97 6.04c-.563 1.15-.844 1.72-.772 2.18c.062.406.29.769.626 1c.387.269 1.03.269 2.3.269h8.12c1.28 0 1.92 0 2.3-.269c.338-.235.564-.598.626-1c.071-.465-.21-1.04-.774-2.18l-2.97-6.04c-.092-.187-.138-.28-.17-.378a1.5 1.5 0 0 1-.062-.266c-.014-.102-.014-.206-.014-.414z" clip-rule="evenodd"></path>
+                        </g>
+                    </svg>
+                </span>
+                <span>검수</span>
+            </a>
+            <a data-route="outbound/new" data-staff-permission="STAFF_OUTBOUND">
+                <span class="sidebar-nav-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="18" height="18" focusable="false">
+                        <g transform="scale(0.75)">
+                            <path fill="currentColor" d="m29.482 8.624l-10-5.5a1 1 0 0 0-.964 0l-10 5.5a1 1 0 0 0 0 1.752L18 15.591V26.31l-3.036-1.67L14 26.391l4.518 2.485a1 1 0 0 0 .964 0l10-5.5A1 1 0 0 0 30 22.5v-13a1 1 0 0 0-.518-.876M19 5.142L26.925 9.5L19 13.858L11.075 9.5Zm9 16.767l-8 4.4V15.59l8-4.4Z"></path>
+                            <path fill="currentColor" d="M10 16H2v-2h8zm2 8H4v-2h8zm2-4H6v-2h8z"></path>
+                        </g>
+                    </svg>
+                </span>
+                <span>출고</span>
+            </a>
         </div>
 
         <div class="sidebar-group">
             <div class="sidebar-group-title">이력</div>
             <a data-route="history/stock">입출고 이력</a>
-            <a data-route="history/inspection">검수이력</a>
+            <a data-route="history/inspection">
+                <span class="sidebar-nav-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="18" height="18" focusable="false">
+                        <g transform="matrix(0.0104167 0 0 0.0104167 1.04 0.67)">
+                            <path fill="currentColor" d="M1152 640H512V512h640zM256 1664h681l-64 128H128V128h1408v640h-128V256H256zm256-384h617l-64 128H512zm512-384v128H512V896zm939 967q14 28 14 57q0 26-10 49t-27 41t-41 28t-50 10h-754q-26 0-49-10t-41-27t-28-41t-10-50q0-29 14-57l299-598v-241h-128V896h640v128h-128v241zm-242-199l-185-369v-271h-128v271l-185 369z"></path>
+                        </g>
+                    </svg>
+                </span>
+                <span>검수이력</span>
+            </a>
         </div>
 
         <div class="sidebar-group">
@@ -32,7 +68,7 @@
                     data-staff-primary-permission="STAFF_PART_CREATE"
                     data-staff-fallback-route="categories">품목 관리</a>
             <a data-route="inspection/templates" data-staff-permission="STAFF_INSPECTION">검수 템플릿</a>
-            <a data-route="partners" data-staff-permission="STAFF_PARTNER_MANAGE">거래처 관리</a>
+            <a data-route="partners">거래처 관리</a>
             <a data-route="users" data-allowed-roles="OWNER,ADMIN" hidden>사용자 관리</a>
         </div>
     </nav>

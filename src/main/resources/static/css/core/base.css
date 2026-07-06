@@ -89,4 +89,16 @@ textarea:focus {
     border-color: var(--cyan);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
+
+/* Chrome, Safari, Edge, Opera - 스핀 버튼 제거 */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Firefox - 스핀 버튼 제거 */
+input[type=number] {
+    -moz-appearance: textfield;
+}
 }

@@ -64,6 +64,7 @@
     let selectedPartId = null;
     let lastDrawerTrigger = null;
     let categoryOptions = [];
+    let categoryLoadFailed = false;
     const categoryDetails = new Map();
     const detailStateByMode = {
         create: createEmptyDetailState(),
@@ -131,6 +132,13 @@
         ["filter", "create", "edit"].forEach(syncCategoryLabel);
     };
 
+    const setCategoryPickerDisabled = (disabled, message = "") => {
+        document.querySelectorAll("[data-open-category-picker]").forEach((button) => {
+            button.disabled = disabled;
+            button.title = disabled ? message : "";
+        });
+    };
+
     const setCategoryValue = (mode, categoryId, options = {}) => {
         const input = categoryPickerInputs[mode];
         if (!input) {
@@ -157,30 +165,26 @@
     };
 
     const createCategoryPickerOption = (category, selectedCategoryId) => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "category-picker-option";
-        if (String(category.categoryId) === String(selectedCategoryId)) {
-            button.classList.add("is-selected");
-        }
-
-        const name = document.createElement("strong");
-        name.textContent = category.categoryName || "이름 없음";
-
-        const description = document.createElement("small");
-        description.textContent = category.description || "설명 없음";
-
-        button.append(name, description);
-        button.addEventListener("click", () => {
-            setCategoryValue(activeCategoryPickerMode, category.categoryId);
-            closeCategoryPicker();
+        return window.PcsCategoryPicker.createOption(category, {
+            selectedCategoryId,
+            onSelect: (selectedCategory) => {
+                setCategoryValue(activeCategoryPickerMode, selectedCategory.categoryId);
+                closeCategoryPicker();
+            }
         });
-
-        return button;
     };
 
     const renderCategoryPickerList = () => {
         if (!categoryPickerList) {
+            return;
+        }
+
+        if (categoryLoadFailed) {
+            categoryPickerList.innerHTML = "";
+            const failed = document.createElement("p");
+            failed.className = "spec-builder-empty";
+            failed.textContent = "분류 목록을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.";
+            categoryPickerList.append(failed);
             return;
         }
 
@@ -207,6 +211,11 @@
             return;
         }
 
+        if (categoryLoadFailed) {
+            showToast("분류 목록을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.", "error");
+            return;
+        }
+
         activeCategoryPickerMode = mode;
         if (categoryPickerSearch) {
             categoryPickerSearch.value = "";
@@ -230,6 +239,11 @@
     };
 
     const validateCategorySelection = (mode) => {
+        if (categoryLoadFailed) {
+            showToast("분류 목록을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.", "error");
+            return false;
+        }
+
         if (categoryPickerInputs[mode]?.value) {
             return true;
         }
@@ -823,17 +837,23 @@
 
     const loadCategoryOptions = async (companyCode) => {
         try {
-            const data = await window.PcsApi.getData(
-                    `/api/workspaces/${encodeURIComponent(companyCode)}/categories?size=100`,
-                    {
-                        authRedirect: true,
-                        loginCompanyCode: companyCode
-                    }
-            );
-            categoryOptions = Array.isArray(data) ? data : data.content || [];
+            categoryLoadFailed = false;
+            setCategoryPickerDisabled(false);
+            categoryOptions = await window.PcsCategory.loadAll(companyCode, {
+                apiOptions: {
+                    authRedirect: true,
+                    loginCompanyCode: companyCode
+                }
+            });
             syncAllCategoryLabels();
+            renderCategoryPickerList();
         } catch (error) {
-            console.error("분류 목록을 불러오지 못했습니다.", error);
+            categoryLoadFailed = true;
+            categoryOptions = [];
+            syncAllCategoryLabels();
+            setCategoryPickerDisabled(true, "분류 목록을 불러오지 못했습니다.");
+            renderCategoryPickerList();
+            showToast("분류 목록을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.", "error");
         }
     };
 

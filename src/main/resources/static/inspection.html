@@ -11,11 +11,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/core/tokens.css?20260618_layers">
     <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
-    <link rel="stylesheet" href="/css/layouts/workspace.css?20260624_quick_bar">
-    <link rel="stylesheet" href="/css/components/components.css?20260623_drawer_clip_fix">
+    <link rel="stylesheet" href="/css/layouts/workspace.css?20260703_quick_bar_no_overlap">
+    <link rel="stylesheet" href="/css/components/components.css?20260703_modal_scroll_lock">
     <link rel="stylesheet" href="/css/components/workflow.css?20260618_layers">
     <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
-    <link rel="stylesheet" href="/css/pages/inspection.css?20260629_target_no_clip">
+    <link rel="stylesheet" href="/css/pages/inspection.css?20260701_right_assist_clear">
 </head>
 <body class="has-collapsible-sidebar inspection-page page-inspection workspace-page">
 <div class="workspace-layout">
@@ -48,13 +48,11 @@
                 </svg>
             </button>
             <div class="page-title-row">
-                <span class="page-icon" aria-hidden="true">
+                <span class="page-icon page-icon-solid" aria-hidden="true">
                     <svg viewBox="0 0 24 24" focusable="false">
-                        <path d="M5 4h14" />
-                        <path d="M7 4v7a5 5 0 0 0 10 0V4" />
-                        <path d="M8 20h8" />
-                        <path d="M12 16v4" />
-                        <path d="m9 10 2 2 4-5" />
+                        <g transform="translate(2 2) scale(1.25)">
+                            <path fill="currentColor" fill-rule="evenodd" d="M6 1v4.48c0 .168 0 .338-.023.51q-.032.227-.103.444c-.055.165-.13.317-.204.47l-1.52 3.09h7.7l-1.5-3.06l-.018-.036c-.074-.152-.15-.304-.204-.469a2.5 2.5 0 0 1-.103-.444c-.023-.172-.023-.342-.023-.511V.994h-4zm6.35 10H3.66l-.974 1.98c-.29.59-.476.972-.588 1.26c-.09.233-.093.32-.094.332a.5.5 0 0 0 .205.329c.012.005.091.04.34.062c.311.029.736.03 1.39.03h8.12c.658 0 1.08-.001 1.39-.03c.25-.022.33-.057.34-.062a.5.5 0 0 0 .205-.33v.003v-.002l.001-.004v.004c0-.013-.005-.1-.094-.332c-.112-.292-.298-.673-.588-1.26L12.339 11zm-1.34-5.56V1h.499a.5.5 0 0 0 0-1h-7a.5.5 0 0 0 0 1h.495v4.44c0 .208 0 .312-.014.413q-.018.136-.062.266a3 3 0 0 1-.17.377l-2.97 6.04c-.563 1.15-.844 1.72-.772 2.18c.062.406.29.769.626 1c.387.269 1.03.269 2.3.269h8.12c1.28 0 1.92 0 2.3-.269c.338-.235.564-.598.626-1c.071-.465-.21-1.04-.774-2.18l-2.97-6.04c-.092-.187-.138-.28-.17-.378a1.5 1.5 0 0 1-.062-.266c-.014-.102-.014-.206-.014-.414z" clip-rule="evenodd" />
+                        </g>
                     </svg>
                 </span>
                 <div>
@@ -121,9 +119,9 @@
 
                     <div class="inspection-result-summary" aria-label="검수 대상 전표 요약">
                         <span>전표 <strong data-summary-total>0</strong>건</span>
-                        <span>대기 <strong data-summary-waiting>0</strong>개</span>
+                        <span>대기<strong data-summary-waiting>0</strong>개</span>
                         <span>완료 <strong data-summary-completed>0</strong>개</span>
-                        <span>검수 대상 <strong data-summary-total-units>0</strong>개</span>
+                        <span>검수 대상<strong data-summary-total-units>0</strong>개</span>
                     </div>
 
                     <div class="data-table" role="table" aria-label="검수 대상 전표" data-inspection-waiting-table>
@@ -325,7 +323,7 @@
                             <span role="columnheader">전표번호</span>
                             <span role="columnheader">유형</span>
                             <span role="columnheader">등급</span>
-                            <span role="columnheader">처리자</span>
+                            <span role="columnheader">처리일</span>
                             <span role="columnheader">상세</span>
                         </div>
                         <div class="data-row management-data-row empty-data-row inspection-empty-row" role="row" data-inspection-history-empty>
@@ -377,7 +375,7 @@
                                         <dd data-inspection-history-date>-</dd>
                                     </div>
                                     <div>
-                                        <dt>처리자</dt>
+                                        <dt>처리일</dt>
                                         <dd data-inspection-history-worker>-</dd>
                                     </div>
                                     <div>
@@ -475,7 +473,7 @@
                         <li class="workflow-step active">
                             <span class="process-dot" aria-hidden="true"></span>
                             <div>
-                                <strong>검수</strong>
+                                <strong>검색</strong>
                                 <p>전표 선택부터 결과 등록까지 진행합니다.</p>
                                 <ol class="sub-process-list" aria-label="검수 세부 흐름">
                                     <li class="is-current" data-inspection-side-step="1" aria-current="step">
@@ -526,14 +524,6 @@
                     </ol>
                 </div>
 
-                <div class="panel-card muted-panel inspection-rule-panel">
-                    <h2>검수 처리 기준</h2>
-                    <ul>
-                        <li>검수 결과는 원본 수정 대신 새 이력으로 저장</li>
-                        <li>불량 등급은 판매 불가 상태로 반영</li>
-                        <li>상태 변경 시 부품 상태 이력을 함께 저장</li>
-                    </ul>
-                </div>
             </aside>
         </section>
     </main>
@@ -573,8 +563,8 @@
 
 <script src="/js/pcs-api.js?20260623_memory_token"></script>
 <script src="/js/workspace-layout.js?20260624_quick_bar"></script>
-<script src="/js/pcs-ui.js?20260527_1"></script>
+<script src="/js/pcs-ui.js?20260703_modal_scroll_lock"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
-<script src="/js/inspection.js?20260623_history_page_size"></script>
+<script src="/js/inspection.js?20260703_prefill_target"></script>
 </body>
 </html>

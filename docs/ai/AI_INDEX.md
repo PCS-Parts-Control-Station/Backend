@@ -23,6 +23,8 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
     - 권한/role 분기 기준 확인
 - `docs/ai/pcs-status-lifecycle-rules.md`
     - `active`, 사용 중지, 상태 보존 기준 확인
+- `docs/ai/pcs-test-strategy.md`
+    - JUnit, MockMvc, Testcontainers 테스트 작성 기준 확인
 
 ## 문서 선택 규칙
 
@@ -110,6 +112,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - 검수 등록 JS 작성 → `docs/features/inspection.md`
 - 검수 이력 JS 작성 → `docs/features/inspection-history.md`
 - 검수 템플릿 관리 JS 작성 → `docs/features/inspection-template.md`
+- 부품 관리 JS 작성 → `docs/features/part-unit.md` + `docs/ai/pcs-auth-client-rules.md`
 - 로그인 JS 작성 → `docs/features/auth.md` + `docs/ai/pcs-auth-client-rules.md`
 - 대시보드/거래처/품목 등 업무 화면 API 연동 → 해당 기능 문서 + `docs/ai/pcs-auth-client-rules.md`
 - 품목 관리/품목 분류/거래처 관리/사용자 관리 같은 관리형 페이지 JS 수정 → `docs/ai/pcs-frontend-js-rules.md`의 "관리형 페이지 JS 기준" + `src/main/resources/static/js/pcs-common.js` + `src/main/resources/static/js/pcs-pagination.js`
@@ -161,6 +164,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - Owner 회원가입 구현 → `docs/features/company.md`
 - 업체 로그인 구현 → `docs/features/auth.md`
 - 입고 전표 등록 구현 → `docs/features/stock.md`
+- 부품 관리 조회 API 구현 → `docs/features/part-unit.md` + `docs/features/part-unit-db.md`
 - 검수 이력 API 구현 → `docs/features/inspection-history.md` + `docs/ai/pcs-auth-client-rules.md`
 - 검수 템플릿 API 구현 → `docs/features/inspection-template.md` + `docs/ai/pcs-auth-client-rules.md`
 - 거래처/품목/입출고/검수 API 구현 → 해당 기능 문서 + `docs/ai/pcs-auth-client-rules.md`
@@ -193,6 +197,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - 재고 정합성 SQL 작성
 - 페이징 목록 SQL 작성 → `docs/ai/pcs-pagination-rules.md`
 - 품목 저장/수정 SQL 작성 → `docs/features/part.md` + `docs/features/part-db.md`
+- 부품 관리 조회 SQL 작성 → `docs/features/part-unit.md` + `docs/features/part-unit-db.md`
 - 사용자 관리 SQL 작성 → `docs/features/member.md` + `docs/features/member-db.md`
 - 마이페이지 계정 수정/비밀번호 SQL 작성 → `docs/features/mypage.md` + `docs/features/member-db.md`
 - 검수/검수 이력/검수 템플릿 SQL/DB 검증 작성 → `docs/features/inspection.md` + `docs/features/inspection-history.md` + `docs/features/inspection-template.md` + `docs/features/inspection-db.md`
@@ -234,6 +239,35 @@ SQL 참조 기준:
 - Git pre-push 훅은 `bootstrap`이나 `full`이 아니라 `gate` 모드로 변경 파일 기준 feature 검사와 공통 검증을 실행한다.
 - Codex Stop 훅도 `gate`를 사용하며 서버를 제어하지 않는다.
 - `.gitignore` 필수 패턴, Git 추적 금지 파일, pre-push 변경 파일 금지 검사는 `docs/ai/pcs-harness-rules.md`의 `.gitignore 규칙` 기준을 따른다.
+
+---
+
+### 7. 테스트 작성 작업
+
+읽을 문서:
+
+- `docs/ai/pcs-test-strategy.md`
+- `docs/ai/pcs-backend-common-rules.md`
+- `docs/ai/pcs-permission-rules.md`
+- 해당 기능 문서 `docs/features/{feature}.md`
+- DB를 검증하면 `docs/features/{feature}-db.md`
+- 테스트를 하네스에 연결하면 `docs/ai/pcs-harness-rules.md`
+
+기준:
+
+- 먼저 feature 문서와 DB 문서에 테스트 기준 섹션이 있는지 확인한다.
+- 부족하면 테스트 작성 전에 MD의 테스트 기준을 보강한다.
+- 단위 테스트는 DB 없이 검증 가능한 정책과 계산 로직만 다룬다.
+- API 테스트는 MockMvc로 요청/응답, 예외 응답, 권한 차단을 검증한다.
+- DB 통합 테스트는 Testcontainers + MariaDB로 MyBatis SQL과 제약조건을 검증한다.
+- 하네스는 테스트를 직접 재구현하지 않고 feature별 테스트 실행 명령만 연결한다.
+
+예시:
+
+- 품목 관리 테스트 작성 → `docs/features/part.md` + `docs/features/part-db.md`
+- 부품 관리 테스트 작성 → `docs/features/part-unit.md` + `docs/features/part-unit-db.md`
+- 품목 분류 테스트 작성 → `docs/features/category.md` + `docs/features/category-db.md`
+- 권한 차단 테스트 작성 → 해당 기능 문서 + `docs/ai/pcs-permission-rules.md`
 
 ---
 

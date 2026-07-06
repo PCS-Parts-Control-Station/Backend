@@ -77,6 +77,412 @@
         <include refid="partSearchWhere" />
     </select>
 
+    <sql id="partUnitSearchWhere">
+        WHERE u.company_id = #{companyId}
+          AND u.active = TRUE
+        <if test="categoryId != null">
+          AND p.category_id = #{categoryId}
+        </if>
+        <if test="documentId != null">
+          AND EXISTS (
+              SELECT 1
+              FROM tb_stock_movement_unit f_smu
+              JOIN tb_stock_movement f_sm
+                ON f_sm.company_id = u.company_id
+               AND f_sm.movement_id = f_smu.movement_id
+              WHERE f_smu.unit_id = u.unit_id
+                AND f_sm.document_id = #{documentId}
+          )
+        </if>
+        <if test="keyword != null and keyword != ''">
+          AND (
+              u.internal_serial_no LIKE CONCAT('%', #{keyword}, '%')
+              OR u.manufacturer_serial_no LIKE CONCAT('%', #{keyword}, '%')
+              OR p.part_name LIKE CONCAT('%', #{keyword}, '%')
+              OR p.model_name LIKE CONCAT('%', #{keyword}, '%')
+              OR p.manufacturer LIKE CONCAT('%', #{keyword}, '%')
+              OR p.part_code LIKE CONCAT('%', #{keyword}, '%')
+              OR c.category_name LIKE CONCAT('%', #{keyword}, '%')
+          )
+        </if>
+        <if test="partState != null and partState != ''">
+          <choose>
+            <when test="partState == 'HELD'">
+              AND u.unit_status = 'IN_STOCK'
+              AND (
+                  u.inspection_status = 'WAITING'
+                  OR (
+                      u.inspection_status = 'COMPLETED'
+                      AND u.sales_status = 'AVAILABLE'
+                      AND u.grade &lt;&gt; 'DEFECTIVE'
+                  )
+                  OR (
+                      u.inspection_status = 'COMPLETED'
+                      AND u.sales_status = 'UNAVAILABLE'
+                  )
+                  OR (
+                      u.inspection_status = 'COMPLETED'
+                      AND u.sales_status = 'HOLD'
+                  )
+              )
+            </when>
+            <when test="partState == 'WAITING'">
+              AND u.unit_status = 'IN_STOCK'
+              AND u.inspection_status = 'WAITING'
+            </when>
+            <when test="partState == 'SALES_AVAILABLE'">
+              AND u.unit_status = 'IN_STOCK'
+              AND u.inspection_status = 'COMPLETED'
+              AND u.sales_status = 'AVAILABLE'
+              AND u.grade &lt;&gt; 'DEFECTIVE'
+            </when>
+            <when test="partState == 'SALES_UNAVAILABLE'">
+              AND u.unit_status = 'IN_STOCK'
+              AND u.inspection_status = 'COMPLETED'
+              AND u.sales_status = 'UNAVAILABLE'
+            </when>
+            <when test="partState == 'SALES_HOLD'">
+              AND u.unit_status = 'IN_STOCK'
+              AND u.inspection_status = 'COMPLETED'
+              AND u.sales_status = 'HOLD'
+            </when>
+            <when test="partState == 'OUTBOUND'">
+              AND u.unit_status = 'OUTBOUND'
+            </when>
+            <otherwise>
+              AND u.unit_status = 'IN_STOCK'
+              AND u.inspection_status = 'COMPLETED'
+              AND u.grade = #{partState}
+            </otherwise>
+          </choose>
+        </if>
+    </sql>
+
+    <sql id="partUnitBaseColumns">
+        u.unit_id,
+        u.internal_serial_no,
+        u.manufacturer_serial_no,
+        p.part_id,
+        p.category_id,
+        c.category_name,
+        p.part_name,
+        p.model_name,
+        p.manufacturer,
+        p.part_code,
+        u.unit_status,
+        u.inspection_status,
+        u.grade,
+        u.sales_status,
+        u.created_at,
+        u.updated_at,
+        (
+            SELECT sd.document_no
+            FROM tb_stock_movement_unit smu
+            JOIN tb_stock_movement sm
+              ON sm.movement_id = smu.movement_id
+             AND sm.company_id = u.company_id
+            JOIN tb_stock_document sd
+              ON sd.company_id = sm.company_id
+             AND sd.document_id = sm.document_id
+            WHERE smu.unit_id = u.unit_id
+            ORDER BY sm.created_at DESC, sm.movement_id DESC
+            LIMIT 1
+        ) AS last_stock_document_no,
+        (
+            SELECT sm.movement_type
+            FROM tb_stock_movement_unit smu
+            JOIN tb_stock_movement sm
+              ON sm.movement_id = smu.movement_id
+             AND sm.company_id = u.company_id
+            WHERE smu.unit_id = u.unit_id
+            ORDER BY sm.created_at DESC, sm.movement_id DESC
+            LIMIT 1
+        ) AS last_stock_movement_type,
+        (
+            SELECT sm.created_at
+            FROM tb_stock_movement_unit smu
+            JOIN tb_stock_movement sm
+              ON sm.movement_id = smu.movement_id
+             AND sm.company_id = u.company_id
+            WHERE smu.unit_id = u.unit_id
+            ORDER BY sm.created_at DESC, sm.movement_id DESC
+            LIMIT 1
+        ) AS last_stock_processed_at,
+        (
+            SELECT i.inspection_id
+            FROM tb_inspection i
+            WHERE i.company_id = u.company_id
+              AND i.unit_id = u.unit_id
+            ORDER BY i.inspected_at DESC, i.inspection_id DESC
+            LIMIT 1
+        ) AS last_inspection_id,
+        (
+            SELECT i.inspection_type
+            FROM tb_inspection i
+            WHERE i.company_id = u.company_id
+              AND i.unit_id = u.unit_id
+            ORDER BY i.inspected_at DESC, i.inspection_id DESC
+            LIMIT 1
+        ) AS last_inspection_type,
+        (
+            SELECT i.inspected_at
+            FROM tb_inspection i
+            WHERE i.company_id = u.company_id
+              AND i.unit_id = u.unit_id
+            ORDER BY i.inspected_at DESC, i.inspection_id DESC
+            LIMIT 1
+        ) AS last_inspected_at
+    </sql>
+
+    <sql id="partUnitRecentColumns">
+        CASE
+            WHEN base.last_stock_processed_at IS NULL
+             AND base.last_inspected_at IS NULL
+            THEN NULL
+            WHEN base.last_stock_processed_at IS NULL
+            THEN '검수'
+            WHEN base.last_inspected_at IS NULL
+            THEN CASE base.last_stock_movement_type
+                    WHEN 'INBOUND' THEN '입고'
+                    WHEN 'OUTBOUND' THEN '출고'
+                    WHEN 'INBOUND_CANCEL' THEN '입고취소'
+                    WHEN 'OUTBOUND_CANCEL' THEN '출고취소'
+                    ELSE '입출고'
+                 END
+            WHEN base.last_inspected_at &gt;= base.last_stock_processed_at
+            THEN '검수'
+            ELSE CASE base.last_stock_movement_type
+                    WHEN 'INBOUND' THEN '입고'
+                    WHEN 'OUTBOUND' THEN '출고'
+                    WHEN 'INBOUND_CANCEL' THEN '입고취소'
+                    WHEN 'OUTBOUND_CANCEL' THEN '출고취소'
+                    ELSE '입출고'
+                 END
+        END AS recent_event_label,
+        CASE
+            WHEN base.last_stock_processed_at IS NULL
+             AND base.last_inspected_at IS NULL
+            THEN NULL
+            WHEN base.last_stock_processed_at IS NULL
+            THEN base.last_inspected_at
+            WHEN base.last_inspected_at IS NULL
+            THEN base.last_stock_processed_at
+            WHEN base.last_inspected_at &gt;= base.last_stock_processed_at
+            THEN base.last_inspected_at
+            ELSE base.last_stock_processed_at
+        END AS recent_event_at
+    </sql>
+
+    <select id="searchPartUnits" resultType="com.pcs.domain.part.dto.response.SearchPartUnitResponse">
+        SELECT
+            base.*,
+            <include refid="partUnitRecentColumns" />
+        FROM (
+            SELECT
+                <include refid="partUnitBaseColumns" />
+            FROM (
+                SELECT
+                    u.company_id,
+                    u.unit_id
+                FROM tb_pc_part_unit u
+                JOIN tb_pc_part p
+                  ON p.company_id = u.company_id
+                 AND p.part_id = u.part_id
+                JOIN tb_part_category c
+                  ON c.company_id = p.company_id
+                 AND c.category_id = p.category_id
+                <include refid="partUnitSearchWhere" />
+                ORDER BY u.updated_at DESC, u.unit_id DESC
+                LIMIT #{size}
+                OFFSET #{offset}
+            ) page_units
+            JOIN tb_pc_part_unit u
+              ON u.company_id = page_units.company_id
+             AND u.unit_id = page_units.unit_id
+            JOIN tb_pc_part p
+              ON p.company_id = u.company_id
+             AND p.part_id = u.part_id
+            JOIN tb_part_category c
+              ON c.company_id = p.company_id
+             AND c.category_id = p.category_id
+        ) base
+        ORDER BY base.updated_at DESC, base.unit_id DESC
+    </select>
+
+    <select id="summarizePartUnits" resultType="com.pcs.domain.part.dto.response.SearchPartUnitSummaryResponse">
+        SELECT
+            COUNT(*) AS total_count,
+            COALESCE(SUM(CASE
+                WHEN u.unit_status = 'IN_STOCK'
+                 AND (
+                    u.inspection_status = 'WAITING'
+                    OR (
+                        u.inspection_status = 'COMPLETED'
+                        AND u.sales_status = 'AVAILABLE'
+                        AND u.grade &lt;&gt; 'DEFECTIVE'
+                    )
+                    OR (
+                        u.inspection_status = 'COMPLETED'
+                        AND u.sales_status = 'UNAVAILABLE'
+                    )
+                    OR (
+                        u.inspection_status = 'COMPLETED'
+                        AND u.sales_status = 'HOLD'
+                    )
+                 )
+                THEN 1
+                ELSE 0
+            END), 0) AS held_count,
+            COALESCE(SUM(CASE
+                WHEN u.unit_status = 'IN_STOCK'
+                 AND u.inspection_status = 'WAITING'
+                THEN 1
+                ELSE 0
+            END), 0) AS waiting_count,
+            COALESCE(SUM(CASE
+                WHEN u.unit_status = 'IN_STOCK'
+                 AND u.inspection_status = 'COMPLETED'
+                 AND u.sales_status = 'AVAILABLE'
+                 AND u.grade &lt;&gt; 'DEFECTIVE'
+                THEN 1
+                ELSE 0
+            END), 0) AS sales_available_count,
+            COALESCE(SUM(CASE
+                WHEN u.unit_status = 'IN_STOCK'
+                 AND u.inspection_status = 'COMPLETED'
+                 AND u.sales_status = 'HOLD'
+                THEN 1
+                ELSE 0
+            END), 0) AS sales_hold_count,
+            COALESCE(SUM(CASE
+                WHEN u.unit_status = 'IN_STOCK'
+                 AND u.inspection_status = 'COMPLETED'
+                 AND u.sales_status = 'UNAVAILABLE'
+                THEN 1
+                ELSE 0
+            END), 0) AS sales_unavailable_count,
+            COALESCE(SUM(CASE
+                WHEN u.unit_status = 'IN_STOCK'
+                 AND u.inspection_status = 'COMPLETED'
+                 AND u.grade = 'A'
+                THEN 1
+                ELSE 0
+            END), 0) AS grade_a_count,
+            COALESCE(SUM(CASE
+                WHEN u.unit_status = 'IN_STOCK'
+                 AND u.inspection_status = 'COMPLETED'
+                 AND u.grade = 'B'
+                THEN 1
+                ELSE 0
+            END), 0) AS grade_b_count,
+            COALESCE(SUM(CASE
+                WHEN u.unit_status = 'IN_STOCK'
+                 AND u.inspection_status = 'COMPLETED'
+                 AND u.grade = 'C'
+                THEN 1
+                ELSE 0
+            END), 0) AS grade_c_count,
+            COALESCE(SUM(CASE
+                WHEN u.unit_status = 'IN_STOCK'
+                 AND u.inspection_status = 'COMPLETED'
+                 AND u.grade = 'DEFECTIVE'
+                THEN 1
+                ELSE 0
+            END), 0) AS defective_count,
+            COALESCE(SUM(CASE
+                WHEN u.unit_status = 'OUTBOUND'
+                THEN 1
+                ELSE 0
+            END), 0) AS outbound_count,
+            COALESCE(SUM(CASE
+                WHEN u.unit_status = 'IN_STOCK'
+                 AND u.inspection_status = 'COMPLETED'
+                 AND u.sales_status = 'AVAILABLE'
+                 AND u.grade &lt;&gt; 'DEFECTIVE'
+                THEN 1
+                ELSE 0
+            END), 0) AS outbound_available_count
+        FROM tb_pc_part_unit u
+        JOIN tb_pc_part p
+          ON p.company_id = u.company_id
+         AND p.part_id = u.part_id
+        JOIN tb_part_category c
+          ON c.company_id = p.company_id
+         AND c.category_id = p.category_id
+        <include refid="partUnitSearchWhere" />
+    </select>
+
+    <select id="findPartUnitById" resultType="com.pcs.domain.part.dto.response.SearchPartUnitResponse">
+        SELECT
+            base.*,
+            <include refid="partUnitRecentColumns" />
+        FROM (
+            SELECT
+                <include refid="partUnitBaseColumns" />
+            FROM tb_pc_part_unit u
+            JOIN tb_pc_part p
+              ON p.company_id = u.company_id
+             AND p.part_id = u.part_id
+            JOIN tb_part_category c
+              ON c.company_id = p.company_id
+             AND c.category_id = p.category_id
+            WHERE u.company_id = #{companyId}
+              AND u.unit_id = #{unitId}
+              AND u.active = TRUE
+        ) base
+    </select>
+
+    <select id="findPartUnitStockHistories" resultType="com.pcs.domain.part.dto.response.PartUnitStockHistoryResponse">
+        SELECT
+            sm.movement_id,
+            sd.document_id,
+            sd.document_no,
+            sm.movement_type,
+            smu.before_unit_status,
+            smu.after_unit_status,
+            COALESCE(m.name, CONCAT('ID ', sm.processed_by)) AS processed_by_name,
+            sm.created_at
+        FROM tb_pc_part_unit u
+        JOIN tb_stock_movement_unit smu
+          ON smu.unit_id = u.unit_id
+        JOIN tb_stock_movement sm
+          ON sm.company_id = u.company_id
+         AND sm.movement_id = smu.movement_id
+        JOIN tb_stock_document sd
+          ON sd.company_id = sm.company_id
+         AND sd.document_id = sm.document_id
+        LEFT JOIN tb_member m
+          ON m.company_id = sm.company_id
+         AND m.member_id = sm.processed_by
+        WHERE u.company_id = #{companyId}
+          AND u.unit_id = #{unitId}
+        ORDER BY sm.created_at DESC, sm.movement_id DESC
+        LIMIT #{size}
+    </select>
+
+    <select id="findPartUnitInspectionHistories" resultType="com.pcs.domain.part.dto.response.PartUnitInspectionHistoryResponse">
+        SELECT
+            i.inspection_id,
+            i.inspection_type,
+            i.result,
+            i.grade,
+            i.sales_status,
+            COALESCE(m.name, CONCAT('ID ', i.inspected_by)) AS inspected_by_name,
+            i.inspected_at,
+            i.memo
+        FROM tb_pc_part_unit u
+        JOIN tb_inspection i
+          ON i.company_id = u.company_id
+         AND i.unit_id = u.unit_id
+        LEFT JOIN tb_member m
+          ON m.company_id = i.company_id
+         AND m.member_id = i.inspected_by
+        WHERE u.company_id = #{companyId}
+          AND u.unit_id = #{unitId}
+        ORDER BY i.inspected_at DESC, i.inspection_id DESC
+        LIMIT #{size}
+    </select>
+
     <select id="findById" resultType="com.pcs.domain.part.entity.PcPart">
         SELECT
             part_id,

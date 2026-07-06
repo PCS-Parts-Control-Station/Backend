@@ -18,11 +18,9 @@
         inspection: "STAFF_INSPECTION",
         outbound: "STAFF_OUTBOUND",
         "outbound/new": "STAFF_OUTBOUND",
-        parts: "STAFF_PART_CREATE",
-        categories: "STAFF_CATEGORY_MANAGE",
-        "inspection/templates": "STAFF_INSPECTION",
-        partners: "STAFF_PARTNER_MANAGE"
+        "inspection/templates": "STAFF_INSPECTION"
     };
+    const STAFF_READ_OPEN_ROUTES = new Set(["parts", "categories", "partners"]);
 
     const getAllowedRoles = (element) => {
         return String(element.dataset.allowedRoles || "")
@@ -59,20 +57,12 @@
         return requiredAllowed && anyAllowed;
     };
 
-    const applyStaffFallbackRoute = (element, role, staffPermissions) => {
-        if (normalizeRole(role) !== "STAFF") {
-            return;
-        }
-        const primaryPermission = normalizePermission(element.dataset.staffPrimaryPermission);
-        const fallbackRoute = String(element.dataset.staffFallbackRoute || "").trim();
-        if (!primaryPermission || !fallbackRoute || staffPermissions.has(primaryPermission)) {
-            return;
-        }
-        element.href = `/w/${encodeURIComponent(companyCode)}/${fallbackRoute}`;
-    };
-
     const getRouteStaffPermission = (route) => {
         return STAFF_ROUTE_PERMISSIONS[route] || "";
+    };
+
+    const isStaffReadOpenRoute = (route) => {
+        return STAFF_READ_OPEN_ROUTES.has(route);
     };
 
     const applyWorkspaceContext = () => {
@@ -103,7 +93,7 @@
 
     const applyActiveRoute = () => {
         const activeRoute = getActiveRoute();
-        const activeSidebarRoute = activeRoute === "categories" ? "parts" : activeRoute;
+        const activeSidebarRoute = activeRoute;
 
         document.querySelectorAll(".sidebar-nav [data-route]").forEach((link) => {
             const route = link.dataset.route;
@@ -151,12 +141,14 @@
             const allowed = isAllowedForRole(element, normalizedRole)
                     && isStaffPermissionAllowed(element, normalizedRole, staffPermissions);
             element.hidden = !allowed;
-            if (allowed) {
-                applyStaffFallbackRoute(element, normalizedRole, staffPermissions);
-            }
 
             const route = element.dataset.route;
-            if (!allowed && route && (route === activeRoute || activeRoute.startsWith(`${route}/`))) {
+            if (
+                !allowed &&
+                route &&
+                !isStaffReadOpenRoute(activeRoute) &&
+                (route === activeRoute || activeRoute.startsWith(`${route}/`))
+            ) {
                 activeRouteBlocked = true;
             }
         });

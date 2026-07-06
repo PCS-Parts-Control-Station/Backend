@@ -173,7 +173,6 @@ CREATE TABLE `tb_inspection_template`
     CONSTRAINT `chk_inspection_template_version` CHECK (`version` > 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
 -- pcs_db.tb_inspection_template_item definition
 CREATE TABLE `tb_inspection_template_item`
 (

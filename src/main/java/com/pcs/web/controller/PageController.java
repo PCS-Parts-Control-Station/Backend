@@ -48,6 +48,11 @@ public class PageController {
         return "forward:/parts.html";
     }
 
+    @GetMapping("/w/{companyCode}/part-units")
+    public String partUnits() {
+        return "forward:/part-units.html";
+    }
+
     @GetMapping("/w/{companyCode}/users")
     public String users() {
         return "forward:/users.html";

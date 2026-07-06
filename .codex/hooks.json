@@ -5,8 +5,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.codex/hooks/stop.ps1\"",
-            "commandWindows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"$root = git rev-parse --show-toplevel; & (Join-Path $root '.codex/hooks/stop.ps1')\"",
+            "command": "pwsh -NoProfile -Command \"$d=(Get-Location).Path; while($d -and -not (Test-Path (Join-Path $d '.codex/hooks/stop.ps1')) -and -not (Test-Path (Join-Path $d 'Backend/.codex/hooks/stop.ps1'))) { $p=Split-Path -Parent $d; if($p -eq $d){$d=$null}else{$d=$p} }; if(-not $d){ throw 'PCS stop hook script not found.' }; $s=Join-Path $d '.codex/hooks/stop.ps1'; if(-not (Test-Path $s)){ $s=Join-Path $d 'Backend/.codex/hooks/stop.ps1' }; & $s\"",
+            "commandWindows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"$d=(Get-Location).Path; while($d -and -not (Test-Path (Join-Path $d '.codex/hooks/stop.ps1')) -and -not (Test-Path (Join-Path $d 'Backend/.codex/hooks/stop.ps1'))) { $p=Split-Path -Parent $d; if($p -eq $d){$d=$null}else{$d=$p} }; if(-not $d){ throw 'PCS stop hook script not found.' }; $s=Join-Path $d '.codex/hooks/stop.ps1'; if(-not (Test-Path $s)){ $s=Join-Path $d 'Backend/.codex/hooks/stop.ps1' }; & $s\"",
             "timeout": 300,
             "statusMessage": "PCS 변경 사항 검증 중"
           }

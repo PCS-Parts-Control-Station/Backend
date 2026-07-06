@@ -12,23 +12,55 @@
     grid-template-columns: minmax(280px, 1fr) minmax(140px, 180px) 76px;
 }
 
+.page-parts .management-data-table {
+    overflow-x: auto;
+}
+
 .data-row.part-management-data-row {
-    grid-template-columns: minmax(170px, 1.15fr) minmax(150px, 1fr) minmax(104px, 0.72fr) 92px 92px;
+    grid-template-columns: 41.5% 30% 18% 5.25% 5.25%;
+    min-width: 1080px;
+    gap: 0;
+    padding: 0 20px;
+}
+
+.data-row.part-management-data-row.table-head {
+    min-height: 36px;
+}
+
+.data-row.part-management-data-row.empty-data-row {
+    grid-template-columns: 1fr;
+    min-width: 0;
+    padding: 16px 20px;
 }
 
 .data-row.part-management-data-row:not(.empty-data-row):not(.table-head) {
-    height: 80px;
+    min-height: 48px;
+}
+
+.data-row.part-management-data-row > * {
+    min-width: 0;
+    width: 100%;
+    justify-self: stretch;
+    padding-right: 20px;
+    text-align: left;
+}
+
+.data-row.part-management-data-row > *:last-child {
+    padding-right: 0;
 }
 
 .data-row.part-management-data-row:not(.empty-data-row) > [role="cell"] {
-    min-width: 0;
+    display: flex;
+    align-items: center;
+    height: 100%;
     overflow: hidden;
 }
 
-.data-row.part-management-data-row:not(.empty-data-row) > span[role="cell"]:not(.part-primary-cell):not(.part-meta-cell):not(.quantity-cell),
+.data-row.part-management-data-row > span,
+.data-row.part-management-data-row > span[role="cell"],
+.data-row.part-management-data-row > span[role="columnheader"],
 .data-row.part-management-data-row:not(.empty-data-row) strong,
 .data-row.part-management-data-row:not(.empty-data-row) small {
-    display: block;
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -38,20 +70,26 @@
 .part-primary-cell,
 .part-meta-cell,
 .quantity-cell {
-    display: grid;
-    gap: 3px;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.part-primary-cell strong,
+.part-meta-cell strong,
+.quantity-cell strong,
+.part-primary-cell small,
+.part-meta-cell small,
+.quantity-cell small {
     min-width: 0;
 }
 
 .part-primary-cell small,
 .part-meta-cell small,
 .quantity-cell small {
-    min-width: 0;
     color: var(--muted);
     font-size: 12px;
     font-weight: 700;
-    line-height: 1.35;
-    overflow-wrap: anywhere;
+    line-height: 1;
 }
 
 .quantity-cell strong {
@@ -111,11 +149,21 @@
 @media (max-width: 840px) {
 .has-collapsible-sidebar .part-filter-form,
     .data-row.part-management-data-row {
+        min-width: 0;
         grid-template-columns: 1fr;
     }
 
 .data-row.part-management-data-row:not(.empty-data-row):not(.table-head) {
         height: auto;
+        min-height: auto;
+    }
+
+.data-row.part-management-data-row:not(.empty-data-row) > [role="cell"] {
+        display: grid;
+        gap: 4px;
+        align-items: start;
+        height: auto;
+        padding-right: 0;
     }
 }
 }

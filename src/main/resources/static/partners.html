@@ -15,7 +15,7 @@
 
     <link rel="stylesheet" href="/css/core/tokens.css?20260618_layers">
     <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
-    <link rel="stylesheet" href="/css/layouts/workspace.css?20260624_quick_bar">
+    <link rel="stylesheet" href="/css/layouts/workspace.css?20260703_quick_bar_no_overlap">
     <link rel="stylesheet" href="/css/components/components.css?20260623_drawer_clip_fix">
     <link rel="stylesheet" href="/css/components/management-page.css?20260624_spec_item_compact">
     <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
@@ -132,19 +132,6 @@
                         </div>
                     </div>
 
-                    <!--
-                        API 연결 예정:
-                        - 목록: GET /api/workspaces/{companyCode}/partners
-                        - 생성: POST /api/workspaces/{companyCode}/partners
-                        - 수정: PATCH /api/workspaces/{companyCode}/partners/{partnerId}
-                        - 거래 상태: PATCH /api/workspaces/{companyCode}/partners/{partnerId}/active
-
-                        DTO 후보:
-                        - PartnerListResponse(partnerId, partnerName, partnerType, partnerRole, phone, email, address, memo, active, updatedAt)
-                        - CreatePartnerRequest(partnerName, partnerType, partnerRole, phone, email, address, memo, active)
-                        - UpdatePartnerRequest(partnerName, partnerType, partnerRole, phone, email, address, memo)
-                        - UpdatePartnerActiveRequest(active)
-                    -->
                     <div class="data-table management-data-table" role="table" aria-label="거래처 목록" data-partner-table>
                         <div class="data-row management-data-row table-head" role="row">
                             <span role="columnheader">거래처명</span>
