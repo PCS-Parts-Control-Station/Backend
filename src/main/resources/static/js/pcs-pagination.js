@@ -208,6 +208,57 @@
         }
     };
 
+    const setListLoading = ({ container = null, target = null, overlay = null, isLoading = false } = {}) => {
+        container?.classList.toggle("is-list-loading", isLoading);
+        target?.setAttribute("aria-busy", String(isLoading));
+        if (overlay) {
+            overlay.hidden = !isLoading;
+            overlay.setAttribute("aria-hidden", String(!isLoading));
+        }
+    };
+
+    const setPaginationButtonsLoading = ({ pagination = null, prevButton = null, nextButton = null, pageData = null, isLoading = false } = {}) => {
+        pagination?.querySelectorAll(".pagination-actions button").forEach((button) => {
+            if (button === prevButton) {
+                button.disabled = isLoading || !pageData?.hasPrevious;
+                return;
+            }
+            if (button === nextButton) {
+                button.disabled = isLoading || !pageData?.hasNext;
+                return;
+            }
+            if (button.classList.contains("pagination-number")) {
+                const page = Number(button.dataset.page);
+                button.disabled = isLoading || page === Number(pageData?.page ?? 0);
+            }
+        });
+    };
+
+    const setLoadingState = ({
+        listContainer = null,
+        target = null,
+        overlay = null,
+        pagination = null,
+        prevButton = null,
+        nextButton = null,
+        pageData = null,
+        isLoading = false
+    } = {}) => {
+        setListLoading({
+            container: listContainer,
+            target,
+            overlay,
+            isLoading
+        });
+        setPaginationButtonsLoading({
+            pagination,
+            prevButton,
+            nextButton,
+            pageData,
+            isLoading
+        });
+    };
+
     window.PcsPagination = {
         DEFAULT_SIZE,
         normalizePageData,
@@ -215,6 +266,9 @@
         formatPageInfo,
         getVisiblePages,
         updateControls,
+        setListLoading,
+        setPaginationButtonsLoading,
+        setLoadingState,
         captureScroll,
         restoreScrollPosition,
         withPreservedScroll

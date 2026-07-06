@@ -732,6 +732,45 @@ label {
     cursor: default;
 }
 
+.list-loading-frame {
+    position: relative;
+}
+
+.is-list-loading [data-list-loading-target] {
+    opacity: var(--list-loading-opacity, 0.54);
+    pointer-events: none;
+}
+
+.list-loading-overlay {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.list-loading-overlay[hidden] {
+    display: none;
+}
+
+.list-loading-overlay i {
+    width: 34px;
+    height: 34px;
+    border: 4px solid rgba(37, 99, 235, 0.16);
+    border-top-color: var(--blue);
+    border-radius: 50%;
+    animation: listLoadingSpin 0.75s linear infinite;
+    background: rgba(255, 255, 255, 0.74);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+@keyframes listLoadingSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .panel-card {
     padding: 20px;
 }
