@@ -12,10 +12,10 @@
     <link rel="stylesheet" href="/css/core/tokens.css?20260618_layers">
     <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
     <link rel="stylesheet" href="/css/layouts/workspace.css?20260703_quick_bar_no_overlap">
-    <link rel="stylesheet" href="/css/components/components.css?20260703_button_icons">
+    <link rel="stylesheet" href="/css/components/components.css?20260703_flow_state">
     <link rel="stylesheet" href="/css/components/management-page.css?20260624_spec_item_compact">
     <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
-    <link rel="stylesheet" href="/css/pages/part-units.css?20260701_summary_color_unified">
+    <link rel="stylesheet" href="/css/pages/part-units.css?20260706_part_filter_group_labels">
 </head>
 <body class="has-collapsible-sidebar page-part-units workspace-page">
 <div class="workspace-layout">
@@ -77,63 +77,6 @@
 
         <section class="content-grid management-drawer-grid part-units-content-grid">
             <div class="content-main">
-                <section class="part-unit-summary-layout" aria-label="부품 관리 통계">
-                    <dl class="part-unit-summary-group is-operational" aria-label="보유 및 업무 통계">
-                        <div class="part-unit-summary-card is-primary is-selected" data-part-state-filter="HELD" role="button" tabindex="0" aria-pressed="true">
-                            <dt>보유부품</dt>
-                            <dd data-summary-held>0</dd>
-                        </div>
-                        <div class="part-unit-summary-card is-pending" data-part-state-filter="WAITING" role="button" tabindex="0" aria-pressed="false">
-                            <dt>검수대기</dt>
-                            <dd data-summary-waiting>0</dd>
-                        </div>
-                        <div class="part-unit-summary-card is-available" data-part-state-filter="SALES_AVAILABLE" role="button" tabindex="0" aria-pressed="false">
-                            <dt>판매가능</dt>
-                            <dd data-summary-sales-available>0</dd>
-                        </div>
-                        <div class="part-unit-summary-card is-danger" data-part-state-filter="SALES_UNAVAILABLE" role="button" tabindex="0" aria-pressed="false">
-                            <dt>판매불가</dt>
-                            <dd data-summary-sales-unavailable>0</dd>
-                        </div>
-                        <div class="part-unit-summary-card is-hold" data-part-state-filter="SALES_HOLD" role="button" tabindex="0" aria-pressed="false">
-                            <dt>판매보류</dt>
-                            <dd data-summary-sales-hold>0</dd>
-                        </div>
-                    </dl>
-                    <div class="part-unit-summary-detail-grid">
-                        <section class="part-unit-summary-panel" aria-labelledby="part-unit-grade-summary-title">
-                            <h2 id="part-unit-grade-summary-title">등급 현황</h2>
-                            <dl class="part-unit-summary-group is-grade" aria-label="검수 결과 통계">
-                                <div class="part-unit-summary-card" data-part-state-filter="A" role="button" tabindex="0" aria-pressed="false">
-                                    <dt>A등급</dt>
-                                    <dd data-summary-grade-a>0</dd>
-                                </div>
-                                <div class="part-unit-summary-card" data-part-state-filter="B" role="button" tabindex="0" aria-pressed="false">
-                                    <dt>B등급</dt>
-                                    <dd data-summary-grade-b>0</dd>
-                                </div>
-                                <div class="part-unit-summary-card" data-part-state-filter="C" role="button" tabindex="0" aria-pressed="false">
-                                    <dt>C등급</dt>
-                                    <dd data-summary-grade-c>0</dd>
-                                </div>
-                                <div class="part-unit-summary-card is-danger" data-part-state-filter="DEFECTIVE" role="button" tabindex="0" aria-pressed="false">
-                                    <dt>불량</dt>
-                                    <dd data-summary-defective>0</dd>
-                                </div>
-                            </dl>
-                        </section>
-                        <section class="part-unit-summary-panel" aria-labelledby="part-unit-other-summary-title">
-                            <h2 id="part-unit-other-summary-title">기타 상태</h2>
-                            <dl class="part-unit-summary-group is-outbound" aria-label="출고 통계">
-                                <div class="part-unit-summary-card is-muted" data-part-state-filter="OUTBOUND" role="button" tabindex="0" aria-pressed="false">
-                                    <dt>출고</dt>
-                                    <dd data-summary-outbound>0</dd>
-                                </div>
-                            </dl>
-                        </section>
-                    </div>
-                </section>
-
                 <section class="filter-card management-filter-card part-units-filter-card" aria-labelledby="part-unit-filter-title">
                     <div>
                         <h2 id="part-unit-filter-title">부품 검색</h2>
@@ -166,6 +109,65 @@
                             <button class="btn btn-secondary" type="button" data-part-unit-filter-reset>초기화</button>
                         </div>
                     </form>
+                    <section class="part-unit-summary-layout" aria-label="부품 조건 필터">
+                        <div class="part-unit-filter-line">
+                            <div class="part-unit-filter-group" aria-labelledby="part-unit-status-filter-title">
+                                <h4 id="part-unit-status-filter-title">상태필터</h4>
+                                <dl class="part-unit-summary-group is-operational" aria-label="상태필터">
+                                    <div class="part-unit-summary-card is-primary is-selected" data-part-state-filter="HELD" role="button" tabindex="0" aria-pressed="true">
+                                        <dt>보유부품</dt>
+                                        <dd data-summary-held>0</dd>
+                                    </div>
+                                    <div class="part-unit-summary-card is-pending" data-part-state-filter="WAITING" role="button" tabindex="0" aria-pressed="false">
+                                        <dt>검수대기</dt>
+                                        <dd data-summary-waiting>0</dd>
+                                    </div>
+                                    <div class="part-unit-summary-card is-available" data-part-state-filter="SALES_AVAILABLE" role="button" tabindex="0" aria-pressed="false">
+                                        <dt>판매가능</dt>
+                                        <dd data-summary-sales-available>0</dd>
+                                    </div>
+                                    <div class="part-unit-summary-card is-danger" data-part-state-filter="SALES_UNAVAILABLE" role="button" tabindex="0" aria-pressed="false">
+                                        <dt>판매불가</dt>
+                                        <dd data-summary-sales-unavailable>0</dd>
+                                    </div>
+                                    <div class="part-unit-summary-card is-hold" data-part-state-filter="SALES_HOLD" role="button" tabindex="0" aria-pressed="false">
+                                        <dt>판매보류</dt>
+                                        <dd data-summary-sales-hold>0</dd>
+                                    </div>
+                                </dl>
+                            </div>
+                            <div class="part-unit-filter-group" aria-labelledby="part-unit-grade-summary-title">
+                                <h4 id="part-unit-grade-summary-title">등급필터</h4>
+                                <dl class="part-unit-summary-group is-grade" aria-label="등급 필터">
+                                    <div class="part-unit-summary-card" data-part-state-filter="A" role="button" tabindex="0" aria-pressed="false">
+                                        <dt>A등급</dt>
+                                        <dd data-summary-grade-a>0</dd>
+                                    </div>
+                                    <div class="part-unit-summary-card" data-part-state-filter="B" role="button" tabindex="0" aria-pressed="false">
+                                        <dt>B등급</dt>
+                                        <dd data-summary-grade-b>0</dd>
+                                    </div>
+                                    <div class="part-unit-summary-card" data-part-state-filter="C" role="button" tabindex="0" aria-pressed="false">
+                                        <dt>C등급</dt>
+                                        <dd data-summary-grade-c>0</dd>
+                                    </div>
+                                    <div class="part-unit-summary-card is-danger" data-part-state-filter="DEFECTIVE" role="button" tabindex="0" aria-pressed="false">
+                                        <dt>불량</dt>
+                                        <dd data-summary-defective>0</dd>
+                                    </div>
+                                </dl>
+                            </div>
+                            <div class="part-unit-filter-group" aria-labelledby="part-unit-outbound-filter-title">
+                                <h4 id="part-unit-outbound-filter-title">기타</h4>
+                                <dl class="part-unit-summary-group is-outbound" aria-label="기타 필터">
+                                    <div class="part-unit-summary-card is-muted" data-part-state-filter="OUTBOUND" role="button" tabindex="0" aria-pressed="false">
+                                        <dt>출고</dt>
+                                        <dd data-summary-outbound>0</dd>
+                                    </div>
+                                </dl>
+                            </div>
+                        </div>
+                    </section>
                 </section>
 
                 <section class="table-card part-units-table-card" aria-labelledby="part-unit-list-title">
@@ -241,9 +243,8 @@
                         </section>
 
                         <div class="form-actions part-unit-detail-actions" aria-label="연결 업무">
-                            <a class="btn btn-secondary" data-route="history/stock">입출고 이력</a>
-                            <a class="btn btn-secondary" data-route="history/inspection">검수 이력</a>
-                            <a class="btn btn-primary" data-next-flow-action hidden></a>
+                            <a class="btn btn-secondary" data-route="history/stock" data-stock-history-action>입고이력</a>
+                            <a class="btn btn-secondary" data-route="history/inspection" data-inspection-history-action hidden>검수이력</a>
                         </div>
                     </div>
                 </div>
@@ -321,6 +322,6 @@
 <script src="/js/workspace-layout.js?20260624_quick_bar"></script>
 <script src="/js/pcs-ui.js?20260703_modal_scroll_lock"></script>
 <script src="/js/pcs-common.js?20260701_category_count"></script>
-<script src="/js/part-units.js?20260703_held_default"></script>
+<script src="/js/part-units.js?20260703_outbound_deeplink"></script>
 </body>
 </html>
