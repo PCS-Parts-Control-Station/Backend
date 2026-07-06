@@ -14,6 +14,8 @@
     const selectedPartnerName = document.querySelector("[data-selected-partner-name]");
     const selectedPartnerMeta = document.querySelector("[data-selected-partner-meta]");
     const outboundTable = document.querySelector(".document-data-table");
+    const listFrame = document.querySelector("[data-outbound-list-frame]");
+    const listLoading = document.querySelector("[data-outbound-list-loading]");
     const emptyRow = document.querySelector("[data-outbound-empty]");
     const pagination = document.querySelector("[data-outbound-pagination]");
     const pageInfo = document.querySelector("[data-page-info]");
@@ -132,12 +134,7 @@
 
     const numberText = (value) => Number(value || 0).toLocaleString("ko-KR");
 
-    const partnerRoleLabel = (role) => {
-        if (role === "CUSTOMER") return "고객";
-        if (role === "SUPPLIER") return "공급처";
-        if (role === "BOTH") return "공급처/고객";
-        return role || "-";
-    };
+    const partnerRoleLabel = (role) => window.PcsLabels?.partnerRole(role) || role || "-";
 
     const partnerMeta = (partner) => {
         const code = partner.partnerCode || partner.code || "";
@@ -154,33 +151,21 @@
         partner.tel,
     ].filter(Boolean).join(" ").toLowerCase();
 
-    const documentStatusLabel = (status) => status === "CANCELED" ? "취소" : "완료";
+    const documentStatusLabel = (status) => window.PcsLabels?.documentStatus(status) || "완료";
 
-    const documentStatusClass = (status) => status === "CANCELED" ? "badge-inactive" : "badge-active";
+    const documentStatusClass = (status) => window.PcsLabels?.documentStatusClass(status) || "badge-active";
 
-    const unitStatusLabel = (status) => {
-        if (status === "IN_STOCK") return "보관";
-        if (status === "OUTBOUND") return "출고";
-        if (status === "DISPOSED") return "폐기";
-        if (status === "CANCELED") return "취소";
-        return status || "-";
-    };
+    const unitStatusLabel = (status) => window.PcsLabels?.unitStatus(status) || status || "-";
 
-    const gradeLabel = (grade) => {
-        if (!grade || grade === "NONE") return "미정";
-        if (grade === "DEFECTIVE") return "불량";
-        return grade;
-    };
+    const gradeLabel = (grade) => window.PcsLabels?.grade(grade) || grade || "미정";
 
-    const gradeClass = (grade) => {
-        if (grade === "A") return "grade-a";
-        if (grade === "B") return "grade-b";
-        if (grade === "C") return "grade-c";
-        if (grade === "DEFECTIVE") return "grade-defective";
-        return "";
-    };
+    const gradeClass = (grade) => window.PcsLabels?.gradeClass(grade) || "";
 
     const setDetailDrawerOpen = (isOpen) => {
+        if (window.PcsDrawer?.setOpen) {
+            window.PcsDrawer.setOpen(detailDrawer, isOpen);
+            return;
+        }
         detailDrawer?.classList.toggle("is-open", isOpen);
         detailDrawer?.setAttribute("aria-hidden", String(!isOpen));
     };
@@ -677,11 +662,20 @@
     };
 
     const setLoading = (isLoading) => {
-        if (!searchButton) {
-            return;
+        if (searchButton) {
+            searchButton.disabled = isLoading;
+            searchButton.textContent = isLoading ? "조회 중" : "검색";
         }
-        searchButton.disabled = isLoading;
-        searchButton.textContent = isLoading ? "조회 중" : "검색";
+        window.PcsPagination?.setLoadingState({
+            listContainer: listFrame,
+            target: outboundTable,
+            overlay: listLoading,
+            pagination,
+            prevButton,
+            nextButton,
+            pageData: currentPageData,
+            isLoading,
+        });
     };
 
     const loadDocuments = async (page = 0, options = {}) => {
@@ -698,7 +692,11 @@
             currentDetail = null;
             closeDetailDrawer({ restoreFocus: false });
         }
-        setEmptyMessage("출고 전표 목록을 불러오는 중입니다.", { loading: true });
+        if (currentDocuments.length) {
+            hideEmptyMessage();
+        } else {
+            setEmptyMessage("출고 전표 목록을 불러오는 중입니다.", { loading: true });
+        }
 
         try {
             const data = await window.PcsApi.getData(`${apiBase}/stock/documents?${buildDocumentParams(page).toString()}`, apiOptions());
@@ -706,18 +704,23 @@
             currentPage = pageData.page;
             renderDocuments(pageData);
         } catch (error) {
-            updateSummary(null);
-            updatePagination({
-                content: [],
-                page: 0,
-                size: PAGE_SIZE,
-                totalElements: 0,
-                totalPages: 0,
-                hasPrevious: false,
-                hasNext: false,
-                summary: null,
-            });
-            setEmptyMessage(error.message || "출고 전표 목록을 불러오지 못했습니다.");
+            const message = error.message || "출고 전표 목록을 불러오지 못했습니다.";
+            if (currentDocuments.length) {
+                window.PcsUi?.toast({ message, type: "error" });
+            } else {
+                updateSummary(null);
+                updatePagination({
+                    content: [],
+                    page: 0,
+                    size: PAGE_SIZE,
+                    totalElements: 0,
+                    totalPages: 0,
+                    hasPrevious: false,
+                    hasNext: false,
+                    summary: null,
+                });
+                setEmptyMessage(message);
+            }
         } finally {
             setLoading(false);
         }

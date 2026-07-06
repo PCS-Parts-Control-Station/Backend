@@ -33,7 +33,7 @@
             <span>출고 관리</span>
         </button>
         <div class="workspace-quick-actions">
-            <a class="btn btn-secondary" data-route="inbound">입고 관리</a>
+            <a class="btn btn-secondary" data-route="documents">전표 조회</a>
             <a class="btn btn-primary" data-route="outbound/new">출고 등록</a>
         </div>
     </div>
@@ -64,7 +64,7 @@
                 </div>
             </div>
             <div class="header-actions">
-                <a class="btn btn-secondary" data-route="inbound">입고 관리</a>
+                <a class="btn btn-secondary" data-route="documents">전표 조회</a>
                 <a class="btn btn-primary" data-route="outbound/new">출고 등록</a>
             </div>
         </header>
@@ -135,17 +135,22 @@
                         </div>
                     </div>
 
-                    <div class="data-table document-data-table" role="table" aria-label="출고 전표 목록">
-                        <div class="data-row document-data-row table-head" role="row">
-                            <span role="columnheader">전표번호</span>
-                            <span role="columnheader">출고 내용</span>
-                            <span role="columnheader">수량</span>
-                            <span role="columnheader">상태</span>
-                            <span role="columnheader">출고일</span>
-                            <span role="columnheader">취소</span>
+                    <div class="document-list-frame list-loading-frame" data-outbound-list-frame>
+                        <div class="data-table document-data-table" role="table" aria-label="출고 전표 목록" data-list-loading-target>
+                            <div class="data-row document-data-row table-head" role="row">
+                                <span role="columnheader">전표번호</span>
+                                <span role="columnheader">출고 내용</span>
+                                <span role="columnheader">수량</span>
+                                <span role="columnheader">상태</span>
+                                <span role="columnheader">출고일</span>
+                                <span role="columnheader">취소</span>
+                            </div>
+                            <div class="data-row document-data-row empty-data-row" role="row" data-outbound-empty hidden>
+                                <span role="cell" data-label="안내">출고 전표 목록을 불러오는 중입니다.</span>
+                            </div>
                         </div>
-                        <div class="data-row document-data-row empty-data-row" role="row" data-outbound-empty hidden>
-                            <span role="cell" data-label="안내">출고 전표 목록을 불러오는 중입니다.</span>
+                        <div class="list-loading-overlay" data-outbound-list-loading hidden aria-hidden="true">
+                            <i aria-hidden="true"></i>
                         </div>
                     </div>
                     <div class="pagination-bar" data-outbound-pagination hidden>
@@ -291,8 +296,7 @@
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
 <script src="/js/workspace-layout.js?20260624_quick_bar"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/outbound.js?20260624_partner_modal"></script>
 <script src="/js/pcs-common.js?20260625_right_drawer_v2"></script>
-<script src="/js/outbound.js?20260625_right_drawer_v2"></script>
+<script src="/js/outbound.js?20260705_common_helpers"></script>
 </body>
 </html>

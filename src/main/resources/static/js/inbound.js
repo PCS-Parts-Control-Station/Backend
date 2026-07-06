@@ -14,6 +14,8 @@
     const selectedPartnerName = document.querySelector("[data-selected-partner-name]");
     const selectedPartnerMeta = document.querySelector("[data-selected-partner-meta]");
     const inboundTable = document.querySelector(".document-data-table");
+    const listFrame = document.querySelector("[data-inbound-list-frame]");
+    const listLoading = document.querySelector("[data-inbound-list-loading]");
     const tableHead = inboundTable?.querySelector(".table-head");
     const emptyRow = document.querySelector("[data-inbound-empty]");
     const pagination = document.querySelector("[data-inbound-pagination]");
@@ -110,23 +112,17 @@
         return `${year}-${month}-${day}`;
     };
 
-    const documentStatusLabel = (status) => {
-        if (status === "CANCELED") {
-            return "취소";
-        }
-        return "완료";
-    };
+    const documentStatusLabel = (status) => window.PcsLabels?.documentStatus(status) || "완료";
 
-    const documentStatusClass = (status) => {
-        if (status === "CANCELED") {
-            return "badge-inactive";
-        }
-        return "badge-active";
-    };
+    const documentStatusClass = (status) => window.PcsLabels?.documentStatusClass(status) || "badge-active";
 
     const numberText = (value) => Number(value || 0).toLocaleString("ko-KR");
 
     const setDetailDrawerOpen = (isOpen) => {
+        if (window.PcsDrawer?.setOpen) {
+            window.PcsDrawer.setOpen(detailDrawer, isOpen);
+            return;
+        }
         detailDrawer?.classList.toggle("is-open", isOpen);
         detailDrawer?.setAttribute("aria-hidden", String(!isOpen));
     };
@@ -694,6 +690,16 @@
             searchButton.disabled = isLoading;
             searchButton.textContent = isLoading ? "조회 중" : "검색";
         }
+        window.PcsPagination?.setLoadingState({
+            listContainer: listFrame,
+            target: inboundTable,
+            overlay: listLoading,
+            pagination,
+            prevButton,
+            nextButton,
+            pageData: currentPageData,
+            isLoading,
+        });
     };
 
     const loadDocuments = async (page = 0, options = {}) => {
@@ -715,7 +721,11 @@
             currentDetail = null;
             closeDetailDrawer({ restoreFocus: false });
         }
-        setEmptyMessage("입고 전표 목록을 불러오는 중입니다.", { loading: true });
+        if (currentDocuments.length) {
+            hideEmptyMessage();
+        } else {
+            setEmptyMessage("입고 전표 목록을 불러오는 중입니다.", { loading: true });
+        }
 
         try {
             const data = await api.getData(`/api/workspaces/${encodeURIComponent(companyCode)}/stock/documents?${buildDocumentParams(page).toString()}`, {
@@ -726,18 +736,23 @@
             currentPage = pageData.page;
             renderDocuments(pageData);
         } catch (error) {
-            updateSummary(null);
-            updatePagination({
-                content: [],
-                page: 0,
-                size: PAGE_SIZE,
-                totalElements: 0,
-                totalPages: 0,
-                hasPrevious: false,
-                hasNext: false,
-                summary: null,
-            });
-            setEmptyMessage(error.message || "입고 전표 목록을 불러오지 못했습니다.");
+            const message = error.message || "입고 전표 목록을 불러오지 못했습니다.";
+            if (currentDocuments.length) {
+                window.PcsUi?.toast({ message, type: "error" });
+            } else {
+                updateSummary(null);
+                updatePagination({
+                    content: [],
+                    page: 0,
+                    size: PAGE_SIZE,
+                    totalElements: 0,
+                    totalPages: 0,
+                    hasPrevious: false,
+                    hasNext: false,
+                    summary: null,
+                });
+                setEmptyMessage(message);
+            }
         } finally {
             setLoading(false);
         }

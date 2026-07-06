@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="/css/components/workflow.css?20260618_layers">
     <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
     <link rel="stylesheet" href="/css/pages/outbound.css?20260629_partner_modal">
-    <link rel="stylesheet" href="/css/pages/outbound-register.css?20260622_merge">
+    <link rel="stylesheet" href="/css/pages/outbound-register.css?20260703_candidate_compact">
 </head>
 <body class="has-collapsible-sidebar outbound-register-page page-outbound-register workspace-page">
 <div class="workspace-layout">
@@ -34,7 +34,7 @@
             <span>출고 등록</span>
         </button>
         <div class="workspace-quick-actions">
-            <a class="btn btn-secondary" data-route="outbound">출고 관리</a>
+            <a class="btn btn-secondary" data-route="documents">전표 조회</a>
             <button class="btn btn-primary" type="submit" form="outbound-form">출고 저장</button>
         </div>
     </div>
@@ -65,7 +65,7 @@
                 </div>
             </div>
             <div class="header-actions">
-                <a class="btn btn-secondary" data-route="outbound">출고 관리</a>
+                <a class="btn btn-secondary" data-route="documents">전표 조회</a>
                 <button class="btn btn-primary" type="submit" form="outbound-form">출고 저장</button>
             </div>
         </header>
@@ -145,16 +145,21 @@
                                 <button class="btn btn-secondary" type="button" data-candidate-reset>초기화</button>
                             </div>
 
-                            <div class="outbound-candidate-table" role="table" aria-label="출고 가능 부품 관리번호" data-candidate-table>
-                                <div class="outbound-candidate-row table-head" role="row">
-                                    <span role="columnheader">관리번호</span>
-                                    <span role="columnheader">품목</span>
-                                    <span role="columnheader">분류</span>
-                                    <span role="columnheader">등급</span>
-                                    <span role="columnheader">선택</span>
+                            <div class="outbound-candidate-list-frame list-loading-frame" data-candidate-list-frame>
+                                <div class="outbound-candidate-table" role="table" aria-label="출고 가능 부품 관리번호" data-candidate-table data-list-loading-target>
+                                    <div class="outbound-candidate-row table-head" role="row">
+                                        <span role="columnheader">관리번호</span>
+                                        <span role="columnheader">품목</span>
+                                        <span role="columnheader">분류</span>
+                                        <span role="columnheader">등급</span>
+                                        <span role="columnheader">선택</span>
+                                    </div>
+                                    <div class="outbound-candidate-row empty-data-row" role="row" data-candidate-empty>
+                                        <span role="cell" data-label="안내">출고 부품을 불러오는 중입니다.</span>
+                                    </div>
                                 </div>
-                                <div class="outbound-candidate-row empty-data-row" role="row" data-candidate-empty>
-                                    <span role="cell" data-label="안내">출고 부품을 불러오는 중입니다.</span>
+                                <div class="list-loading-overlay" data-candidate-list-loading hidden aria-hidden="true">
+                                    <i aria-hidden="true"></i>
                                 </div>
                             </div>
                             <div class="pagination-bar outbound-pagination" data-candidate-pagination hidden>
@@ -248,8 +253,8 @@
                         <li class="workflow-step">
                             <span class="process-dot" aria-hidden="true"></span>
                             <div>
-                                <strong>출고 관리</strong>
-                                <p>저장된 전표는 출고 관리에서 조회하고 취소합니다.</p>
+                                <strong>전표 조회</strong>
+                                <p>저장된 전표는 전표 통합 조회에서 확인하고 취소합니다.</p>
                             </div>
                         </li>
                     </ol>
@@ -334,6 +339,7 @@
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
 <script src="/js/workspace-layout.js?20260624_quick_bar"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/outbound-register.js?20260629_partner_modal"></script>
+<script src="/js/pcs-common.js?20260705_common_helpers"></script>
+<script src="/js/outbound-register.js?20260702_candidate_list_loading"></script>
 </body>
 </html>

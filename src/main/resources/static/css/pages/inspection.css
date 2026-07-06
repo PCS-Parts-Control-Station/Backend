@@ -323,10 +323,10 @@
 }
 
 .inspection-pagination-bar {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
+    column-gap: 12px;
     min-height: 42px;
     margin: 8px 20px 0;
     padding: 6px 12px;
@@ -335,18 +335,16 @@
 
 .inspection-pagination-bar p {
     display: flex;
-    order: 1;
     align-items: center;
-    justify-self: auto;
+    justify-self: start;
     min-height: 30px;
     margin: 0;
     line-height: 1;
 }
 
 .inspection-pagination-bar .pagination-actions {
-    order: 2;
     align-items: center;
-    justify-self: auto;
+    justify-self: center;
 }
 
 .inspection-pagination-bar .pagination-actions button {

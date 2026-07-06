@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="/css/components/components.css?20260623_drawer_clip_fix">
     <link rel="stylesheet" href="/css/components/workflow.css?20260618_layers">
     <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
-    <link rel="stylesheet" href="/css/pages/inspection.css?20260629_target_no_clip">
+    <link rel="stylesheet" href="/css/pages/inspection.css?20260702_pagination_center">
 </head>
 <body class="has-collapsible-sidebar inspection-page page-inspection workspace-page">
 <div class="workspace-layout">
@@ -33,7 +33,7 @@
             <span>검수 관리</span>
         </button>
         <div class="workspace-quick-actions">
-            <a class="btn btn-secondary" data-route="inbound">입고 관리</a>
+            <a class="btn btn-secondary" data-route="documents">전표 조회</a>
             <a class="btn btn-secondary" data-route="history">이력 관리</a>
         </div>
     </div>
@@ -64,7 +64,7 @@
                 </div>
             </div>
             <div class="header-actions">
-                <a class="btn btn-secondary" data-route="inbound">입고 관리</a>
+                <a class="btn btn-secondary" data-route="documents">전표 조회</a>
                 <a class="btn btn-secondary" data-route="history/inspection">이력 관리</a>
             </div>
         </header>
@@ -126,19 +126,24 @@
                         <span>검수 대상 <strong data-summary-total-units>0</strong>개</span>
                     </div>
 
-                    <div class="data-table" role="table" aria-label="검수 대상 전표" data-inspection-waiting-table>
-                        <div class="data-row management-data-row inspection-document-row table-head" role="row">
-                            <span role="columnheader">전표번호</span>
-                            <span role="columnheader">거래처</span>
-                            <span role="columnheader">입고일</span>
-                            <span role="columnheader">검수 대상</span>
-                            <span role="columnheader">대기</span>
-                            <span role="columnheader">완료</span>
-                            <span role="columnheader">진행률</span>
-                            <span role="columnheader">선택</span>
+                    <div class="inspection-document-list-frame list-loading-frame" data-inspection-document-list-frame>
+                        <div class="data-table" role="table" aria-label="검수 대상 전표" data-inspection-waiting-table data-list-loading-target>
+                            <div class="data-row management-data-row inspection-document-row table-head" role="row">
+                                <span role="columnheader">전표번호</span>
+                                <span role="columnheader">거래처</span>
+                                <span role="columnheader">입고일</span>
+                                <span role="columnheader">검수 대상</span>
+                                <span role="columnheader">대기</span>
+                                <span role="columnheader">완료</span>
+                                <span role="columnheader">진행률</span>
+                                <span role="columnheader">선택</span>
+                            </div>
+                            <div class="data-row management-data-row empty-data-row inspection-empty-row" role="row" data-inspection-waiting-empty>
+                                <span role="cell" data-label="안내">검수 대상 전표를 불러오는 중입니다.</span>
+                            </div>
                         </div>
-                        <div class="data-row management-data-row empty-data-row inspection-empty-row" role="row" data-inspection-waiting-empty>
-                            <span role="cell" data-label="안내">검수 대상 전표를 불러오는 중입니다.</span>
+                        <div class="list-loading-overlay" data-inspection-document-list-loading hidden aria-hidden="true">
+                            <i aria-hidden="true"></i>
                         </div>
                     </div>
                     <div class="pagination-bar inspection-pagination-bar" data-inspection-document-pagination hidden>
@@ -297,8 +302,8 @@
                         </div>
 
                         <label>
-                            <span>검수 메모</span>
-                            <textarea name="memo" rows="4" placeholder="검수 중 확인한 내용을 입력해 주세요" disabled></textarea>
+                            <span>특이사항</span>
+                            <textarea name="memo" rows="4" placeholder="검수 중 확인한 특이사항을 입력해 주세요" disabled></textarea>
                         </label>
 
                         <p class="field-message" data-inspection-form-message role="status" aria-live="polite">검수할 관리번호를 먼저 선택해 주세요.</p>
@@ -318,18 +323,24 @@
                         </div>
                     </div>
 
-                    <div class="data-table" role="table" aria-label="검수 이력" data-inspection-history-table>
-                        <div class="data-row management-data-row inspection-history-row table-head" role="row">
-                            <span role="columnheader">검수일</span>
-                            <span role="columnheader">부품</span>
-                            <span role="columnheader">전표번호</span>
-                            <span role="columnheader">유형</span>
-                            <span role="columnheader">등급</span>
-                            <span role="columnheader">처리자</span>
-                            <span role="columnheader">상세</span>
+                    <div class="list-loading-frame inspection-history-list-frame" data-inspection-history-list-frame>
+                        <div class="data-table" role="table" aria-label="검수 이력" data-inspection-history-table data-list-loading-target>
+                            <div class="data-row management-data-row inspection-history-row table-head" role="row">
+                                <span role="columnheader">검수일</span>
+                                <span role="columnheader">부품</span>
+                                <span role="columnheader">전표번호</span>
+                                <span role="columnheader">유형</span>
+                                <span role="columnheader">등급</span>
+                                <span role="columnheader">처리자</span>
+                                <span role="columnheader">상세</span>
+                            </div>
+                            <div class="data-row management-data-row empty-data-row inspection-empty-row" role="row" data-inspection-history-empty>
+                                <span role="cell" data-label="안내">전표를 선택하면 검수 이력이 표시됩니다.</span>
+                            </div>
                         </div>
-                        <div class="data-row management-data-row empty-data-row inspection-empty-row" role="row" data-inspection-history-empty>
-                            <span role="cell" data-label="안내">전표를 선택하면 검수 이력이 표시됩니다.</span>
+                        <div class="list-loading-overlay" data-inspection-history-list-loading hidden aria-hidden="true">
+                            <i aria-hidden="true"></i>
+                            <span class="sr-only">검수 이력을 불러오는 중입니다.</span>
                         </div>
                     </div>
                     <div class="pagination-bar inspection-pagination-bar" data-inspection-history-pagination hidden>
@@ -575,6 +586,7 @@
 <script src="/js/workspace-layout.js?20260624_quick_bar"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
-<script src="/js/inspection.js?20260623_history_page_size"></script>
+<script src="/js/pcs-common.js?20260705_common_helpers"></script>
+<script src="/js/inspection.js?20260702_document_list_loading"></script>
 </body>
 </html>

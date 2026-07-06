@@ -23,6 +23,8 @@
     const searchButton = document.querySelector("[data-candidate-search]");
     const resetSearchButton = document.querySelector("[data-candidate-reset]");
     const selectAllCandidatesButton = document.querySelector("[data-select-all-candidates]");
+    const candidateListFrame = document.querySelector("[data-candidate-list-frame]");
+    const candidateListLoading = document.querySelector("[data-candidate-list-loading]");
     const candidateTable = document.querySelector("[data-candidate-table]");
     const candidateSummary = document.querySelector("[data-candidate-summary]");
     const pagination = document.querySelector("[data-candidate-pagination]");
@@ -44,6 +46,7 @@
     }
 
     let currentPage = 0;
+    let currentPageData = null;
     let selectedUnits = new Map();
     let latestCandidates = [];
     let categoryOptions = [];
@@ -293,22 +296,9 @@
         return values.length ? values.join(" / ") : "-";
     };
 
-    const gradeLabel = (grade) => {
-        if (!grade || grade === "NONE") {
-            return "미정";
-        }
-        if (grade === "DEFECTIVE") {
-            return "불량";
-        }
-        return grade;
-    };
+    const gradeLabel = (grade) => window.PcsLabels?.grade(grade) || grade || "미정";
 
-    const gradeClass = (grade) => {
-        if (grade === "A") return "grade-a";
-        if (grade === "B") return "grade-b";
-        if (grade === "C") return "grade-c";
-        return "";
-    };
+    const gradeClass = (grade) => window.PcsLabels?.gradeClass(grade) || "";
 
     const setPartnerMessage = (message, type = "info") => {
         if (!partnerMessage) {
@@ -331,6 +321,16 @@
             searchButton.disabled = isLoading;
             searchButton.textContent = isLoading ? "조회 중" : "검색";
         }
+        window.PcsPagination?.setLoadingState({
+            listContainer: candidateListFrame,
+            target: candidateTable,
+            overlay: candidateListLoading,
+            pagination,
+            prevButton,
+            nextButton,
+            pageData: currentPageData,
+            isLoading,
+        });
     };
 
     const setSelectAllLoading = (isLoading) => {
@@ -515,6 +515,7 @@
     };
 
     const updatePagination = (pageData) => {
+        currentPageData = pageData;
         window.PcsPagination.updateControls({
             pageData,
             container: pagination,
@@ -565,6 +566,10 @@
                 renderCandidates(pageData.content, pageData);
                 updatePagination(pageData);
             } catch (error) {
+                if (preserveScroll && latestCandidates.length) {
+                    window.PcsUi?.showToast?.(error?.message || "출고 부품을 불러오지 못했습니다.", "error");
+                    return;
+                }
                 setCandidateMessage(error?.message || "출고 부품을 불러오지 못했습니다.");
                 updatePagination({
                     totalElements: 0,

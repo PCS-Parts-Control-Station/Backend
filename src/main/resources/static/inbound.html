@@ -33,7 +33,7 @@
             <span>입고 관리</span>
         </button>
         <div class="workspace-quick-actions">
-            <a class="btn btn-secondary" data-route="outbound">출고 관리</a>
+            <a class="btn btn-secondary" data-route="documents">전표 조회</a>
             <a class="btn btn-primary" data-route="inbound/new">입고 등록</a>
         </div>
     </div>
@@ -64,7 +64,7 @@
                 </div>
             </div>
             <div class="header-actions">
-                <a class="btn btn-secondary" data-route="outbound">출고 관리</a>
+                <a class="btn btn-secondary" data-route="documents">전표 조회</a>
                 <a class="btn btn-primary" data-route="inbound/new">입고 등록</a>
             </div>
         </header>
@@ -135,17 +135,22 @@
                         </div>
                     </div>
 
-                    <div class="data-table document-data-table" role="table" aria-label="입고 전표 목록">
-                        <div class="data-row document-data-row table-head" role="row">
-                            <span role="columnheader">전표번호</span>
-                            <span role="columnheader">입고 내용</span>
-                            <span role="columnheader">수량</span>
-                            <span role="columnheader">상태</span>
-                            <span role="columnheader">입고일</span>
-                            <span role="columnheader">취소</span>
+                    <div class="document-list-frame list-loading-frame" data-inbound-list-frame>
+                        <div class="data-table document-data-table" role="table" aria-label="입고 전표 목록" data-list-loading-target>
+                            <div class="data-row document-data-row table-head" role="row">
+                                <span role="columnheader">전표번호</span>
+                                <span role="columnheader">입고 내용</span>
+                                <span role="columnheader">수량</span>
+                                <span role="columnheader">상태</span>
+                                <span role="columnheader">입고일</span>
+                                <span role="columnheader">취소</span>
+                            </div>
+                            <div class="data-row document-data-row empty-data-row" role="row" data-inbound-empty hidden>
+                                <span role="cell" data-label="안내">입고 전표 목록을 불러오는 중입니다.</span>
+                            </div>
                         </div>
-                        <div class="data-row document-data-row empty-data-row" role="row" data-inbound-empty hidden>
-                            <span role="cell" data-label="안내">입고 전표 목록을 불러오는 중입니다.</span>
+                        <div class="list-loading-overlay" data-inbound-list-loading hidden aria-hidden="true">
+                            <i aria-hidden="true"></i>
                         </div>
                     </div>
                     <div class="pagination-bar" data-inbound-pagination hidden>
