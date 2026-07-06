@@ -1,7 +1,9 @@
 package com.pcs.web.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @Controller
 public class PageController {
@@ -72,8 +74,8 @@ public class PageController {
     }
 
     @GetMapping("/w/{companyCode}/inbound")
-    public String inbound() {
-        return "forward:/inbound.html";
+    public String inbound(@PathVariable String companyCode, HttpServletRequest request) {
+        return redirectToDocuments(companyCode, "INBOUND", request);
     }
 
     @GetMapping("/w/{companyCode}/inbound/new")
@@ -82,8 +84,21 @@ public class PageController {
     }
 
     @GetMapping("/w/{companyCode}/outbound")
-    public String outbound() {
-        return "forward:/outbound.html";
+    public String outbound(@PathVariable String companyCode, HttpServletRequest request) {
+        return redirectToDocuments(companyCode, "OUTBOUND", request);
+    }
+
+    private String redirectToDocuments(String companyCode, String documentType, HttpServletRequest request) {
+        String queryString = request.getQueryString();
+        StringBuilder query = new StringBuilder("documentType=").append(documentType);
+        if (queryString != null && !queryString.isBlank()) {
+            for (String parameter : queryString.split("&")) {
+                if (!parameter.isBlank() && !parameter.startsWith("documentType=")) {
+                    query.append("&").append(parameter);
+                }
+            }
+        }
+        return "redirect:/w/" + companyCode + "/documents?" + query;
     }
 
     @GetMapping("/w/{companyCode}/outbound/new")
