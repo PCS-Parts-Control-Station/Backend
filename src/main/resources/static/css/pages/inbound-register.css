@@ -482,6 +482,14 @@
     padding: 20px;
 }
 
+.inbound-category-picker-modal {
+    width: min(680px, calc(100vw - 32px));
+}
+
+.inbound-category-picker-modal .part-modal-fields {
+    grid-template-columns: 1fr;
+}
+
 @media (max-width: 1280px) {
 .register-fields,
 .line-entry-grid,

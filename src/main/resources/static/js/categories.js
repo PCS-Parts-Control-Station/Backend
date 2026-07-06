@@ -567,7 +567,8 @@
             container: pagination,
             info: pageInfo,
             prevButton,
-            nextButton
+            nextButton,
+            onPageClick: (page) => loadCategories(page, { preserveScroll: true })
         });
     };
 

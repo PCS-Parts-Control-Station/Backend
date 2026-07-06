@@ -131,20 +131,9 @@
 
     const resultBadgeClass = (result) => result === "FAIL" ? "badge-danger" : "badge-active";
 
-    const gradeBadgeClass = (grade) => {
-        if (grade === "DEFECTIVE") return "badge-danger";
-        if (grade === "NONE") return "badge-grade-none";
-        if (grade === "A") return "badge-grade-a";
-        if (grade === "B") return "badge-grade-b";
-        if (grade === "C") return "badge-grade-c";
-        return "badge-blue";
-    };
+    const gradeBadgeClass = (grade) => window.PcsLabels?.gradeBadgeClass(grade) || "badge-blue";
 
-    const unitStatusBadgeClass = (status) => {
-        if (status === "OUTBOUND") return "badge-warning";
-        if (status === "DISPOSED" || status === "CANCELED") return "badge-danger";
-        return "badge-active";
-    };
+    const unitStatusBadgeClass = (status) => window.PcsLabels?.unitStatusBadgeClass(status) || "badge-active";
 
     const renderUnitStatusBadge = (status, options = {}) => {
         if (!status || (options.hideInStock && status === "IN_STOCK")) {
@@ -153,15 +142,10 @@
         return `<em class="badge ${unitStatusBadgeClass(status)} history-unit-status-badge">${escapeHtml(LABELS.unitStatus[status] || status)}</em>`;
     };
 
-    const resolveCurrentSalesStatus = (unitStatus, salesStatus) => {
-        if (unitStatus === "OUTBOUND") {
-            return salesStatus === "AVAILABLE" ? "판매 완료" : "출고 완료";
-        }
-        if (unitStatus === "DISPOSED" || unitStatus === "CANCELED") {
-            return LABELS.unitStatus[unitStatus] || unitStatus;
-        }
-        return LABELS.salesStatus[salesStatus] || salesStatus || "-";
-    };
+    const resolveCurrentSalesStatus = (unitStatus, salesStatus) => window.PcsLabels?.currentSalesStatus(unitStatus, salesStatus)
+        || LABELS.salesStatus[salesStatus]
+        || salesStatus
+        || "-";
 
     const clearRows = (targetTable) => {
         targetTable?.querySelectorAll(".data-row:not(.table-head)").forEach((row) => row.remove());
@@ -281,7 +265,11 @@
             return;
         }
         detailPanelOpen = false;
-        detailPanel.hidden = true;
+        if (window.PcsDrawer?.close) {
+            window.PcsDrawer.close(detailPanel, {restoreFocus: false});
+        } else {
+            detailPanel.hidden = true;
+        }
         if (restoreFocus && lastDetailTrigger) {
             lastDetailTrigger.focus();
         }
@@ -293,7 +281,11 @@
         }
         lastDetailTrigger = triggerElement || lastDetailTrigger;
         detailPanelOpen = true;
-        detailPanel.hidden = false;
+        if (window.PcsDrawer?.open) {
+            window.PcsDrawer.open(detailPanel, {focus: false});
+        } else {
+            detailPanel.hidden = false;
+        }
         resetDetailPanelContent();
     };
 
@@ -514,18 +506,37 @@
     };
 
     const updateUnitPagination = (totalElements) => {
-        const totalPages = Math.max(1, Math.ceil(totalElements / UNIT_PAGE_SIZE));
+        const totalPages = Math.ceil(totalElements / UNIT_PAGE_SIZE);
+        const pageData = {
+            totalElements,
+            totalPages,
+            page: unitCurrentPage,
+            hasPrevious: unitCurrentPage > 0,
+            hasNext: unitCurrentPage < totalPages - 1
+        };
+
+        if (window.PcsPagination) {
+            window.PcsPagination.updateControls({
+                pageData,
+                container: unitPagination,
+                info: unitPageInfo,
+                prevButton: unitPrevButton,
+                nextButton: unitNextButton,
+                onPageClick: (page) => {
+                    unitCurrentPage = page;
+                    selectedManagementNumber = null;
+                    closeDetailPanel({restoreFocus: false});
+                    renderUnitRows(selectedDocumentRows);
+                }
+            });
+            return;
+        }
+
         if (unitPagination) {
             unitPagination.hidden = totalElements <= UNIT_PAGE_SIZE;
         }
         if (unitPageInfo) {
-            unitPageInfo.textContent = `${numberText(unitCurrentPage + 1)} / ${numberText(totalPages)} 페이지 · 총 ${numberText(totalElements)}개`;
-        }
-        if (unitPrevButton) {
-            unitPrevButton.disabled = unitCurrentPage <= 0;
-        }
-        if (unitNextButton) {
-            unitNextButton.disabled = unitCurrentPage >= totalPages - 1;
+            unitPageInfo.textContent = `${numberText(unitCurrentPage + 1)} / ${numberText(Math.max(1, totalPages))} 페이지 · 총 ${numberText(totalElements)}개`;
         }
     };
 
@@ -755,7 +766,8 @@
             container: pagination,
             info: pageInfo,
             prevButton,
-            nextButton
+            nextButton,
+            onPageClick: (page) => loadDocumentGroups(page, { preserveScroll: true })
         });
     };
 

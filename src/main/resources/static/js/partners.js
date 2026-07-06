@@ -272,7 +272,8 @@
             container: pagination,
             info: pageInfo,
             prevButton,
-            nextButton
+            nextButton,
+            onPageClick: (page) => loadPartners(page, { preserveScroll: true })
         });
     };
 

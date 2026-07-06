@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PCS 전표 통합 조회 화면입니다. 입고와 출고 전표를 통합 조회하고 관련 업무 화면으로 이동합니다.">
+    <title>PCS | 전표 통합 조회</title>
+    <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/core/tokens.css?20260618_layers">
+    <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
+    <link rel="stylesheet" href="/css/layouts/workspace.css?20260624_quick_bar">
+    <link rel="stylesheet" href="/css/components/components.css?20260623_drawer_clip_fix">
+    <link rel="stylesheet" href="/css/components/management-page.css?20260625_management_header">
+    <link rel="stylesheet" href="/css/components/workflow.css?20260618_layers">
+    <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
+    <link rel="stylesheet" href="/css/pages/documents.css?20260703_document_cancel">
+</head>
+<body class="has-collapsible-sidebar page-documents workspace-page">
+<div class="workspace-layout">
+    <div data-workspace-sidebar data-active-route="documents"></div>
+
+    <div class="workspace-quick-bar" data-workspace-quick-bar data-watch-target=".workspace-header .header-actions" aria-hidden="true">
+        <button class="menu-toggle" type="button" data-sidebar-toggle aria-controls="workspace-sidebar" aria-expanded="false" aria-label="메뉴 열기">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M4 7h16"></path>
+                <path d="M4 12h16"></path>
+                <path d="M4 17h16"></path>
+            </svg>
+        </button>
+        <button class="workspace-quick-brand" type="button" data-scroll-top aria-label="전표 통합 조회 화면 맨 위로 이동">
+            <span>전표 통합 조회</span>
+        </button>
+        <div class="workspace-quick-actions">
+            <a class="btn btn-secondary" data-route="inbound/new" data-staff-permission="STAFF_INBOUND">입고 등록</a>
+            <a class="btn btn-secondary" data-route="outbound/new" data-staff-permission="STAFF_OUTBOUND">출고 등록</a>
+        </div>
+    </div>
+
+    <main class="workspace-main documents-page">
+        <header class="workspace-header">
+            <button class="menu-toggle" type="button" data-sidebar-toggle aria-controls="workspace-sidebar" aria-expanded="false" aria-label="메뉴 열기">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M4 7h16"></path>
+                    <path d="M4 12h16"></path>
+                    <path d="M4 17h16"></path>
+                </svg>
+            </button>
+            <div>
+                <p class="page-kicker">전표</p>
+                <h1>전표 통합 조회</h1>
+                <p class="page-description">입고와 출고 전표를 한 화면에서 조회하고 상세를 확인합니다.</p>
+            </div>
+            <div class="header-actions">
+                <a class="btn btn-secondary" data-route="outbound/new" data-staff-permission="STAFF_OUTBOUND">출고 등록</a>
+                <a class="btn btn-primary" data-route="inbound/new" data-staff-permission="STAFF_INBOUND">입고 등록</a>
+            </div>
+        </header>
+
+        <section class="filter-card documents-filter-card" aria-labelledby="documents-filter-title">
+            <div class="documents-filter-heading">
+                <h2 id="documents-filter-title">전표 검색</h2>
+                <p>전표번호, 거래처, 품목, 기간으로 조회합니다.</p>
+            </div>
+            <!-- API: GET /api/workspaces/{companyCode}/stock/documents?documentType=&keyword=&partnerId=&documentStatus=&dateFrom=&dateTo=&page=&size= -->
+            <form class="filter-form documents-filter-form" action="#" method="get" autocomplete="off" data-documents-filter-form>
+                <label class="documents-keyword-field">
+                    <span>검색어</span>
+                    <input type="search" name="keyword" placeholder="전표번호, 거래처, 품목명">
+                </label>
+                <div class="partner-picker-field documents-partner-filter-field">
+                    <span>거래처</span>
+                    <input type="hidden" name="partnerId" data-partner-filter>
+                    <button class="partner-picker-button" type="button" data-open-partner-modal>
+                        <span class="partner-picker-label">선택</span>
+                        <span class="partner-picker-value">
+                            <strong data-selected-partner-name>전체 거래처</strong>
+                            <small data-selected-partner-meta>거래처를 검색해 선택해 주세요.</small>
+                        </span>
+                    </button>
+                </div>
+                <label>
+                    <span>구분</span>
+                    <select name="documentType">
+                        <option value="">전체</option>
+                        <option value="INBOUND">입고</option>
+                        <option value="OUTBOUND">출고</option>
+                    </select>
+                </label>
+                <label>
+                    <span>상태</span>
+                    <select name="documentStatus">
+                        <option value="">전체</option>
+                        <option value="COMPLETED">완료</option>
+                        <option value="CANCELED">취소</option>
+                    </select>
+                </label>
+                <fieldset class="documents-date-range">
+                    <legend>처리일</legend>
+                    <input type="date" name="dateFrom" aria-label="시작일">
+                    <span aria-hidden="true">~</span>
+                    <input type="date" name="dateTo" aria-label="종료일">
+                </fieldset>
+                <div class="documents-filter-actions">
+                    <button class="btn btn-primary" type="submit">검색</button>
+                    <button class="btn btn-secondary" type="button" data-documents-filter-reset>초기화</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="table-card documents-list-card" aria-labelledby="documents-list-title">
+            <div class="table-header inline-summary-header management-summary-header">
+                <div>
+                    <h2 id="documents-list-title">전표 목록</h2>
+                    <p>행을 선택하면 오른쪽에서 전표 상세와 업무 이동 버튼을 확인합니다.</p>
+                </div>
+                <div class="list-summary-box" aria-label="전표 목록 요약" data-documents-summary>
+                    <dl class="list-summary">
+                        <div>
+                            <dt>전표</dt>
+                            <dd data-documents-summary-total>0</dd>
+                        </div>
+                        <div>
+                            <dt>수량</dt>
+                            <dd data-documents-summary-quantity>0</dd>
+                        </div>
+                        <div>
+                            <dt>취소</dt>
+                            <dd data-documents-summary-canceled>0</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="documents-table-wrap list-loading-frame">
+                <div class="data-table documents-table" role="table" aria-label="전표 통합 조회 목록" data-documents-table data-list-loading-target>
+                    <div class="data-row documents-row table-head" role="row">
+                        <span role="columnheader">구분</span>
+                        <span role="columnheader">전표번호</span>
+                        <span role="columnheader">거래처 / 내용</span>
+                        <span role="columnheader">수량</span>
+                        <span role="columnheader">상태</span>
+                        <span role="columnheader">처리일</span>
+                    </div>
+                    <div class="data-row documents-row empty-data-row" role="row" data-documents-empty hidden>
+                        <span role="cell" data-label="안내">전표를 불러오는 중입니다.</span>
+                    </div>
+                </div>
+                <div class="list-loading-overlay" data-documents-list-loading hidden aria-hidden="true">
+                    <i aria-hidden="true"></i>
+                </div>
+            </div>
+
+            <div class="pagination-bar documents-pagination" data-documents-pagination hidden>
+                <p data-page-info>1 / 1 페이지</p>
+                <div class="pagination-actions">
+                    <span class="documents-pagination-status" data-documents-pagination-status hidden aria-live="polite">
+                        <i aria-hidden="true"></i>
+                        <span>불러오는 중</span>
+                    </span>
+                    <button type="button" data-page-prev>이전</button>
+                    <button type="button" data-page-next>다음</button>
+                </div>
+            </div>
+        </section>
+
+        <aside class="right-side-drawer documents-detail-drawer" data-documents-detail-drawer aria-labelledby="documents-detail-title" aria-hidden="true" tabindex="-1">
+            <div class="panel-card right-side-drawer-panel documents-detail-panel">
+                <div class="panel-title-bar">
+                    <div>
+                        <h2 id="documents-detail-title">전표 상세</h2>
+                        <p data-detail-subtitle>전표를 선택해 주세요.</p>
+                    </div>
+                    <button class="panel-link-button" type="button" data-close-detail-panel>닫기</button>
+                </div>
+
+                <div class="drawer-scroll-body documents-detail-body">
+                    <div class="documents-detail-card">
+                        <strong data-detail-document-no>-</strong>
+                        <div class="documents-detail-badges">
+                            <em class="badge badge-gray" data-detail-type>-</em>
+                            <em class="badge badge-gray" data-detail-status>-</em>
+                        </div>
+                    </div>
+
+                    <dl class="detail-list documents-detail-list">
+                        <div>
+                            <dt>거래처</dt>
+                            <dd data-detail-partner>-</dd>
+                        </div>
+                        <div>
+                            <dt>처리일</dt>
+                            <dd data-detail-created-at>-</dd>
+                        </div>
+                        <div>
+                            <dt>처리자</dt>
+                            <dd data-detail-processed-by>-</dd>
+                        </div>
+                        <div>
+                            <dt>사유</dt>
+                            <dd data-detail-reason>-</dd>
+                        </div>
+                    </dl>
+
+                    <section class="documents-detail-lines" aria-labelledby="documents-detail-lines-title">
+                        <div class="section-title-row">
+                            <h3 id="documents-detail-lines-title">품목 요약</h3>
+                            <span data-detail-line-summary>-</span>
+                        </div>
+                        <div class="documents-detail-line-list" data-detail-lines>
+                            <p class="detail-empty-text">전표를 선택해 주세요.</p>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="documents-detail-actions" data-detail-actions></div>
+            </div>
+        </aside>
+
+        <dialog class="part-modal partner-modal documents-partner-modal" data-partner-modal aria-labelledby="documents-partner-modal-title">
+            <div class="part-modal-card partner-modal-card">
+                <div class="part-modal-header">
+                    <div>
+                        <p class="page-kicker">거래처 선택</p>
+                        <h2 id="documents-partner-modal-title">거래처를 선택합니다.</h2>
+                        <p>검색 후 목록에서 조회할 거래처를 선택해 주세요.</p>
+                    </div>
+                    <button class="modal-close-button" type="button" data-close-partner-modal aria-label="닫기">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M6 6l12 12"></path>
+                            <path d="M18 6L6 18"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="partner-modal-body">
+                    <div class="partner-modal-search">
+                        <label>
+                            <span>거래처 검색</span>
+                            <input type="search" data-partner-search placeholder="예: 용산전자">
+                        </label>
+                    </div>
+                    <div class="partner-modal-list" data-partner-list aria-live="polite"></div>
+                </div>
+                <div class="partner-modal-actions">
+                    <button class="btn btn-secondary" type="button" data-close-partner-modal>닫기</button>
+                </div>
+            </div>
+        </dialog>
+
+        <dialog class="part-modal confirm-modal documents-cancel-modal" data-cancel-modal aria-labelledby="documents-cancel-modal-title">
+            <form class="part-modal-card" method="dialog">
+                <div class="part-modal-header">
+                    <div>
+                        <p class="page-kicker">전표 취소</p>
+                        <h2 id="documents-cancel-modal-title">전표를 취소할까요?</h2>
+                        <p>취소 후 원본 전표와 재고 이력은 보존되고, 관련 재고 상태만 되돌립니다.</p>
+                    </div>
+                    <button class="modal-close-button" type="button" data-close-cancel-modal aria-label="닫기">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M6 6l12 12"></path>
+                            <path d="M18 6L6 18"></path>
+                        </svg>
+                    </button>
+                </div>
+                <dl class="confirm-summary">
+                    <div>
+                        <dt>전표번호</dt>
+                        <dd data-cancel-document-no>-</dd>
+                    </div>
+                    <div>
+                        <dt>구분</dt>
+                        <dd data-cancel-document-type>-</dd>
+                    </div>
+                    <div>
+                        <dt>거래처</dt>
+                        <dd data-cancel-partner>-</dd>
+                    </div>
+                    <div>
+                        <dt>수량</dt>
+                        <dd data-cancel-quantity>-</dd>
+                    </div>
+                </dl>
+                <p class="field-message is-error modal-message" data-cancel-message role="status" aria-live="polite" hidden></p>
+                <div class="part-modal-actions">
+                    <button class="btn btn-secondary" type="button" data-close-cancel-modal>닫기</button>
+                    <button class="btn btn-danger" type="button" data-confirm-cancel>전표 취소</button>
+                </div>
+            </form>
+        </dialog>
+    </main>
+</div>
+<script src="/js/pcs-api.js?20260623_memory_token"></script>
+<script src="/js/pcs-pagination.js?20260527_pagination"></script>
+<script src="/js/workspace-layout.js?20260624_quick_bar"></script>
+<script src="/js/pcs-ui.js?20260527_1"></script>
+<script src="/js/pcs-common.js?20260625_right_drawer_v2"></script>
+<script src="/js/documents.js?20260703_document_cancel"></script>
+</body>
+</html>

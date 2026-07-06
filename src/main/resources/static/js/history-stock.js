@@ -79,35 +79,20 @@
         return `${year}-${month}-${day} ${hour}:${minute}`;
     };
 
-    const documentTypeLabel = (type) => {
-        if (type === "INBOUND") return "입고";
-        if (type === "OUTBOUND") return "출고";
-        return type || "-";
-    };
+    const documentTypeLabel = (type) => window.PcsLabels?.documentType(type) || type || "-";
 
-    const documentTypeClass = (type) => {
-        if (type === "INBOUND") return "badge-blue";
-        if (type === "OUTBOUND") return "badge-orange";
-        return "badge-gray";
-    };
+    const documentTypeClass = (type) => window.PcsLabels?.documentTypeClass(type) || "badge-gray";
 
-    const documentStatusLabel = (status) => status === "CANCELED" ? "취소" : "완료";
+    const documentStatusLabel = (status) => window.PcsLabels?.documentStatus(status) || "완료";
 
-    const documentStatusClass = (status) => status === "CANCELED" ? "badge-inactive" : "badge-active";
+    const documentStatusClass = (status) => window.PcsLabels?.documentStatusClass(status) || "badge-active";
 
     const gradeLabel = (grade) => {
         if (!grade || grade === "NONE") return "";
-        if (grade === "DEFECTIVE") return "불량";
-        return grade;
+        return window.PcsLabels?.grade(grade) || grade;
     };
 
-    const unitStatusLabel = (status) => {
-        if (status === "IN_STOCK") return "보관";
-        if (status === "OUTBOUND") return "출고";
-        if (status === "CANCELED") return "취소";
-        if (status === "DISPOSED") return "폐기";
-        return status || "-";
-    };
+    const unitStatusLabel = (status) => window.PcsLabels?.unitStatus(status) || status || "-";
 
     const summarizeGrades = (units) => {
         const counts = new Map();
@@ -144,6 +129,10 @@
     };
 
     const setDetailDrawerOpen = (isOpen) => {
+        if (window.PcsDrawer?.setOpen) {
+            window.PcsDrawer.setOpen(detailDrawer, isOpen);
+            return;
+        }
         detailDrawer?.classList.toggle("is-open", isOpen);
         detailDrawer?.setAttribute("aria-hidden", String(!isOpen));
     };
@@ -250,6 +239,7 @@
             info: pageInfo,
             prevButton,
             nextButton,
+            onPageClick: (page) => loadDocuments(page, { preserveScroll: true })
         });
     };
 
@@ -530,28 +520,6 @@
 
     closeDetailButtons.forEach((button) => {
         button.addEventListener("click", () => closeDetailDrawer());
-    });
-
-    document.addEventListener("click", (event) => {
-        if (!detailDrawer?.classList.contains("is-open")) {
-            return;
-        }
-        if (!(event.target instanceof Element)) {
-            return;
-        }
-        if (detailDrawer.contains(event.target)) {
-            return;
-        }
-        if (event.target.closest("[data-document-id]")) {
-            return;
-        }
-        closeDetailDrawer({ restoreFocus: false });
-    });
-
-    document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && detailDrawer?.classList.contains("is-open")) {
-            closeDetailDrawer();
-        }
     });
 
     window.PcsDrawer?.bindDismiss({

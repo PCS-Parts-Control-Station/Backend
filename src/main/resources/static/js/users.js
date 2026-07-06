@@ -368,7 +368,8 @@
             container: pagination,
             info: pageInfo,
             prevButton,
-            nextButton
+            nextButton,
+            onPageClick: (page) => loadUsers(page, { preserveScroll: true })
         });
     };
 
