@@ -102,8 +102,8 @@ src/main/resources/static
 ├─ dashboard.html
 ├─ categories.html
 ├─ partners.html
-├─ inbound.html
 ├─ inbound-register.html
+├─ documents.html
 ├─ css
 ├─ js
 └─ images
