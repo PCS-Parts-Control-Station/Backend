@@ -143,7 +143,7 @@ Owner 회원가입 + 회사 생성 요청 예시:
 
 | Method | API | 설명 |
 |---|---|---|
-| GET | `/api/workspaces/{companyCode}/users` | 사용자 목록 |
+| GET | `/api/workspaces/{companyCode}/users` | 사용자 목록. `keyword`, `role`, `passwordStatus`, `createdFrom`, `createdTo`, `page`, `size`, `limit` 지원 |
 | POST | `/api/workspaces/{companyCode}/users` | 사용자 생성 |
 | GET | `/api/workspaces/{companyCode}/users/{memberId}` | 사용자 상세 |
 | PATCH | `/api/workspaces/{companyCode}/users/{memberId}` | 사용자 수정 |
@@ -177,6 +177,7 @@ Owner 회원가입 + 회사 생성 요청 예시:
     "role": "STAFF",
     "passwordStatus": "TEMPORARY",
     "active": true,
+    "createdAt": "2026-06-19T15:30:00",
     "updatedAt": "2026-06-19T15:30:00"
   },
   "temporaryPassword": "PCS-Ab3de5Fg7H",
@@ -393,7 +394,7 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&pag
 }
 ```
 
-입고 전표번호는 서버가 `IN-YYYYMMDD-RANDOM16` 형식으로 자동 발급한다.
+입고 전표 번호는 서버가 `IN-YYYYMMDD-RANDOM16` 형식으로 자동 발급한다.
 내부 정렬과 페이징 기준은 `documentId`를 사용한다.
 
 출고 대상 관리번호 조회 query:
@@ -450,7 +451,7 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&pag
 | 이름 | 설명 |
 |---|---|
 | `documentType` | `INBOUND`, `OUTBOUND` |
-| `keyword` | 전표번호, 거래처명, 품목명, 모델명, 품목코드 검색 |
+| `keyword` | 전표 번호, 거래처명, 품목명, 모델명, 품목코드 검색 |
 | `partnerId` | 거래처 필터 |
 | `documentStatus` | `COMPLETED`, `CANCELED` |
 | `page` | 0부터 시작 |
@@ -565,7 +566,7 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&pag
 }
 ```
 
-출고 전표번호는 서버가 `OUT-YYYYMMDD-RANDOM16` 형식으로 자동 발급한다. 클라이언트는 실제 출고할 `unitIds`를 보내며, 서버는 저장 시점에 각 관리번호가 출고 가능한 상태인지 다시 검증한다.
+출고 전표 번호는 서버가 `OUT-YYYYMMDD-RANDOM16` 형식으로 자동 발급한다. 클라이언트는 실제 출고할 `unitIds`를 보내며, 서버는 저장 시점에 각 관리번호가 출고 가능한 상태인지 다시 검증한다.
 
 취소 요청 예시:
 
@@ -619,7 +620,7 @@ GET /api/workspaces/{companyCode}/parts?keyword=RTX&categoryId=1&active=true&pag
 
 검수 대상 조회는 입고 전표를 기준으로 한다. 전표 목록은 `waiting-documents`, 전표별 관리번호는 `waiting-documents/{documentId}/units`를 사용한다.
 
-검수 이력 전표 목록은 `GET /api/workspaces/{companyCode}/inspections/history-documents`로 조회한다. 이 API는 검수 이력 화면의 전표 목록용 집계 응답이며 `keyword`, `partId`, `inspectionType`, `result`, `grade`, `dateFrom`, `dateTo`, `page`, `size`, `limit`을 지원한다. 화면의 기본 전표 검색은 검색어, 기간, 이력 유형을 사용하고, 검수 결과와 등급은 전표 선택 후 관리번호 목록 보조 필터로 사용한다.
+검수 이력 전표 목록은 `GET /api/workspaces/{companyCode}/inspections/history-documents`로 조회한다. 이 API는 검수 이력 화면의 전표 목록용 집계 응답이며 `keyword`, `documentId`, `partId`, `inspectionType`, `result`, `grade`, `dateFrom`, `dateTo`, `page`, `size`, `limit`을 지원한다. 화면의 기본 전표 검색은 검색어, 기간, 이력 유형을 사용하고, 검수 결과와 등급은 전표 선택 후 관리번호 목록 보조 필터로 사용한다.
 
 개별 부품 기준 검수 이력은 별도 URL을 두지 않고 `GET /api/workspaces/{companyCode}/inspections?unitId={unitId}`로 조회한다. 전표 선택 후 관리번호 목록은 `GET /api/workspaces/{companyCode}/inspections?documentId={documentId}`로 조회한다. 검수 이력 목록은 `keyword`, `documentId`, `unitId`, `partId`, `inspectionType`, `result`, `grade`, `dateFrom`, `dateTo`, `page`, `size`, `limit`을 지원한다. 관리번호 상세는 `GET /api/workspaces/{companyCode}/inspections/{inspectionId}`로 항목별 결과를 함께 조회한다.
 

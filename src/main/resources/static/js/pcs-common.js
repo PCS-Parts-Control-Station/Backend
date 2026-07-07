@@ -591,6 +591,9 @@
             if (clearSelectionOnClose) {
                 clearSelection();
             }
+            if (typeof options.onClose === "function") {
+                options.onClose();
+            }
         };
 
         const update = (row) => {

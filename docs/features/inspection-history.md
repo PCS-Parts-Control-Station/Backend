@@ -16,7 +16,7 @@ com.pcs.domain.inspection
 
 | Method | API | 설명 |
 |---|---|---|
-| GET | `/api/workspaces/{companyCode}/inspections/history-documents` | 검수 이력 전표 목록. `keyword`, `partId`, `inspectionType`, `result`, `grade`, `dateFrom`, `dateTo`, `page`, `size`, `limit` 지원 |
+| GET | `/api/workspaces/{companyCode}/inspections/history-documents` | 검수 이력 전표 목록. `keyword`, `documentId`, `partId`, `inspectionType`, `result`, `grade`, `dateFrom`, `dateTo`, `page`, `size`, `limit` 지원 |
 | GET | `/api/workspaces/{companyCode}/inspections` | 검수 이력 목록. `keyword`, `documentId`, `unitId`, `partId`, `inspectionType`, `result`, `grade`, `dateFrom`, `dateTo`, `page`, `size`, `limit` 지원 |
 | GET | `/api/workspaces/{companyCode}/inspections/{inspectionId}` | 검수 이력 상세 |
 
@@ -25,6 +25,8 @@ com.pcs.domain.inspection
 전표 선택 후 관리번호 목록은 `GET /api/workspaces/{companyCode}/inspections?documentId={documentId}`로 조회한다. 검수 결과와 등급 필터는 전표 자체가 아니라 전표 안의 관리번호 이력에 적용한다.
 
 개별 부품 기준 검수 이력은 별도 URL을 두지 않고 `GET /api/workspaces/{companyCode}/inspections?unitId={unitId}`로 조회한다.
+
+부품관리 등 다른 화면에서 검수 이력으로 이동할 때는 `/w/{companyCode}/history/inspection?documentId={documentId}&partId={partId}&unitId={unitId}&inspectionId={inspectionId}` 형식의 URL query를 사용한다. 화면은 해당 전표를 선택하고, 해당 품목 묶음과 관리번호를 선택한 뒤, 선택된 검수 이력 상세 패널을 열린 상태로 표시한다. 이 자동 선택 조회는 현재 검색 폼의 기간 필터에 막히지 않도록 `history-documents`와 `inspections` API를 `documentId` 기준으로 직접 조회한다.
 
 ## 화면
 
@@ -45,9 +47,9 @@ src/main/resources/static/js/history-inspection.js
    - 관리번호 목록
 4. 관리번호 상세 슬라이드 패널
 
-이력 검색은 검색어, 기간, 이력 유형을 한 영역에 배치한다. 검색어는 전표번호, 품목명, 관리번호를 통합 검색한다.
+이력 검색은 검색어, 기간, 이력 유형을 한 영역에 배치한다. 검색어는 전표 번호, 품목명, 관리번호를 통합 검색한다.
 
-전표 목록은 전체 너비 테이블로 표시하고 10개 단위 이전/다음 페이징을 제공한다. 컬럼은 전표번호, 품목 요약, 검수 건수, 불합격 건수, 최근 검수일이다. 별도 선택 버튼을 두지 않고 행 전체 클릭과 키보드 Enter/Space로 전표를 선택한다.
+전표 목록은 전체 너비 테이블로 표시하고 10개 단위 이전/다음 페이징을 제공한다. 컬럼은 전표 번호, 품목 요약, 검수 건수, 불합격 건수, 최근 검수일이다. 별도 선택 버튼을 두지 않고 행 전체 클릭과 키보드 Enter/Space로 전표를 선택한다.
 
 전표를 선택하기 전에는 관리번호 목록과 상세 영역을 미리 보여주지 않는다. 전표를 선택하면 `전표 상세` 영역을 표시하고, 왼쪽에는 품목 묶음, 오른쪽에는 관리번호 목록을 배치한다. 품목 묶음을 선택하면 해당 묶음의 관리번호 이력만 좁혀 보여준다.
 
@@ -60,6 +62,7 @@ src/main/resources/static/js/history-inspection.js
 - 실제 검수 이력 row는 `tb_inspection`의 관리번호 단위 기록이다.
 - 전표 단위 목록은 `documentId` 기준 집계 결과다.
 - 개별 이력 추적은 `unitId`와 `inspectionId` 기준으로 처리한다.
+- URL query에 `documentId`, `partId`, `unitId`, `inspectionId`가 있으면 초기 진입 시 전표 목록, 품목 묶음, 관리번호 목록, 오른쪽 상세 패널을 같은 대상 기준으로 복원한다.
 - 목록은 `inspectedAt DESC, inspectionId DESC` 기준으로 정렬한다.
 - 품목 묶음에는 품목명, 모델명, 품목 분류를 표시한다.
 - 화면 fallback 문구에 의존하지 않도록 API 응답에는 품목 분류명 또는 카테고리명을 포함한다.

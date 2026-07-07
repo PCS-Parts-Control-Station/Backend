@@ -200,7 +200,7 @@
         row.dataset.documentId = String(stockDocument.documentId);
         row.innerHTML = `
             <span role="cell" data-label="구분"><em class="badge ${documentTypeClass(stockDocument.documentType)}">${documentTypeLabel(stockDocument.documentType)}</em></span>
-            <strong role="cell" data-label="전표번호">${escapeHtml(stockDocument.documentNo)}</strong>
+            <strong role="cell" data-label="전표 번호">${escapeHtml(stockDocument.documentNo)}</strong>
             <span role="cell" class="cell-stack" data-label="내용">
                 <b>${escapeHtml(stockDocument.partnerName || "-")}</b>
                 <small>${escapeHtml(buildDocumentSubText(stockDocument))}</small>

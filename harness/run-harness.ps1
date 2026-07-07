@@ -1005,7 +1005,7 @@ function Test-WorkspaceNavigation {
         Add-Result "FAIL" "WORKSPACE_PART_DRAWER_INVALID" "parts.html still contains the legacy fixed side panel." "Move part create, detail, and edit modes into the management detail drawer."
     }
 
-    if ($parts -notmatch '<script src="/js/pcs-common\.js[^"]*"></script>\s*<script src="/js/parts\.js[^"]*"></script>') {
+    if ($parts -notmatch '<script src="/js/pcs-common\.js[^"]*"></script>\s*(<script src="/js/pcs-navigation-state\.js[^"]*"></script>\s*)?<script src="/js/parts\.js[^"]*"></script>') {
         Add-Result "FAIL" "WORKSPACE_PART_DRAWER_SCRIPT_ORDER_INVALID" "parts.html must load pcs-common.js before parts.js." "Keep shared drawer helpers available before page scripts run."
     }
 
@@ -1447,6 +1447,11 @@ function Test-MemberFeature {
                 Add-Result "FAIL" "MEMBER_MAPPER_COLUMN_$($column.ToUpper())" "MemberMapper.xml does not insert $column." "Insert required tb_member columns."
             }
         }
+        foreach ($column in @("created_at", "updated_at")) {
+            if ($memberMapperXmlContent -notmatch $column) {
+                Add-Result "FAIL" "MEMBER_MAPPER_RESPONSE_DATE_$($column.ToUpper())" "MemberMapper.xml does not select $column for user-management responses." "User-management list/detail responses must include createdAt and updatedAt."
+            }
+        }
     }
 
     $schema = Join-Path $ProjectRoot "docs/sql/pcs-schema-ddl.sql"
@@ -1466,6 +1471,40 @@ function Test-MemberFeature {
         if ($passwordResponseMatches) {
             $locations = ($passwordResponseMatches | Select-Object -First 5 | ForEach-Object { "$($_.Path):$($_.LineNumber)" }) -join ", "
             Add-Result "FAIL" "MEMBER_RESPONSE_PASSWORD_HASH" "Member response DTO exposes passwordHash. Locations: $locations" "Never expose passwordHash in response DTOs."
+        }
+
+        $searchMemberResponse = Join-Path $memberResponseRoot "SearchMemberResponse.java"
+        if (Test-Path $searchMemberResponse) {
+            $searchMemberResponseContent = Get-Content -Raw $searchMemberResponse
+            foreach ($field in @("createdAt", "updatedAt")) {
+                if ($searchMemberResponseContent -notmatch $field) {
+                    Add-Result "FAIL" "MEMBER_RESPONSE_$($field.ToUpper())" "SearchMemberResponse is missing $field." "Expose createdAt and updatedAt for user-management list/detail screens."
+                }
+            }
+        }
+    }
+
+    $usersHtml = Join-Path $ProjectRoot "src/main/resources/static/users.html"
+    $usersJs = Join-Path $ProjectRoot "src/main/resources/static/js/users.js"
+    if (Test-Path $usersHtml) {
+        $usersHtmlContent = Get-Content -Raw -Encoding UTF8 $usersHtml
+        $joinedAtLabel = "$([char]0xAC00)$([char]0xC785)$([char]0xC77C)"
+        $updatedAtLabel = "$([char]0xC218)$([char]0xC815)$([char]0xC77C)"
+        $dateLabels = @($joinedAtLabel, $updatedAtLabel)
+        foreach ($label in $dateLabels) {
+            if ($usersHtmlContent -notmatch $label) {
+                $rule = "MEMBER_USERS_HTML_$label"
+                $message = "users.html does not display $label."
+                Add-Result "FAIL" $rule $message "User-management list/detail must show joined and updated dates."
+            }
+        }
+    }
+    if (Test-Path $usersJs) {
+        $usersJsContent = Get-Content -Raw -Encoding UTF8 $usersJs
+        foreach ($field in @("createdAt", "updatedAt")) {
+            if ($usersJsContent -notmatch $field) {
+                Add-Result "FAIL" "MEMBER_USERS_JS_$($field.ToUpper())" "users.js does not render $field." "Render createdAt and updatedAt in user-management rows/details."
+            }
         }
     }
 
@@ -1739,6 +1778,9 @@ function Test-CategoryFeature {
     Test-PathRequired "src/test/java/com/pcs/domain/category/service/CategoryServiceTest.java" "CATEGORY_SERVICE_TEST" "Keep category unit tests aligned with docs/features/category.md."
     Test-PathRequired "src/test/java/com/pcs/domain/category/api/CategoryApiControllerTest.java" "CATEGORY_API_TEST" "Keep category MockMvc API tests aligned with docs/features/category.md."
     Test-PathRequired "src/integrationTest/java/com/pcs/domain/category/CategoryPersistenceIntegrationTest.java" "CATEGORY_DB_INTEGRATION_TEST" "Keep category MariaDB integration tests aligned with docs/features/category-db.md."
+    Test-PathRequired "src/main/resources/static/categories.html" "CATEGORY_HTML" "Keep category management screen available."
+    Test-PathRequired "src/main/resources/static/js/categories.js" "CATEGORY_JS" "Keep category management behavior available."
+    Test-PathRequired "src/main/resources/static/js/pcs-navigation-state.js" "CATEGORY_NAVIGATION_STATE_JS" "Use the shared URL/history-state restoration helper for category management."
 
     $controller = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/category/api/CategoryApiController.java"
     if (Test-Path $controller) {
@@ -1786,6 +1828,31 @@ function Test-CategoryFeature {
         }
     }
 
+    $categoryHtml = Join-Path $ProjectRoot "src/main/resources/static/categories.html"
+    if (Test-Path $categoryHtml) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $categoryHtml
+        foreach ($pattern in @("data-category-filter-form", "data-category-table", "data-category-detail-drawer", "/js/pcs-navigation-state.js")) {
+            if ($content -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "CATEGORY_HTML_NAVIGATION_STATE_PATTERN" "categories.html is missing required screen/state pattern: $pattern" "Keep category list, drawer, and shared state script wired together."
+            }
+        }
+        $navigationScriptIndex = $content.IndexOf("/js/pcs-navigation-state.js")
+        $pageScriptIndex = $content.IndexOf("/js/categories.js")
+        if ($navigationScriptIndex -lt 0 -or $pageScriptIndex -lt 0 -or $navigationScriptIndex -gt $pageScriptIndex) {
+            Add-Result "FAIL" "CATEGORY_NAVIGATION_STATE_SCRIPT_ORDER" "categories.html must load pcs-navigation-state.js before categories.js." "Load shared navigation state before category page behavior."
+        }
+    }
+
+    $categoryJs = Join-Path $ProjectRoot "src/main/resources/static/js/categories.js"
+    if (Test-Path $categoryJs) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $categoryJs
+        foreach ($pattern in @("window.PcsNavigationState", "createUrlStateController", "captureFormState", "applyFormState", "keyword", "page", "categoryId", "popstate", "restoreScroll")) {
+            if ($content -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "CATEGORY_JS_NAVIGATION_STATE_PATTERN" "categories.js is missing URL state restoration pattern: $pattern" "Restore category filters, page, selected drawer, and scroll state through PcsNavigationState."
+            }
+        }
+    }
+
     Invoke-GradleTestCheck "CATEGORY_UNIT_API_TESTS" "Category unit and API tests" @("test", "--tests", "com.pcs.domain.category.*")
     Invoke-GradleTestCheck "CATEGORY_DB_INTEGRATION_TESTS" "Category DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.category.*")
 
@@ -1811,6 +1878,9 @@ function Test-PartFeature {
     Test-PathRequired "src/test/java/com/pcs/domain/part/service/PartServiceTest.java" "PART_SERVICE_TEST" "Keep part unit tests aligned with docs/features/part.md."
     Test-PathRequired "src/test/java/com/pcs/domain/part/api/PartApiControllerTest.java" "PART_API_TEST" "Keep part MockMvc API tests aligned with docs/features/part.md."
     Test-PathRequired "src/integrationTest/java/com/pcs/domain/part/PartPersistenceIntegrationTest.java" "PART_DB_INTEGRATION_TEST" "Keep part MariaDB integration tests aligned with docs/features/part-db.md."
+    Test-PathRequired "src/main/resources/static/parts.html" "PART_HTML" "Keep part management screen available."
+    Test-PathRequired "src/main/resources/static/js/parts.js" "PART_JS" "Keep part management behavior available."
+    Test-PathRequired "src/main/resources/static/js/pcs-navigation-state.js" "PART_NAVIGATION_STATE_JS" "Use the shared URL/history-state restoration helper for part management."
 
     $controller = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/part/api/PartApiController.java"
     if (Test-Path $controller) {
@@ -1835,6 +1905,31 @@ function Test-PartFeature {
         }
     }
 
+    $partHtml = Join-Path $ProjectRoot "src/main/resources/static/parts.html"
+    if (Test-Path $partHtml) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $partHtml
+        foreach ($pattern in @("data-part-filter-form", "data-part-table", "data-part-detail-drawer", "name=`"categoryId`"", "/js/pcs-navigation-state.js")) {
+            if ($content -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "PART_HTML_NAVIGATION_STATE_PATTERN" "parts.html is missing required screen/state pattern: $pattern" "Keep part list, category filter, drawer, and shared state script wired together."
+            }
+        }
+        $navigationScriptIndex = $content.IndexOf("/js/pcs-navigation-state.js")
+        $pageScriptIndex = $content.IndexOf("/js/parts.js")
+        if ($navigationScriptIndex -lt 0 -or $pageScriptIndex -lt 0 -or $navigationScriptIndex -gt $pageScriptIndex) {
+            Add-Result "FAIL" "PART_NAVIGATION_STATE_SCRIPT_ORDER" "parts.html must load pcs-navigation-state.js before parts.js." "Load shared navigation state before part page behavior."
+        }
+    }
+
+    $partJs = Join-Path $ProjectRoot "src/main/resources/static/js/parts.js"
+    if (Test-Path $partJs) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $partJs
+        foreach ($pattern in @("window.PcsNavigationState", "createUrlStateController", "captureFormState", "applyFormState", "keyword", "categoryId", "page", "partId", "popstate", "restoreScroll")) {
+            if ($content -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "PART_JS_NAVIGATION_STATE_PATTERN" "parts.js is missing URL state restoration pattern: $pattern" "Restore part filters, page, selected drawer, and scroll state through PcsNavigationState."
+            }
+        }
+    }
+
     Invoke-GradleTestCheck "PART_UNIT_API_TESTS" "Part unit and API tests" @("test", "--tests", "com.pcs.domain.part.*")
     Invoke-GradleTestCheck "PART_DB_INTEGRATION_TESTS" "Part DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.part.*")
 
@@ -1849,6 +1944,7 @@ function Test-PartUnitFeature {
         @("docs/sql/pcs-part-unit-list-index-alter.sql", "PART_UNIT_LIST_INDEX_ALTER"),
         @("src/main/resources/static/part-units.html", "PART_UNIT_HTML"),
         @("src/main/resources/static/css/pages/part-units.css", "PART_UNIT_CSS"),
+        @("src/main/resources/static/js/pcs-navigation-state.js", "PART_UNIT_NAVIGATION_STATE_JS"),
         @("src/main/resources/static/js/part-units.js", "PART_UNIT_JS"),
         @("src/main/java/com/pcs/domain/part/api/PartApiController.java", "PART_UNIT_API"),
         @("src/main/java/com/pcs/domain/part/facade/PartFacade.java", "PART_UNIT_FACADE"),
@@ -1974,9 +2070,24 @@ function Test-PartUnitFeature {
         if ($content -match '<select[^>]*name="partState"') {
             Add-Result "FAIL" "PART_UNIT_HTML_STATE_SELECT_FILTER" "part-units.html must not render partState as a select filter." "Use clickable summary cards as the part-unit state filter."
         }
-        foreach ($pattern in @("data-part-state-filter", "data-part-unit-document-picker-modal", "data-open-part-unit-document-picker", "name=`"documentId`"", "name=`"partState`"")) {
+        foreach ($pattern in @("data-part-state-filter", "data-part-unit-document-picker-modal", "data-open-part-unit-document-picker", "name=`"documentId`"", "name=`"partState`"", "/js/pcs-navigation-state.js")) {
             if ($content -notmatch [regex]::Escape($pattern)) {
                 Add-Result "FAIL" "PART_UNIT_HTML_INTERACTIVE_FILTER" "part-units.html is missing interactive filter markup: $pattern" "Keep summary state buttons and document picker aligned with docs/features/part-unit.md."
+            }
+        }
+        $navigationScriptIndex = $content.IndexOf("/js/pcs-navigation-state.js")
+        $pageScriptIndex = $content.IndexOf("/js/part-units.js")
+        if ($navigationScriptIndex -lt 0 -or $pageScriptIndex -lt 0 -or $navigationScriptIndex -gt $pageScriptIndex) {
+            Add-Result "FAIL" "PART_UNIT_NAVIGATION_STATE_SCRIPT_ORDER" "part-units.html must load pcs-navigation-state.js before part-units.js." "Load shared navigation state before page-specific part-unit behavior."
+        }
+    }
+
+    $navigationJs = Join-Path $ProjectRoot "src/main/resources/static/js/pcs-navigation-state.js"
+    if (Test-Path $navigationJs) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $navigationJs
+        foreach ($pattern in @("window.PcsNavigationState", "createUrlStateController", "URLSearchParams", "history.replaceState", "pagehide", "restoreScroll", "captureFormState", "applyFormState")) {
+            if ($content -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "PART_UNIT_NAVIGATION_STATE_COMMON_JS" "pcs-navigation-state.js is missing required pattern: $pattern" "Keep URL and history-state restoration in the shared navigation utility."
             }
         }
     }
@@ -1984,7 +2095,7 @@ function Test-PartUnitFeature {
     $js = Join-Path $ProjectRoot "src/main/resources/static/js/part-units.js"
     if (Test-Path $js) {
         $content = Get-Content -Raw -Encoding UTF8 -Path $js
-        foreach ($pattern in @("/part-units", "/stock/documents", "window.PcsApi", "window.PcsPagination", "window.PcsCategoryPicker", "data-part-state-filter", "documentId")) {
+        foreach ($pattern in @("/part-units", "/stock/documents", "window.PcsApi", "window.PcsPagination", "window.PcsCategoryPicker", "window.PcsNavigationState", "createUrlStateController", "data-part-state-filter", "documentId", "categoryId", "partState", "page", "unitId", "popstate", "restoreScroll")) {
             if ($content -notmatch [regex]::Escape($pattern)) {
                 Add-Result "FAIL" "PART_UNIT_JS_PATTERN" "part-units.js is missing required common/API pattern: $pattern" "Use existing frontend common helpers for part-unit page behavior."
             }

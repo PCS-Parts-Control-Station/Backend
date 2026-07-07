@@ -32,7 +32,7 @@
             <span>운영 현황</span>
         </button>
         <div class="workspace-quick-actions">
-            <a class="btn btn-secondary" data-route="inspection">검수 관리</a>
+            <a class="btn btn-secondary" data-route="inspection">검수</a>
             <a class="btn btn-secondary" data-route="outbound/new">출고 등록</a>
             <a class="btn btn-primary" data-route="inbound/new">입고 등록</a>
         </div>
@@ -47,13 +47,20 @@
                     <path d="M4 17h16" />
                 </svg>
             </button>
-            <div>
-                <p class="page-kicker">업무 대시보드</p>
-                <h1>운영 현황</h1>
-                <p class="page-description">오늘 처리량, 처리 필요 항목, 재고 상태를 한 화면에서 확인합니다.</p>
+            <div class="page-title-row">
+                <span class="page-icon page-icon-solid" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <path fill="currentColor" d="m19.37 4.82l-.22-.22a10.29 10.29 0 1 0 .25.25zm-6.61 5.3v-6.9a8.65 8.65 0 0 1 4.88 2z" />
+                    </svg>
+                </span>
+                <div>
+                    <p class="page-kicker">업무 대시보드</p>
+                    <h1>운영 현황</h1>
+                    <p class="page-description">오늘 처리량, 처리 필요 항목, 재고 상태를 한 화면에서 확인합니다.</p>
+                </div>
             </div>
             <div class="header-actions">
-                <a class="btn btn-secondary" data-route="inspection">검수 관리</a>
+                <a class="btn btn-secondary" data-route="inspection">검수</a>
                 <a class="btn btn-secondary" data-route="outbound/new">출고 등록</a>
                 <a class="btn btn-primary" data-route="inbound/new">입고 등록</a>
             </div>

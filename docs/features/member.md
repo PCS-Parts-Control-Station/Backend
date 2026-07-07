@@ -15,7 +15,7 @@ com.pcs.domain.member
 
 | Method | API | 설명 |
 |---|---|---|
-| GET | `/api/workspaces/{companyCode}/users` | 사용자 목록 |
+| GET | `/api/workspaces/{companyCode}/users` | 사용자 목록. `keyword`, `role`, `passwordStatus`, `createdFrom`, `createdTo`, `page`, `size`, `limit` 지원 |
 | POST | `/api/workspaces/{companyCode}/users` | 사용자 생성 |
 | GET | `/api/workspaces/{companyCode}/users/{memberId}` | 사용자 상세 |
 | PATCH | `/api/workspaces/{companyCode}/users/{memberId}` | 사용자 수정 |
@@ -49,10 +49,13 @@ com.pcs.domain.member
 
 - 사용자 목록은 `PageResultDto` 구조를 사용한다.
 - `summary.totalCount`, `summary.adminCount`, `summary.staffCount`는 현재 검색 조건과 관리 가능 역할 범위 기준으로 계산한다.
+- `createdFrom`, `createdTo`는 가입일 범위 검색 조건이며 `tb_member.created_at` 기준으로 서버 SQL에서 필터링한다. `createdTo`는 해당 날짜 전체를 포함하도록 다음날 00:00 미만 조건으로 변환한다.
+- `passwordStatus`는 비밀번호 상태 검색 조건이며 `TEMPORARY`는 변경 필요, `ACTIVE`는 정상 계정을 의미한다.
 - 프론트는 현재 페이지 행을 직접 세서 요약을 만들지 않고 서버 summary를 사용한다.
 - OWNER 목록에는 OWNER 본인을 포함하지 않는다.
 - ADMIN 목록에는 ADMIN 본인과 OWNER를 포함하지 않는다.
 - `role` 필터가 현재 사용자가 관리할 수 없는 역할이면 `AUTH_FORBIDDEN`으로 실패한다.
+- 사용자 목록/상세 응답은 `createdAt`, `updatedAt`을 포함하며, 사용자 관리 화면은 목록과 상세에 `가입일`, `수정일`을 표시한다.
 
 ## STAFF 권한 설정 응답
 
@@ -65,6 +68,7 @@ com.pcs.domain.member
 - 사용자 생성/수정 Request DTO에는 validation을 둔다.
 - 권한 변경은 `docs/ai/pcs-permission-rules.md` 기준으로 인증 사용자 권한 검증을 거쳐야 한다.
 - 비밀번호 해시는 Service 계층 밖으로 노출하지 않는다.
+- 사용자 관리 목록/상세 화면은 `createdAt`, `updatedAt` 응답 필드를 사용해 `가입일`, `수정일`을 표시한다.
 - 사용자 관리에 새로운 활성 여부 변경 API를 추가할 때는 `member.md`, `member-db.md`, `auth-db.md`, 권한 규칙을 함께 갱신한다.
 
 ## Test Coverage

@@ -582,7 +582,7 @@
     font-size: 11px;
 }
 
-.inspection-history-row [data-label="전표번호"] {
+.inspection-history-row [data-label="전표 번호"] {
     color: var(--navy);
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
     font-size: 11px;

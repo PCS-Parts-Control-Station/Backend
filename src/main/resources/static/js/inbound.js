@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
     const PAGE_SIZE = 20;
 
     window.PcsUi?.consumeFlashToast();
@@ -376,7 +376,7 @@
         row.setAttribute("aria-selected", String(Boolean(isSelected)));
         row.dataset.documentId = String(stockDocument.documentId);
         row.innerHTML = `
-            <strong role="cell" data-label="전표번호">${escapeHtml(stockDocument.documentNo)}</strong>
+            <strong role="cell" data-label="전표 번호">${escapeHtml(stockDocument.documentNo)}</strong>
             <span role="cell" class="cell-stack" data-label="입고 내용">
                 <b>${escapeHtml(stockDocument.partnerName || "-")}</b>
                 <small>${escapeHtml(buildDocumentSubText(stockDocument))}</small>

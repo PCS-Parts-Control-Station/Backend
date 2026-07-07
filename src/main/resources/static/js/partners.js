@@ -8,23 +8,10 @@
         ETC: "기타"
     };
 
-    const partnerTypeBadgeClasses = {
-        PC_CAFE: "badge-pending",
-        PERSON: "badge-inactive",
-        COMPANY: "badge-blue",
-        ETC: "badge-inactive"
-    };
-
     const partnerRoleLabels = {
         SUPPLIER: "공급처",
         CUSTOMER: "고객",
         BOTH: "공급+고객"
-    };
-
-    const partnerRoleBadgeClasses = {
-        SUPPLIER: "badge-info",
-        CUSTOMER: "badge-info",
-        BOTH: "badge-active"
     };
 
     const form = document.querySelector(".management-filter-form");
@@ -143,16 +130,8 @@
             return;
         }
         detailFields.name.textContent = partner.partnerName || "-";
-        setDetailBadge(
-                detailFields.type,
-                partnerTypeLabels[partner.partnerType] || partner.partnerType || "-",
-                partnerTypeBadgeClasses[partner.partnerType] || "badge-inactive"
-        );
-        setDetailBadge(
-                detailFields.role,
-                partnerRoleLabels[partner.partnerRole] || partner.partnerRole || "-",
-                partnerRoleBadgeClasses[partner.partnerRole] || "badge-info"
-        );
+        detailFields.type.textContent = partnerTypeLabels[partner.partnerType] || partner.partnerType || "-";
+        detailFields.role.textContent = partnerRoleLabels[partner.partnerRole] || partner.partnerRole || "-";
         setDetailBadge(
                 detailFields.active,
                 partner.active ? "거래 가능" : "거래 불가",
@@ -220,22 +199,16 @@
 
             row.append(
                 createTextCell("거래처명", partner.partnerName, "strong"),
-                createBadgeCell(
-                    "유형",
-                    partnerTypeLabels[partner.partnerType] || partner.partnerType || "-",
-                    partnerTypeBadgeClasses[partner.partnerType] || "badge-inactive"
-                ),
-                createBadgeCell(
-                    "역할",
-                    partnerRoleLabels[partner.partnerRole] || partner.partnerRole || "-",
-                    partnerRoleBadgeClasses[partner.partnerRole] || "badge-info"
-                ),
+                createTextCell("유형", partnerTypeLabels[partner.partnerType] || partner.partnerType || "-"),
+                createTextCell("역할", partnerRoleLabels[partner.partnerRole] || partner.partnerRole || "-"),
                 createBadgeCell(
                     "거래 상태",
                     partner.active ? "거래 가능" : "거래 불가",
                     partner.active ? "badge-available" : "badge-inactive"
                 ),
                 createTextCell("연락처", partner.phone),
+                createTextCell("이메일", partner.email),
+                createTextCell("주소", partner.address),
                 createTextCell("수정일", formatDate(partner.updatedAt))
             );
 

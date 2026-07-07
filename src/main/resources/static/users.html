@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="/css/components/components.css?20260703_modal_scroll_lock">
     <link rel="stylesheet" href="/css/components/management-page.css?20260624_spec_item_compact">
     <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
-    <link rel="stylesheet" href="/css/pages/users.css?20260619_md_alignment">
+    <link rel="stylesheet" href="/css/pages/users.css?20260707_user_filter_status">
 </head>
 <body class="has-collapsible-sidebar page-users workspace-page">
 <div class="workspace-layout">
@@ -37,8 +37,8 @@
             <span>사용자 관리</span>
         </button>
         <div class="workspace-quick-actions">
+            <button class="btn btn-secondary" type="button" data-open-staff-permission-modal>작업자 권한</button>
             <button class="btn btn-primary" type="button" data-user-create-drawer aria-controls="user-detail-drawer" aria-expanded="false">사용자 등록</button>
-            <button class="btn btn-primary" type="button" data-open-staff-permission-modal>작업자 권한</button>
         </div>
     </div>
 
@@ -57,8 +57,8 @@
                 <p class="page-description">작업공간 계정과 작업자 공통 업무 권한을 관리합니다.</p>
             </div>
             <div class="header-actions">
+                <button class="btn btn-secondary" type="button" data-open-staff-permission-modal>작업자 권한</button>
                 <button class="btn btn-primary" type="button" data-user-create-drawer aria-controls="user-detail-drawer" aria-expanded="false">사용자 등록</button>
-                <button class="btn btn-primary" type="button" data-open-staff-permission-modal>작업자 권한</button>
             </div>
         </header>
 
@@ -67,7 +67,7 @@
                 <section class="filter-card management-filter-card" aria-labelledby="filter-title">
                     <div>
                         <h2 id="filter-title">사용자 검색</h2>
-                        <p>이름, 로그인 아이디, 계정 유형으로 목록을 좁혀 봅니다.</p>
+                        <p>이름, 로그인 아이디, 계정 유형, 비밀번호 상태, 가입일로 목록을 좁혀 봅니다.</p>
                     </div>
                     <form class="filter-form management-filter-form user-filter-form" action="#" method="get" autocomplete="off" data-user-filter-form>
                         <label>
@@ -81,6 +81,22 @@
                                 <option value="ADMIN">관리자</option>
                                 <option value="STAFF">작업자</option>
                             </select>
+                        </label>
+                        <label>
+                            <span>비밀번호</span>
+                            <select name="passwordStatus">
+                                <option value="">전체</option>
+                                <option value="TEMPORARY">변경 필요</option>
+                                <option value="ACTIVE">정상</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>가입일 시작</span>
+                            <input type="date" name="createdFrom" aria-label="가입일 시작일">
+                        </label>
+                        <label>
+                            <span>가입일 종료</span>
+                            <input type="date" name="createdTo" aria-label="가입일 종료일">
                         </label>
                         <button class="btn btn-primary" type="submit">검색</button>
                     </form>
@@ -114,8 +130,9 @@
                         <div class="data-row management-data-row user-management-data-row table-head" role="row">
                             <span role="columnheader">사용자</span>
                             <span role="columnheader">계정 유형</span>
-                            <span role="columnheader">계정 상태</span>
                             <span role="columnheader">비밀번호</span>
+                            <span role="columnheader">가입일</span>
+                            <span role="columnheader">수정일</span>
                         </div>
                         <div class="data-row management-data-row user-management-data-row empty-data-row" role="row" data-user-empty>
                             <span role="cell" data-label="안내">사용자 목록을 불러오는 중입니다.</span>
@@ -175,7 +192,7 @@
                             <div>
                                 <p class="panel-eyebrow">계정 작업</p>
                                 <h2>사용자 상세</h2>
-                                <p>계정 상태와 관리 가능한 작업을 확인합니다.</p>
+                                <p>관리 가능한 작업과 계정 정보를 확인합니다.</p>
                             </div>
                             <button class="panel-link-button" type="button" data-user-create-mode>새 사용자 등록</button>
                         </div>
@@ -185,7 +202,6 @@
                             <strong data-detail-name>-</strong>
                             <div class="detail-badge-row" data-detail-badges>
                                 <i class="badge" data-detail-role-badge>-</i>
-                                <i class="badge" data-detail-active-badge>-</i>
                                 <i class="badge" data-detail-password-badge>-</i>
                             </div>
                         </div>
@@ -194,6 +210,10 @@
                             <div>
                                 <dt>로그인 아이디</dt>
                                 <dd data-detail-login-id>-</dd>
+                            </div>
+                            <div>
+                                <dt>가입일</dt>
+                                <dd data-detail-created-at>-</dd>
                             </div>
                             <div>
                                 <dt>수정일</dt>
@@ -378,6 +398,6 @@
 <script src="/js/workspace-layout.js?20260624_quick_bar"></script>
 <script src="/js/pcs-ui.js?20260703_modal_scroll_lock"></script>
 <script src="/js/pcs-common.js?20260625_right_drawer_v2"></script>
-<script src="/js/users.js?20260625_right_drawer_v2"></script>
+<script src="/js/users.js?20260707_user_filter_status"></script>
 </body>
 </html>

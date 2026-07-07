@@ -33,9 +33,9 @@
     const detailFields = {
         name: document.querySelector("[data-detail-name]"),
         loginId: document.querySelector("[data-detail-login-id]"),
+        createdAt: document.querySelector("[data-detail-created-at]"),
         updatedAt: document.querySelector("[data-detail-updated-at]"),
         roleBadge: document.querySelector("[data-detail-role-badge]"),
-        activeBadge: document.querySelector("[data-detail-active-badge]"),
         passwordBadge: document.querySelector("[data-detail-password-badge]")
     };
     const summaryFields = {
@@ -176,6 +176,12 @@
         return cell;
     };
 
+    const createDateCell = (label, value) => {
+        const cell = window.PcsTable.textCell(label, formatDate(value));
+        cell.classList.add("user-date-cell");
+        return cell;
+    };
+
     const createUserIdentityCell = (user) => {
         const cell = document.createElement("span");
         cell.className = "user-identity-cell";
@@ -241,14 +247,10 @@
 
         detailFields.name.textContent = user.memberName || "-";
         detailFields.loginId.textContent = user.loginId || "-";
+        detailFields.createdAt.textContent = formatDate(user.createdAt);
         detailFields.updatedAt.textContent = formatDate(user.updatedAt);
 
         setBadge(detailFields.roleBadge, roleLabel(user.role), roleBadgeClass(user.role));
-        setBadge(
-                detailFields.activeBadge,
-                user.active === false ? "사용 중지" : "사용 중",
-                user.active === false ? "badge-inactive" : "badge-active"
-        );
         setBadge(
                 detailFields.passwordBadge,
                 user.passwordStatus === "TEMPORARY" ? "변경 필요" : "비밀번호 정상",
@@ -330,17 +332,13 @@
                 createUserIdentityCell(user),
                 createBadgeCell("계정 유형", roleLabel(user.role), roleBadgeClass(user.role), "user-role-cell"),
                 createBadgeCell(
-                        "계정 상태",
-                        user.active === false ? "사용 중지" : "사용 중",
-                        user.active === false ? "badge-inactive" : "badge-active",
-                        "user-account-status-cell"
-                ),
-                createBadgeCell(
                         "비밀번호",
                         user.passwordStatus === "TEMPORARY" ? "변경 필요" : "정상",
                         user.passwordStatus === "TEMPORARY" ? "badge-pending" : "badge-blue",
                         "user-password-status-cell"
-                )
+                ),
+                createDateCell("가입일", user.createdAt),
+                createDateCell("수정일", user.updatedAt)
             );
 
             row.addEventListener("click", () => selectUser(user.memberId, row));

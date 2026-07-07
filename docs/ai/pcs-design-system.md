@@ -56,7 +56,7 @@ docs/ai/design/history-timeline.md
 
 문서 역할:
 
-- `public-pages.md`: `/`, `/company/register`, `/w`, `/w/{companyCode}` 같은 업무공간 밖 화면
+- `public-pages.md`: `/`, `/company/register`, `/w`, `/w/{companyCode}` 같은 업무 공간 밖 화면
 - `design-md-rules.md`: 디자인 MD 추가/수정 위치, 중복 정의 금지, 충돌 해결 기준
 - `workspace-layout.md`: 로그인 후 좌측 사이드바 기반 업무 화면 공통 레이아웃
 - `responsive-layout.md`: 업무 화면 반응형, 햄버거 사이드바, 테이블 모바일 전환
@@ -74,7 +74,7 @@ docs/ai/design/history-timeline.md
 
 ## 디자인 방향
 
-PCS는 중고 PC 부품을 관리번호 단위로 추적하는 국내 업무용 재고관리 시스템이다.
+PCS는 중고 PC 부품을 관리번호 단위로 추적하는 국내 업무용 재고 관리 시스템이다.
 
 핵심은 `관리번호 기반 개별 부품 추적`, `입고`, `검수`, `재고`, `출고`, `이력`이 한눈에 이해되는 B2B SaaS 스타일이다.
 
@@ -86,7 +86,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 추적하는 국내 업무용 
 - 카드, 입력창, 버튼은 8px radius를 기본으로 사용
 - 그림자는 약하게만 사용하고, 섹션 구분은 배경색과 여백으로 만든다
 - 상태값은 배지로 표현한다
-- 관리번호, 검수상태, 판매상태, 재고, 최근이력처럼 실제 운영 데이터가 보이게 구성한다
+- 관리번호, 검수 상태, 판매 상태, 재고, 최근 이력처럼 실제 운영 데이터가 보이게 구성한다
 
 ## 색상 토큰
 
@@ -173,7 +173,7 @@ font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospa
 - 큰 제목은 굵고 명확하게 사용한다.
 - 업무 화면 내부 제목은 짧게 쓴다.
 - 설명문은 기능 설명보다 실제 운영 상황이 떠오르게 쓴다.
-- `Dashboard`, `Parts`, `Inbound` 같은 영어 라벨보다 `운영 현황`, `품목 관리`, `입고 관리` 같은 한국어 업무 용어를 우선한다.
+- `Dashboard`, `Parts`, `Inbound` 같은 영어 라벨보다 `운영 현황`, `품목 관리`, `입고` 같은 한국어 업무 용어를 우선한다.
 
 ## 버튼
 
@@ -292,12 +292,12 @@ box-shadow: var(--shadow-sm);
 
 상태 기준:
 
-- 검수완료: green
-- 검수대기: orange
-- 판매가능: blue
-- 판매보류: orange
+- 검수 완료: green
+- 검수 대기: orange
+- 판매 가능: blue
+- 판매 보류: orange
 - 불량: red
-- 출고차단: red
+- 출고 차단: red
 - 사용 중: green
 - 사용 안 함: gray
 
@@ -359,7 +359,7 @@ RAM, SSD, GPU가 한 번에 들어오는 날
 ```text
 비즈니스의 혁신을 시작하세요.
 효율적인 운영을 경험하세요.
-새로운 재고관리 패러다임.
+새로운 재고 관리 패러다임.
 ```
 
 ## 로고

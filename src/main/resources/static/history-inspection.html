@@ -32,8 +32,8 @@
             <span>검수 이력</span>
         </button>
         <div class="workspace-quick-actions">
-            <a class="btn btn-secondary" data-route="inspection">검수 관리</a>
-            <a class="btn btn-secondary" data-route="inspection/templates">템플릿 관리</a>
+            <a class="btn btn-secondary" data-route="inspection">검수</a>
+            <a class="btn btn-secondary" data-route="inspection/templates">검수 템플릿</a>
         </div>
     </div>
 
@@ -61,8 +61,8 @@
                 </div>
             </div>
             <div class="header-actions">
-                <a class="btn btn-secondary" data-route="inspection">검수 관리</a>
-                <a class="btn btn-secondary" data-route="inspection/templates">템플릿 관리</a>
+                <a class="btn btn-secondary" data-route="inspection">검수</a>
+                <a class="btn btn-secondary" data-route="inspection/templates">검수 템플릿</a>
             </div>
         </header>
 
@@ -76,7 +76,7 @@
                     <form class="filter-form management-filter-form history-filter-form" action="#" method="get" autocomplete="off" data-history-filter-form>
                         <label class="history-keyword-field">
                             <span>검색어</span>
-                            <input type="search" name="keyword" placeholder="전표번호, 품목명, 관리번호" autocomplete="off">
+                            <input type="search" name="keyword" placeholder="전표 번호, 품목명, 관리번호" autocomplete="off">
                         </label>
                         <fieldset class="history-date-range">
                             <legend>기간</legend>
@@ -109,7 +109,7 @@
 
                     <div class="data-table document-data-table history-document-table" role="table" aria-label="전표 목록" data-history-document-table>
                         <div class="data-row document-data-row history-document-row table-head" role="row">
-                            <span role="columnheader">전표번호</span>
+                            <span role="columnheader">전표 번호</span>
                             <span role="columnheader">품목 요약</span>
                             <span role="columnheader">검수 건수</span>
                             <span role="columnheader">불합격 건수</span>
@@ -224,8 +224,7 @@
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
 <script src="/js/workspace-layout.js?20260624_quick_bar"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
-<script src="/js/history-inspection.js?20260629_outside_close"></script>
 <script src="/js/pcs-common.js?20260625_right_drawer_v2"></script>
-<script src="/js/history-inspection.js?20260625_right_drawer_v2"></script>
+<script src="/js/history-inspection.js?20260707_deep_link"></script>
 </body>
 </html>

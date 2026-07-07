@@ -34,7 +34,7 @@ Query:
 | 이름 | 설명 |
 |---|---|
 | `documentType` | `INBOUND`, `OUTBOUND` |
-| `keyword` | 전표번호, 거래처명, 품목명, 모델명, 품목코드 검색 |
+| `keyword` | 전표 번호, 거래처명, 품목명, 모델명, 품목코드 검색 |
 | `partnerId` | 거래처 필터 |
 | `documentStatus` | `COMPLETED`, `CANCELED` |
 | `page` | 0부터 시작 |
@@ -43,7 +43,7 @@ Query:
 
 응답은 `PageResultDto<SearchStockDocumentResponse, SearchStockDocumentSummaryResponse>` 구조를 사용한다.
 
-목록 정렬은 `document_id DESC` 기준이다. 전표번호는 긴 랜덤 식별자를 포함하므로 정렬 기준으로 쓰지 않는다.
+목록 정렬은 `document_id DESC` 기준이다. 전표 번호는 긴 랜덤 식별자를 포함하므로 정렬 기준으로 쓰지 않는다.
 
 요약 필드:
 
@@ -65,7 +65,7 @@ Query:
 | 이름 | 설명 |
 |---|---|
 | `documentId` | 내부 식별자 |
-| `documentNo` | 사용자 확인용 전표번호 |
+| `documentNo` | 사용자 확인용 전표 번호 |
 | `documentType` | `INBOUND`, `OUTBOUND` |
 | `documentStatus` | `COMPLETED`, `CANCELED` |
 | `partnerId`, `partnerName` | 거래처 정보 |
@@ -105,7 +105,7 @@ src/main/resources/static/js/inbound-register.js
 - 품목 분류는 배지보다 일반 텍스트에 가깝게 표시해 목록 가독성을 우선한다.
 - 품목 추가 후에는 선택한 품목, 수량, 품목 사유 입력 상태를 초기화한다.
 
-## 입고/출고 관리 화면
+## 입고/출고 화면
 
 ```text
 src/main/resources/static/inbound.html
@@ -114,13 +114,13 @@ src/main/resources/static/outbound.html
 src/main/resources/static/js/outbound.js
 ```
 
-입고 관리와 출고 관리는 전표 조회 화면이다. 오른쪽 업무 흐름 보조 패널을 기본으로 두지 않고, 전표 목록을 본문 전체 너비로 보여준다.
+입고와 출고는 전표 조회 화면이다. 오른쪽 업무 흐름 보조 패널을 기본으로 두지 않고, 전표 목록을 본문 전체 너비로 보여준다.
 
 화면 기준:
 
 - 상단에는 검색, 필터, 요약 정보를 간결하게 배치한다.
-- 입고 관리의 거래처 조건은 검색 모달에서 선택한다.
-- 전표 목록은 전표번호, 거래처, 처리일, 수량, 상태를 한 행에서 비교할 수 있게 표시한다.
+- 입고의 거래처 조건은 검색 모달에서 선택한다.
+- 전표 목록은 전표 번호, 거래처, 처리일, 수량, 상태를 한 행에서 비교할 수 있게 표시한다.
 - 전표 행 전체를 클릭해 상세를 연다.
 - 선택된 전표 행은 배경색과 왼쪽 강조선으로 구분한다.
 - 전표 상세는 오른쪽 논블로킹 슬라이드 패널로 연다.
@@ -150,7 +150,7 @@ src/main/resources/static/js/outbound.js
 - 출고 등록은 품목 수량만 입력하지 않고 실제 출고할 `관리번호`를 선택한다.
 - 관리번호 목록은 품목 묶음을 먼저 보여주고, 묶음 안에서 개별 관리번호를 선택한다.
 - 출고 부품 목록은 품목별 수량과 선택된 관리번호를 함께 보여준다.
-- 부품 상세의 `출고하러가기`에서 `/w/{companyCode}/outbound/new?unitId={관리번호ID}&partId={품목ID}&categoryId={분류ID}&keyword={관리번호}`로 진입하면 해당 관리번호를 출고 부품 목록에 자동 선택하고, 사용자가 거래처를 먼저 고를 수 있도록 거래처 선택 영역에 포커스를 둔다.
+- 부품 상세의 `출고하러 가기`에서 `/w/{companyCode}/outbound/new?unitId={관리번호ID}&partId={품목ID}&categoryId={분류ID}&keyword={관리번호}`로 진입하면 해당 관리번호를 출고 부품 목록에 자동 선택하고, 사용자가 거래처를 먼저 고를 수 있도록 거래처 선택 영역에 포커스를 둔다.
 
 출고 대상 조회:
 
@@ -192,13 +192,13 @@ Query:
 }
 ```
 
-출고 전표번호는 서버가 `OUT-YYYYMMDD-RANDOM16` 형식으로 자동 발급한다.
+출고 전표 번호는 서버가 `OUT-YYYYMMDD-RANDOM16` 형식으로 자동 발급한다.
 
 ## 주요 규칙
 
 - `tb_stock_document`는 거래처와 연결된 입출고 전표 헤더다.
-- 입고 전표번호는 서버가 `IN-YYYYMMDD-RANDOM16` 형식으로 자동 발급하고, 내부 정렬은 `document_id`를 사용한다.
-- 출고 전표번호는 서버가 `OUT-YYYYMMDD-RANDOM16` 형식으로 자동 발급하고, 내부 정렬은 `document_id`를 사용한다.
+- 입고 전표 번호는 서버가 `IN-YYYYMMDD-RANDOM16` 형식으로 자동 발급하고, 내부 정렬은 `document_id`를 사용한다.
+- 출고 전표 번호는 서버가 `OUT-YYYYMMDD-RANDOM16` 형식으로 자동 발급하고, 내부 정렬은 `document_id`를 사용한다.
 - `tb_stock_movement`는 전표 안의 품목별 재고 변화 라인이다.
 - `tb_stock_movement_unit`은 재고 변화 라인에 포함된 개별 부품 목록이다.
 - 입출고 원본은 수정/삭제하지 않고 취소 이력으로 처리한다.

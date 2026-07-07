@@ -322,6 +322,7 @@ public class InspectionService {
     public PageResultDto<SearchInspectionHistoryDocumentResponse, SearchInspectionHistoryDocumentSummaryResponse> searchHistoryDocuments(
             Long companyId,
             String keyword,
+            Long documentId,
             Long partId,
             InspectionType inspectionType,
             InspectionResult result,
@@ -341,6 +342,7 @@ public class InspectionService {
         long totalElements = inspectionMapper.countHistoryDocuments(
                 companyId,
                 normalizedKeyword,
+                documentId,
                 partId,
                 inspectionType,
                 result,
@@ -353,6 +355,7 @@ public class InspectionService {
                 : inspectionMapper.searchHistoryDocuments(
                         companyId,
                         normalizedKeyword,
+                        documentId,
                         partId,
                         inspectionType,
                         result,
@@ -365,6 +368,7 @@ public class InspectionService {
         SearchInspectionHistoryDocumentSummaryResponse summary = inspectionMapper.summarizeHistoryDocuments(
                 companyId,
                 normalizedKeyword,
+                documentId,
                 partId,
                 inspectionType,
                 result,

@@ -28,7 +28,7 @@ DB/SQL/API 작업이면 `AI_INDEX.md` 기준으로 필요한 feature 문서와 `
 
 ## 프로젝트 방향
 
-PCS는 중고 PC 부품을 `관리번호` 단위로 입고, 검수, 출고, 이력까지 추적하는 국내 업무용 재고관리 시스템이다.
+PCS는 중고 PC 부품을 `관리번호` 단위로 입고, 검수, 출고, 이력까지 추적하는 국내 업무용 재고 관리 시스템이다.
 
 현재 구현 방향:
 
@@ -229,7 +229,7 @@ POST /api/workspaces/{companyCode}/parts
 POST /api/workspaces/{companyCode}/stock/documents/inbounds
 ```
 
-### 검수 관리 화면
+### 검수 화면
 
 파일:
 
@@ -260,18 +260,18 @@ src/main/resources/static/css/components/workflow.css
 
 - 검수 업무는 전표를 출발점으로 삼되, 실제 검수 저장 단위는 개별 부품 `관리번호`다.
 - 사이드바에 `전표` 메뉴를 독립 업무로 추가하지 않는다.
-- 전표 목록은 검수 관리 화면의 1단계로 둔다.
+- 전표 목록은 검수 화면의 1단계로 둔다.
 - 오른쪽 패널은 상세/등록을 담당하지 않고, 본래 역할인 업무 흐름 안내와 검수 처리 기준만 담당한다.
 - `최근 검수 이력`은 전표 기준이 아니라 개별 관리번호 기준이다.
-- 이력 목록에는 추적 보조 정보로 `전표번호`를 같이 표시한다.
+- 이력 목록에는 추적 보조 정보로 `전표 번호`를 같이 표시한다.
 
 현재 mock 동작:
 
 - 1단계 `전표 선택`을 누르면 2단계에 선택 전표 요약과 부품 묶음이 표시된다.
 - 부품 묶음 안에는 관리번호 체크박스, `선택 검수 등록`, `대기 전체 검수`, 개별 `검수 등록`/`재검수` 버튼이 있다.
 - 2단계에서 관리번호를 선택하면 3단계 검수 등록 폼이 활성화된다.
-- 3단계 폼은 검수 템플릿, 검수 결과, 등급, 판매상태, 항목별 결과, 메모를 입력한다.
-- `불합격` 또는 `불량` 선택 시 판매상태는 `판매 불가`로 자동 보정한다.
+- 3단계 폼은 검수 템플릿, 검수 결과, 등급, 판매 상태, 항목별 결과, 메모를 입력한다.
+- `불합격` 또는 `불량` 선택 시 판매 상태는 `판매 불가`로 자동 보정한다.
 - 저장은 아직 API 미연결 상태이며 mock 안내 메시지만 표시한다.
 - 4단계 `최근 검수 이력`의 `상세`를 누르면 같은 카드 안에 이력 상세와 항목별 결과가 펼쳐진다.
 
@@ -332,7 +332,7 @@ pages/inspection.css: 검수 화면 전용 규칙
 입고 전표 모바일 카드 기준:
 
 ```text
-전표번호              상태 배지
+전표 번호              상태 배지
 거래처 / 입고 내용
 수량                 입고일
 [상세] [취소]
@@ -340,7 +340,7 @@ pages/inspection.css: 검수 화면 전용 규칙
 
 중요:
 
-- 모바일에서 `전표번호`, `입고 내용`, `관리` 라벨을 반복 노출하지 않는다.
+- 모바일에서 `전표 번호`, `입고 내용`, `관리` 라벨을 반복 노출하지 않는다.
 - `수량`, `입고일`처럼 의미 보강이 필요한 값만 작은 라벨을 붙인다.
 - 셀마다 큰 구분선을 넣지 않고 전표 1건을 하나의 카드로 읽히게 한다.
 
@@ -373,7 +373,7 @@ pages/inspection.css: 검수 화면 전용 규칙
     - 1100px: 본문 1컬럼 전환
     - 모바일 폭: 검색 폼 1열, 전표 카드형 행, 가로 스크롤 없음
 - 테스트 서버는 작업 후 종료했다.
-- 검수 관리 화면은 현재 정적 서버 제공과 JS 문법 검사를 확인했다.
+- 검수 화면은 현재 정적 서버 제공과 JS 문법 검사를 확인했다.
     - `node --check src/main/resources/static/js/inspection.js` 통과
     - `python3 -m http.server ...`로 `inspection.html`, `inspection.css`, `inspection.js` 정상 제공 확인
 - 현재 채팅에서는 Browser 제어 도구가 노출되지 않아 검수 화면 클릭/스크린샷 QA는 수행하지 못했다.
@@ -422,7 +422,7 @@ src/main/resources/static/js/inspection.js
 
 우선순위 높은 후보:
 
-1. 검수 관리 화면 브라우저 시각 QA
+1. 검수 화면 브라우저 시각 QA
     - 새 채팅에서 Browser/Node REPL 도구가 노출되는지 먼저 확인
     - 정적 서버로 `inspection.html` 열기
     - `전표 선택` 클릭
@@ -431,7 +431,7 @@ src/main/resources/static/js/inspection.js
     - 3단계 검수 등록 폼 활성화 확인
     - 4단계 최근 검수 이력 상세 클릭
     - 1440px, 1366px, 1180px 이하, 모바일 폭에서 깨짐 확인
-2. 검수 관리 화면 API 연결 설계
+2. 검수 화면 API 연결 설계
     - `docs/features/inspection.md`
     - `docs/ai/pcs-api-spec.md`
     - `docs/sql/pcs-schema-ddl.sql`
@@ -450,15 +450,15 @@ src/main/resources/static/js/inspection.js
 
 ## 새 채팅 시작 프롬프트 예시
 
-검수 관리 화면 브라우저 검증을 이어서 할 때:
+검수 화면 브라우저 검증을 이어서 할 때:
 
 ```text
 docs/ai/AI_INDEX.md와 docs/ai/pcs-handoff.md를 먼저 읽고,
 Browser 또는 in-app browser 도구가 사용 가능한지 확인해줘.
 가능하면 정적 서버로 src/main/resources/static/inspection.html을 열어서
-검수 관리 화면을 클릭 테스트하고 스크린샷 기준으로 UI를 다듬어줘.
+검수 화면을 클릭 테스트하고 스크린샷 기준으로 UI를 다듬어줘.
 
-현재 검수 관리 화면은 아래 파일로 구성돼 있어.
+현재 검수 화면은 아래 파일로 구성돼 있어.
 - src/main/resources/static/inspection.html
 - src/main/resources/static/css/pages/inspection.css
 - src/main/resources/static/js/inspection.js

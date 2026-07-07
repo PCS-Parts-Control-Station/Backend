@@ -16,10 +16,12 @@ import com.pcs.domain.member.entity.MemberAccount;
 import com.pcs.domain.member.service.MemberService;
 import com.pcs.domain.member.service.StaffPermissionService;
 import com.pcs.domain.member.type.MemberRole;
+import com.pcs.domain.member.type.PasswordStatus;
 import com.pcs.domain.member.type.StaffPermission;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.security.PcsPrincipal;
 import com.pcs.global.workspace.WorkspaceAccessValidator;
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +51,9 @@ public class MemberFacade {
             String pathCompanyCode,
             String keyword,
             MemberRole role,
+            PasswordStatus passwordStatus,
+            LocalDate createdFrom,
+            LocalDate createdTo,
             Integer page,
             Integer size,
             Integer limit
@@ -59,6 +64,9 @@ public class MemberFacade {
                 checkedPrincipal.role(),
                 keyword,
                 role,
+                passwordStatus,
+                createdFrom,
+                createdTo,
                 page,
                 size,
                 limit

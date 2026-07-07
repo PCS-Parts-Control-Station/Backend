@@ -19,6 +19,7 @@
 <script src="/js/pcs-pagination.js"></script>
 <script src="/js/pcs-ui.js"></script>
 <script src="/js/pcs-common.js"></script>
+<script src="/js/pcs-navigation-state.js"></script>
 <script src="/js/partners.js"></script>
 ```
 
@@ -35,6 +36,7 @@
 - `pcs-pagination.js`가 먼저 로드되어야 `window.PcsPagination`을 사용할 수 있다.
 - `pcs-ui.js`가 먼저 로드되어야 `window.PcsUi.toast()`를 사용할 수 있다.
 - `pcs-common.js`는 `pcs-ui.js` 뒤, 화면별 JS 앞에 둔다.
+- `pcs-navigation-state.js`는 URL 기반 목록 상태 복원이 필요한 화면에서 `pcs-common.js` 뒤, 화면별 JS 앞에 둔다.
 - 화면별 JS는 항상 공통 JS 뒤에 둔다.
 
 ## 공통 JS 사용
@@ -55,6 +57,7 @@ window.PcsTable.emptyRow(table, options)
 window.PcsDrawer.bindDismiss(options)
 window.PcsDrawer.bindOutsideClose(options)
 window.PcsDrawer.bindEscapeClose(options)
+window.PcsNavigationState.createUrlStateController(options)
 ```
 
 기준:
@@ -66,6 +69,7 @@ window.PcsDrawer.bindEscapeClose(options)
 - 빈 목록/로딩/오류 행은 `PcsTable.emptyRow()`를 우선 사용한다.
 - 오른쪽 사이드바/드로어의 외부 클릭과 `Escape` 닫기는 `PcsDrawer.bindDismiss()`를 사용한다.
 - 다른 목록 행, 드로어를 여는 버튼, 연결된 모달처럼 닫기에서 제외할 요소는 `keepOpenSelector`로 지정한다.
+- 목록 화면에서 검색 조건, 페이지, 선택된 상세 행, 스크롤 위치를 뒤로가기/새로고침 이후 복원해야 하면 `PcsNavigationState`로 URL query와 history state를 동기화한다.
 - 화면별 JS는 도메인별 렌더링, 이벤트 연결, API URL 조립에 집중한다.
 
 ## 관리형 페이지 JS 기준

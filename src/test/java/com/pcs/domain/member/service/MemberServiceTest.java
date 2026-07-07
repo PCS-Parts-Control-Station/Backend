@@ -26,6 +26,7 @@ import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.workspace.WorkspaceAccessValidator;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,15 +57,56 @@ class MemberServiceTest {
     @Test
     void searchMembers_ownerCanSearchAdminAndStaff() {
         SearchMemberResponse admin = member(2L, "admin01", MemberRole.ADMIN);
-        when(memberMapper.countMembers(eq(1L), eq("adm"), eq(MemberRole.ADMIN), eq(List.of(MemberRole.ADMIN, MemberRole.STAFF))))
+        LocalDate createdFrom = LocalDate.of(2026, 5, 1);
+        LocalDate createdTo = LocalDate.of(2026, 5, 31);
+        LocalDateTime createdFromAt = LocalDateTime.of(2026, 5, 1, 0, 0);
+        LocalDateTime createdToBefore = LocalDateTime.of(2026, 6, 1, 0, 0);
+        when(memberMapper.countMembers(
+                eq(1L),
+                eq("adm"),
+                eq(MemberRole.ADMIN),
+                eq(PasswordStatus.TEMPORARY),
+                eq(List.of(MemberRole.ADMIN, MemberRole.STAFF)),
+                eq(createdFromAt),
+                eq(createdToBefore)
+        ))
                 .thenReturn(1L);
-        when(memberMapper.searchMembers(eq(1L), eq("adm"), eq(MemberRole.ADMIN), eq(List.of(MemberRole.ADMIN, MemberRole.STAFF)), eq(20), eq(0)))
+        when(memberMapper.searchMembers(
+                eq(1L),
+                eq("adm"),
+                eq(MemberRole.ADMIN),
+                eq(PasswordStatus.TEMPORARY),
+                eq(List.of(MemberRole.ADMIN, MemberRole.STAFF)),
+                eq(createdFromAt),
+                eq(createdToBefore),
+                eq(20),
+                eq(0)
+        ))
                 .thenReturn(List.of(admin));
-        when(memberMapper.summarizeMembers(eq(1L), eq("adm"), eq(MemberRole.ADMIN), eq(List.of(MemberRole.ADMIN, MemberRole.STAFF))))
+        when(memberMapper.summarizeMembers(
+                eq(1L),
+                eq("adm"),
+                eq(MemberRole.ADMIN),
+                eq(PasswordStatus.TEMPORARY),
+                eq(List.of(MemberRole.ADMIN, MemberRole.STAFF)),
+                eq(createdFromAt),
+                eq(createdToBefore)
+        ))
                 .thenReturn(new SearchMemberSummaryResponse(1, 1, 0));
 
         PageResultDto<SearchMemberResponse, SearchMemberSummaryResponse> result =
-                memberService.searchMembers(1L, MemberRole.OWNER, " adm ", MemberRole.ADMIN, 0, 20, null);
+                memberService.searchMembers(
+                        1L,
+                        MemberRole.OWNER,
+                        " adm ",
+                        MemberRole.ADMIN,
+                        PasswordStatus.TEMPORARY,
+                        createdFrom,
+                        createdTo,
+                        0,
+                        20,
+                        null
+                );
 
         assertThat(result.content()).containsExactly(admin);
         assertThat(result.summary().adminCount()).isEqualTo(1);
@@ -74,7 +116,7 @@ class MemberServiceTest {
     @Test
     void searchMembers_adminCannotSearchAdminRole() {
         assertThatThrownBy(() ->
-                memberService.searchMembers(1L, MemberRole.ADMIN, null, MemberRole.ADMIN, 0, 10, null)
+                memberService.searchMembers(1L, MemberRole.ADMIN, null, MemberRole.ADMIN, null, null, null, 0, 10, null)
         ).isInstanceOfSatisfying(BusinessException.class, exception ->
                 assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.AUTH_FORBIDDEN)
         );
@@ -83,7 +125,7 @@ class MemberServiceTest {
     @Test
     void searchMembers_staffCannotUseUserManagement() {
         assertThatThrownBy(() ->
-                memberService.searchMembers(1L, MemberRole.STAFF, null, null, 0, 10, null)
+                memberService.searchMembers(1L, MemberRole.STAFF, null, null, null, null, null, 0, 10, null)
         ).isInstanceOfSatisfying(BusinessException.class, exception ->
                 assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.AUTH_FORBIDDEN)
         );
@@ -227,6 +269,7 @@ class MemberServiceTest {
                 role,
                 PasswordStatus.ACTIVE,
                 true,
+                LocalDateTime.of(2026, 5, 1, 9, 0),
                 LocalDateTime.of(2026, 6, 1, 10, 0)
         );
     }

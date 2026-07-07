@@ -5,7 +5,7 @@
 
 ## 프로젝트 한 줄 요약
 
-PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고, 이력까지 추적하는 국내 업무용 재고관리 시스템이다.
+PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고, 이력까지 추적하는 국내 업무용 재고 관리 시스템이다.
 
 ## 기본 참조 문서
 
@@ -111,7 +111,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - 마이페이지 JS 작성 → `docs/features/mypage.md`
 - 검수 등록 JS 작성 → `docs/features/inspection.md`
 - 검수 이력 JS 작성 → `docs/features/inspection-history.md`
-- 검수 템플릿 관리 JS 작성 → `docs/features/inspection-template.md`
+- 검수 템플릿 JS 작성 → `docs/features/inspection-template.md`
 - 부품 관리 JS 작성 → `docs/features/part-unit.md` + `docs/ai/pcs-auth-client-rules.md`
 - 로그인 JS 작성 → `docs/features/auth.md` + `docs/ai/pcs-auth-client-rules.md`
 - 대시보드/거래처/품목 등 업무 화면 API 연동 → 해당 기능 문서 + `docs/ai/pcs-auth-client-rules.md`

@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="PCS 입고 관리 화면입니다. 입고 전표를 조회하고 상세, 품목 요약, 취소 가능 여부를 확인합니다.">
-    <title>PCS | 입고 관리</title>
+    <meta name="description" content="PCS 입고 화면입니다. 입고 전표를 조회하고 상세, 품목 요약, 취소 가능 여부를 확인합니다.">
+    <title>PCS | 입고</title>
     <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,11 +29,11 @@
                 <path d="M4 17h16" />
             </svg>
         </button>
-        <button class="workspace-quick-brand" type="button" data-scroll-top aria-label="입고 관리 화면 맨 위로 이동">
-            <span>입고 관리</span>
+        <button class="workspace-quick-brand" type="button" data-scroll-top aria-label="입고 화면 맨 위로 이동">
+            <span>입고</span>
         </button>
         <div class="workspace-quick-actions">
-            <a class="btn btn-secondary" data-route="outbound">출고 관리</a>
+            <a class="btn btn-secondary" data-route="outbound">출고</a>
             <a class="btn btn-primary" data-route="inbound/new">입고 등록</a>
         </div>
     </div>
@@ -56,12 +56,12 @@
                 </span>
                 <div>
                     <p class="page-kicker">재고 입출고 관리</p>
-                    <h1>입고 관리</h1>
+                    <h1>입고</h1>
                     <p class="page-description">입고 전표를 조회하고 상세와 취소 상태를 확인합니다.</p>
                 </div>
             </div>
             <div class="header-actions">
-                <a class="btn btn-secondary" data-route="outbound">출고 관리</a>
+                <a class="btn btn-secondary" data-route="outbound">출고</a>
                 <a class="btn btn-primary" data-route="inbound/new">입고 등록</a>
             </div>
         </header>
@@ -71,13 +71,13 @@
                 <section class="filter-card document-filter-card" aria-labelledby="inbound-filter-title">
                     <div>
                         <h2 id="inbound-filter-title">입고 전표 검색</h2>
-                        <p>전표번호, 거래처, 품목명, 처리 상태로 입고 내역을 좁혀 봅니다.</p>
+                        <p>전표 번호, 거래처, 품목명, 처리 상태로 입고 내역을 좁혀 봅니다.</p>
                     </div>
                     <!-- API: GET /api/workspaces/{companyCode}/stock/documents?documentType=INBOUND&keyword=&partnerId=&documentStatus= -->
                     <form class="filter-form document-filter-form" action="#" method="get">
                         <label>
                             <span>검색어</span>
-                            <input type="search" name="keyword" placeholder="거래처, 품목명, 전표번호 검색">
+                            <input type="search" name="keyword" placeholder="거래처, 품목명, 전표 번호 검색">
                         </label>
                         <div class="partner-picker-field document-partner-filter-field">
                             <span>거래처</span>
@@ -134,7 +134,7 @@
 
                     <div class="data-table document-data-table" role="table" aria-label="입고 전표 목록">
                         <div class="data-row document-data-row table-head" role="row">
-                            <span role="columnheader">전표번호</span>
+                            <span role="columnheader">전표 번호</span>
                             <span role="columnheader">입고 내용</span>
                             <span role="columnheader">수량</span>
                             <span role="columnheader">상태</span>
@@ -264,7 +264,7 @@
         </div>
         <dl class="confirm-summary">
             <div>
-                <dt>전표번호</dt>
+                <dt>전표 번호</dt>
                 <dd data-cancel-document-no>-</dd>
             </div>
             <div>
