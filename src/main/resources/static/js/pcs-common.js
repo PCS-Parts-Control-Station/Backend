@@ -108,6 +108,106 @@
         table.append(row);
     };
 
+    const LABELS = {
+        documentType: {
+            INBOUND: "입고",
+            OUTBOUND: "출고"
+        },
+        documentStatus: {
+            COMPLETED: "완료",
+            CANCELED: "취소"
+        },
+        partnerRole: {
+            SUPPLIER: "공급처",
+            CUSTOMER: "고객",
+            CLIENT: "고객",
+            BUYER: "고객",
+            BOTH: "공급처/고객"
+        },
+        grade: {
+            A: "A",
+            B: "B",
+            C: "C",
+            DEFECTIVE: "불량",
+            NONE: "미정"
+        },
+        unitStatus: {
+            IN_STOCK: "보관",
+            OUTBOUND: "출고",
+            DISPOSED: "폐기",
+            CANCELED: "취소"
+        },
+        salesStatus: {
+            AVAILABLE: "판매 가능",
+            HOLD: "판매 보류",
+            UNAVAILABLE: "판매 불가"
+        },
+        inspectionResult: {
+            PASS: "통과",
+            FAIL: "불합격"
+        }
+    };
+
+    const normalizeCode = (value) => String(value || "").trim().toUpperCase();
+
+    const label = (group, value, fallback = "-") => {
+        const code = normalizeCode(value);
+        if (!code) {
+            return fallback;
+        }
+        return LABELS[group]?.[code] || value || fallback;
+    };
+
+    const documentTypeClass = (type) => {
+        const code = normalizeCode(type);
+        if (code === "INBOUND") {
+            return "badge-blue";
+        }
+        if (code === "OUTBOUND") {
+            return "badge-orange";
+        }
+        return "badge-gray";
+    };
+
+    const documentStatusClass = (status) => normalizeCode(status) === "CANCELED" ? "badge-inactive" : "badge-active";
+
+    const gradeClass = (grade) => {
+        const code = normalizeCode(grade);
+        if (code === "A") return "grade-a";
+        if (code === "B") return "grade-b";
+        if (code === "C") return "grade-c";
+        if (code === "DEFECTIVE") return "grade-defective";
+        return "";
+    };
+
+    const gradeBadgeClass = (grade) => {
+        const code = normalizeCode(grade);
+        if (code === "DEFECTIVE") return "badge-danger";
+        if (code === "NONE") return "badge-grade-none";
+        if (code === "A") return "badge-grade-a";
+        if (code === "B") return "badge-grade-b";
+        if (code === "C") return "badge-grade-c";
+        return "badge-blue";
+    };
+
+    const unitStatusBadgeClass = (status) => {
+        const code = normalizeCode(status);
+        if (code === "OUTBOUND") return "badge-warning";
+        if (code === "DISPOSED" || code === "CANCELED") return "badge-danger";
+        return "badge-active";
+    };
+
+    const currentSalesStatus = (unitStatus, salesStatus) => {
+        const unitCode = normalizeCode(unitStatus);
+        if (unitCode === "OUTBOUND") {
+            return normalizeCode(salesStatus) === "AVAILABLE" ? "판매 완료" : "출고 완료";
+        }
+        if (unitCode === "DISPOSED" || unitCode === "CANCELED") {
+            return label("unitStatus", unitStatus);
+        }
+        return label("salesStatus", salesStatus);
+    };
+
     const isDrawerOpen = (drawer, predicate) => {
         if (!drawer) {
             return false;
@@ -122,6 +222,34 @@
             return true;
         }
         return drawer.getAttribute("aria-hidden") === "false";
+    };
+
+    const setDrawerOpen = (drawer, isOpen) => {
+        if (!drawer) {
+            return;
+        }
+        if (isOpen) {
+            drawer.hidden = false;
+        }
+        drawer.classList.toggle("is-open", isOpen);
+        drawer.setAttribute("aria-hidden", String(!isOpen));
+        if (!isOpen && drawer.classList.contains("right-side-drawer-panel")) {
+            drawer.hidden = true;
+        }
+    };
+
+    const openDrawer = (drawer, options = {}) => {
+        setDrawerOpen(drawer, true);
+        if (options.focus !== false) {
+            drawer?.focus?.({ preventScroll: true });
+        }
+    };
+
+    const closeDrawer = (drawer, options = {}) => {
+        setDrawerOpen(drawer, false);
+        if (options.restoreFocus !== false && options.lastTrigger?.isConnected) {
+            options.lastTrigger.focus({ preventScroll: true });
+        }
     };
 
     const bindOutsideClose = (options = {}) => {
@@ -689,8 +817,27 @@
         textCell,
         emptyRow
     };
+    window.PcsLabels = {
+        label,
+        documentType: (value, fallback) => label("documentType", value, fallback),
+        documentStatus: (value, fallback) => label("documentStatus", value, fallback),
+        partnerRole: (value, fallback) => label("partnerRole", value, fallback),
+        grade: (value, fallback = "미정") => label("grade", value, fallback),
+        unitStatus: (value, fallback) => label("unitStatus", value, fallback),
+        salesStatus: (value, fallback) => label("salesStatus", value, fallback),
+        inspectionResult: (value, fallback) => label("inspectionResult", value, fallback),
+        currentSalesStatus,
+        documentTypeClass,
+        documentStatusClass,
+        gradeClass,
+        gradeBadgeClass,
+        unitStatusBadgeClass
+    };
     window.PcsDrawer = {
         isOpen: isDrawerOpen,
+        open: openDrawer,
+        close: closeDrawer,
+        setOpen: setDrawerOpen,
         bindOutsideClose,
         bindEscapeClose,
         bindDismiss,

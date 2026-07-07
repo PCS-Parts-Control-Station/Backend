@@ -163,6 +163,14 @@
                 info: pageInfo,
                 prevButton,
                 nextButton,
+                onPageClick: (page) => {
+                    const execute = () => loadDocuments(page);
+                    if (window.PcsPagination?.withPreservedScroll) {
+                        void window.PcsPagination.withPreservedScroll(execute);
+                        return;
+                    }
+                    void execute();
+                }
             });
             return;
         }
@@ -740,6 +748,14 @@
         loadDocuments(0);
     });
 
+    const applyInitialSearchParams = () => {
+        const params = new URLSearchParams(window.location.search);
+        const keyword = params.get("documentNo") || params.get("keyword");
+        if (keyword && filterForm?.elements.keyword) {
+            filterForm.elements.keyword.value = keyword;
+        }
+    };
+
     openPartnerModalButton?.addEventListener("click", () => {
         renderPartnerList();
         partnerModal?.showModal();
@@ -777,14 +793,24 @@
         if (!currentPageData?.hasPrevious) {
             return;
         }
-        loadDocuments(Math.max(0, currentPage - 1));
+        const execute = () => loadDocuments(Math.max(0, currentPage - 1));
+        if (window.PcsPagination?.withPreservedScroll) {
+            void window.PcsPagination.withPreservedScroll(execute);
+            return;
+        }
+        void execute();
     });
 
     nextButton?.addEventListener("click", () => {
         if (!currentPageData?.hasNext) {
             return;
         }
-        loadDocuments(currentPage + 1);
+        const execute = () => loadDocuments(currentPage + 1);
+        if (window.PcsPagination?.withPreservedScroll) {
+            void window.PcsPagination.withPreservedScroll(execute);
+            return;
+        }
+        void execute();
     });
 
     inboundTable?.addEventListener("click", (event) => {
@@ -851,5 +877,6 @@
 
     consumeCreatedInbound();
     loadPartnerFilter();
+    applyInitialSearchParams();
     loadDocuments(0);
 })();
