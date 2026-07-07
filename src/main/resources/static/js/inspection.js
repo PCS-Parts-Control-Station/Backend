@@ -5,11 +5,15 @@
     const filterForm = document.querySelector(".inspection-filter-form");
     const partnerFilter = filterForm?.elements.partnerId;
     const waitingTable = document.querySelector("[data-inspection-waiting-table]");
+    const documentListFrame = document.querySelector("[data-inspection-document-list-frame]");
+    const documentListLoading = document.querySelector("[data-inspection-document-list-loading]");
     const documentPagination = document.querySelector("[data-inspection-document-pagination]");
     const documentPageInfo = document.querySelector("[data-inspection-document-page-info]");
     const documentPrevButton = document.querySelector("[data-inspection-document-page-prev]");
     const documentNextButton = document.querySelector("[data-inspection-document-page-next]");
     const historyTable = document.querySelector("[data-inspection-history-table]");
+    const historyListFrame = document.querySelector("[data-inspection-history-list-frame]");
+    const historyListLoading = document.querySelector("[data-inspection-history-list-loading]");
     const historyScope = document.querySelector("[data-inspection-history-scope]");
     const historyPagination = document.querySelector("[data-inspection-history-pagination]");
     const historyPageInfo = document.querySelector("[data-inspection-history-page-info]");
@@ -502,6 +506,32 @@
         });
     };
 
+    const setDocumentListLoading = (isLoading) => {
+        window.PcsPagination?.setLoadingState({
+            listContainer: documentListFrame,
+            target: waitingTable,
+            overlay: documentListLoading,
+            pagination: documentPagination,
+            prevButton: documentPrevButton,
+            nextButton: documentNextButton,
+            pageData: currentDocumentPageData,
+            isLoading
+        });
+    };
+
+    const setHistoryListLoading = (isLoading) => {
+        window.PcsPagination?.setLoadingState({
+            listContainer: historyListFrame,
+            target: historyTable,
+            overlay: historyListLoading,
+            pagination: historyPagination,
+            prevButton: historyPrevButton,
+            nextButton: historyNextButton,
+            pageData: currentHistoryPageData,
+            isLoading
+        });
+    };
+
     const updateHistoryPagination = (pageData) => {
         currentHistoryPageData = pageData;
         if (!window.PcsPagination) {
@@ -612,7 +642,11 @@
             return;
         }
 
-        setTableMessage(waitingTable, "검수 대상 전표를 불러오는 중입니다.");
+        const keepCurrentList = options.preserveScroll && waitingDocuments.length > 0;
+        if (!keepCurrentList) {
+            setTableMessage(waitingTable, "검수 대상 전표를 불러오는 중입니다.");
+        }
+        setDocumentListLoading(true);
         const normalizedPage = Math.max(0, Number(page) || 0);
         const params = new URLSearchParams({ page: String(normalizedPage), size: String(DOCUMENT_PAGE_SIZE) });
         const keyword = filterForm?.elements.keyword?.value?.trim();
@@ -643,11 +677,16 @@
             renderWaitingDocuments(waitingDocuments);
             updateDocumentPagination(pageData);
         } catch (error) {
-            setTableMessage(waitingTable, error.message || "검수 대상 전표를 불러오지 못했습니다.");
-            if (documentPagination) {
-                documentPagination.hidden = true;
+            if (keepCurrentList) {
+                window.PcsUi?.showToast?.(error.message || "검수 대상 전표를 불러오지 못했습니다.", "error");
+            } else {
+                setTableMessage(waitingTable, error.message || "검수 대상 전표를 불러오지 못했습니다.");
+                if (documentPagination) {
+                    documentPagination.hidden = true;
+                }
             }
         } finally {
+            setDocumentListLoading(false);
             if (options.preserveScroll && window.PcsPagination) {
                 window.PcsPagination.restoreScrollPosition(options.preserveScroll);
             }
@@ -1122,27 +1161,88 @@
         document.querySelectorAll("[data-inspection-line]").forEach(updateLineSelectionState);
     }
 
-    const syncInspectionFormRule = () => {
-        const result = inspectionForm?.elements.result;
-        const grade = inspectionForm?.elements.grade;
-        const salesStatus = inspectionForm?.elements.salesStatus;
+    const syncInspectionOutcomeRule = (form, changedField = null) => {
+        const result = form?.elements.result;
+        const grade = form?.elements.grade;
+        const salesStatus = form?.elements.salesStatus;
         if (!result || !grade || !salesStatus) {
             return false;
         }
-        let adjusted = false;
-        if (result.value === "FAIL") {
-            adjusted = grade.value !== "DEFECTIVE" || salesStatus.value !== "UNAVAILABLE";
+
+        if (changedField === "result") {
+            if (result.value === "FAIL") {
+                const adjusted = grade.value !== "DEFECTIVE" || salesStatus.value !== "UNAVAILABLE";
+                grade.value = "DEFECTIVE";
+                salesStatus.value = "UNAVAILABLE";
+                return adjusted;
+            }
+
+            if (result.value === "PASS" && grade.value === "DEFECTIVE") {
+                const adjusted = true;
+                grade.value = "A";
+                if (salesStatus.value === "UNAVAILABLE") {
+                    salesStatus.value = "AVAILABLE";
+                }
+                return adjusted;
+            }
+
+            return false;
+        }
+
+        if (changedField === "grade") {
+            if (grade.value === "DEFECTIVE") {
+                const adjusted = result.value !== "FAIL" || salesStatus.value !== "UNAVAILABLE";
+                result.value = "FAIL";
+                salesStatus.value = "UNAVAILABLE";
+                return adjusted;
+            }
+
+            if (result.value === "FAIL") {
+                const adjusted = true;
+                result.value = "PASS";
+                if (salesStatus.value === "UNAVAILABLE") {
+                    salesStatus.value = "AVAILABLE";
+                }
+                return adjusted;
+            }
+
+            return false;
+        }
+
+        if (result.value === "FAIL" || grade.value === "DEFECTIVE") {
+            const adjusted = result.value !== "FAIL" || grade.value !== "DEFECTIVE" || salesStatus.value !== "UNAVAILABLE";
+            result.value = "FAIL";
             grade.value = "DEFECTIVE";
             salesStatus.value = "UNAVAILABLE";
             return adjusted;
         }
-        if (grade.value === "DEFECTIVE") {
-            adjusted = result.value !== "FAIL" || salesStatus.value !== "UNAVAILABLE";
-            result.value = "FAIL";
-            salesStatus.value = "UNAVAILABLE";
+
+        return false;
+    };
+
+    const syncInspectionFormRule = (changedField = null) => syncInspectionOutcomeRule(inspectionForm, changedField);
+
+    const syncHistoryWorkflowRule = (changedField = null) => syncInspectionOutcomeRule(historyWorkflowForm, changedField);
+
+    const applyFailedItemOutcome = (form, itemResults) => {
+        if (!itemResults.some((item) => item.result === "FAIL")) {
+            return false;
         }
+        const result = form?.elements.result;
+        const grade = form?.elements.grade;
+        const salesStatus = form?.elements.salesStatus;
+        if (!result || !grade || !salesStatus) {
+            return false;
+        }
+        const adjusted = result.value !== "FAIL" || grade.value !== "DEFECTIVE" || salesStatus.value !== "UNAVAILABLE";
+        result.value = "FAIL";
+        grade.value = "DEFECTIVE";
+        salesStatus.value = "UNAVAILABLE";
         return adjusted;
     };
+
+    const isInvalidDefectiveSalesStatus = (form) => form?.elements.grade?.value === "DEFECTIVE"
+            && form?.elements.salesStatus?.value !== "UNAVAILABLE";
 
     const collectInspectionItemResults = () => {
         const items = (selectedTemplateDetail?.items || []).filter((item) => item.active !== false);
@@ -1161,7 +1261,7 @@
                 }
             }
 
-            if (!item.required && item.inputType !== "CHECK" && !value) {
+            if (!item.required && item.inputType !== "CHECK" && !value && result !== "FAIL") {
                 return;
             }
 
@@ -1289,13 +1389,17 @@
         const requestId = ++historyRequestId;
         currentHistoryPage = Math.max(0, page);
         resetHistoryDetail();
+        const keepExistingRows = Boolean(options.preserveScroll && historyTable?.querySelector("[data-inspection-history-id]"));
         if (historyScope) {
             historyScope.textContent = scope.description;
         }
-        clearRows(historyTable);
-        if (historyPagination) {
-            historyPagination.hidden = true;
+        if (!keepExistingRows) {
+            clearRows(historyTable);
+            if (historyPagination) {
+                historyPagination.hidden = true;
+            }
         }
+        setHistoryListLoading(true);
         try {
             const params = window.PcsPagination
                     ? window.PcsPagination.buildParams({
@@ -1332,9 +1436,18 @@
             if (requestId !== historyRequestId) {
                 return;
             }
-            setTableMessage(historyTable, error.message || "검수 이력을 불러오지 못했습니다.");
-            if (historyPagination) {
-                historyPagination.hidden = true;
+            const message = error.message || "검수 이력을 불러오지 못했습니다.";
+            if (keepExistingRows) {
+                showToast(message, "error");
+            } else {
+                setTableMessage(historyTable, message);
+                if (historyPagination) {
+                    historyPagination.hidden = true;
+                }
+            }
+        } finally {
+            if (requestId === historyRequestId) {
+                setHistoryListLoading(false);
             }
         }
     };
@@ -1463,7 +1576,7 @@
     };
 
     const collectWorkflowItemResults = () => {
-        const items = (selectedWorkflowTemplateDetail?.items || []).filter((item) => item.active !== false);
+        const items = selectedWorkflowTemplateDetail?.items || [];
         const missingItems = [];
         const itemResults = [];
         items.forEach((item) => {
@@ -1477,7 +1590,7 @@
                 missingItems.push(item.itemName);
             }
 
-            if (!item.required && item.inputType !== "CHECK" && !value) {
+            if (!item.required && item.inputType !== "CHECK" && !value && result !== "FAIL") {
                 return;
             }
 
@@ -1565,20 +1678,6 @@
         await loadHistoryDetail(inspectionId);
     };
 
-    const syncHistoryWorkflowRule = () => {
-        const result = historyWorkflowForm?.elements.result;
-        const grade = historyWorkflowForm?.elements.grade;
-        const salesStatus = historyWorkflowForm?.elements.salesStatus;
-        if (!result || !grade || !salesStatus) {
-            return;
-        }
-        if (result.value === "FAIL" || grade.value === "DEFECTIVE") {
-            result.value = "FAIL";
-            grade.value = "DEFECTIVE";
-            salesStatus.value = "UNAVAILABLE";
-        }
-    };
-
     const startHistoryWorkflow = async (mode) => {
         if (!selectedHistoryDetail || !historyWorkflowForm || !historyWorkflowPanel) {
             return;
@@ -1627,7 +1726,6 @@
         if (historyWorkflowSaving) {
             return;
         }
-        syncHistoryWorkflowRule();
         const form = historyWorkflowForm.elements;
         const memo = form.memo.value.trim();
         if (!memo) {
@@ -1642,6 +1740,15 @@
         if (missingItems.length) {
             setWorkflowMessage(`필수 검수 항목을 입력해 주세요: ${missingItems.join(", ")}`, true);
             return;
+        }
+        const adjustedByItemFailure = applyFailedItemOutcome(historyWorkflowForm, itemResults);
+        syncHistoryWorkflowRule();
+        if (isInvalidDefectiveSalesStatus(historyWorkflowForm)) {
+            setWorkflowMessage("불량 등급은 판매 불가로 저장해야 합니다.", true);
+            return;
+        }
+        if (adjustedByItemFailure) {
+            setWorkflowMessage("불합격 항목이 있어 검수 결과와 등급을 자동 조정했습니다.");
         }
         const path = activeHistoryMode === "correction" ? "corrections" : "reinspections";
         try {
@@ -1773,13 +1880,13 @@
             return;
         }
         if (inspectionForm?.contains(event.target) && event.target.matches("[name='result'], [name='grade']")) {
-            if (syncInspectionFormRule()) {
-                setFormMessage("불합격 또는 불량은 판매 불가 상태로 자동 반영됩니다.");
+            if (syncInspectionFormRule(event.target.name)) {
+                setFormMessage("검수 결과와 등급에 맞춰 판매상태가 자동 조정됩니다.");
             }
             return;
         }
         if (historyWorkflowForm?.contains(event.target) && event.target.matches("[name='result'], [name='grade']")) {
-            syncHistoryWorkflowRule();
+            syncHistoryWorkflowRule(event.target.name);
         }
     });
 
@@ -1875,11 +1982,6 @@
             return;
         }
         syncInspectionFormRule();
-        if (inspectionForm.elements.grade?.value === "DEFECTIVE"
-                && inspectionForm.elements.salesStatus?.value !== "UNAVAILABLE") {
-            setFormMessage("불량 등급은 판매 불가로 저장해야 합니다.", true);
-            return;
-        }
         const templateId = Number(inspectionForm.elements.templateId?.value);
         if (!templateId) {
             setFormMessage("검수 템플릿을 선택해 주세요.", true);
@@ -1889,6 +1991,15 @@
         if (missingItems.length) {
             setFormMessage(`필수 검수 항목을 입력해 주세요: ${missingItems.join(", ")}`, true);
             return;
+        }
+        const adjustedByItemFailure = applyFailedItemOutcome(inspectionForm, itemResults);
+        syncInspectionFormRule();
+        if (isInvalidDefectiveSalesStatus(inspectionForm)) {
+            setFormMessage("불량 등급은 판매 불가로 저장해야 합니다.", true);
+            return;
+        }
+        if (adjustedByItemFailure) {
+            setFormMessage("불합격 항목이 있어 검수 결과와 등급을 자동 조정했습니다.");
         }
 
         pendingSavePayload = {

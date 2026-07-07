@@ -173,7 +173,7 @@ font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospa
 - 큰 제목은 굵고 명확하게 사용한다.
 - 업무 화면 내부 제목은 짧게 쓴다.
 - 설명문은 기능 설명보다 실제 운영 상황이 떠오르게 쓴다.
-- `Dashboard`, `Parts`, `Inbound` 같은 영어 라벨보다 `운영 현황`, `품목 관리`, `입고` 같은 한국어 업무 용어를 우선한다.
+- `Dashboard`, `Parts`, `Inbound` 같은 영어 라벨보다 `운영 현황`, `품목 관리`, `입고 등록`, `전표 통합 조회` 같은 한국어 업무 용어를 우선한다.
 
 ## 버튼
 

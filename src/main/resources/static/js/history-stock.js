@@ -10,7 +10,9 @@
     const pageInfo = document.querySelector("[data-page-info]");
     const prevButton = document.querySelector("[data-page-prev]");
     const nextButton = document.querySelector("[data-page-next]");
-    const summaryText = document.querySelector("[data-history-summary]");
+    const summaryTotal = document.querySelector("[data-history-summary-total]");
+    const summaryQuantity = document.querySelector("[data-history-summary-quantity]");
+    const summaryCanceled = document.querySelector("[data-history-summary-canceled]");
     const detailDrawer = document.querySelector("[data-history-detail-drawer]");
     const closeDetailButtons = document.querySelectorAll("[data-close-detail-panel]");
     const detailFields = {
@@ -166,8 +168,14 @@
         const totalCount = Number(summary.totalCount || 0);
         const totalQuantity = Number(summary.totalQuantity || 0);
         const canceledCount = Number(summary.canceledCount || 0);
-        if (summaryText) {
-            summaryText.textContent = `전표 ${numberText(totalCount)}건 · 수량 ${numberText(totalQuantity)}개 · 취소 ${numberText(canceledCount)}건`;
+        if (summaryTotal) {
+            summaryTotal.textContent = numberText(totalCount);
+        }
+        if (summaryQuantity) {
+            summaryQuantity.textContent = numberText(totalQuantity);
+        }
+        if (summaryCanceled) {
+            summaryCanceled.textContent = numberText(canceledCount);
         }
     };
 

@@ -73,7 +73,6 @@
                             <h2 id="filter-title">이력 검색</h2>
                             <p>전표, 거래처, 품목, 기간으로 입출고 기록을 조회합니다.</p>
                         </div>
-                        <p class="stock-history-summary" data-history-summary>전표 0건 · 수량 0개 · 취소 0건</p>
                     </div>
                     <!-- API: GET /api/workspaces/{companyCode}/stock/documents?documentType=&keyword=&documentStatus=&dateFrom=&dateTo=&page=&size= -->
                     <form class="filter-form management-filter-form stock-history-filter-form" action="#" method="get" autocomplete="off" data-history-filter-form>
@@ -111,10 +110,26 @@
                 </section>
 
                 <section class="table-card stock-history-list-card" aria-labelledby="history-list-title">
-                    <div class="table-header inline-summary-header">
+                    <div class="table-header inline-summary-header stock-history-summary-header">
                         <div>
                             <h2 id="history-list-title">전표 목록</h2>
                             <p>행을 선택하면 오른쪽에서 상세를 확인합니다.</p>
+                        </div>
+                        <div class="list-summary-box" aria-label="전표 목록 요약" data-history-summary>
+                            <dl class="list-summary">
+                                <div>
+                                    <dt>전표</dt>
+                                    <dd data-history-summary-total>0</dd>
+                                </div>
+                                <div>
+                                    <dt>수량</dt>
+                                    <dd data-history-summary-quantity>0</dd>
+                                </div>
+                                <div>
+                                    <dt>취소</dt>
+                                    <dd data-history-summary-canceled>0</dd>
+                                </div>
+                            </dl>
                         </div>
                     </div>
 
