@@ -397,6 +397,7 @@ class InspectionServiceTest {
         when(inspectionMapper.countHistoryDocuments(
                 companyId,
                 "RAM",
+                null,
                 11L,
                 InspectionType.INITIAL,
                 InspectionResult.PASS,
@@ -407,6 +408,7 @@ class InspectionServiceTest {
         when(inspectionMapper.searchHistoryDocuments(
                 companyId,
                 "RAM",
+                null,
                 11L,
                 InspectionType.INITIAL,
                 InspectionResult.PASS,
@@ -419,6 +421,7 @@ class InspectionServiceTest {
         when(inspectionMapper.summarizeHistoryDocuments(
                 companyId,
                 "RAM",
+                null,
                 11L,
                 InspectionType.INITIAL,
                 InspectionResult.PASS,
@@ -430,6 +433,7 @@ class InspectionServiceTest {
         var result = inspectionService.searchHistoryDocuments(
                 companyId,
                 " RAM ",
+                null,
                 11L,
                 InspectionType.INITIAL,
                 InspectionResult.PASS,

@@ -80,11 +80,11 @@ class MemberPersistenceIntegrationTest extends MariaDbIntegrationTest {
         insertMember(1L, "staff01", "Staff User", MemberRole.STAFF, PasswordStatus.ACTIVE, null, 3L);
 
         PageResultDto<SearchMemberResponse, SearchMemberSummaryResponse> result =
-                memberService.searchMembers(1L, MemberRole.ADMIN, null, null, 0, 20, null);
+                memberService.searchMembers(1L, MemberRole.ADMIN, null, null, null, null, null, 0, 20, null);
 
         assertThat(result.content()).extracting(SearchMemberResponse::role)
                 .containsExactly(MemberRole.STAFF);
-        assertThatThrownBy(() -> memberService.searchMembers(1L, MemberRole.ADMIN, null, MemberRole.ADMIN, 0, 20, null))
+        assertThatThrownBy(() -> memberService.searchMembers(1L, MemberRole.ADMIN, null, MemberRole.ADMIN, null, null, null, 0, 20, null))
                 .isInstanceOfSatisfying(BusinessException.class, exception ->
                         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.AUTH_FORBIDDEN)
                 );

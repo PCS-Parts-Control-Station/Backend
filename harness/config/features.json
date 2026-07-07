@@ -84,6 +84,7 @@
         "^src/integrationTest/resources/pcs-category-part-test-schema\\.sql$",
         "^docs/features/category(-db)?\\.md$",
         "^src/main/resources/static/categories\\.html$",
+        "^src/main/resources/static/js/pcs-navigation-state\\.js$",
         "^src/main/resources/static/js/categories\\.js$",
         "^src/main/resources/static/css/pages/categories\\.css$"
       ]
@@ -99,6 +100,7 @@
         "^src/integrationTest/resources/pcs-category-part-test-schema\\.sql$",
         "^docs/features/part(-db)?\\.md$",
         "^src/main/resources/static/parts\\.html$",
+        "^src/main/resources/static/js/pcs-navigation-state\\.js$",
         "^src/main/resources/static/js/parts\\.js$",
         "^src/main/resources/static/css/pages/parts\\.css$"
       ]
@@ -113,8 +115,10 @@
         "^src/integrationTest/java/com/pcs/domain/part/",
         "^src/integrationTest/resources/pcs-category-part-test-schema\\.sql$",
         "^docs/features/part-unit(-db)?\\.md$",
+        "^docs/ai/(pcs-frontend-js-rules|pcs-project-structure-reference)\\.md$",
         "^docs/sql/(pcs-schema-ddl|pcs-part-unit-list-index-alter)\\.sql$",
         "^src/main/resources/static/part-units\\.html$",
+        "^src/main/resources/static/js/pcs-navigation-state\\.js$",
         "^src/main/resources/static/js/part-units\\.js$",
         "^src/main/resources/static/css/pages/part-units\\.css$"
       ]

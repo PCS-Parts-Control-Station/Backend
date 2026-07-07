@@ -96,3 +96,9 @@ API 테스트:
 
 - `companyCode`와 JWT의 업체가 다르면 실패해야 한다.
 - STAFF는 `STAFF_CATEGORY_MANAGE` 권한이 없으면 생성, 수정, 삭제를 할 수 없다.
+
+## 화면 상태 복원
+
+- 품목 분류 화면은 공통 `PcsNavigationState`를 사용해 `keyword`, `page`, 선택된 `categoryId`를 URL query와 `history.state`에 저장한다.
+- 품목 분류에서 다른 화면으로 이동했다가 브라우저 뒤로가기로 돌아오면 검색어, 페이지, 선택된 분류 상세 드로어, 스크롤 위치가 복원되어야 한다.
+- 생성/수정 입력 중인 폼과 사양 항목 모달 상태는 URL 복원 대상이 아니며, 복원 대상은 업무 조회 흐름에 필요한 목록 조건과 선택 상세로 제한한다.

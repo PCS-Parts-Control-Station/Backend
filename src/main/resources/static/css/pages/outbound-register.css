@@ -15,11 +15,8 @@ border-color: rgba(37, 99, 235, 0.16);
 }
 
 .outbound-page-icon svg {
-fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+fill: currentColor;
+    stroke: none;
 }
 
 .outbound-register-page [data-outbound-register-side-step] {

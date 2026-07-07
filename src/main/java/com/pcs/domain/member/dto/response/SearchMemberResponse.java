@@ -11,6 +11,7 @@ public record SearchMemberResponse(
         MemberRole role,
         PasswordStatus passwordStatus,
         Boolean active,
+        LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
 }

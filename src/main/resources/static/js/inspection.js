@@ -125,6 +125,17 @@
     let historyDetailRequestId = 0;
     let targetStepHighlightTimer = null;
 
+    const readInspectionPrefill = () => {
+        const params = new URLSearchParams(window.location.search);
+        const documentId = params.get("documentId");
+        const movementId = params.get("movementId");
+        const unitId = params.get("unitId");
+        if (!documentId) {
+            return null;
+        }
+        return { documentId, movementId, unitId };
+    };
+
     const LABELS = {
         inspectionStatus: {
             WAITING: "검수 전",
@@ -421,7 +432,7 @@
             row.setAttribute("tabindex", "0");
             row.dataset.inspectionDocumentId = String(item.documentId);
             row.innerHTML = `
-                <strong role="cell" data-label="전표번호">${escapeHtml(item.documentNo)}</strong>
+                <strong role="cell" data-label="전표 번호">${escapeHtml(item.documentNo)}</strong>
                 <span class="inspection-stack-cell" role="cell" data-label="거래처">
                     <strong>${escapeHtml(item.partnerName)}</strong>
                     <small>${escapeHtml(item.summary)}</small>
@@ -848,6 +859,48 @@
             }
             resetHistorySection("전표 정보를 불러오지 못해 검수 이력을 표시할 수 없습니다.");
         }
+    };
+
+    const applyInspectionPrefill = async (prefill) => {
+        if (!prefill?.documentId) {
+            return;
+        }
+        await loadDocumentDetail(prefill.documentId);
+        if (!currentDocumentDetail) {
+            return;
+        }
+
+        if (prefill.movementId && (currentDocumentDetail.lines || []).some((line) => String(line.movementId) === String(prefill.movementId))) {
+            selectedMovementId = prefill.movementId;
+        }
+
+        if (prefill.unitId) {
+            const context = findLineByUnitId(prefill.unitId);
+            if (context) {
+                selectedMovementId = context.line.movementId;
+            }
+        }
+
+        renderDocumentLines(currentDocumentDetail.lines || []);
+
+        if (!prefill.unitId) {
+            requestAnimationFrame(() => targetStep?.scrollIntoView({ block: "start", behavior: "smooth" }));
+            return;
+        }
+
+        const context = findLineByUnitId(prefill.unitId);
+        if (!context) {
+            setFormMessage("선택된 입고 전표에서 해당 관리번호를 찾지 못했습니다.", true);
+            showToast("선택된 입고 전표에서 해당 관리번호를 찾지 못했습니다.", "warning");
+            return;
+        }
+        if (context.unit.inspectionStatus === "COMPLETED") {
+            setFormMessage("이미 검수 완료된 관리번호입니다.", true);
+            showToast("이미 검수 완료된 관리번호입니다.", "warning");
+            return;
+        }
+
+        await renderInspectionForm(context);
     };
 
     const findLineByUnitId = (unitId) => {
@@ -1297,7 +1350,7 @@
                     <strong>${escapeHtml(history.internalSerialNo)}</strong>
                     <small>${escapeHtml(history.partName)} ${escapeHtml(history.modelName)}</small>
                 </span>
-                <span role="cell" data-label="전표번호">${escapeHtml(history.documentNo || "-")}</span>
+                <span role="cell" data-label="전표 번호">${escapeHtml(history.documentNo || "-")}</span>
                 <span role="cell" data-label="유형"><em class="badge ${typeBadgeClass(history.inspectionType)}">${escapeHtml(LABELS.inspectionType[history.inspectionType] || history.inspectionType)}</em></span>
                 <span role="cell" data-label="등급"><em class="badge ${gradeBadgeClass(history.grade)}">${escapeHtml(LABELS.grade[history.grade] || history.grade)}</em></span>
                 <span role="cell" data-label="처리자">${escapeHtml(history.inspectedByName || "-")}</span>
@@ -1987,6 +2040,7 @@
 
     const init = async () => {
         window.PcsUi?.consumeFlashToast?.();
+        const prefill = readInspectionPrefill();
         clearInspectionForm();
         applyInitialSearchParams();
         await Promise.all([
@@ -1994,6 +2048,7 @@
             loadWaitingDocuments(),
             loadHistories()
         ]);
+        await applyInspectionPrefill(prefill);
     };
 
     init();

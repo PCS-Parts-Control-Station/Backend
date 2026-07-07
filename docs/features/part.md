@@ -115,3 +115,9 @@ API 테스트:
 
 - `companyCode`와 JWT의 업체가 다르면 실패해야 한다.
 - STAFF는 `STAFF_PART_CREATE` 권한이 없으면 생성과 수정을 할 수 없다.
+
+## 화면 상태 복원
+
+- 품목 관리 화면은 공통 `PcsNavigationState`를 사용해 `keyword`, `categoryId`, `page`, 선택된 `partId`를 URL query와 `history.state`에 저장한다.
+- 품목 관리에서 다른 화면으로 이동했다가 브라우저 뒤로가기로 돌아오면 검색어, 분류 필터, 페이지, 선택된 품목 상세 드로어, 스크롤 위치가 복원되어야 한다.
+- 생성/수정 입력 중인 폼 상태는 URL 복원 대상이 아니며, 복원 대상은 업무 조회 흐름에 필요한 목록 조건과 선택 상세로 제한한다.

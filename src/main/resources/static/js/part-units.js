@@ -28,13 +28,17 @@
     const documentPickerList = document.querySelector("[data-part-unit-document-picker-list]");
     const documentPickerMessage = document.querySelector("[data-part-unit-document-picker-message]");
     const flowList = document.querySelector("[data-detail-flow-list]");
-    const nextFlowAction = document.querySelector("[data-next-flow-action]");
+    const stockHistoryAction = document.querySelector("[data-stock-history-action]");
+    const inspectionHistoryAction = document.querySelector("[data-inspection-history-action]");
     const searchButton = filterForm?.querySelector("button[type='submit']");
 
     let currentPage = 0;
     let detailRequestId = 0;
     let documentSearchTimer = null;
     let selectedDocument = null;
+    let categoryPicker = null;
+    let detailDrawer = null;
+    let isRestoringNavigationState = false;
 
     const escape = window.PcsHtml?.escape || ((value) => String(value ?? ""));
     const setText = window.PcsHtml?.setText || ((element, value, fallback = "-") => {
@@ -42,31 +46,39 @@
             element.textContent = value === null || value === undefined || value === "" ? fallback : String(value);
         }
     });
+    const navigationState = window.PcsNavigationState?.createUrlStateController({
+        namespace: "part-units",
+        managedKeys: ["keyword", "documentId", "documentNo", "categoryId", "partState", "page", "unitId"],
+        defaults: {
+            partState: DEFAULT_PART_STATE,
+            page: "0"
+        }
+    });
 
     const LABELS = {
         unit: {
-            IN_STOCK: "재고보유",
+            IN_STOCK: "재고 보유",
             OUTBOUND: "출고",
-            CANCELED: "입고취소",
+            CANCELED: "입고 취소",
             DISPOSED: "비활성"
         },
         grade: {
             NONE: "-",
-            A: "A등급",
-            B: "B등급",
-            C: "C등급",
+            A: "A 등급",
+            B: "B 등급",
+            C: "C 등급",
             DEFECTIVE: "불량"
         },
         sales: {
-            HOLD: "보류",
-            AVAILABLE: "판매가능",
-            UNAVAILABLE: "판매불가"
+            HOLD: "판매 보류",
+            AVAILABLE: "판매 가능",
+            UNAVAILABLE: "판매 불가"
         },
         movement: {
             INBOUND: "입고",
             OUTBOUND: "출고",
-            INBOUND_CANCEL: "입고취소",
-            OUTBOUND_CANCEL: "출고취소"
+            INBOUND_CANCEL: "입고 취소",
+            OUTBOUND_CANCEL: "출고 취소"
         },
         inspectionType: {
             INITIAL: "최초 검수",
@@ -83,6 +95,12 @@
     const apiBase = () => {
         const code = companyCode();
         return code ? `/api/workspaces/${encodeURIComponent(code)}` : "";
+    };
+    const workspaceRoute = (route, params = null) => {
+        const code = companyCode();
+        const query = params?.toString();
+        const path = code ? `/w/${encodeURIComponent(code)}/${route}` : `/${route}`;
+        return query ? `${path}?${query}` : path;
     };
     const apiOptions = () => ({
         authRedirect: true,
@@ -121,14 +139,10 @@
     const gradeLabel = (grade) => LABELS.grade[grade] || grade || "-";
     const unitLabel = (status) => LABELS.unit[status] || status || "-";
     const salesLabel = (status) => LABELS.sales[status] || status || "-";
+    const partSalesLabel = (unit) => unit?.unitStatus === "OUTBOUND" ? "판매 완료" : salesLabel(unit?.salesStatus);
     const movementLabel = (type) => LABELS.movement[type] || type || "-";
     const inspectionTypeLabel = (type) => LABELS.inspectionType[type] || type || "-";
     const inspectionResultLabel = (result) => LABELS.inspectionResult[result] || result || "-";
-
-    const workspaceRoute = (route) => {
-        const code = companyCode();
-        return code ? `/w/${encodeURIComponent(code)}/${route}` : "#";
-    };
 
     const normalizeListData = (data) => {
         if (Array.isArray(data)) {
@@ -166,7 +180,36 @@
         syncStateCards();
     };
 
-    const setSelectedDocument = (document = null) => {
+    const currentFilterState = () => ({
+        ...window.PcsNavigationState?.captureFormState?.(filterForm, {
+            fields: ["keyword", "documentId", "categoryId", "partState"]
+        }),
+        documentNo: selectedDocument?.documentNo || "",
+    });
+
+    const syncNavigationState = (overrides = {}, options = {}) => {
+        if (!navigationState || isRestoringNavigationState) {
+            return;
+        }
+
+        const nextState = {
+            ...currentFilterState(),
+            page: String(currentPage),
+            unitId: navigationState.read().unitId || "",
+            ...overrides,
+        };
+
+        if (!nextState.documentId) {
+            nextState.documentNo = "";
+        }
+
+        navigationState.write(nextState, {
+            mode: options.mode || "replace",
+            captureScroll: options.captureScroll !== false,
+        });
+    };
+
+    const setSelectedDocument = (document = null, options = {}) => {
         selectedDocument = document;
         if (documentInput) {
             documentInput.value = document?.documentId ? String(document.documentId) : "";
@@ -174,19 +217,70 @@
         if (documentLabel) {
             documentLabel.textContent = document?.documentNo || "전체";
         }
+        if (options.sync !== false) {
+            syncNavigationState({
+                documentId: document?.documentId ? String(document.documentId) : "",
+                documentNo: document?.documentNo || "",
+                page: "0",
+                unitId: ""
+            });
+        }
+    };
+
+    const setCategoryValue = (value, options = {}) => {
+        const normalized = value ? String(value) : "";
+        if (categoryPicker) {
+            categoryPicker.setValue(normalized);
+        } else if (filterForm?.elements.categoryId) {
+            filterForm.elements.categoryId.value = normalized;
+        }
+        if (options.sync !== false) {
+            syncNavigationState({
+                categoryId: normalized,
+                page: "0",
+                unitId: ""
+            });
+        }
+    };
+
+    const readInitialNavigationState = () => navigationState?.read() || {};
+
+    const applyNavigationStateToFilters = () => {
+        const state = readInitialNavigationState();
+        const page = window.PcsNavigationState?.numberParam?.(state.page, 0) || 0;
+
+        isRestoringNavigationState = true;
+        try {
+            window.PcsNavigationState?.applyFormState?.(filterForm, state, {
+                fields: ["keyword", "categoryId"]
+            });
+            setPartState(state.partState || DEFAULT_PART_STATE);
+            setSelectedDocument(state.documentId ? {
+                documentId: state.documentId,
+                documentNo: state.documentNo || `전표 ${state.documentId}`
+            } : null, { sync: false });
+            setCategoryValue(state.categoryId || "", { sync: false });
+        } finally {
+            isRestoringNavigationState = false;
+        }
+
+        return {
+            page,
+            unitId: state.unitId || ""
+        };
     };
 
     const workStatusLabel = (unit) => {
         if (!unit) {
             return "-";
         }
-        if (unit.unitStatus === "CANCELED") return "입고취소";
+        if (unit.unitStatus === "CANCELED") return "입고 취소";
         if (unit.unitStatus === "DISPOSED") return "비활성";
         if (unit.unitStatus === "OUTBOUND") {
             return unit.grade && unit.grade !== "NONE" ? gradeLabel(unit.grade) : "출고";
         }
         if (unit.inspectionStatus === "WAITING" || !unit.grade || unit.grade === "NONE") {
-            return "검수대기";
+            return "검수 대기";
         }
         return gradeLabel(unit.grade);
     };
@@ -202,24 +296,25 @@
         if (!unit) {
             return "-";
         }
-        return `${workStatusLabel(unit)} / ${salesLabel(unit.salesStatus)} / ${recentLabel(unit)}`;
+        return `${workStatusLabel(unit)} / ${partSalesLabel(unit)} / ${recentLabel(unit)}`;
     };
 
     const statusBadgeClass = (label) => {
         const value = label || "";
-        if (value.includes("판매불가") || value.includes("불량")) return "badge-danger";
+        if (value.includes("판매 완료")) return "badge-available";
+        if (value.includes("판매 불가") || value.includes("불량")) return "badge-danger";
         if (value.includes("출고") || value.includes("취소") || value.includes("비활성")) return "badge-inactive";
-        if (value.includes("검수대기")) return "badge-pending";
-        if (value.includes("보류") || value.includes("C등급")) return "badge-warning";
-        if (value.includes("A등급") || value.includes("B등급") || value.includes("판매가능")) return "badge-available";
+        if (value.includes("검수 대기")) return "badge-pending";
+        if (value.includes("보류") || value.includes("C 등급") || value.includes("C 등급")) return "badge-warning";
+        if (value.includes("A 등급") || value.includes("B 등급") || value.includes("판매 가능")) return "badge-available";
         return "badge-blue";
     };
 
     const salesBadgeClass = (label) => {
         const value = label || "";
-        if (value === "판매가능") return "badge-available";
-        if (value === "보류") return "badge-warning";
-        if (value === "판매불가") return "badge-danger";
+        if (value === "판매 가능") return "badge-available";
+        if (value === "판매 보류" || value === "보류") return "badge-warning";
+        if (value === "판매 불가") return "badge-danger";
         return "badge-inactive";
     };
 
@@ -315,6 +410,37 @@
         });
     };
 
+    const findPartUnitRow = (unitId) => {
+        if (!unitId || !table) {
+            return null;
+        }
+        return Array.from(table.querySelectorAll("[data-part-unit-row]"))
+                .find((row) => String(row.dataset.unitId || "") === String(unitId)) || null;
+    };
+
+    const openPartUnitRow = (unitId, options = {}) => {
+        const row = findPartUnitRow(unitId);
+        if (!row || !detailDrawer?.update) {
+            return false;
+        }
+
+        isRestoringNavigationState = options.restore === true;
+        try {
+            detailDrawer.update(row);
+        } finally {
+            isRestoringNavigationState = false;
+        }
+
+        if (options.scrollIntoView) {
+            row.scrollIntoView({
+                block: "center",
+                behavior: options.behavior || "auto"
+            });
+        }
+
+        return true;
+    };
+
     const buildParams = (page) => {
         const params = window.PcsPagination.buildParams({
             page,
@@ -326,6 +452,7 @@
     };
 
     const loadPartUnits = async (page = 0, options = {}) => {
+        const requestedPage = Math.max(0, Number(page) || 0);
         const base = apiBase();
         if (!base || !window.PcsApi?.getData || !window.PcsPagination) {
             emptyTable("워크스페이스 정보를 확인할 수 없습니다.");
@@ -333,11 +460,18 @@
             return;
         }
 
+        if (options.updateNavigation !== false) {
+            syncNavigationState({
+                page: String(requestedPage),
+                unitId: options.unitId || ""
+            });
+        }
+
         const execute = async () => {
             setLoading(true);
             try {
                 const data = await window.PcsApi.getData(
-                        `${base}/part-units?${buildParams(page).toString()}`,
+                        `${base}/part-units?${buildParams(requestedPage).toString()}`,
                         apiOptions()
                 );
                 const pageData = window.PcsPagination.normalizePageData(data, PAGE_SIZE);
@@ -345,6 +479,16 @@
                 renderRows(pageData);
                 updateSummary(pageData.summary || {});
                 updatePagination(pageData);
+
+                if (options.restoreUnitId) {
+                    const restored = openPartUnitRow(options.restoreUnitId, {
+                        restore: true,
+                        scrollIntoView: true
+                    });
+                    if (restored) {
+                        navigationState?.restoreScroll();
+                    }
+                }
             } catch (error) {
                 emptyTable(error?.message || "부품 목록을 불러오지 못했습니다.");
                 updateSummary();
@@ -359,6 +503,194 @@
             return;
         }
         await execute();
+    };
+
+    const hasCompletedInspection = (detail) => {
+        const unit = detail?.unit;
+        return unit?.inspectionStatus === "COMPLETED"
+                || Boolean(unit?.lastInspectionId)
+                || (detail?.inspectionHistories || []).length > 0;
+    };
+
+    const hasOutboundHistory = (detail) => {
+        const unit = detail?.unit;
+        return unit?.unitStatus === "OUTBOUND"
+                || (detail?.stockHistories || []).some((history) => String(history.movementType || "").startsWith("OUTBOUND"));
+    };
+
+    const findInboundStockContext = (detail) => {
+        const histories = detail?.stockHistories || [];
+        return histories.find((history) => history.documentId && history.movementId && history.movementType === "INBOUND")
+                || histories.find((history) => history.documentId && history.movementId && String(history.movementType || "").startsWith("INBOUND"));
+    };
+
+    const inspectionRoute = (detail) => {
+        const context = findInboundStockContext(detail);
+        const unitId = detail?.unit?.unitId;
+        if (!context || !unitId) {
+            return "inspection";
+        }
+        const params = new URLSearchParams({
+            documentId: String(context.documentId),
+            movementId: String(context.movementId),
+            unitId: String(unitId)
+        });
+        return `inspection?${params.toString()}`;
+    };
+
+    const outboundRoute = (detail) => {
+        const unit = detail?.unit;
+        if (!unit?.unitId) {
+            return "outbound/new";
+        }
+
+        const params = new URLSearchParams({
+            unitId: String(unit.unitId)
+        });
+        if (unit.partId) {
+            params.set("partId", String(unit.partId));
+        }
+        if (unit.categoryId) {
+            params.set("categoryId", String(unit.categoryId));
+        }
+        if (unit.internalSerialNo) {
+            params.set("keyword", unit.internalSerialNo);
+        }
+
+        return `outbound/new?${params.toString()}`;
+    };
+
+    const stockHistoryRoute = (detail, options = {}) => {
+        const unit = detail?.unit;
+        const params = new URLSearchParams();
+        const keyword = unit?.internalSerialNo || unit?.manufacturerSerialNo || "";
+        if (keyword) {
+            params.set("keyword", keyword);
+        }
+        if (options.inboundOnly) {
+            params.set("documentType", "INBOUND");
+        }
+        return workspaceRoute("history/stock", params);
+    };
+
+    const latestInspectionId = (detail) => {
+        return [...(detail?.inspectionHistories || [])]
+                .sort((a, b) => dateValue(b.inspectedAt) - dateValue(a.inspectedAt))
+                .find((history) => history.inspectionId)?.inspectionId || detail?.unit?.lastInspectionId || "";
+    };
+
+    const inspectionHistoryRoute = (detail) => {
+        const unit = detail?.unit;
+        const params = new URLSearchParams();
+        const context = findInboundStockContext(detail);
+        if (context?.documentId) {
+            params.set("documentId", String(context.documentId));
+        }
+        if (unit?.partId) {
+            params.set("partId", String(unit.partId));
+        }
+        if (unit?.unitId) {
+            params.set("unitId", String(unit.unitId));
+        }
+        const inspectionId = latestInspectionId(detail);
+        if (inspectionId) {
+            params.set("inspectionId", String(inspectionId));
+        }
+        return workspaceRoute("history/inspection", params);
+    };
+
+    const createFlowArticle = ({ title, status, meta, actionLabel, route, note, variant }) => {
+        const item = document.createElement("article");
+        if (variant) {
+            item.classList.add(variant);
+        }
+
+        const titleElement = document.createElement("strong");
+        titleElement.textContent = title || "-";
+        item.append(titleElement);
+
+        if (status !== null && status !== undefined && status !== "") {
+            const statusElement = document.createElement("span");
+            statusElement.textContent = status;
+            item.append(statusElement);
+        }
+
+        if (meta) {
+            const metaElement = document.createElement("small");
+            metaElement.textContent = meta;
+            item.append(metaElement);
+        }
+
+        if (actionLabel || note) {
+            const actionRow = document.createElement("div");
+            actionRow.className = "process-flow-action-row";
+
+            if (actionLabel && route) {
+                const action = document.createElement("a");
+                action.className = "btn btn-primary process-flow-action-button";
+                action.href = workspaceRoute(route);
+                action.textContent = actionLabel;
+                actionRow.append(action);
+            }
+
+            if (note) {
+                const noteElement = document.createElement("em");
+                noteElement.className = "process-flow-status-note";
+                noteElement.textContent = note;
+                actionRow.append(noteElement);
+            }
+
+            item.append(actionRow);
+        }
+
+        return item;
+    };
+
+    const nextFlowStep = (detail) => {
+        const unit = detail?.unit;
+        if (!unit) {
+            return null;
+        }
+
+        if (["OUTBOUND", "CANCELED", "DISPOSED"].includes(unit.unitStatus)) {
+            return null;
+        }
+
+        if (!hasCompletedInspection(detail)) {
+            return {
+                title: "검수",
+                status: "검수 전",
+                actionLabel: "검수하러 가기",
+                route: inspectionRoute(detail),
+                variant: "is-next"
+            };
+        }
+
+        if (unit.salesStatus === "AVAILABLE") {
+            return {
+                title: "출고",
+                status: "판매 가능",
+                actionLabel: "출고하러 가기",
+                route: outboundRoute(detail),
+                variant: "is-next"
+            };
+        }
+
+        if (unit.salesStatus === "UNAVAILABLE") {
+            return {
+                title: "판매 불가 상태입니다.",
+                variant: "is-blocked"
+            };
+        }
+
+        if (unit.salesStatus === "HOLD") {
+            return {
+                title: "판매 보류 상태입니다.",
+                variant: "is-blocked"
+            };
+        }
+
+        return null;
     };
 
     const renderFlow = (detail) => {
@@ -381,65 +713,50 @@
 
         const events = [...stockEvents, ...inspectionEvents]
                 .sort((a, b) => dateValue(a.at) - dateValue(b.at));
+        const nextStep = nextFlowStep(detail);
 
         flowList.innerHTML = "";
-        if (!events.length) {
-            const empty = document.createElement("article");
-            empty.innerHTML = "<strong>-</strong><span>표시할 이력이 없습니다.</span><small>-</small>";
-            flowList.append(empty);
+        if (!events.length && !nextStep) {
+            flowList.append(createFlowArticle({
+                title: "-",
+                status: "표시할 이력이 없습니다.",
+                meta: "-"
+            }));
             return;
         }
 
         events.forEach((event) => {
-            const item = document.createElement("article");
-            item.innerHTML = `<strong>${escape(event.title)}</strong><span>${escape(event.status)}</span><small>${escape(event.meta)}</small>`;
-            flowList.append(item);
+            flowList.append(createFlowArticle(event));
         });
+
+        if (nextStep) {
+            flowList.append(createFlowArticle(nextStep));
+        }
     };
 
-    const hideNextFlowAction = () => {
-        if (!nextFlowAction) {
-            return;
+    const resetDetailActions = () => {
+        if (stockHistoryAction) {
+            stockHistoryAction.textContent = "입고 이력";
+            stockHistoryAction.href = workspaceRoute("history/stock");
         }
-        nextFlowAction.hidden = true;
-        nextFlowAction.removeAttribute("href");
-        nextFlowAction.textContent = "";
+        if (inspectionHistoryAction) {
+            inspectionHistoryAction.hidden = true;
+        }
     };
 
-    const showNextFlowAction = (label, route) => {
-        if (!nextFlowAction) {
-            return;
+    const updateDetailActions = (detail) => {
+        if (stockHistoryAction) {
+            const inboundOnly = !hasOutboundHistory(detail);
+            stockHistoryAction.textContent = inboundOnly ? "입고 이력" : "입출고 이력";
+            stockHistoryAction.href = stockHistoryRoute(detail, { inboundOnly });
         }
-        nextFlowAction.textContent = label;
-        nextFlowAction.href = workspaceRoute(route);
-        nextFlowAction.hidden = false;
-    };
-
-    const updateNextFlowAction = (detail) => {
-        const unit = detail?.unit;
-        if (!unit) {
-            hideNextFlowAction();
-            return;
+        if (inspectionHistoryAction) {
+            const hasInspection = hasCompletedInspection(detail);
+            inspectionHistoryAction.hidden = !hasInspection;
+            if (hasInspection) {
+                inspectionHistoryAction.href = inspectionHistoryRoute(detail);
+            }
         }
-
-        if (["OUTBOUND", "CANCELED", "DISPOSED"].includes(unit.unitStatus)) {
-            hideNextFlowAction();
-            return;
-        }
-
-        const inspectionCompleted = unit.inspectionStatus === "COMPLETED"
-                || (detail.inspectionHistories || []).length > 0;
-        if (!inspectionCompleted) {
-            showNextFlowAction("검수하러 가기", "inspection");
-            return;
-        }
-
-        if (unit.salesStatus === "AVAILABLE") {
-            showNextFlowAction("출고하러 가기", "outbound/new");
-            return;
-        }
-
-        hideNextFlowAction();
     };
 
     const updateDetailFields = (detail) => {
@@ -456,7 +773,7 @@
         setText(document.querySelector("[data-detail-serial]"), unit.manufacturerSerialNo);
         setBadge("[data-detail-unit-status]", stateText, statusBadgeClass(stateText));
         renderFlow(detail);
-        updateNextFlowAction(detail);
+        updateDetailActions(detail);
     };
 
     const loadDetail = async (unitId, requestId) => {
@@ -482,7 +799,7 @@
         }
     };
 
-    window.PcsDrawer?.bindDatasetDetailDrawer({
+    detailDrawer = window.PcsDrawer?.bindDatasetDetailDrawer({
         drawer: "[data-part-unit-detail-drawer]",
         container: "[data-part-unit-table]",
         rowSelector: "[data-part-unit-row]",
@@ -507,13 +824,23 @@
             if (flowList) {
                 flowList.innerHTML = "<article><strong>-</strong><span>상세 이력을 불러오는 중입니다.</span><small>-</small></article>";
             }
-            hideNextFlowAction();
+            resetDetailActions();
             detailRequestId += 1;
             loadDetail(row.dataset.unitId, detailRequestId);
+            syncNavigationState({
+                page: String(currentPage),
+                unitId: row.dataset.unitId || ""
+            });
+        },
+        onClose: () => {
+            syncNavigationState({
+                page: String(currentPage),
+                unitId: ""
+            });
         }
     });
 
-    const categoryPicker = window.PcsCategoryPicker?.bind({
+    categoryPicker = window.PcsCategoryPicker?.bind({
         input: filterForm?.elements.categoryId,
         label: "[data-part-unit-category-label]",
         openButtons: "[data-open-part-unit-category-picker]",
@@ -524,7 +851,14 @@
         closeButtons: "[data-close-part-unit-category-picker]",
         clearButtons: "[data-clear-part-unit-category-picker]",
         defaultLabel: "전체",
-        loadFailureMessage: "분류를 불러오지 못했습니다."
+        loadFailureMessage: "분류를 불러오지 못했습니다.",
+        onChange: (categoryId) => {
+            syncNavigationState({
+                categoryId,
+                page: "0",
+                unitId: ""
+            });
+        }
     });
 
     const setDocumentMessage = (message = "") => {
@@ -676,7 +1010,7 @@
         filterForm?.reset();
         setPartState(DEFAULT_PART_STATE);
         setSelectedDocument(null);
-        categoryPicker?.setValue("");
+        setCategoryValue("");
         loadPartUnits(0);
     });
 
@@ -690,8 +1024,21 @@
         loadPartUnits(currentPage + 1, { preserveScroll: true });
     });
 
+    window.addEventListener("popstate", () => {
+        const restored = applyNavigationStateToFilters();
+        loadPartUnits(restored.page, {
+            updateNavigation: false,
+            restoreUnitId: restored.unitId
+        });
+    });
+
+    navigationState?.bindScrollCapture();
+
+    const restored = applyNavigationStateToFilters();
     categoryPicker?.load();
-    setPartState(partStateInput?.value || DEFAULT_PART_STATE);
     syncStateCards();
-    loadPartUnits(0);
+    loadPartUnits(restored.page, {
+        updateNavigation: false,
+        restoreUnitId: restored.unitId
+    });
 })();

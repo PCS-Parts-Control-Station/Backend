@@ -67,10 +67,19 @@
     let editSpecsEditable = true;
     let specOwner = "create";
     let editingSpecIndex = null;
+    let isRestoringNavigationState = false;
 
     const getCompanyCode = window.PcsWorkspace.getCompanyCode;
     const formatDate = window.PcsFormat.date;
     const numberText = window.PcsFormat.number;
+    const normalizeString = (value) => (value === null || value === undefined ? "" : String(value));
+    const navigationState = window.PcsNavigationState?.createUrlStateController({
+        namespace: "categories",
+        managedKeys: ["keyword", "page", "categoryId"],
+        defaults: {
+            page: "0"
+        }
+    });
 
     const cloneSpecs = (items = []) => items.map((spec, index) => ({
         specKey: spec.specKey || null,
@@ -90,6 +99,51 @@
     }));
 
     const showToast = window.PcsFeedback.toast;
+
+    const currentFilterState = () => ({
+        ...window.PcsNavigationState?.captureFormState?.(filterForm, {
+            fields: ["keyword"]
+        })
+    });
+
+    const syncNavigationState = (overrides = {}, options = {}) => {
+        if (!navigationState || isRestoringNavigationState) {
+            return;
+        }
+
+        const nextState = {
+            ...currentFilterState(),
+            page: String(currentPage),
+            categoryId: navigationState.read().categoryId || "",
+            ...overrides
+        };
+
+        navigationState.write(nextState, {
+            mode: options.mode || "replace",
+            captureScroll: options.captureScroll !== false
+        });
+    };
+
+    const readInitialNavigationState = () => navigationState?.read() || {};
+
+    const applyNavigationStateToFilters = () => {
+        const state = readInitialNavigationState();
+        const page = window.PcsNavigationState?.numberParam?.(state.page, 0) || 0;
+
+        isRestoringNavigationState = true;
+        try {
+            window.PcsNavigationState?.applyFormState?.(filterForm, state, {
+                fields: ["keyword"]
+            });
+        } finally {
+            isRestoringNavigationState = false;
+        }
+
+        return {
+            page,
+            categoryId: state.categoryId || ""
+        };
+    };
 
     const setPanelMode = (mode) => {
         panelViews.forEach((panel) => {
@@ -124,6 +178,12 @@
         selectedCategoryId = null;
         setDrawerOpen(false);
         updateSelectedRow();
+        if (options.sync !== false) {
+            syncNavigationState({
+                page: String(currentPage),
+                categoryId: ""
+            });
+        }
         if (options.restoreFocus !== false && lastDrawerTrigger?.isConnected) {
             lastDrawerTrigger.focus({ preventScroll: true });
         }
@@ -326,11 +386,20 @@
         );
     };
 
-    const selectCategory = async (categoryId, trigger = null) => {
+    const selectCategory = async (categoryId, trigger = null, options = {}) => {
         selectedCategoryId = categoryId;
         openDrawer(trigger);
         const category = getSelectedCategory();
         updateSelectedRow();
+        if (options.sync !== false) {
+            syncNavigationState({
+                page: String(currentPage),
+                categoryId: String(categoryId || "")
+            }, {
+                mode: options.mode || "replace",
+                captureScroll: options.captureScroll !== false
+            });
+        }
         if (category) {
             renderDetail(category);
             setPanelMode("detail");
@@ -349,6 +418,12 @@
     const showCreatePanel = (trigger = null, options = {}) => {
         selectedCategoryId = null;
         updateSelectedRow();
+        if (options.sync !== false) {
+            syncNavigationState({
+                page: String(currentPage),
+                categoryId: ""
+            });
+        }
         createForm?.reset();
         createSpecs = [];
         renderCreateSpecs();
@@ -524,7 +599,7 @@
 
         if (!items.length) {
             setEmptyMessage("조회된 분류가 없습니다.");
-            showCreatePanel();
+            showCreatePanel(null, { sync: false });
             return;
         }
 
@@ -559,6 +634,27 @@
         } else {
             updateSelectedRow();
         }
+    };
+
+    const findCategoryRow = (categoryId) => {
+        if (!categoryId || !table) {
+            return null;
+        }
+        return Array.from(table.querySelectorAll("[data-category-id]"))
+            .find((row) => String(row.dataset.categoryId || "") === String(categoryId)) || null;
+    };
+
+    const openCategoryRow = async (categoryId, options = {}) => {
+        const row = findCategoryRow(categoryId);
+        if (!row) {
+            return false;
+        }
+
+        await selectCategory(categoryId, row, {
+            sync: options.sync !== false,
+            captureScroll: options.captureScroll !== false
+        });
+        return true;
     };
 
     const updatePagination = (pageData) => {
@@ -647,6 +743,7 @@
         }
 
         const preserveScroll = options.preserveScroll === true;
+        const restoreCategoryId = normalizeString(options.restoreCategoryId);
         const fetchPage = async (targetPage) => {
             const params = buildParams(targetPage);
             const data = await window.PcsApi.getData(
@@ -673,13 +770,35 @@
             currentPage = pageData.page;
 
             if (options.keepSelection !== true) {
-                selectedCategoryId = null;
-                closeDrawer({ restoreFocus: false });
-                showCreatePanel();
+                selectedCategoryId = restoreCategoryId || null;
+                if (!restoreCategoryId) {
+                    closeDrawer({ restoreFocus: false, sync: false });
+                    showCreatePanel(null, { sync: false });
+                }
             }
 
             renderRows(pageData.content);
             updatePagination(pageData);
+
+            if (restoreCategoryId) {
+                const restored = await openCategoryRow(restoreCategoryId, {
+                    sync: false,
+                    captureScroll: false
+                });
+                if (!restored) {
+                    selectedCategoryId = null;
+                    closeDrawer({ restoreFocus: false, sync: false });
+                }
+            }
+            if (options.updateNavigation !== false) {
+                syncNavigationState({
+                    page: String(currentPage),
+                    categoryId: selectedCategoryId ? String(selectedCategoryId) : ""
+                });
+            }
+            if (options.restoreScroll === true) {
+                navigationState?.restoreScroll();
+            }
         };
 
         const execute = async () => {
@@ -695,7 +814,7 @@
                     hasNext: false
                 });
                 selectedCategoryId = null;
-                showCreatePanel();
+                showCreatePanel(null, { sync: false });
             } finally {
                 setLoading(false);
             }
@@ -723,11 +842,16 @@
                     return;
                 }
             }
-            showCreatePanel();
-            await loadCategories(0);
+            const restored = applyNavigationStateToFilters();
+            showCreatePanel(null, { sync: false });
+            await loadCategories(restored.page, {
+                updateNavigation: false,
+                restoreCategoryId: restored.categoryId,
+                restoreScroll: true
+            });
         } catch (error) {
             setEmptyMessage(error?.message || "업체 주소를 확인할 수 없습니다.");
-            showCreatePanel();
+            showCreatePanel(null, { sync: false });
         }
     };
 
@@ -956,6 +1080,17 @@
     nextButton.addEventListener("click", () => {
         loadCategories(currentPage + 1, { preserveScroll: true });
     });
+
+    window.addEventListener("popstate", () => {
+        const restored = applyNavigationStateToFilters();
+        loadCategories(restored.page, {
+            updateNavigation: false,
+            restoreCategoryId: restored.categoryId,
+            restoreScroll: true
+        });
+    });
+
+    navigationState?.bindScrollCapture();
 
     initializePage();
 })();

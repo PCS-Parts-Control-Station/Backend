@@ -234,7 +234,7 @@ aside.right-side-drawer.document-detail-drawer
     - 선택 안내 또는 전표 요약 문구
     - 닫기
   - document-detail-card
-    - 전표번호
+    - 전표 번호
     - 상태 배지
   - detail-list
     - 거래처
@@ -258,7 +258,7 @@ aside.right-side-drawer.document-detail-drawer
 - 닫기는 명시적인 `닫기` 버튼과 `Escape` 키를 지원한다.
 - 패널 외부 클릭으로 닫지 않는다.
 - 패널이 열린다고 포커스를 강제로 빼앗지 않는다. 닫을 때는 가능하면 마지막으로 선택했던 행 또는 버튼으로 포커스를 복귀한다.
-- 전표번호와 관리번호 같은 긴 값은 monospace 계열로 표시한다.
+- 전표 번호와 관리번호 같은 긴 값은 monospace 계열로 표시한다.
 - 상태는 배지로 표시한다.
 - 상세 카드 안 상태 배지는 작은 pill 형태로 유지하고, 행 높이나 카드 높이에 맞춰 원형으로 커지지 않게 한다.
 - 관련 항목 목록은 길어질 수 있으므로 내부 스크롤을 허용한다.

@@ -8,28 +8,110 @@
     </a>
 
     <nav class="sidebar-nav" aria-label="업무 화면 이동">
-        <a data-route="dashboard">운영 현황</a>
+        <a data-route="dashboard">
+            <span class="sidebar-nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="18" height="18" focusable="false">
+                    <path fill="currentColor" d="m19.37 4.82l-.22-.22a10.29 10.29 0 1 0 .25.25zm-6.61 5.3v-6.9a8.65 8.65 0 0 1 4.88 2z"></path>
+                </svg>
+            </span>
+            <span>운영 현황</span>
+        </a>
 
         <div class="sidebar-group">
             <div class="sidebar-group-title">업무</div>
-            <a data-route="inbound/new" data-staff-permission="STAFF_INBOUND">입고</a>
-            <a data-route="inspection" data-staff-permission="STAFF_INSPECTION">검수</a>
-            <a data-route="outbound/new" data-staff-permission="STAFF_OUTBOUND">출고</a>
+            <a data-route="inbound/new" data-staff-permission="STAFF_INBOUND">
+                <span class="sidebar-nav-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="18" height="18" focusable="false">
+                        <path fill="currentColor" d="M20.955 8.804v2.21a.75.75 0 1 1-1.5 0v-2.21a2 2 0 0 0-.13-.76l-7.3 4.38v8.19a1.6 1.6 0 0 0 .33-.14l2.53-1.4a.76.76 0 0 1 1 .29a.75.75 0 0 1-.3 1l-2.52 1.4a3.7 3.7 0 0 1-1.81.47a3.8 3.8 0 0 1-1.82-.47l-5.95-3.3a3.79 3.79 0 0 1-1.92-3.27v-6.39c0-.669.18-1.325.52-1.9q.086-.155.2-.29a3.56 3.56 0 0 1 1.2-1.08l6-3.31a3.81 3.81 0 0 1 3.62 0l6 3.31c.42.231.789.548 1.08.93q.067.069.12.15q.114.135.2.29c.32.58.476 1.237.45 1.9"></path>
+                        <path fill="currentColor" d="M22.435 16.424a.75.75 0 0 1-.75.75h-1.76v1.75a.75.75 0 1 1-1.5 0v-1.75h-1.72a.75.75 0 1 1 0-1.5h1.74v-1.75a.75.75 0 1 1 1.5 0v1.75h1.76a.76.76 0 0 1 .73.75"></path>
+                    </svg>
+                </span>
+                <span>입고</span>
+            </a>
+            <a data-route="inspection" data-staff-permission="STAFF_INSPECTION">
+                <span class="sidebar-nav-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="18" height="18" focusable="false">
+                        <g transform="translate(2 2) scale(1.25)">
+                            <path fill="currentColor" fill-rule="evenodd" d="M6 1v4.48c0 .168 0 .338-.023.51q-.032.227-.103.444c-.055.165-.13.317-.204.47l-1.52 3.09h7.7l-1.5-3.06l-.018-.036c-.074-.152-.15-.304-.204-.469a2.5 2.5 0 0 1-.103-.444c-.023-.172-.023-.342-.023-.511V.994h-4zm6.35 10H3.66l-.974 1.98c-.29.59-.476.972-.588 1.26c-.09.233-.093.32-.094.332a.5.5 0 0 0 .205.329c.012.005.091.04.34.062c.311.029.736.03 1.39.03h8.12c.658 0 1.08-.001 1.39-.03c.25-.022.33-.057.34-.062a.5.5 0 0 0 .205-.33v.003v-.002l.001-.004v.004c0-.013-.005-.1-.094-.332c-.112-.292-.298-.673-.588-1.26L12.339 11zm-1.34-5.56V1h.499a.5.5 0 0 0 0-1h-7a.5.5 0 0 0 0 1h.495v4.44c0 .208 0 .312-.014.413q-.018.136-.062.266a3 3 0 0 1-.17.377l-2.97 6.04c-.563 1.15-.844 1.72-.772 2.18c.062.406.29.769.626 1c.387.269 1.03.269 2.3.269h8.12c1.28 0 1.92 0 2.3-.269c.338-.235.564-.598.626-1c.071-.465-.21-1.04-.774-2.18l-2.97-6.04c-.092-.187-.138-.28-.17-.378a1.5 1.5 0 0 1-.062-.266c-.014-.102-.014-.206-.014-.414z" clip-rule="evenodd"></path>
+                        </g>
+                    </svg>
+                </span>
+                <span>검수</span>
+            </a>
+            <a data-route="outbound/new" data-staff-permission="STAFF_OUTBOUND">
+                <span class="sidebar-nav-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="18" height="18" focusable="false">
+                        <g transform="scale(0.75)">
+                            <path fill="currentColor" d="m29.482 8.624l-10-5.5a1 1 0 0 0-.964 0l-10 5.5a1 1 0 0 0 0 1.752L18 15.591V26.31l-3.036-1.67L14 26.391l4.518 2.485a1 1 0 0 0 .964 0l10-5.5A1 1 0 0 0 30 22.5v-13a1 1 0 0 0-.518-.876M19 5.142L26.925 9.5L19 13.858L11.075 9.5Zm9 16.767l-8 4.4V15.59l8-4.4Z"></path>
+                            <path fill="currentColor" d="M10 16H2v-2h8zm2 8H4v-2h8zm2-4H6v-2h8z"></path>
+                        </g>
+                    </svg>
+                </span>
+                <span>출고</span>
+            </a>
         </div>
 
         <div class="sidebar-group">
             <div class="sidebar-group-title">이력</div>
-            <a data-route="history/stock">입출고 이력</a>
-            <a data-route="history/inspection">검수이력</a>
+            <a data-route="history/stock">
+                <span class="sidebar-nav-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="18" height="18" focusable="false">
+                        <g transform="matrix(1.1 0 0 1.2 2 0)">
+                            <path fill="currentColor" d="m10 7.961l3.03-1.211l-7.5-3l-2.586 1.034a1.5 1.5 0 0 0-.364.209zM2.035 5.853A1.5 1.5 0 0 0 2 6.177v3.08a4.5 4.5 0 0 1 5.561 6.184l1.94 1.938v-8.54zm8.465 11.88q.409-.059.8-.215l5.757-2.302A1.5 1.5 0 0 0 18 13.823V6.177q0-.167-.035-.324L10.5 8.838zm6.921-12.74l-3.046 1.218l-7.5-3l1.825-.73a3.5 3.5 0 0 1 2.6 0l5.757 2.303a1.5 1.5 0 0 1 .364.209M3.5 17c.786 0 1.512-.26 2.096-.697l2.55 2.55a.5.5 0 1 0 .708-.707l-2.55-2.55A3.5 3.5 0 1 0 3.5 17m0-1a2.5 2.5 0 1 1 0-5a2.5 2.5 0 0 1 0 5"></path>
+                        </g>
+                    </svg>
+                </span>
+                <span>입출고 이력</span>
+            </a>
+            <a data-route="history/inspection">
+                <span class="sidebar-nav-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="18" height="18" focusable="false">
+                        <g transform="matrix(0.0104167 0 0 0.0104167 1.04 0.67)">
+                            <path fill="currentColor" d="M1152 640H512V512h640zM256 1664h681l-64 128H128V128h1408v640h-128V256H256zm256-384h617l-64 128H512zm512-384v128H512V896zm939 967q14 28 14 57q0 26-10 49t-27 41t-41 28t-50 10h-754q-26 0-49-10t-41-27t-28-41t-10-50q0-29 14-57l299-598v-241h-128V896h640v128h-128v241zm-242-199l-185-369v-271h-128v271l-185 369z"></path>
+                        </g>
+                    </svg>
+                </span>
+                <span>검수 이력</span>
+            </a>
         </div>
 
         <div class="sidebar-group">
             <div class="sidebar-group-title">관리</div>
             <a data-route="documents" data-staff-any-permissions="STAFF_INBOUND,STAFF_OUTBOUND,STAFF_INSPECTION">전표 통합 조회</a>
-            <a data-route="part-units">부품 관리</a>
-            <a data-route="inspection/templates" data-staff-permission="STAFF_INSPECTION">검수 템플릿</a>
-            <a data-route="partners" data-staff-permission="STAFF_PARTNER_MANAGE">거래처 관리</a>
-            <a data-route="users" data-allowed-roles="OWNER,ADMIN" hidden>사용자 관리</a>
+            <a data-route="part-units">
+                <span class="sidebar-nav-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="18" height="18" focusable="false">
+                        <path fill="currentColor" d="m17.578 4.432l-2-1.05C13.822 2.461 12.944 2 12 2s-1.822.46-3.578 1.382l-.321.169l8.923 5.099l4.016-2.01c-.646-.732-1.688-1.279-3.462-2.21m4.17 3.534l-3.998 2V13a.75.75 0 0 1-1.5 0v-2.286l-3.5 1.75v9.44c.718-.179 1.535-.607 2.828-1.286l2-1.05c2.151-1.129 3.227-1.693 3.825-2.708c.597-1.014.597-2.277.597-4.8v-.117c0-1.893 0-3.076-.252-3.978M11.25 21.904v-9.44l-8.998-4.5C2 8.866 2 10.05 2 11.941v.117c0 2.525 0 3.788.597 4.802c.598 1.015 1.674 1.58 3.825 2.709l2 1.049c1.293.679 2.11 1.107 2.828 1.286M2.96 6.641l9.04 4.52l3.411-1.705l-8.886-5.078l-.103.054c-1.773.93-2.816 1.477-3.462 2.21"></path>
+                    </svg>
+                </span>
+                <span>부품 관리</span>
+            </a>
+            <a data-route="inspection/templates" data-staff-permission="STAFF_INSPECTION">
+                <span class="sidebar-nav-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="18" height="18" focusable="false">
+                        <g transform="matrix(0.01065 0 0 0.0097656 0.3 2)">
+                            <path fill="currentColor" d="M1914 1539q6 30 6 61t-6 61l124 51l-49 119l-124-52q-35 51-86 86l52 124l-119 49l-51-124q-30 6-61 6t-61-6l-51 124l-119-49l52-124q-51-35-86-86l-124 52l-49-119l124-51q-6-30-6-61t6-61l-124-51l49-119l124 52q35-51 86-86l-52-124l119-49l51 124q30-6 61-6t61 6l51-124l119 49l-52 124q51 35 86 86l124-52l49 119zm-314 253q40 0 75-15t61-41t41-61t15-75t-15-75t-41-61t-61-41t-75-15t-75 15t-61 41t-41 61t-15 75t15 75t41 61t61 41t75 15m-576-192q0 65 14 128t42 120t67 108t91 92H354q-40 0-75-15t-61-41t-42-61t-15-75q0-27 7-51t21-48l569-990q10-18 10-35V128H640V0h768v128h-128v604q0 19 9 34l160 278q-63 18-120 48l-150-261q-13-23-20-48t-7-51V128H896v604q0 52-28 100l-330 576h519q-33 93-33 192"></path>
+                        </g>
+                    </svg>
+                </span>
+                <span>검수 템플릿</span>
+            </a>
+            <a data-route="partners">
+                <span class="sidebar-nav-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="18" height="18" focusable="false">
+                        <path fill="currentColor" d="M18.72 14.76c.35-.85.54-1.76.54-2.76c0-.72-.11-1.41-.3-2.05c-.65.15-1.33.23-2.04.23A9.07 9.07 0 0 1 9.5 6.34a9.2 9.2 0 0 1-4.73 4.88c-.04.25-.04.52-.04.78A7.27 7.27 0 0 0 12 19.27c1.05 0 2.06-.23 2.97-.64c.57 1.09.83 1.63.81 1.63c-1.64.55-2.91.82-3.78.82c-2.42 0-4.73-.95-6.43-2.66a9 9 0 0 1-2.24-3.69H2v-4.55h1.09a9.09 9.09 0 0 1 15.33-4.6a9 9 0 0 1 2.47 4.6H22v4.55h-.06L18.38 18l-5.3-.6v-1.67h4.83zm-9.45-2.99c.3 0 .59.12.8.34a1.136 1.136 0 0 1 0 1.6c-.21.21-.5.33-.8.33c-.63 0-1.14-.5-1.14-1.13s.51-1.14 1.14-1.14m5.45 0c.63 0 1.13.51 1.13 1.14s-.5 1.13-1.13 1.13s-1.14-.5-1.14-1.13a1.14 1.14 0 0 1 1.14-1.14"></path>
+                    </svg>
+                </span>
+                <span>거래처 관리</span>
+            </a>
+            <a data-route="users" data-allowed-roles="OWNER,ADMIN" hidden>
+                <span class="sidebar-nav-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="18" height="18" focusable="false">
+                        <path fill="currentColor" d="M3.5 7a5 5 0 1 1 10 0a5 5 0 0 1-10 0M5 14a5 5 0 0 0-5 5v2h17v-2a5 5 0 0 0-5-5zm19 7h-5v-2c0-1.959-.804-3.73-2.1-5H19a5 5 0 0 1 5 5zm-8.5-9a5 5 0 0 1-1.786-.329A6.97 6.97 0 0 0 15.5 7a6.97 6.97 0 0 0-1.787-4.671A5 5 0 1 1 15.5 12"></path>
+                    </svg>
+                </span>
+                <span>사용자 관리</span>
+            </a>
         </div>
     </nav>
 
@@ -39,17 +121,16 @@
             <strong data-session-name>확인 중</strong>
         </div>
         <div class="sidebar-account-actions" aria-label="계정 작업">
-            <button class="sidebar-icon-button" type="button" data-sidebar-settings aria-label="마이페이지로 이동" title="마이페이지">
+            <button class="sidebar-icon-button is-solid-icon" type="button" data-sidebar-settings aria-label="마이페이지로 이동" title="마이페이지">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z"></path>
-                    <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 1.55V21a2 2 0 0 1-4 0v-.05a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 0 1 0-4h.05a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 0 1 4 0v.05a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.15.48.62 1 1.55 1H21a2 2 0 0 1 0 4h-.05A1.7 1.7 0 0 0 19.4 15Z"></path>
+                    <g transform="translate(1.2 1.2) scale(0.9)">
+                        <path fill="currentColor" fill-rule="evenodd" d="M13.583 1.005a1 1 0 0 1 .9.912l.144 1.722v.007a.8.8 0 0 0 .156.42a.8.8 0 0 0 .297.246q.048.014.095.034a.85.85 0 0 0 .79-.07l.095-.072l1.3-1.136a1 1 0 0 1 1.366.047l2.117 2.122a1 1 0 0 1 .045 1.365l-1.139 1.303a.85.85 0 0 0-.139.881q.016.039.028.078c.06.123.15.23.26.31a.85.85 0 0 0 .436.159l1.738.126a1 1 0 0 1 .928.997v2.979a1 1 0 0 1-.925.997l-1.74.13l-.012.002a.85.85 0 0 0-.71.48a1 1 0 0 1-.033.097a.85.85 0 0 0 .139.88l1.138 1.304a1 1 0 0 1-.044 1.364l-2.105 2.109a1 1 0 0 1-1.364.048l-1.3-1.131l-.095-.07a.85.85 0 0 0-.79-.07q-.035.015-.072.026a.87.87 0 0 0-.477.71l-.126 1.76a1 1 0 0 1-.997.929H10.51a1 1 0 0 1-.996-.915l-.153-1.787v-.016a.89.89 0 0 0-.481-.726q-.035-.011-.067-.024a.85.85 0 0 0-.88.139L6.627 20.81a1 1 0 0 1-1.364-.046l-2.105-2.105a1 1 0 0 1-.046-1.365l1.139-1.304a.85.85 0 0 0 .139-.88l-.03-.083a.85.85 0 0 0-.694-.464h-.002l-1.74-.131A1 1 0 0 1 1 13.435v-2.979a1 1 0 0 1 .928-.997l1.736-.126a.85.85 0 0 0 .722-.546l.012-.032a.85.85 0 0 0-.142-.884l-1.135-1.3a1 1 0 0 1 .056-1.375L5.319 3.11a1 1 0 0 1 1.356-.036l1.3 1.135a.86.86 0 0 0 .884.143l.01-.004a.83.83 0 0 0 .517-.708l.126-1.712l.011-.097A1 1 0 0 1 10.51 1h2.978zM12 8a4 4 0 1 0 0 8a4 4 0 0 0 0-8" clip-rule="evenodd"></path>
+                    </g>
                 </svg>
             </button>
-            <button class="sidebar-icon-button" type="button" data-sidebar-logout aria-label="로그아웃" title="로그아웃">
+            <button class="sidebar-icon-button is-solid-icon" type="button" data-sidebar-logout aria-label="로그아웃" title="로그아웃">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                    <path d="M16 17l5-5-5-5"></path>
-                    <path d="M21 12H9"></path>
+                    <path fill="currentColor" fill-rule="evenodd" d="M6 2a3 3 0 0 0-3 3v14a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V5a3 3 0 0 0-3-3zm10.293 5.293a1 1 0 0 1 1.414 0l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414-1.414L18.586 13H10a1 1 0 1 1 0-2h8.586l-2.293-2.293a1 1 0 0 1 0-1.414" clip-rule="evenodd"></path>
                 </svg>
             </button>
         </div>

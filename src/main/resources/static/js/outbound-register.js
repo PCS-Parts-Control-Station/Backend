@@ -67,6 +67,21 @@
         loginCompanyCode: getCompanyCode(),
     });
 
+    const readOutboundPrefill = () => {
+        const params = new URLSearchParams(window.location.search);
+        const unitId = params.get("unitId");
+        if (!unitId) {
+            return null;
+        }
+
+        return {
+            unitId,
+            partId: params.get("partId"),
+            categoryId: params.get("categoryId"),
+            keyword: params.get("keyword"),
+        };
+    };
+
     const setCurrentRegisterStep = (step) => {
         const nextStep = String(step || "1");
         currentRegisterStep = nextStep;
@@ -102,6 +117,21 @@
 
     const updateCurrentRegisterStep = (preferredStep = null) => {
         setCurrentRegisterStep(preferredStep || resolveCurrentRegisterStep());
+    };
+
+    const focusPartnerSelection = () => {
+        updateCurrentRegisterStep("1");
+
+        window.requestAnimationFrame(() => {
+            const scrollTarget = openPartnerModalButton?.closest(".partner-picker-field") || openPartnerModalButton;
+            scrollTarget?.scrollIntoView({
+                block: "center",
+                behavior: "smooth",
+            });
+            if (openPartnerModalButton && !openPartnerModalButton.disabled) {
+                openPartnerModalButton.focus({ preventScroll: true });
+            }
+        });
     };
 
     const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (letter) => ({
@@ -514,7 +544,7 @@
         });
     };
 
-    const buildCandidateParams = (page = 0, size = PAGE_SIZE) => {
+    const buildCandidateParams = (page = 0, size = PAGE_SIZE, extraParams = {}) => {
         return window.PcsPagination.buildParams({
             page,
             size,
@@ -522,6 +552,7 @@
                 keyword: keywordInput?.value.trim(),
                 categoryId: categoryFilter?.value,
                 grade: gradeFilter?.value,
+                ...extraParams,
             },
         });
     };
@@ -538,7 +569,7 @@
             return;
         }
 
-        const params = buildCandidateParams(page);
+        const params = buildCandidateParams(page, PAGE_SIZE, options.extraParams || {});
 
         const preserveScroll = options.preserveScroll === true;
 
@@ -577,6 +608,41 @@
         }
 
         await execute();
+    };
+
+    const applyOutboundPrefill = async (prefill) => {
+        if (!prefill?.unitId) {
+            return false;
+        }
+
+        if (keywordInput) {
+            keywordInput.value = prefill.keyword || "";
+        }
+        if (categoryFilter && prefill.categoryId) {
+            categoryFilter.value = String(prefill.categoryId);
+            syncCategoryFilterLabel();
+        }
+
+        const extraParams = {};
+        if (prefill.partId) {
+            extraParams.partId = prefill.partId;
+        }
+
+        await loadCandidates(0, { extraParams });
+
+        const target = latestCandidates.find((candidate) => String(candidate.unitId) === String(prefill.unitId));
+        if (!target) {
+            setSubmitMessage("해당 관리번호를 출고 대상에서 찾지 못했습니다.", true);
+            updateCurrentRegisterStep("2");
+            return true;
+        }
+
+        selectedUnits.set(Number(target.unitId), target);
+        renderSelectedList();
+        syncCandidateSelectionState();
+        setSubmitMessage("출고할 관리번호가 선택되었습니다. 출고 거래처를 선택해 주세요.");
+        focusPartnerSelection();
+        return true;
     };
 
     const selectAllCandidates = async () => {
@@ -905,6 +971,7 @@
             setCandidateMessage("업체 주소가 올바르지 않습니다.");
             return;
         }
+        const prefill = readOutboundPrefill();
 
         try {
             if (window.PcsApi.validateWorkspacePublic) {
@@ -915,6 +982,10 @@
             }
             await Promise.all([loadPartners(), loadCategories()]);
             renderSelectedList();
+            if (prefill) {
+                await applyOutboundPrefill(prefill);
+                return;
+            }
             await loadCandidates(0, { initial: true });
             candidateSearchStarted = false;
             updateCurrentRegisterStep("1");

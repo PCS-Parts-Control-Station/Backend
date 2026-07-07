@@ -92,6 +92,7 @@ public interface InspectionMapper {
     List<SearchInspectionHistoryDocumentResponse> searchHistoryDocuments(
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,
+            @Param("documentId") Long documentId,
             @Param("partId") Long partId,
             @Param("inspectionType") InspectionType inspectionType,
             @Param("result") InspectionResult result,
@@ -118,6 +119,7 @@ public interface InspectionMapper {
     long countHistoryDocuments(
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,
+            @Param("documentId") Long documentId,
             @Param("partId") Long partId,
             @Param("inspectionType") InspectionType inspectionType,
             @Param("result") InspectionResult result,
@@ -142,6 +144,7 @@ public interface InspectionMapper {
     SearchInspectionHistoryDocumentSummaryResponse summarizeHistoryDocuments(
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,
+            @Param("documentId") Long documentId,
             @Param("partId") Long partId,
             @Param("inspectionType") InspectionType inspectionType,
             @Param("result") InspectionResult result,

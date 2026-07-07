@@ -17,11 +17,20 @@
         <if test="role != null">
           AND role = #{role}
         </if>
+        <if test="passwordStatus != null">
+          AND password_status = #{passwordStatus}
+        </if>
         <if test="keyword != null and keyword != ''">
           AND (
               name LIKE CONCAT('%', #{keyword}, '%')
               OR login_id LIKE CONCAT('%', #{keyword}, '%')
           )
+        </if>
+        <if test="createdFrom != null">
+          AND created_at <![CDATA[>=]]> #{createdFrom}
+        </if>
+        <if test="createdTo != null">
+          AND created_at <![CDATA[<]]> #{createdTo}
         </if>
     </sql>
 
@@ -60,6 +69,7 @@
             role,
             password_status,
             active,
+            created_at,
             updated_at
         FROM tb_member
         <include refid="memberSearchWhere" />
@@ -91,6 +101,7 @@
             role,
             password_status,
             active,
+            created_at,
             updated_at
         FROM tb_member
         WHERE company_id = #{companyId}
