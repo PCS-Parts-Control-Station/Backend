@@ -290,6 +290,12 @@
     stroke-linejoin: round;
 }
 
+.sidebar-icon-button.is-solid-icon svg,
+.sidebar-icon-button.is-solid-icon path {
+    fill: currentColor;
+    stroke: none;
+}
+
 .workspace-main {
     min-width: 0;
     padding: 32px;

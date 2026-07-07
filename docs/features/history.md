@@ -56,7 +56,7 @@ src/main/resources/static/js/history-inspection.js
 화면 기준:
 
 - 상단에는 기간, 구분, 상태, 검색어 필터를 배치한다.
-- 전표 목록은 전표번호, 구분, 거래처, 내용, 수량, 상태, 처리일을 비교할 수 있게 표시한다.
+- 전표 목록은 전표 번호, 구분, 거래처, 내용, 수량, 상태, 처리일을 비교할 수 있게 표시한다.
 - 전표 행 전체를 클릭하면 오른쪽 상세 슬라이드 패널을 연다.
 - 상세 슬라이드 패널은 배경 오버레이를 사용하지 않고, 열린 상태에서도 다른 전표 행을 바로 클릭할 수 있다.
 - 전표 행과 패널 내부를 제외한 영역을 클릭하면 상세 슬라이드 패널을 닫는다.
@@ -78,7 +78,7 @@ src/main/resources/static/js/history-inspection.js
 - 관리번호 행을 클릭하면 오른쪽 상세 슬라이드 패널에서 검수 이력 타임라인과 항목별 결과를 확인한다.
 - 관리번호 행과 패널 내부를 제외한 영역을 클릭하면 상세 슬라이드 패널을 닫는다.
 
-검수 이력 화면은 `GET /inspections/history-documents`, `GET /inspections?documentId=...`, `GET /inspections/{inspectionId}`를 사용한다. 별도 `/history/inspections` API를 호출하지 않는다.
+검수 이력 화면은 `GET /inspections/history-documents`, `GET /inspections?documentId=...`, `GET /inspections/{inspectionId}`를 사용한다. 다른 화면에서 `documentId`, `partId`, `unitId`, `inspectionId` query로 진입하면 전표, 품목 묶음, 관리번호, 상세 패널 선택 상태를 복원한다. 별도 `/history/inspections` API를 호출하지 않는다.
 
 ## 주요 규칙
 

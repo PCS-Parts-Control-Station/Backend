@@ -167,6 +167,7 @@ public class InspectionFacade {
             PcsPrincipal principal,
             String pathCompanyCode,
             String keyword,
+            Long documentId,
             Long partId,
             InspectionType inspectionType,
             InspectionResult result,
@@ -181,6 +182,7 @@ public class InspectionFacade {
         return inspectionService.searchHistoryDocuments(
                 checkedPrincipal.companyId(),
                 keyword,
+                documentId,
                 partId,
                 inspectionType,
                 result,

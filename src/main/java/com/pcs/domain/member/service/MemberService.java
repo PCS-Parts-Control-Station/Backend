@@ -20,6 +20,7 @@ import com.pcs.global.pagination.PageQuery;
 import com.pcs.global.util.TextNormalizer;
 import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.security.SecureRandom;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -72,6 +73,9 @@ public class MemberService {
             MemberRole actorRole,
             String keyword,
             MemberRole requestedRole,
+            PasswordStatus passwordStatus,
+            LocalDate createdFrom,
+            LocalDate createdTo,
             Integer page,
             Integer size,
             Integer limit
@@ -81,12 +85,17 @@ public class MemberService {
         validateRequestedRole(requestedRole, manageableRoles);
 
         String normalizedKeyword = TextNormalizer.optional(keyword);
+        LocalDateTime createdFromAt = toStartOfDay(createdFrom);
+        LocalDateTime createdToBefore = toExclusiveEnd(createdTo);
         PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
         long totalElements = memberMapper.countMembers(
                 companyId,
                 normalizedKeyword,
                 requestedRole,
-                manageableRoles
+                passwordStatus,
+                manageableRoles,
+                createdFromAt,
+                createdToBefore
         );
         List<SearchMemberResponse> items = totalElements == 0
                 ? List.of()
@@ -94,7 +103,10 @@ public class MemberService {
                         companyId,
                         normalizedKeyword,
                         requestedRole,
+                        passwordStatus,
                         manageableRoles,
+                        createdFromAt,
+                        createdToBefore,
                         pageQuery.size(),
                         pageQuery.offset()
                 );
@@ -102,7 +114,10 @@ public class MemberService {
                 companyId,
                 normalizedKeyword,
                 requestedRole,
-                manageableRoles
+                passwordStatus,
+                manageableRoles,
+                createdFromAt,
+                createdToBefore
         );
         return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, summary);
     }
@@ -256,6 +271,14 @@ public class MemberService {
 
     private void validateCompanyActive(Long companyId) {
         workspaceAccessValidator.validateCompanyActive(companyId);
+    }
+
+    private LocalDateTime toStartOfDay(LocalDate date) {
+        return date == null ? null : date.atStartOfDay();
+    }
+
+    private LocalDateTime toExclusiveEnd(LocalDate date) {
+        return date == null ? null : date.plusDays(1).atStartOfDay();
     }
 
     private String generateTemporaryPassword() {

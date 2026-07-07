@@ -1,10 +1,10 @@
 @layer page {
 .user-filter-form {
-    grid-template-columns: minmax(280px, 1fr) minmax(122px, 150px) 76px;
+    grid-template-columns: minmax(300px, 1fr) minmax(122px, 144px) minmax(136px, 156px) minmax(150px, 170px) minmax(150px, 170px) 76px;
 }
 
 .data-row.user-management-data-row {
-    grid-template-columns: minmax(180px, 1.45fr) 104px 104px 112px;
+    grid-template-columns: minmax(170px, 1.45fr) 96px 108px 104px 104px;
 }
 
 .data-row.user-management-data-row:not(.empty-data-row):not(.table-head) {
@@ -51,11 +51,17 @@
 }
 
 .user-role-cell,
-.user-account-status-cell,
-.user-password-status-cell {
+.user-password-status-cell,
+.user-date-cell {
     display: flex;
     align-items: center;
     min-width: 0;
+}
+
+.user-date-cell {
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
 }
 
 .confirm-summary .mono-value {
@@ -66,7 +72,21 @@
 
 @media (max-width: 1280px) {
 .has-collapsible-sidebar .user-filter-form {
-        grid-template-columns: minmax(0, 1fr) minmax(122px, 144px) 76px;
+        grid-template-columns: minmax(260px, 1fr) minmax(122px, 144px) minmax(136px, 156px) minmax(150px, 170px) minmax(150px, 170px) 76px;
+    }
+
+.has-collapsible-sidebar .user-filter-form label:first-child {
+        grid-column: auto;
+    }
+}
+
+@media (max-width: 1120px) {
+.has-collapsible-sidebar .user-filter-form {
+        grid-template-columns: minmax(122px, 144px) minmax(136px, 156px) minmax(150px, 170px) minmax(150px, 170px) 76px;
+    }
+
+.has-collapsible-sidebar .user-filter-form label:first-child {
+        grid-column: 1 / -1;
     }
 }
 
@@ -77,8 +97,8 @@
     }
 
 .user-role-cell,
-    .user-account-status-cell,
-    .user-password-status-cell {
+    .user-password-status-cell,
+    .user-date-cell {
         display: grid;
         gap: 5px;
     }

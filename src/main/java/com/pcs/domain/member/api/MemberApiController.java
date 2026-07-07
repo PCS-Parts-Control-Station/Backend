@@ -13,10 +13,12 @@ import com.pcs.domain.member.dto.response.StaffPermissionSettingsResponse;
 import com.pcs.domain.member.dto.response.TemporaryPasswordResponse;
 import com.pcs.domain.member.facade.MemberFacade;
 import com.pcs.domain.member.type.MemberRole;
+import com.pcs.domain.member.type.PasswordStatus;
 import com.pcs.global.dto.ApiResultDto;
 import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.security.PcsPrincipal;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -46,6 +48,9 @@ public class MemberApiController {
             @AuthenticationPrincipal PcsPrincipal principal,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) MemberRole role,
+            @RequestParam(required = false) PasswordStatus passwordStatus,
+            @RequestParam(required = false) LocalDate createdFrom,
+            @RequestParam(required = false) LocalDate createdTo,
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
             @RequestParam(required = false) Integer limit
@@ -55,6 +60,9 @@ public class MemberApiController {
                 companyCode,
                 keyword,
                 role,
+                passwordStatus,
+                createdFrom,
+                createdTo,
                 page,
                 size,
                 limit

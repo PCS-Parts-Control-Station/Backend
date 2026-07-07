@@ -1,1 +1,46 @@
-@layer page {}
+@layer page {
+.page-partners .management-data-table {
+    overflow-x: auto;
+}
+
+.page-partners .management-data-row {
+    grid-template-columns:
+        minmax(140px, 1fr)
+        58px
+        70px
+        96px
+        104px
+        minmax(130px, 0.9fr)
+        minmax(150px, 1fr)
+        84px;
+    min-width: 940px;
+    gap: 10px;
+}
+
+.page-partners .management-data-row > * {
+    min-width: 0;
+}
+
+.page-partners .management-data-row > span,
+.page-partners .management-data-row > strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.page-partners .management-data-row .badge {
+    justify-self: start;
+}
+
+@media (max-width: 840px) {
+    .page-partners .management-data-row {
+        min-width: 0;
+        grid-template-columns: 1fr;
+    }
+
+    .page-partners .management-data-row > span,
+    .page-partners .management-data-row > strong {
+        white-space: normal;
+    }
+}
+}

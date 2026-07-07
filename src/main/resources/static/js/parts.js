@@ -72,9 +72,17 @@
     };
     let activeSpecModalMode = "create";
     let activeCategoryPickerMode = "filter";
+    let isRestoringNavigationState = false;
 
     const getCompanyCode = window.PcsWorkspace.getCompanyCode;
     const numberText = window.PcsFormat.number;
+    const navigationState = window.PcsNavigationState?.createUrlStateController({
+        namespace: "parts",
+        managedKeys: ["keyword", "categoryId", "page", "partId"],
+        defaults: {
+            page: "0"
+        }
+    });
 
     const getCurrentStock = (part) => Number(part?.currentStockQuantity ?? part?.stockQuantity ?? 0);
 
@@ -153,6 +161,52 @@
         if (options.resetDetail !== false && (mode === "create" || mode === "edit") && previousValue !== nextValue) {
             resetDetailStateForCategory(mode, nextValue);
         }
+    };
+
+    const currentFilterState = () => ({
+        ...window.PcsNavigationState?.captureFormState?.(filterForm, {
+            fields: ["keyword", "categoryId"]
+        })
+    });
+
+    const syncNavigationState = (overrides = {}, options = {}) => {
+        if (!navigationState || isRestoringNavigationState) {
+            return;
+        }
+
+        const nextState = {
+            ...currentFilterState(),
+            page: String(currentPage),
+            partId: navigationState.read().partId || "",
+            ...overrides
+        };
+
+        navigationState.write(nextState, {
+            mode: options.mode || "replace",
+            captureScroll: options.captureScroll !== false
+        });
+    };
+
+    const readInitialNavigationState = () => navigationState?.read() || {};
+
+    const applyNavigationStateToFilters = () => {
+        const state = readInitialNavigationState();
+        const page = window.PcsNavigationState?.numberParam?.(state.page, 0) || 0;
+
+        isRestoringNavigationState = true;
+        try {
+            window.PcsNavigationState?.applyFormState?.(filterForm, state, {
+                fields: ["keyword", "categoryId"]
+            });
+            setCategoryValue("filter", state.categoryId || "", { resetDetail: false });
+        } finally {
+            isRestoringNavigationState = false;
+        }
+
+        return {
+            page,
+            partId: state.partId || ""
+        };
     };
 
     const matchesCategoryKeyword = (category, keyword) => {
@@ -322,6 +376,12 @@
         selectedPartId = null;
         setDrawerOpen(false);
         updateSelectedRow();
+        if (options.sync !== false) {
+            syncNavigationState({
+                page: String(currentPage),
+                partId: ""
+            });
+        }
         if (options.restoreFocus !== false && lastDrawerTrigger?.isConnected) {
             lastDrawerTrigger.focus({ preventScroll: true });
         }
@@ -476,11 +536,20 @@
         );
     };
 
-    const selectPart = async (partId, trigger = null) => {
+    const selectPart = async (partId, trigger = null, options = {}) => {
         selectedPartId = partId;
         openDrawer(trigger);
         const part = getSelectedPart();
         updateSelectedRow();
+        if (options.sync !== false) {
+            syncNavigationState({
+                page: String(currentPage),
+                partId: String(partId || "")
+            }, {
+                mode: options.mode || "replace",
+                captureScroll: options.captureScroll !== false
+            });
+        }
         if (part) {
             renderDetail(part);
             setPanelMode("detail");
@@ -501,6 +570,12 @@
     const showCreatePanel = (trigger = null, options = {}) => {
         selectedPartId = null;
         updateSelectedRow();
+        if (options.sync !== false) {
+            syncNavigationState({
+                page: String(currentPage),
+                partId: ""
+            });
+        }
         createForm?.reset();
         setCategoryValue("create", "", { resetDetail: false });
         detailStateByMode.create = createEmptyDetailState();
@@ -531,7 +606,7 @@
 
         if (!items.length) {
             setEmptyMessage("조회된 품목이 없습니다.");
-            showCreatePanel(null, { open: false });
+            showCreatePanel(null, { open: false, sync: false });
             return;
         }
 
@@ -569,8 +644,29 @@
             renderDetail(getSelectedPart());
             updateSelectedRow();
         } else {
-            showCreatePanel(null, { open: false });
+            showCreatePanel(null, { open: false, sync: false });
         }
+    };
+
+    const findPartRow = (partId) => {
+        if (!partId || !table) {
+            return null;
+        }
+        return Array.from(table.querySelectorAll("[data-part-id]"))
+                .find((row) => String(row.dataset.partId || "") === String(partId)) || null;
+    };
+
+    const openPartRow = async (partId, options = {}) => {
+        const row = findPartRow(partId);
+        if (!row) {
+            return false;
+        }
+
+        await selectPart(partId, row, {
+            sync: options.sync !== false,
+            captureScroll: options.captureScroll !== false
+        });
+        return true;
     };
 
     const updatePagination = (pageData) => {
@@ -865,9 +961,12 @@
         }
 
         const preserveScroll = options.preserveScroll === true;
+        const restorePartId = normalizeString(options.restorePartId);
         if (options.keepSelection !== true) {
-            selectedPartId = null;
-            closeDrawer({ restoreFocus: false });
+            selectedPartId = restorePartId || null;
+            if (!restorePartId) {
+                closeDrawer({ restoreFocus: false, sync: false });
+            }
         }
         const fetchPage = async (targetPage) => {
             const params = buildParams(targetPage);
@@ -897,6 +996,26 @@
             renderRows(pageData.content);
             updatePagination(pageData);
             renderSummary(pageData);
+
+            if (restorePartId) {
+                const restored = await openPartRow(restorePartId, {
+                    sync: false,
+                    captureScroll: false
+                });
+                if (!restored) {
+                    selectedPartId = null;
+                    closeDrawer({ restoreFocus: false, sync: false });
+                }
+            }
+            if (options.updateNavigation !== false) {
+                syncNavigationState({
+                    page: String(currentPage),
+                    partId: selectedPartId ? String(selectedPartId) : ""
+                });
+            }
+            if (options.restoreScroll === true) {
+                navigationState?.restoreScroll();
+            }
         };
 
         const execute = async () => {
@@ -915,7 +1034,7 @@
                     content: [],
                     totalElements: 0
                 });
-                showCreatePanel(null, { open: false });
+                showCreatePanel(null, { open: false, sync: false });
             } finally {
                 setLoading(false);
             }
@@ -943,8 +1062,13 @@
                     return;
                 }
             }
+            const restored = applyNavigationStateToFilters();
             await loadCategoryOptions(companyCode);
-            await loadParts(0);
+            await loadParts(restored.page, {
+                updateNavigation: false,
+                restorePartId: restored.partId,
+                restoreScroll: true
+            });
             updateDetailSummary("create");
             updateDetailSummary("edit");
         } catch (error) {
@@ -1148,6 +1272,17 @@
     nextButton.addEventListener("click", () => {
         loadParts(currentPage + 1, { preserveScroll: true });
     });
+
+    window.addEventListener("popstate", () => {
+        const restored = applyNavigationStateToFilters();
+        loadParts(restored.page, {
+            updateNavigation: false,
+            restorePartId: restored.partId,
+            restoreScroll: true
+        });
+    });
+
+    navigationState?.bindScrollCapture();
 
     initializePage();
 })();

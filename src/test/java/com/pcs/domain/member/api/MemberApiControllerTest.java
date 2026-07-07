@@ -36,6 +36,7 @@ import com.pcs.global.error.GlobalExceptionHandler;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.security.PcsPrincipal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
@@ -87,12 +88,26 @@ class MemberApiControllerTest {
     void searchMembers_returnsPagedMemberList() throws Exception {
         SearchMemberResponse member = member(2L, "staff01", MemberRole.STAFF);
         SearchMemberSummaryResponse summary = new SearchMemberSummaryResponse(1, 0, 1);
-        when(memberFacade.searchMembers(principal, "acme", "staff", MemberRole.STAFF, 0, 10, null))
+        when(memberFacade.searchMembers(
+                principal,
+                "acme",
+                "staff",
+                MemberRole.STAFF,
+                PasswordStatus.TEMPORARY,
+                LocalDate.of(2026, 5, 1),
+                LocalDate.of(2026, 5, 31),
+                0,
+                10,
+                null
+        ))
                 .thenReturn(PageResultDto.of(List.of(member), 0, 10, 1, summary));
 
         mockMvc.perform(get("/api/workspaces/acme/users")
                         .param("keyword", "staff")
                         .param("role", "STAFF")
+                        .param("passwordStatus", "TEMPORARY")
+                        .param("createdFrom", "2026-05-01")
+                        .param("createdTo", "2026-05-31")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
@@ -243,6 +258,7 @@ class MemberApiControllerTest {
                 role,
                 PasswordStatus.ACTIVE,
                 true,
+                LocalDateTime.of(2026, 5, 1, 9, 0),
                 LocalDateTime.of(2026, 6, 1, 10, 0)
         );
     }

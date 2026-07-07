@@ -428,7 +428,7 @@
             row.setAttribute("tabindex", "0");
             row.dataset.inspectionDocumentId = String(item.documentId);
             row.innerHTML = `
-                <strong role="cell" data-label="전표번호">${escapeHtml(item.documentNo)}</strong>
+                <strong role="cell" data-label="전표 번호">${escapeHtml(item.documentNo)}</strong>
                 <span class="inspection-stack-cell" role="cell" data-label="거래처">
                     <strong>${escapeHtml(item.partnerName)}</strong>
                     <small>${escapeHtml(item.summary)}</small>
@@ -1250,7 +1250,7 @@
                     <strong>${escapeHtml(history.internalSerialNo)}</strong>
                     <small>${escapeHtml(history.partName)} ${escapeHtml(history.modelName)}</small>
                 </span>
-                <span role="cell" data-label="전표번호">${escapeHtml(history.documentNo || "-")}</span>
+                <span role="cell" data-label="전표 번호">${escapeHtml(history.documentNo || "-")}</span>
                 <span role="cell" data-label="유형"><em class="badge ${typeBadgeClass(history.inspectionType)}">${escapeHtml(LABELS.inspectionType[history.inspectionType] || history.inspectionType)}</em></span>
                 <span role="cell" data-label="등급"><em class="badge ${gradeBadgeClass(history.grade)}">${escapeHtml(LABELS.grade[history.grade] || history.grade)}</em></span>
                 <span role="cell" data-label="처리자">${escapeHtml(history.inspectedByName || "-")}</span>

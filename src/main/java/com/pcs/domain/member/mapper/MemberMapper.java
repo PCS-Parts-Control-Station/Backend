@@ -5,6 +5,7 @@ import com.pcs.domain.member.dto.response.SearchMemberSummaryResponse;
 import com.pcs.domain.member.entity.Member;
 import com.pcs.domain.member.entity.MemberAccount;
 import com.pcs.domain.member.type.MemberRole;
+import com.pcs.domain.member.type.PasswordStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
@@ -19,7 +20,10 @@ public interface MemberMapper {
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,
             @Param("role") MemberRole role,
+            @Param("passwordStatus") PasswordStatus passwordStatus,
             @Param("manageableRoles") List<MemberRole> manageableRoles,
+            @Param("createdFrom") LocalDateTime createdFrom,
+            @Param("createdTo") LocalDateTime createdTo,
             @Param("size") int size,
             @Param("offset") int offset
     );
@@ -28,14 +32,20 @@ public interface MemberMapper {
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,
             @Param("role") MemberRole role,
-            @Param("manageableRoles") List<MemberRole> manageableRoles
+            @Param("passwordStatus") PasswordStatus passwordStatus,
+            @Param("manageableRoles") List<MemberRole> manageableRoles,
+            @Param("createdFrom") LocalDateTime createdFrom,
+            @Param("createdTo") LocalDateTime createdTo
     );
 
     SearchMemberSummaryResponse summarizeMembers(
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,
             @Param("role") MemberRole role,
-            @Param("manageableRoles") List<MemberRole> manageableRoles
+            @Param("passwordStatus") PasswordStatus passwordStatus,
+            @Param("manageableRoles") List<MemberRole> manageableRoles,
+            @Param("createdFrom") LocalDateTime createdFrom,
+            @Param("createdTo") LocalDateTime createdTo
     );
 
     SearchMemberResponse findResponseById(

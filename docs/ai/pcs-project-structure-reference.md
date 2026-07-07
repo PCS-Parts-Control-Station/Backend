@@ -129,12 +129,14 @@ pcs-api.js
 pcs-pagination.js
 pcs-ui.js
 pcs-common.js
+pcs-navigation-state.js
 ```
 
 - 공통 JS 사용 기준은 `docs/ai/pcs-frontend-js-rules.md`를 따른다.
 - 인증 API 호출 방식은 `docs/ai/pcs-auth-client-rules.md`를 따른다.
 - 페이징 목록 화면은 `docs/ai/pcs-pagination-rules.md`를 따른다.
 - 회사 코드 추출, workspace 링크 갱신, 날짜/숫자 포맷, 토스트 래핑, 폼 저장중 처리, 공통 테이블 빈 행 처리는 `pcs-common.js`를 우선 사용한다.
+- 목록 화면의 검색 조건, 페이지, 선택된 상세 행, 스크롤 위치 복원은 `pcs-navigation-state.js`를 우선 사용한다. 사용 예시는 `docs/ai/pcs-navigation-state-guide.md`를 참고한다.
 
 입고 화면 JS:
 

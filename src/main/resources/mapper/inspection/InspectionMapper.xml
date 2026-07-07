@@ -443,6 +443,9 @@
           AND m.movement_type = 'INBOUND'
           AND m.movement_status = 'COMPLETED'
           AND m.canceled_movement_id IS NULL
+        <if test="documentId != null">
+          AND d.document_id = #{documentId}
+        </if>
         <if test="partId != null">
           AND u.part_id = #{partId}
         </if>

@@ -93,6 +93,25 @@
 
     const apiBase = () => `/api/workspaces/${encodeURIComponent(getCompanyCode())}`;
 
+    const readDeepLinkTarget = () => {
+        const params = new URLSearchParams(window.location.search);
+        return {
+            documentId: params.get("documentId") || "",
+            partId: params.get("partId") || "",
+            unitId: params.get("unitId") || "",
+            inspectionId: params.get("inspectionId") || ""
+        };
+    };
+
+    const hasDeepLinkTarget = (target) => {
+        return Boolean(target?.documentId || target?.partId || target?.unitId || target?.inspectionId);
+    };
+
+    const sameId = (left, right) => {
+        return left !== null && left !== undefined && right !== null && right !== undefined
+                && String(left) === String(right);
+    };
+
     const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (letter) => ({
         "&": "&amp;",
         "<": "&lt;",
@@ -196,6 +215,10 @@
             unitIds: new Set(),
             parts: new Map()
         }));
+    };
+
+    const findDocumentGroupById = (groups, documentId) => {
+        return groups.find((group) => sameId(group.documentId, documentId)) || null;
     };
 
     const getLatestInspection = (items) => {
@@ -558,7 +581,7 @@
             row.setAttribute("aria-selected", "false");
             row.dataset.historyDocumentKey = group.key;
             row.innerHTML = `
-                <code role="cell" data-label="전표번호">${escapeHtml(group.documentNo)}</code>
+                <code role="cell" data-label="전표 번호">${escapeHtml(group.documentNo)}</code>
                 <span class="history-stack-cell" role="cell" data-label="품목 요약">
                     <strong>${escapeHtml(summarizeParts(group))}</strong>
                     <small>관리번호 ${numberText(group.unitCount ?? group.unitIds.size)}개</small>
@@ -725,7 +748,7 @@
                             <dd>${escapeHtml(formatDate(detail.inspectedAt))}</dd>
                         </div>
                         <div>
-                            <dt>현재 판매상태</dt>
+                            <dt>현재 판매 상태</dt>
                             <dd>${escapeHtml(resolveCurrentSalesStatus(detail.unitStatus, detail.salesStatus))}</dd>
                         </div>
                     </dl>
@@ -780,8 +803,8 @@
         return window.PcsPagination.normalizePageData(data, size);
     };
 
-    const fetchHistoryDocumentPage = async (page, size) => {
-        const params = buildParams(page, size);
+    const fetchHistoryDocumentPage = async (page, size, extraParams = {}, options = {}) => {
+        const params = buildParams(page, size, extraParams, options);
         const data = await window.PcsApi.getData(`${apiBase()}/inspections/history-documents?${params.toString()}`, {
             authRedirect: true,
             loginCompanyCode: getCompanyCode()
@@ -796,6 +819,8 @@
         }
 
         const preserveScroll = options.preserveScroll === true;
+        const restoreTarget = options.restoreTarget || null;
+        const restoreDocumentId = restoreTarget?.documentId || "";
         const task = async () => {
             currentPage = page;
             setLoading(true);
@@ -807,9 +832,11 @@
                 setTableMessage(documentTable, "이력을 불러오는 중입니다.");
             }
 
-            let pageData = await fetchHistoryDocumentPage(page, SOURCE_PAGE_SIZE);
+            const documentExtraParams = restoreDocumentId ? {documentId: restoreDocumentId} : {};
+            const documentFetchOptions = restoreDocumentId ? {includeFilter: false} : {};
+            let pageData = await fetchHistoryDocumentPage(page, SOURCE_PAGE_SIZE, documentExtraParams, documentFetchOptions);
             if (pageData.content.length === 0 && pageData.totalElements > 0 && pageData.page > 0) {
-                pageData = await fetchHistoryDocumentPage(pageData.page - 1, SOURCE_PAGE_SIZE);
+                pageData = await fetchHistoryDocumentPage(pageData.page - 1, SOURCE_PAGE_SIZE, documentExtraParams, documentFetchOptions);
             }
             currentPage = pageData.page;
 
@@ -817,6 +844,13 @@
             currentDocumentGroups = groups;
             renderDocumentRows(groups, pageData);
             updatePagination(pageData);
+
+            if (restoreDocumentId) {
+                const targetGroup = findDocumentGroupById(groups, restoreDocumentId);
+                if (targetGroup) {
+                    await loadDocumentHistories(targetGroup, {restoreTarget});
+                }
+            }
         };
 
         const execute = async () => {
@@ -845,7 +879,7 @@
         await execute();
     };
 
-    const loadDocumentHistories = async (group) => {
+    const loadDocumentHistories = async (group, options = {}) => {
         if (!group?.documentId) {
             selectedDocument = group || null;
             updateSelectedDocumentRow();
@@ -893,6 +927,7 @@
 
         try {
             const rows = [];
+            const restoreTarget = options.restoreTarget || null;
             let page = 0;
             let pageData;
             do {
@@ -900,6 +935,23 @@
                 rows.push(...pageData.content);
                 page += 1;
             } while (pageData.hasNext && page < MAX_DETAIL_PAGES);
+
+            if (restoreTarget?.unitId && !rows.some((item) => sameId(item.unitId, restoreTarget.unitId))) {
+                const unitPageData = await fetchHistoryPage(0, DETAIL_PAGE_SIZE, {
+                    documentId: group.documentId,
+                    unitId: restoreTarget.unitId
+                }, {includeFilter: false});
+                const knownInspectionIds = new Set(rows.map((item) => String(item.inspectionId || "")));
+                unitPageData.content.forEach((item) => {
+                    const inspectionKey = String(item.inspectionId || "");
+                    if (!inspectionKey || !knownInspectionIds.has(inspectionKey)) {
+                        rows.push(item);
+                        if (inspectionKey) {
+                            knownInspectionIds.add(inspectionKey);
+                        }
+                    }
+                });
+            }
 
             selectedDocumentRows = rows;
             if (documentScope) {
@@ -919,6 +971,9 @@
                 unitRefine.hidden = false;
             }
             renderUnitRows(rows);
+            if (hasDeepLinkTarget(restoreTarget)) {
+                await restoreDeepLinkedSelection(restoreTarget);
+            }
         } catch (error) {
             if (documentScope) {
                 documentScope.textContent = "";
@@ -942,6 +997,85 @@
         } catch (error) {
             resetDetailPanelContent(error?.message || "상세 이력을 불러오지 못했습니다.");
         }
+    };
+
+    const restoreDeepLinkedSelection = async (target) => {
+        if (!hasDeepLinkTarget(target) || !selectedDocumentRows.length) {
+            return;
+        }
+
+        let unitKey = "";
+        if (target.partId) {
+            const partGroupKey = `id:${target.partId}`;
+            if (selectedDocumentRows.some((item) => getPartGroupKey(item) === partGroupKey)) {
+                selectedPartGroup = partGroupKey;
+            }
+        }
+
+        if (target.unitId) {
+            const unitRow = selectedDocumentRows.find((item) => sameId(item.unitId, target.unitId));
+            if (unitRow) {
+                selectedPartGroup = getPartGroupKey(unitRow);
+                unitKey = getUnitKey(unitRow);
+            } else {
+                unitKey = `id:${target.unitId}`;
+            }
+        }
+
+        if (!unitKey && target.inspectionId) {
+            const inspectionRow = selectedDocumentRows.find((item) => sameId(item.inspectionId, target.inspectionId));
+            if (inspectionRow) {
+                selectedPartGroup = getPartGroupKey(inspectionRow);
+                unitKey = getUnitKey(inspectionRow);
+            }
+        }
+
+        selectedManagementNumber = null;
+        unitCurrentPage = 0;
+        activeHistoryFilter = "ALL";
+        activeResultFilter = "";
+        activeGradeFilter = "";
+        if (resultFilterSelect) {
+            resultFilterSelect.value = "";
+        }
+        if (gradeFilterSelect) {
+            gradeFilterSelect.value = "";
+        }
+        updateUnitFilterControls();
+        renderPartGroups(selectedDocumentRows);
+        updateUnitFilterCounts(getRowsForSelectedPart());
+
+        if (unitKey) {
+            const groups = createUnitHistoryGroups(selectedDocumentRows);
+            const targetIndex = groups.findIndex((group) => group.key === unitKey);
+            if (targetIndex >= 0) {
+                unitCurrentPage = Math.floor(targetIndex / UNIT_PAGE_SIZE);
+            }
+        }
+
+        renderUnitRows(selectedDocumentRows);
+
+        if (!unitKey) {
+            return;
+        }
+
+        const unitRows = selectedDocumentRows.filter((item) => getUnitKey(item) === unitKey);
+        const inspectionId = target.inspectionId || getLatestInspection(unitRows)?.inspectionId || "";
+        if (!inspectionId) {
+            return;
+        }
+
+        const row = Array.from(unitTable?.querySelectorAll("[data-history-unit-key]") || [])
+                .find((candidate) => candidate.dataset.historyUnitKey === unitKey) || null;
+        selectedManagementNumber = {
+            key: unitKey,
+            inspectionId: String(inspectionId)
+        };
+        updateSelectedManagementRow();
+        if (row) {
+            row.scrollIntoView({block: "center", behavior: "auto"});
+        }
+        await loadHistoryDetail(inspectionId, row);
     };
 
     const clearSelectedDocument = () => {
@@ -987,7 +1121,8 @@
             filterForm.elements.dateFrom.value = formatLocalDate(start);
             filterForm.elements.dateTo.value = formatLocalDate(end);
 
-            await loadDocumentGroups(0);
+            const deepLinkTarget = readDeepLinkTarget();
+            await loadDocumentGroups(0, hasDeepLinkTarget(deepLinkTarget) ? {restoreTarget: deepLinkTarget} : {});
         } catch (error) {
             setTableMessage(documentTable, error?.message || "업체 주소를 확인할 수 없습니다.");
         }
