@@ -105,22 +105,21 @@ src/main/resources/static/js/inbound-register.js
 - 품목 분류는 배지보다 일반 텍스트에 가깝게 표시해 목록 가독성을 우선한다.
 - 품목 추가 후에는 선택한 품목, 수량, 품목 사유 입력 상태를 초기화한다.
 
-## 입고/출고 화면
+## 전표 통합 조회 화면
 
 ```text
-src/main/resources/static/inbound.html
-src/main/resources/static/js/inbound.js
-src/main/resources/static/outbound.html
-src/main/resources/static/js/outbound.js
+src/main/resources/static/documents.html
+src/main/resources/static/css/pages/documents.css
+src/main/resources/static/js/documents.js
 ```
 
-입고와 출고는 전표 조회 화면이다. 오른쪽 업무 흐름 보조 패널을 기본으로 두지 않고, 전표 목록을 본문 전체 너비로 보여준다.
+전표 통합 조회는 입고 전표와 출고 전표를 한 화면에서 조회하고 취소하는 관리 화면이다. 기존 `/w/{companyCode}/inbound`, `/w/{companyCode}/outbound` 경로는 전표 통합 조회로 이동하며, `documentType` 조건을 붙여 각각 입고 또는 출고 전표를 먼저 보여준다.
 
 화면 기준:
 
 - 상단에는 검색, 필터, 요약 정보를 간결하게 배치한다.
-- 입고의 거래처 조건은 검색 모달에서 선택한다.
-- 전표 목록은 전표 번호, 거래처, 처리일, 수량, 상태를 한 행에서 비교할 수 있게 표시한다.
+- 거래처 조건은 검색 모달에서 선택한다.
+- 전표 목록은 구분, 전표번호, 거래처/내용, 수량, 상태, 처리일을 한 행에서 비교할 수 있게 표시한다.
 - 전표 행 전체를 클릭해 상세를 연다.
 - 선택된 전표 행은 배경색과 왼쪽 강조선으로 구분한다.
 - 전표 상세는 오른쪽 논블로킹 슬라이드 패널로 연다.
@@ -128,7 +127,7 @@ src/main/resources/static/js/outbound.js
 - 상세 슬라이드가 열린 상태에서도 다른 전표 행을 바로 클릭할 수 있고, 이때 패널 내용만 교체한다.
 - 전표 행과 패널 내부를 제외한 영역을 클릭하면 패널을 닫는다.
 - 닫기는 `닫기` 버튼, `Escape` 키, 오른쪽 패널 밖 클릭을 지원한다.
-- 취소 처리는 상세 패널에서 취소 가능 여부를 보여준 뒤, 확인 모달에서 최종 실행한다.
+- 취소 처리는 상세 패널의 하단 고정 버튼에서 시작하고, 확인 모달에서 최종 실행한다.
 
 입고/출고 전표 상세는 품목별 상세 행을 길게 펼치기보다 품목별 수량 요약을 우선 보여준다. 관리번호 전체 목록은 상세 조회나 확장 영역에서 확인한다.
 

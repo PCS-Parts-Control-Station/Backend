@@ -20,7 +20,7 @@
         "outbound/new": "STAFF_OUTBOUND",
         "inspection/templates": "STAFF_INSPECTION"
     };
-    const STAFF_READ_OPEN_ROUTES = new Set(["parts", "categories", "partners"]);
+    const STAFF_READ_OPEN_ROUTES = new Set(["part-units", "parts", "categories", "partners"]);
 
     const getAllowedRoles = (element) => {
         return String(element.dataset.allowedRoles || "")
