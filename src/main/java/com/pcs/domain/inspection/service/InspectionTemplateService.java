@@ -3,6 +3,8 @@ package com.pcs.domain.inspection.service;
 import com.pcs.domain.inspection.dto.request.CreateInspectionTemplateItemRequest;
 import com.pcs.domain.inspection.dto.request.CreateInspectionTemplateOptionRequest;
 import com.pcs.domain.inspection.dto.request.CreateInspectionTemplateRequest;
+import com.pcs.domain.inspection.dto.request.SaveInspectionTemplateItemRequest;
+import com.pcs.domain.inspection.dto.request.SaveInspectionTemplateOptionRequest;
 import com.pcs.domain.inspection.dto.request.UpdateInspectionTemplateItemRequest;
 import com.pcs.domain.inspection.dto.request.UpdateInspectionTemplateItemSortOrderRequest;
 import com.pcs.domain.inspection.dto.request.UpdateInspectionTemplateOptionRequest;
@@ -28,12 +30,13 @@ import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.pagination.PageQuery;
 import com.pcs.global.util.TextNormalizer;
 import com.pcs.global.workspace.WorkspaceAccessValidator;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.IntStream;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -117,6 +120,7 @@ public class InspectionTemplateService {
                 memberId
         );
         inspectionTemplateMapper.insertTemplate(template);
+        saveTemplateItems(companyId, template.getTemplateId(), request.items());
         return getTemplate(companyId, template.getTemplateId());
     }
 
@@ -136,6 +140,7 @@ public class InspectionTemplateService {
         template.setVersion(version);
         template.setActive(request.active() == null || request.active());
         inspectionTemplateMapper.updateTemplate(template);
+        saveTemplateItems(companyId, templateId, request.items());
         return getTemplate(companyId, templateId);
     }
 
@@ -280,6 +285,175 @@ public class InspectionTemplateService {
         inspectionTemplateMapper.updateOptionSortOrders(itemId, toSortOrderUpdates(request.orderedOptionIds()));
         inspectionTemplateMapper.touchTemplate(templateId);
         return getTemplate(companyId, templateId);
+    }
+
+    private void saveTemplateItems(
+            Long companyId,
+            Long templateId,
+            List<SaveInspectionTemplateItemRequest> itemRequests
+    ) {
+        if (itemRequests == null || itemRequests.isEmpty()) {
+            return;
+        }
+
+        Map<Long, InspectionTemplateItem> existingItems = inspectionTemplateMapper.findItemsByTemplateId(templateId)
+                .stream()
+                .collect(Collectors.toMap(InspectionTemplateItem::getItemId, (item) -> item));
+        validateBatchItemNames(existingItems, itemRequests);
+
+        Map<InspectionItemGroup, Integer> groupIndexes = new EnumMap<>(InspectionItemGroup.class);
+        for (SaveInspectionTemplateItemRequest request : itemRequests) {
+            InspectionItemGroup itemGroup = request.itemGroup();
+            InspectionInputType inputType = request.inputType();
+            if (itemGroup == null || inputType == null) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "검수 항목 구분과 입력 방식이 필요합니다.");
+            }
+
+            int groupIndex = groupIndexes.merge(itemGroup, 1, Integer::sum);
+            int fallbackSortOrder = groupIndex * SORT_ORDER_STEP;
+            String itemName = TextNormalizer.required(request.itemName());
+
+            InspectionTemplateItem item;
+            if (request.itemId() == null) {
+                item = new InspectionTemplateItem(
+                        templateId,
+                        itemGroup,
+                        itemName,
+                        inputType,
+                        request.required() != null && request.required(),
+                        normalizeSortOrder(request.sortOrder(), fallbackSortOrder),
+                        request.gradeImpact() == null ? GradeImpact.LOW : request.gradeImpact(),
+                        request.failPolicy() == null ? InspectionFailPolicy.NONE : request.failPolicy()
+                );
+                item.setActive(request.active() == null || request.active());
+                inspectionTemplateMapper.insertItem(item);
+            } else {
+                item = existingItems.get(request.itemId());
+                if (item == null) {
+                    throw new BusinessException(ErrorCode.INSPECTION_TEMPLATE_ITEM_NOT_FOUND);
+                }
+                item.setItemGroup(itemGroup);
+                item.setItemName(itemName);
+                item.setInputType(inputType);
+                item.setRequired(request.required() != null && request.required());
+                item.setSortOrder(normalizeSortOrder(request.sortOrder(), fallbackSortOrder));
+                item.setGradeImpact(request.gradeImpact() == null ? GradeImpact.LOW : request.gradeImpact());
+                item.setFailPolicy(request.failPolicy() == null ? InspectionFailPolicy.NONE : request.failPolicy());
+                item.setActive(request.active() == null || request.active());
+                inspectionTemplateMapper.updateItem(item);
+            }
+
+            if (inputType == InspectionInputType.SELECT) {
+                saveTemplateOptions(companyId, templateId, item.getItemId(), request.options());
+            } else {
+                inspectionTemplateMapper.deactivateOptionsByItemId(item.getItemId());
+            }
+        }
+
+        inspectionTemplateMapper.touchTemplate(templateId);
+    }
+
+    private void saveTemplateOptions(
+            Long companyId,
+            Long templateId,
+            Long itemId,
+            List<SaveInspectionTemplateOptionRequest> optionRequests
+    ) {
+        if (optionRequests == null) {
+            return;
+        }
+
+        Map<Long, InspectionTemplateOptionResponse> existingOptions = inspectionTemplateMapper.findOptionsByTemplateId(templateId)
+                .stream()
+                .filter((option) -> option.itemId().equals(itemId))
+                .collect(Collectors.toMap(InspectionTemplateOptionResponse::optionId, (option) -> option));
+        validateBatchOptionNames(existingOptions, optionRequests);
+
+        for (int index = 0; index < optionRequests.size(); index++) {
+            SaveInspectionTemplateOptionRequest request = optionRequests.get(index);
+            String optionLabel = TextNormalizer.required(request.optionLabel());
+            String optionValue = normalizeOptionValue(request.optionValue(), optionLabel);
+            int sortOrder = normalizeSortOrder(request.sortOrder(), (index + 1) * SORT_ORDER_STEP);
+
+            if (request.optionId() == null) {
+                InspectionTemplateItemOption option = new InspectionTemplateItemOption(
+                        itemId,
+                        optionLabel,
+                        optionValue,
+                        sortOrder
+                );
+                option.setActive(request.active() == null || request.active());
+                inspectionTemplateMapper.insertOption(option);
+                continue;
+            }
+
+            if (!existingOptions.containsKey(request.optionId())) {
+                throw new BusinessException(ErrorCode.INSPECTION_TEMPLATE_OPTION_NOT_FOUND);
+            }
+            InspectionTemplateItemOption option = findOptionOrThrow(companyId, templateId, itemId, request.optionId());
+            option.setOptionLabel(optionLabel);
+            option.setOptionValue(optionValue);
+            option.setSortOrder(sortOrder);
+            option.setActive(request.active() == null || request.active());
+            inspectionTemplateMapper.updateOption(option);
+        }
+    }
+
+    private void validateBatchItemNames(
+            Map<Long, InspectionTemplateItem> existingItems,
+            List<SaveInspectionTemplateItemRequest> itemRequests
+    ) {
+        Set<Long> requestedIds = new HashSet<>();
+        Set<String> itemNames = new HashSet<>();
+
+        for (SaveInspectionTemplateItemRequest request : itemRequests) {
+            if (request.itemId() != null && !requestedIds.add(request.itemId())) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "검수 항목 ID가 중복되었습니다.");
+            }
+        }
+
+        for (InspectionTemplateItem item : existingItems.values()) {
+            if (!requestedIds.contains(item.getItemId())) {
+                itemNames.add(TextNormalizer.required(item.getItemName()));
+            }
+        }
+
+        for (SaveInspectionTemplateItemRequest request : itemRequests) {
+            String itemName = TextNormalizer.required(request.itemName());
+            if (!itemNames.add(itemName)) {
+                throw new BusinessException(ErrorCode.INSPECTION_TEMPLATE_ITEM_DUPLICATED);
+            }
+        }
+    }
+
+    private void validateBatchOptionNames(
+            Map<Long, InspectionTemplateOptionResponse> existingOptions,
+            List<SaveInspectionTemplateOptionRequest> optionRequests
+    ) {
+        Set<Long> requestedIds = new HashSet<>();
+        Set<String> optionLabels = new HashSet<>();
+        Set<String> optionValues = new HashSet<>();
+
+        for (SaveInspectionTemplateOptionRequest request : optionRequests) {
+            if (request.optionId() != null && !requestedIds.add(request.optionId())) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "검수 선택지 ID가 중복되었습니다.");
+            }
+        }
+
+        for (InspectionTemplateOptionResponse option : existingOptions.values()) {
+            if (!requestedIds.contains(option.optionId())) {
+                optionLabels.add(TextNormalizer.required(option.optionLabel()));
+                optionValues.add(normalizeOptionValue(option.optionValue(), option.optionLabel()));
+            }
+        }
+
+        for (SaveInspectionTemplateOptionRequest request : optionRequests) {
+            String optionLabel = TextNormalizer.required(request.optionLabel());
+            String optionValue = normalizeOptionValue(request.optionValue(), optionLabel);
+            if (!optionLabels.add(optionLabel) || !optionValues.add(optionValue)) {
+                throw new BusinessException(ErrorCode.INSPECTION_TEMPLATE_OPTION_DUPLICATED);
+            }
+        }
     }
 
     private InspectionTemplateDetailResponse buildDetail(Long companyId, SearchInspectionTemplateResponse template) {

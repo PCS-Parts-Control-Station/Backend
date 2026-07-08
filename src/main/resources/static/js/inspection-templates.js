@@ -74,6 +74,11 @@
     const builderEmpty = document.querySelector("[data-template-builder-empty]");
     const builderBody = document.querySelector("[data-template-builder-body]");
     const builderDescription = document.querySelector("[data-template-builder-description]");
+    const builderSection = document.querySelector("[data-template-builder]");
+    const builderSlots = {
+        create: document.querySelector("[data-template-builder-slot='create']"),
+        edit: document.querySelector("[data-template-builder-slot='edit']")
+    };
     const itemList = document.querySelector("[data-template-item-list]");
     const selectedItemDetail = document.querySelector("[data-selected-item-detail]");
     const selectedItemSummary = document.querySelector("[data-selected-item-summary]");
@@ -129,6 +134,7 @@
     let isSorting = false;
     let inputTypeConfirmResolver = null;
     let activeCategoryPickerMode = "create";
+    let draftSequence = 0;
 
     const numberText = (value) => Number(value || 0).toLocaleString("ko-KR");
 
@@ -399,7 +405,88 @@
         }))
     });
 
+    const nextDraftId = (prefix) => `${prefix}-${++draftSequence}`;
+
+    const refreshTemplateCounts = (template) => {
+        if (!template) {
+            return null;
+        }
+        const items = Array.isArray(template.items) ? template.items : [];
+        template.items = items;
+        template.basicItemCount = items.filter((item) => item.itemGroup === "BASIC").length;
+        template.detailItemCount = items.filter((item) => item.itemGroup === "DETAIL").length;
+        template.optionCount = items.reduce((sum, item) => sum + (Array.isArray(item.options) ? item.options.length : 0), 0);
+        template.itemCount = template.basicItemCount + template.detailItemCount;
+        return template;
+    };
+
+    const cloneTemplateDraft = (template) => refreshTemplateCounts({
+        ...template,
+        items: (template?.items || []).map((item) => ({
+            ...item,
+            options: (item.options || []).map((option) => ({ ...option }))
+        }))
+    });
+
+    const createBlankTemplateDraft = () => refreshTemplateCounts({
+        id: "new-template",
+        templateId: null,
+        categoryId: null,
+        categoryName: "",
+        templateName: "새 템플릿",
+        version: 1,
+        active: true,
+        basicItemCount: 0,
+        detailItemCount: 0,
+        optionCount: 0,
+        itemCount: 0,
+        createdBy: "-",
+        createdAt: "-",
+        updatedAt: "-",
+        items: []
+    });
+
+    const mountBuilder = (mode) => {
+        const slot = builderSlots[mode];
+        if (slot && builderSection && builderSection.parentElement !== slot) {
+            slot.append(builderSection);
+        }
+    };
+
+    const sortBySortOrder = (left, right) => {
+        const orderDiff = Number(left.sortOrder || 0) - Number(right.sortOrder || 0);
+        if (orderDiff !== 0) {
+            return orderDiff;
+        }
+        return String(left.id).localeCompare(String(right.id));
+    };
+
+    const sortedItemsByGroup = (template, groupKey) => (template?.items || [])
+        .filter((item) => item.itemGroup === groupKey)
+        .slice()
+        .sort(sortBySortOrder);
+
+    const sortedOptions = (item) => (item?.options || []).slice().sort(sortBySortOrder);
+
+    const nextSortOrderForGroup = (template, groupKey) => {
+        const groupItems = sortedItemsByGroup(template, groupKey);
+        const lastSortOrder = groupItems.reduce((max, item) => Math.max(max, Number(item.sortOrder || 0)), 0);
+        return lastSortOrder + SORT_STEP;
+    };
+
+    const nextSortOrderForOptions = (item) => {
+        const options = sortedOptions(item);
+        const lastSortOrder = options.reduce((max, option) => Math.max(max, Number(option.sortOrder || 0)), 0);
+        return lastSortOrder + SORT_STEP;
+    };
+
     const countOptions = (template) => template?.items?.reduce((sum, item) => sum + item.options.length, 0) || 0;
+
+    const updateBuilderCount = (template) => {
+        if (counts.item && template) {
+            counts.item.textContent = `항목 ${numberText(template.items.length)} · 선택지 ${numberText(countOptions(template))}`;
+        }
+    };
 
     const mergeTemplateDetailIntoList = (detail) => {
         const index = templates.findIndex((template) => template.id === detail.id);
@@ -456,6 +543,11 @@
         badge.className = `badge ${className}`;
         badge.textContent = text;
         return badge;
+    };
+
+    const getPanelMode = () => {
+        const activePanel = Array.from(panelViews).find((panel) => !panel.hidden);
+        return activePanel?.dataset.templatePanel || "create";
     };
 
     const setPanelMode = (mode) => {
@@ -537,22 +629,50 @@
         advancedSummary.textContent = `등급 영향 ${GRADE_IMPACTS[gradeImpact] || "낮음"} · ${FAIL_POLICIES[failPolicy] || "별도 조치 없음"}`;
     };
 
-    const buildItemPayload = (item, overrides = {}) => ({
+    const existingIdOrNull = (value) => {
+        if (value === null || value === undefined || value === "") {
+            return null;
+        }
+        const numericValue = Number(value);
+        return Number.isFinite(numericValue) ? numericValue : null;
+    };
+
+    const readOptionLabel = (container) => {
+        const field = container?.elements?.optionLabel || container?.querySelector?.("[name='optionLabel']");
+        return field?.value.trim() || "";
+    };
+
+    const buildTemplateOptionSavePayload = (option) => ({
+        optionId: existingIdOrNull(option.optionId),
+        optionLabel: option.optionLabel,
+        optionValue: option.optionValue || option.optionLabel,
+        sortOrder: Number(option.sortOrder || 0),
+        active: option.active !== false
+    });
+
+    const buildTemplateItemSavePayload = (item) => ({
+        itemId: existingIdOrNull(item.itemId),
         itemName: item.itemName,
         itemGroup: item.itemGroup,
         inputType: item.inputType,
-        required: item.required,
-        sortOrder: item.sortOrder,
+        required: item.required === true,
+        sortOrder: Number(item.sortOrder || 0),
         gradeImpact: item.gradeImpact || "LOW",
         failPolicy: item.failPolicy || "NONE",
-        ...overrides
+        active: item.active !== false,
+        options: item.inputType === "SELECT"
+            ? sortedOptions(item).map(buildTemplateOptionSavePayload)
+            : []
     });
 
-    const buildOptionPayload = (option, overrides = {}) => ({
-        optionLabel: option.optionLabel,
-        optionValue: option.optionValue || option.optionLabel,
-        sortOrder: option.sortOrder,
-        ...overrides
+    const buildTemplateSavePayload = (form, template) => ({
+        templateName: form.templateName.value.trim(),
+        categoryId: Number(form.categoryId.value),
+        version: Number(form.version.value || 1),
+        active: form.active.checked,
+        items: ["BASIC", "DETAIL"]
+            .flatMap((groupKey) => sortedItemsByGroup(template, groupKey))
+            .map(buildTemplateItemSavePayload)
     });
 
     const clearDragMarkers = () => {
@@ -613,112 +733,42 @@
         });
     };
 
-    const patchTemplateItem = (template, item, overrides = {}) => {
-        return requestData(
-            `${apiBase()}/inspection-templates/${template.templateId}/items/${item.itemId}`,
-            {
-                ...apiOptions(),
-                method: "PATCH",
-                body: buildItemPayload(item, overrides)
-            }
-        );
-    };
-
-    const patchTemplateOption = (template, item, option, overrides = {}) => {
-        return requestData(
-            `${apiBase()}/inspection-templates/${template.templateId}/items/${item.itemId}/options/${option.optionId}`,
-            {
-                ...apiOptions(),
-                method: "PATCH",
-                body: buildOptionPayload(option, overrides)
-            }
-        );
-    };
-
-    const saveItemOrder = async (template, groupKey, orderedIds) => {
+    const saveItemOrder = (template, groupKey, orderedIds) => {
         if (!template || isSorting) {
             return;
         }
-        const groupItems = template.items.filter((item) => item.itemGroup === groupKey);
-        const itemsById = new Map(groupItems.map((item) => [item.id, item]));
-        const updates = orderedIds
-            .map((id, index) => {
-                const item = itemsById.get(String(id));
-                const nextSortOrder = (index + 1) * SORT_STEP;
-                if (!item || item.sortOrder === nextSortOrder) {
-                    return null;
-                }
-                return { item, nextSortOrder };
-            })
-            .filter(Boolean);
-
-        if (!updates.length) {
-            return;
-        }
-
         isSorting = true;
         try {
-            const data = await requestData(
-                `${apiBase()}/inspection-templates/${template.templateId}/items/sort-order`,
-                {
-                    ...apiOptions(),
-                    method: "PATCH",
-                    body: {
-                        itemGroup: groupKey,
-                        orderedItemIds: orderedIds.map((id) => Number(id))
-                    }
+            const nextOrderById = new Map(orderedIds.map((id, index) => [String(id), (index + 1) * SORT_STEP]));
+            template.items.forEach((item) => {
+                if (item.itemGroup === groupKey && nextOrderById.has(String(item.id))) {
+                    item.sortOrder = nextOrderById.get(String(item.id));
                 }
-            );
-            applyTemplateDetail(data);
-            showToast("항목 순서를 저장했습니다.", "success");
-        } catch (error) {
-            handleApiError(error, "항목 순서 저장에 실패했습니다.");
-            await reloadSelectedTemplate();
+            });
+            refreshTemplateCounts(template);
+            renderItems(template);
         } finally {
             isSorting = false;
         }
     };
 
-    const saveOptionOrder = async (template, item, orderedIds) => {
+    const saveOptionOrder = (template, item, orderedIds) => {
         if (!template || !item || isSorting) {
             return;
         }
-        const optionsById = new Map(item.options.map((option) => [option.id, option]));
-        const updates = orderedIds
-            .map((id, index) => {
-                const option = optionsById.get(String(id));
-                const nextSortOrder = (index + 1) * SORT_STEP;
-                if (!option || option.sortOrder === nextSortOrder) {
-                    return null;
-                }
-                return { option, nextSortOrder };
-            })
-            .filter(Boolean);
-
-        if (!updates.length) {
-            return;
-        }
-
         isSorting = true;
         try {
-            const data = await requestData(
-                `${apiBase()}/inspection-templates/${template.templateId}/items/${item.itemId}/options/sort-order`,
-                {
-                    ...apiOptions(),
-                    method: "PATCH",
-                    body: {
-                        orderedOptionIds: orderedIds.map((id) => Number(id))
-                    }
+            const nextOrderById = new Map(orderedIds.map((id, index) => [String(id), (index + 1) * SORT_STEP]));
+            item.options.forEach((option) => {
+                if (nextOrderById.has(String(option.id))) {
+                    option.sortOrder = nextOrderById.get(String(option.id));
                 }
-            );
+            });
             selectedItemId = item.id;
             editingItemId = item.id;
             editingOptionId = null;
-            applyTemplateDetail(data);
-            showToast("선택지 순서를 저장했습니다.", "success");
-        } catch (error) {
-            handleApiError(error, "선택지 순서 저장에 실패했습니다.");
-            await reloadSelectedTemplate();
+            refreshTemplateCounts(template);
+            renderSelectedItemDetail(template);
         } finally {
             isSorting = false;
         }
@@ -823,7 +873,13 @@
         updateSelectedRow();
     };
 
-    const loadTemplates = async ({ preferredTemplateId = selectedTemplateId, page = templatePageData.page } = {}) => {
+    const loadTemplates = async ({
+        preferredTemplateId = selectedTemplateId,
+        page = templatePageData.page,
+        panelMode = null
+    } = {}) => {
+        const nextPanelMode = panelMode
+            || (getPanelMode() === "edit" && detailDrawer?.classList.contains("is-open") ? "edit" : "detail");
         const nextPage = Math.max(0, Number(page || 0));
         const params = new URLSearchParams({
             page: String(nextPage),
@@ -852,7 +908,7 @@
         const nextSelectedId = templates.some((template) => template.id === preferred)
             ? preferred
             : templates[0].id;
-        await selectTemplate(nextSelectedId, null, { open: false });
+        await selectTemplate(nextSelectedId, null, { open: false, panelMode: nextPanelMode });
     };
 
     const loadTemplateDetail = async (templateId) => {
@@ -887,80 +943,62 @@
     };
 
     const addOptionToItem = async (template, item, form) => {
-        const optionLabel = form.elements.optionLabel.value.trim();
+        const optionLabel = readOptionLabel(form);
         if (!optionLabel) {
             showToast("선택지명을 입력해 주세요.", "warning");
             return;
         }
 
-        setFormSaving(form, true, "추가 중");
-        try {
-            await requestData(
-                `${apiBase()}/inspection-templates/${template.templateId}/items/${item.itemId}/options`,
-                {
-                    ...apiOptions(),
-                    method: "POST",
-                    body: { optionLabel }
-                }
-            );
-            selectedItemId = item.id;
-            editingItemId = item.id;
-            editingOptionId = null;
-            form.reset();
-            await loadTemplates({ preferredTemplateId: template.id });
-            showToast("선택지를 추가했습니다.", "success");
-        } catch (error) {
-            handleApiError(error, "선택지 추가에 실패했습니다.");
-        } finally {
-            setFormSaving(form, false);
+        item.options.push({
+            id: nextDraftId("option"),
+            optionId: null,
+            itemId: item.itemId || null,
+            optionLabel,
+            optionValue: optionLabel,
+            sortOrder: nextSortOrderForOptions(item),
+            active: true
+        });
+        selectedItemId = item.id;
+        editingItemId = item.id;
+        editingOptionId = null;
+        form.reset?.();
+        const field = form.querySelector?.("[name='optionLabel']");
+        if (field) {
+            field.value = "";
         }
+        refreshTemplateCounts(template);
+        updateBuilderCount(template);
+        renderSelectedItemDetail(template);
     };
 
     const updateOptionLabel = async (template, item, optionId, form) => {
         const option = item.options.find((itemOption) => itemOption.id === String(optionId));
-        const optionLabel = form.elements.optionLabel.value.trim();
+        const optionLabel = readOptionLabel(form);
         if (!option || !optionLabel) {
             showToast("선택지명을 입력해 주세요.", "warning");
             return;
         }
 
-        setFormSaving(form, true);
-        try {
-            await patchTemplateOption(template, item, option, { optionLabel });
-            selectedItemId = item.id;
-            editingItemId = item.id;
-            editingOptionId = null;
-            await loadTemplates({ preferredTemplateId: template.id });
-            showToast("선택지를 수정했습니다.", "success");
-        } catch (error) {
-            handleApiError(error, "선택지 수정에 실패했습니다.");
-        } finally {
-            setFormSaving(form, false);
-        }
+        option.optionLabel = optionLabel;
+        option.optionValue = option.optionValue || optionLabel;
+        selectedItemId = item.id;
+        editingItemId = item.id;
+        editingOptionId = null;
+        refreshTemplateCounts(template);
+        renderSelectedItemDetail(template);
     };
 
-    const toggleOptionActive = async (template, item, optionId) => {
+    const toggleOptionActive = (template, item, optionId) => {
         const option = item.options.find((itemOption) => itemOption.id === String(optionId));
         if (!option) {
             return;
         }
-        try {
-            await window.PcsApi.request(
-                `${apiBase()}/inspection-templates/${template.templateId}/items/${item.itemId}/options/${option.optionId}/active`,
-                {
-                    ...apiOptions(),
-                    method: "PATCH",
-                    body: { active: !option.active }
-                }
-            );
-            selectedItemId = item.id;
-            editingItemId = item.id;
-            editingOptionId = null;
-            await loadTemplates({ preferredTemplateId: template.id });
-            showToast(option.active ? "선택지를 중지했습니다." : "선택지를 사용 중으로 변경했습니다.", "success");
-        } catch (error) {
-            handleApiError(error, "선택지 상태 변경에 실패했습니다.");
-        }
+        option.active = !option.active;
+        selectedItemId = item.id;
+        editingItemId = item.id;
+        editingOptionId = null;
+        refreshTemplateCounts(template);
+        renderSelectedItemDetail(template);
     };
 
     const updateItemFromForm = async (template, item, form) => {
@@ -978,27 +1016,22 @@
             }
         }
 
-        setFormSaving(form, true);
-        try {
-            await patchTemplateItem(template, item, {
-                itemName,
-                itemGroup: form.elements.itemGroup.value,
-                inputType: nextInputType,
-                required: form.elements.required.checked,
-                gradeImpact: form.elements.gradeImpact.value || "LOW",
-                failPolicy: form.elements.failPolicy.value || "NONE"
-            });
-            selectedItemId = item.id;
-            editingItemId = null;
-            editingOptionId = null;
-            await loadTemplates({ preferredTemplateId: template.id });
-            closeItemModal();
-            showToast("검수 항목을 수정했습니다.", "success");
-        } catch (error) {
-            handleApiError(error, "검수 항목 수정에 실패했습니다.");
-        } finally {
-            setFormSaving(form, false);
+        const previousInputType = item.inputType;
+        item.itemName = itemName;
+        item.itemGroup = form.elements.itemGroup.value;
+        item.inputType = nextInputType;
+        item.required = form.elements.required.checked;
+        item.gradeImpact = form.elements.gradeImpact.value || "LOW";
+        item.failPolicy = form.elements.failPolicy.value || "NONE";
+        if (previousInputType === "SELECT" && nextInputType !== "SELECT") {
+            item.options = item.options.map((option) => ({ ...option, active: false }));
         }
+        selectedItemId = item.id;
+        editingItemId = null;
+        editingOptionId = null;
+        refreshTemplateCounts(template);
+        closeItemModal();
+        renderBuilder();
     };
 
     const setItemFormSubmitText = (text) => {
@@ -1100,7 +1133,7 @@
         focusItemName();
     };
 
-    const toggleSelectedItemActive = async () => {
+    const toggleSelectedItemActive = () => {
         const template = getSelectedTemplate();
         const item = getSelectedItem(template);
         if (!template || !item) {
@@ -1110,27 +1143,15 @@
         if (itemActiveToggle) {
             itemActiveToggle.disabled = true;
         }
-        try {
-            await window.PcsApi.request(
-                `${apiBase()}/inspection-templates/${template.templateId}/items/${item.itemId}/active`,
-                {
-                    ...apiOptions(),
-                    method: "PATCH",
-                    body: { active: !item.active }
-                }
-            );
-            selectedItemId = item.id;
-            editingItemId = null;
-            editingOptionId = null;
-            await loadTemplates({ preferredTemplateId: template.id });
-            closeItemModal();
-            showToast("항목 상태를 변경했습니다.", "success");
-        } catch (error) {
-            handleApiError(error, "항목 상태 변경에 실패했습니다.");
-        } finally {
-            if (itemActiveToggle) {
-                itemActiveToggle.disabled = false;
-            }
+        item.active = !item.active;
+        selectedItemId = item.id;
+        editingItemId = null;
+        editingOptionId = null;
+        refreshTemplateCounts(template);
+        closeItemModal();
+        renderBuilder();
+        if (itemActiveToggle) {
+            itemActiveToggle.disabled = false;
         }
     };
 
@@ -1174,12 +1195,10 @@
             empty.textContent = "등록된 선택지가 없습니다.";
             values.append(empty);
         } else {
-            item.options.forEach((itemOption) => {
+            sortedOptions(item).forEach((itemOption) => {
                 if (editingOptionId === itemOption.id) {
-                    const form = document.createElement("form");
+                    const form = document.createElement("div");
                     form.className = "management-editor-option-edit-form";
-                    form.setAttribute("action", "#");
-                    form.setAttribute("method", "post");
 
                     const field = document.createElement("input");
                     field.name = "optionLabel";
@@ -1189,7 +1208,7 @@
 
                     const saveButton = document.createElement("button");
                     saveButton.className = "btn btn-primary";
-                    saveButton.type = "submit";
+                    saveButton.type = "button";
                     saveButton.textContent = "저장";
 
                     const cancelButton = document.createElement("button");
@@ -1202,7 +1221,14 @@
                     });
 
                     form.append(field, saveButton, cancelButton);
-                    form.addEventListener("submit", (event) => {
+                    saveButton.addEventListener("click", (event) => {
+                        event.preventDefault();
+                        updateOptionLabel(template, item, itemOption.id, form);
+                    });
+                    field.addEventListener("keydown", (event) => {
+                        if (event.key !== "Enter") {
+                            return;
+                        }
                         event.preventDefault();
                         updateOptionLabel(template, item, itemOption.id, form);
                     });
@@ -1293,11 +1319,8 @@
         const summary = document.createElement("summary");
         summary.textContent = "선택지 추가";
 
-        const form = document.createElement("form");
+        const form = document.createElement("div");
         form.className = "management-editor-option-create-form";
-        form.setAttribute("action", "#");
-        form.setAttribute("method", "post");
-        form.setAttribute("autocomplete", "off");
 
         const labelInput = document.createElement("label");
         const labelText = document.createElement("span");
@@ -1310,11 +1333,18 @@
 
         const submitButton = document.createElement("button");
         submitButton.className = "btn btn-primary";
-        submitButton.type = "submit";
+        submitButton.type = "button";
         submitButton.textContent = "추가";
 
         form.append(labelInput, submitButton);
-        form.addEventListener("submit", (event) => {
+        submitButton.addEventListener("click", (event) => {
+            event.preventDefault();
+            addOptionToItem(template, item, form);
+        });
+        labelField.addEventListener("keydown", (event) => {
+            if (event.key !== "Enter") {
+                return;
+            }
             event.preventDefault();
             addOptionToItem(template, item, form);
         });
@@ -1476,7 +1506,7 @@
         }
 
         ["BASIC", "DETAIL"].forEach((groupKey) => {
-            const groupItems = template.items.filter((item) => item.itemGroup === groupKey);
+            const groupItems = sortedItemsByGroup(template, groupKey);
             const group = document.createElement("section");
             group.className = "management-editor-group";
 
@@ -1545,7 +1575,7 @@
         builderEmpty.hidden = true;
         builderBody.hidden = false;
         builderDescription.textContent = `${template.templateName}의 검수 입력 항목입니다.`;
-        counts.item.textContent = `항목 ${numberText(template.items.length)} · 선택지 ${numberText(countOptions(template))}`;
+        updateBuilderCount(template);
         if (itemFormReset) {
             itemFormReset.hidden = false;
         }
@@ -1560,13 +1590,21 @@
             openDrawer(trigger);
         }
         try {
-            selectedTemplate = await loadTemplateDetail(templateId);
+            const loadedTemplate = await loadTemplateDetail(templateId);
+            const nextPanelMode = options.panelMode || "detail";
+            selectedTemplate = nextPanelMode === "edit" ? cloneTemplateDraft(loadedTemplate) : loadedTemplate;
             if (!selectedTemplate.items.some((item) => item.id === String(selectedItemId))) {
                 selectedItemId = selectedTemplate.items[0]?.id || null;
             }
+            if (nextPanelMode === "edit") {
+                mountBuilder("edit");
+            }
             renderDetail(selectedTemplate);
             renderBuilder();
-            setPanelMode("detail");
+            if (nextPanelMode === "edit") {
+                fillEditForm(selectedTemplate);
+            }
+            setPanelMode(nextPanelMode);
             updateSelectedRow();
         } catch (error) {
             handleApiError(error, "검수 템플릿 상세 조회에 실패했습니다.");
@@ -1585,11 +1623,12 @@
     };
 
     const showCreatePanel = (trigger = null, options = {}) => {
-        selectedTemplate = null;
+        selectedTemplate = createBlankTemplateDraft();
         selectedTemplateId = null;
         selectedItemId = null;
         editingItemId = null;
         editingOptionId = null;
+        mountBuilder("create");
         createForm?.reset();
         setCategoryValue("create", "");
         if (createForm?.elements.active) {
@@ -1606,7 +1645,7 @@
     filterForm?.addEventListener("submit", async (event) => {
         event.preventDefault();
         try {
-            await loadTemplates({ preferredTemplateId: null, page: 0 });
+            await loadTemplates({ preferredTemplateId: null, page: 0, panelMode: "detail" });
         } catch (error) {
             handleApiError(error, "검수 템플릿 목록 조회에 실패했습니다.");
         }
@@ -1663,7 +1702,10 @@
         if (!template) {
             return;
         }
-        fillEditForm(template);
+        selectedTemplate = cloneTemplateDraft(template);
+        mountBuilder("edit");
+        fillEditForm(selectedTemplate);
+        renderBuilder();
         setPanelMode("edit");
     });
 
@@ -1684,17 +1726,24 @@
     categoryPickerSearch?.addEventListener("input", renderCategoryPickerList);
 
     createForm?.addEventListener("reset", () => {
-        window.setTimeout(() => setCategoryValue("create", ""), 0);
+        window.setTimeout(() => {
+            selectedTemplate = createBlankTemplateDraft();
+            selectedTemplateId = null;
+            selectedItemId = null;
+            editingItemId = null;
+            editingOptionId = null;
+            setCategoryValue("create", "");
+            renderBuilder();
+        }, 0);
     });
 
-    document.querySelector("[data-template-detail-mode]")?.addEventListener("click", () => {
+    document.querySelector("[data-template-detail-mode]")?.addEventListener("click", async () => {
         const template = getSelectedTemplate();
-        if (!template) {
+        if (!template || !selectedTemplateId) {
             showCreatePanel(null, { open: false });
             return;
         }
-        renderDetail(template);
-        setPanelMode("detail");
+        await selectTemplate(selectedTemplateId, null, { open: false, panelMode: "detail" });
     });
 
     window.PcsDrawer?.bindDismiss({
@@ -1739,6 +1788,7 @@
             showToast("카테고리를 선택해 주세요.", "warning");
             return;
         }
+        const template = getSelectedTemplate() || createBlankTemplateDraft();
 
         setFormSaving(createForm, true);
         try {
@@ -1747,12 +1797,7 @@
                 {
                     ...apiOptions(),
                     method: "POST",
-                    body: {
-                        templateName,
-                        categoryId: Number(form.categoryId.value),
-                        version: Number(form.version.value || 1),
-                        active: form.active.checked
-                    }
+                    body: buildTemplateSavePayload(form, template)
                 }
             );
             selectedTemplateId = String(data.templateId);
@@ -1760,7 +1805,7 @@
             createForm.reset();
             setCategoryValue("create", "");
             createForm.elements.active.checked = true;
-            await loadTemplates({ preferredTemplateId: selectedTemplateId, page: 0 });
+            await loadTemplates({ preferredTemplateId: selectedTemplateId, page: 0, panelMode: "detail" });
             showToast("템플릿을 등록했습니다.", "success");
         } catch (error) {
             handleApiError(error, "템플릿 등록에 실패했습니다.");
@@ -1794,15 +1839,10 @@
                 {
                     ...apiOptions(),
                     method: "PATCH",
-                    body: {
-                        templateName,
-                        categoryId: Number(form.categoryId.value),
-                        version: Number(form.version.value || 1),
-                        active: form.active.checked
-                    }
+                    body: buildTemplateSavePayload(form, template)
                 }
             );
-            await loadTemplates({ preferredTemplateId: template.id });
+            await loadTemplates({ preferredTemplateId: template.id, panelMode: "detail" });
             showToast("템플릿 정보를 수정했습니다.", "success");
         } catch (error) {
             handleApiError(error, "템플릿 수정에 실패했습니다.");
@@ -1866,36 +1906,27 @@
             return;
         }
 
-        setFormSaving(itemForm, true, "추가 중");
-        try {
-            const data = await requestData(
-                `${apiBase()}/inspection-templates/${template.templateId}/items`,
-                {
-                    ...apiOptions(),
-                    method: "POST",
-                    body: {
-                        itemName,
-                        itemGroup: form.itemGroup.value,
-                        inputType: form.inputType.value,
-                        required: form.required.checked,
-                        gradeImpact: form.gradeImpact.value,
-                        failPolicy: form.failPolicy.value
-                    }
-                }
-            );
-            const createdItem = [...(data.items || [])].sort((a, b) => Number(b.itemId) - Number(a.itemId))[0];
-            selectedItemId = createdItem ? String(createdItem.itemId) : selectedItemId;
-            editingItemId = null;
-            editingOptionId = null;
-            itemForm.reset();
-            await loadTemplates({ preferredTemplateId: template.id });
-            closeItemModal();
-            showToast("검수 항목을 추가했습니다.", "success");
-        } catch (error) {
-            handleApiError(error, "검수 항목 추가에 실패했습니다.");
-        } finally {
-            setFormSaving(itemForm, false);
-        }
+        const newItem = {
+            id: nextDraftId("item"),
+            itemId: null,
+            itemName,
+            itemGroup: form.itemGroup.value,
+            inputType: form.inputType.value,
+            required: form.required.checked,
+            sortOrder: nextSortOrderForGroup(template, form.itemGroup.value),
+            gradeImpact: form.gradeImpact.value || "LOW",
+            failPolicy: form.failPolicy.value || "NONE",
+            active: true,
+            options: []
+        };
+        template.items.push(newItem);
+        selectedItemId = newItem.id;
+        editingItemId = null;
+        editingOptionId = null;
+        itemForm.reset();
+        refreshTemplateCounts(template);
+        closeItemModal();
+        renderBuilder();
     });
 
     const init = async () => {

@@ -377,7 +377,8 @@
             required = #{required},
             sort_order = #{sortOrder},
             grade_impact = #{gradeImpact},
-            fail_policy = #{failPolicy}
+            fail_policy = #{failPolicy},
+            active = #{active}
         WHERE template_id = #{templateId}
           AND item_id = #{itemId}
     </update>
@@ -431,7 +432,8 @@
         SET
             option_label = #{optionLabel},
             option_value = #{optionValue},
-            sort_order = #{sortOrder}
+            sort_order = #{sortOrder},
+            active = #{active}
         WHERE item_id = #{itemId}
           AND option_id = #{optionId}
     </update>

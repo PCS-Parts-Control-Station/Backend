@@ -14,6 +14,14 @@ com.pcs.domain.inspection
 
 ## API
 
+### 묶음 저장 규칙
+
+- 검수 템플릿 등록/수정 화면에서는 `templateName`, `categoryId`, `version`, `active`, `items`를 하나의 폼 묶음으로 다룬다.
+- `POST /inspection-templates`, `PATCH /inspection-templates/{templateId}` 요청은 선택적으로 `items` 배열을 함께 받는다.
+- `items`에는 항목 기본값과 `options`를 함께 담는다. 기존 항목/선택지는 `itemId`, `optionId`가 있으면 갱신하고, 없으면 새로 생성한다.
+- 화면에서 항목 추가/수정, 사용/중지, 드래그 정렬, 선택지 추가/수정/사용/중지는 즉시 API를 호출하지 않는다. 오른쪽 드로어 하단의 `form-actions` 저장 버튼을 누를 때 템플릿 기본정보와 함께 한 번에 저장한다.
+- 개별 항목/선택지 API는 서버 기능 호환과 별도 관리 흐름을 위해 유지한다. 검수 템플릿 관리 화면의 기본 UX에서는 직접 호출하지 않는다.
+
 | Method | API | 설명 |
 |---|---|---|
 | GET | `/api/workspaces/{companyCode}/inspection-templates` | 검수 템플릿 목록. `keyword`, `categoryId`, `active`, `page`, `size`, `limit` 지원 |
