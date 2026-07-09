@@ -61,12 +61,25 @@ function Get-PowerShellRunner {
     throw "PowerShell runner was not found. Install pwsh or run from Windows PowerShell."
 }
 
+function Test-IsWindowsHost {
+    if (Get-Variable -Name IsWindows -Scope Global -ErrorAction SilentlyContinue) {
+        return $IsWindows
+    }
+
+    return $env:OS -eq "Windows_NT"
+}
+
 function Invoke-HarnessCheck {
     $runner = Get-PowerShellRunner
     $arguments = @(
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
+        "-NoProfile"
+    )
+
+    if (Test-IsWindowsHost) {
+        $arguments += @("-ExecutionPolicy", "Bypass")
+    }
+
+    $arguments += @(
         "-File",
         $HarnessPath,
         "-Mode",

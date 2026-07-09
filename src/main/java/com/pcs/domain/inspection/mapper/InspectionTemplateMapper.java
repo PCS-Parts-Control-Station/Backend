@@ -50,10 +50,12 @@ public interface InspectionTemplateMapper {
     );
 
     List<InspectionTemplateItem> findItemsByTemplateId(
+            @Param("companyId") Long companyId,
             @Param("templateId") Long templateId
     );
 
     List<InspectionTemplateOptionResponse> findOptionsByTemplateId(
+            @Param("companyId") Long companyId,
             @Param("templateId") Long templateId
     );
 
@@ -79,44 +81,61 @@ public interface InspectionTemplateMapper {
     );
 
     boolean existsItemName(
+            @Param("companyId") Long companyId,
             @Param("templateId") Long templateId,
             @Param("itemName") String itemName,
             @Param("excludeItemId") Long excludeItemId
     );
 
     boolean existsOptionLabel(
+            @Param("companyId") Long companyId,
+            @Param("templateId") Long templateId,
             @Param("itemId") Long itemId,
             @Param("optionLabel") String optionLabel,
             @Param("excludeOptionId") Long excludeOptionId
     );
 
     boolean existsOptionValue(
+            @Param("companyId") Long companyId,
+            @Param("templateId") Long templateId,
             @Param("itemId") Long itemId,
             @Param("optionValue") String optionValue,
             @Param("excludeOptionId") Long excludeOptionId
     );
 
-    int nextItemSortOrder(@Param("templateId") Long templateId);
+    int nextItemSortOrder(@Param("companyId") Long companyId, @Param("templateId") Long templateId);
 
-    int nextOptionSortOrder(@Param("itemId") Long itemId);
+    int nextOptionSortOrder(
+            @Param("companyId") Long companyId,
+            @Param("templateId") Long templateId,
+            @Param("itemId") Long itemId
+    );
 
     int countItemsByTemplateGroupAndIds(
+            @Param("companyId") Long companyId,
             @Param("templateId") Long templateId,
             @Param("itemGroup") InspectionItemGroup itemGroup,
             @Param("itemIds") List<Long> itemIds
     );
 
     int countItemsByTemplateGroup(
+            @Param("companyId") Long companyId,
             @Param("templateId") Long templateId,
             @Param("itemGroup") InspectionItemGroup itemGroup
     );
 
     int countOptionsByItemIdAndIds(
+            @Param("companyId") Long companyId,
+            @Param("templateId") Long templateId,
             @Param("itemId") Long itemId,
             @Param("optionIds") List<Long> optionIds
     );
 
-    int countOptionsByItemId(@Param("itemId") Long itemId);
+    int countOptionsByItemId(
+            @Param("companyId") Long companyId,
+            @Param("templateId") Long templateId,
+            @Param("itemId") Long itemId
+    );
 
     void insertTemplate(InspectionTemplate template);
 
@@ -128,37 +147,47 @@ public interface InspectionTemplateMapper {
             @Param("active") boolean active
     );
 
-    int touchTemplate(@Param("templateId") Long templateId);
+    int touchTemplate(@Param("companyId") Long companyId, @Param("templateId") Long templateId);
 
     void insertItem(InspectionTemplateItem item);
 
-    void updateItem(InspectionTemplateItem item);
+    void updateItem(@Param("companyId") Long companyId, @Param("item") InspectionTemplateItem item);
 
     int updateItemActive(
+            @Param("companyId") Long companyId,
             @Param("templateId") Long templateId,
             @Param("itemId") Long itemId,
             @Param("active") boolean active
     );
 
     int updateItemSortOrders(
+            @Param("companyId") Long companyId,
             @Param("templateId") Long templateId,
             @Param("itemGroup") InspectionItemGroup itemGroup,
             @Param("sortOrders") List<SortOrderUpdate> sortOrders
     );
 
-    int deactivateOptionsByItemId(@Param("itemId") Long itemId);
+    int deactivateOptionsByItemId(
+            @Param("companyId") Long companyId,
+            @Param("templateId") Long templateId,
+            @Param("itemId") Long itemId
+    );
 
     void insertOption(InspectionTemplateItemOption option);
 
-    void updateOption(InspectionTemplateItemOption option);
+    void updateOption(@Param("companyId") Long companyId, @Param("templateId") Long templateId, @Param("option") InspectionTemplateItemOption option);
 
     int updateOptionActive(
+            @Param("companyId") Long companyId,
+            @Param("templateId") Long templateId,
             @Param("itemId") Long itemId,
             @Param("optionId") Long optionId,
             @Param("active") boolean active
     );
 
     int updateOptionSortOrders(
+            @Param("companyId") Long companyId,
+            @Param("templateId") Long templateId,
             @Param("itemId") Long itemId,
             @Param("sortOrders") List<SortOrderUpdate> sortOrders
     );

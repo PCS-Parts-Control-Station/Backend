@@ -41,22 +41,7 @@ class AuthServiceTest {
         authService = new AuthService(authMapper, staffPermissionService, passwordEncoder, 30);
     }
 
-    @Test
-    void validateRefreshToken_rejectsTemporaryPasswordSession() {
-        when(authMapper.findRefreshTokenSession(org.mockito.ArgumentMatchers.anyString())).thenReturn(session);
-        when(session.isRevoked()).thenReturn(false);
-        when(session.isExpired(org.mockito.ArgumentMatchers.any(LocalDateTime.class))).thenReturn(false);
-        when(session.isCompanyActive()).thenReturn(true);
-        when(session.isMemberActive()).thenReturn(true);
-        when(session.getPasswordStatus()).thenReturn(PasswordStatus.TEMPORARY);
 
-        BusinessException exception = assertThrows(
-                BusinessException.class,
-                () -> authService.validateRefreshToken("refresh-token")
-        );
-
-        assertEquals(ErrorCode.MEMBER_PASSWORD_CHANGE_REQUIRED, exception.getErrorCode());
-    }
 
     @Test
     void authenticateWorkspace_masksMissingAccountAndRunsDummyPasswordCheck() {

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -100,8 +101,8 @@ class InspectionTemplateServiceTest {
             return null;
         }).when(inspectionTemplateMapper).insertTemplate(any(InspectionTemplate.class));
         when(inspectionTemplateMapper.findTemplateSummaryById(companyId, 100L)).thenReturn(summary);
-        when(inspectionTemplateMapper.findItemsByTemplateId(100L)).thenReturn(List.of());
-        when(inspectionTemplateMapper.findOptionsByTemplateId(100L)).thenReturn(List.of());
+        when(inspectionTemplateMapper.findItemsByTemplateId(companyId, 100L)).thenReturn(List.of());
+        when(inspectionTemplateMapper.findOptionsByTemplateId(companyId, 100L)).thenReturn(List.of());
         when(inspectionTemplateMapper.findTemplateById(companyId, 100L)).thenReturn(template);
 
         var response = inspectionTemplateService.createTemplate(companyId, 20L, request);
@@ -177,22 +178,22 @@ class InspectionTemplateServiceTest {
                 null
         );
         when(inspectionTemplateMapper.findTemplateById(companyId, templateId)).thenReturn(template);
-        when(inspectionTemplateMapper.existsItemName(templateId, "팬 소음", null)).thenReturn(false);
-        when(inspectionTemplateMapper.nextItemSortOrder(templateId)).thenReturn(30);
+        when(inspectionTemplateMapper.existsItemName(companyId, templateId, "팬 소음", null)).thenReturn(false);
+        when(inspectionTemplateMapper.nextItemSortOrder(companyId, templateId)).thenReturn(30);
         doAnswer((invocation) -> {
             InspectionTemplateItem item = invocation.getArgument(0);
             item.setItemId(201L);
             return null;
         }).when(inspectionTemplateMapper).insertItem(any(InspectionTemplateItem.class));
         when(inspectionTemplateMapper.findTemplateSummaryById(companyId, templateId)).thenReturn(summary);
-        when(inspectionTemplateMapper.findItemsByTemplateId(templateId)).thenReturn(List.of());
-        when(inspectionTemplateMapper.findOptionsByTemplateId(templateId)).thenReturn(List.of());
+        when(inspectionTemplateMapper.findItemsByTemplateId(companyId, templateId)).thenReturn(List.of());
+        when(inspectionTemplateMapper.findOptionsByTemplateId(companyId, templateId)).thenReturn(List.of());
 
         inspectionTemplateService.createItem(companyId, templateId, request);
 
         ArgumentCaptor<InspectionTemplateItem> itemCaptor = ArgumentCaptor.forClass(InspectionTemplateItem.class);
         verify(inspectionTemplateMapper).insertItem(itemCaptor.capture());
-        verify(inspectionTemplateMapper).touchTemplate(templateId);
+        verify(inspectionTemplateMapper).touchTemplate(companyId, templateId);
 
         InspectionTemplateItem item = itemCaptor.getValue();
         assertEquals("팬 소음", item.getItemName());
@@ -232,19 +233,19 @@ class InspectionTemplateServiceTest {
         );
         when(inspectionTemplateMapper.findItemById(companyId, templateId, itemId)).thenReturn(item);
         when(inspectionTemplateMapper.findOptionById(companyId, templateId, itemId, optionId)).thenReturn(option);
-        when(inspectionTemplateMapper.existsOptionLabel(itemId, "팬 소음", optionId)).thenReturn(false);
-        when(inspectionTemplateMapper.existsOptionValue(itemId, "팬 소음", optionId)).thenReturn(false);
+        when(inspectionTemplateMapper.existsOptionLabel(companyId, templateId, itemId, "팬 소음", optionId)).thenReturn(false);
+        when(inspectionTemplateMapper.existsOptionValue(companyId, templateId, itemId, "팬 소음", optionId)).thenReturn(false);
         when(inspectionTemplateMapper.findTemplateSummaryById(companyId, templateId)).thenReturn(summary);
-        when(inspectionTemplateMapper.findItemsByTemplateId(templateId)).thenReturn(List.of(item));
-        when(inspectionTemplateMapper.findOptionsByTemplateId(templateId)).thenReturn(List.of());
+        when(inspectionTemplateMapper.findItemsByTemplateId(companyId, templateId)).thenReturn(List.of(item));
+        when(inspectionTemplateMapper.findOptionsByTemplateId(companyId, templateId)).thenReturn(List.of());
         when(inspectionTemplateMapper.findTemplateById(companyId, templateId)).thenReturn(template);
 
         inspectionTemplateService.updateOption(companyId, templateId, itemId, optionId, request);
 
         ArgumentCaptor<InspectionTemplateItemOption> optionCaptor =
                 ArgumentCaptor.forClass(InspectionTemplateItemOption.class);
-        verify(inspectionTemplateMapper).updateOption(optionCaptor.capture());
-        verify(inspectionTemplateMapper).touchTemplate(templateId);
+        verify(inspectionTemplateMapper).updateOption(eq(companyId), eq(templateId), optionCaptor.capture());
+        verify(inspectionTemplateMapper).touchTemplate(companyId, templateId);
 
         InspectionTemplateItemOption savedOption = optionCaptor.getValue();
         assertEquals("팬 소음", savedOption.getOptionLabel());
@@ -265,8 +266,8 @@ class InspectionTemplateServiceTest {
 
         inspectionTemplateService.updateOptionActive(companyId, templateId, itemId, optionId, false);
 
-        verify(inspectionTemplateMapper).updateOptionActive(itemId, optionId, false);
-        verify(inspectionTemplateMapper).touchTemplate(templateId);
+        verify(inspectionTemplateMapper).updateOptionActive(companyId, templateId, itemId, optionId, false);
+        verify(inspectionTemplateMapper).touchTemplate(companyId, templateId);
     }
 
     @Test
@@ -287,17 +288,17 @@ class InspectionTemplateServiceTest {
                 InspectionFailPolicy.NONE
         );
         when(inspectionTemplateMapper.findItemById(companyId, templateId, itemId)).thenReturn(item);
-        when(inspectionTemplateMapper.existsItemName(templateId, "소음 메모", itemId)).thenReturn(false);
+        when(inspectionTemplateMapper.existsItemName(companyId, templateId, "소음 메모", itemId)).thenReturn(false);
         when(inspectionTemplateMapper.findTemplateSummaryById(companyId, templateId)).thenReturn(summary);
-        when(inspectionTemplateMapper.findItemsByTemplateId(templateId)).thenReturn(List.of(item));
-        when(inspectionTemplateMapper.findOptionsByTemplateId(templateId)).thenReturn(List.of());
+        when(inspectionTemplateMapper.findItemsByTemplateId(companyId, templateId)).thenReturn(List.of(item));
+        when(inspectionTemplateMapper.findOptionsByTemplateId(companyId, templateId)).thenReturn(List.of());
         when(inspectionTemplateMapper.findTemplateById(companyId, templateId)).thenReturn(template);
 
         inspectionTemplateService.updateItem(companyId, templateId, itemId, request);
 
-        verify(inspectionTemplateMapper).updateItem(item);
-        verify(inspectionTemplateMapper).deactivateOptionsByItemId(itemId);
-        verify(inspectionTemplateMapper).touchTemplate(templateId);
+        verify(inspectionTemplateMapper).updateItem(companyId, item);
+        verify(inspectionTemplateMapper).deactivateOptionsByItemId(companyId, templateId, itemId);
+        verify(inspectionTemplateMapper).touchTemplate(companyId, templateId);
     }
 
     @Test
@@ -311,19 +312,21 @@ class InspectionTemplateServiceTest {
                 List.of(201L, 202L, 203L)
         );
         when(inspectionTemplateMapper.findTemplateById(companyId, templateId)).thenReturn(template);
-        when(inspectionTemplateMapper.countItemsByTemplateGroup(templateId, InspectionItemGroup.BASIC)).thenReturn(3);
+        when(inspectionTemplateMapper.countItemsByTemplateGroup(companyId, templateId, InspectionItemGroup.BASIC)).thenReturn(3);
         when(inspectionTemplateMapper.countItemsByTemplateGroupAndIds(
+                companyId,
                 templateId,
                 InspectionItemGroup.BASIC,
                 List.of(201L, 202L, 203L)
         )).thenReturn(3);
         when(inspectionTemplateMapper.findTemplateSummaryById(companyId, templateId)).thenReturn(summary);
-        when(inspectionTemplateMapper.findItemsByTemplateId(templateId)).thenReturn(List.of());
-        when(inspectionTemplateMapper.findOptionsByTemplateId(templateId)).thenReturn(List.of());
+        when(inspectionTemplateMapper.findItemsByTemplateId(companyId, templateId)).thenReturn(List.of());
+        when(inspectionTemplateMapper.findOptionsByTemplateId(companyId, templateId)).thenReturn(List.of());
 
         inspectionTemplateService.updateItemSortOrder(companyId, templateId, request);
 
         verify(inspectionTemplateMapper).updateItemSortOrders(
+                companyId,
                 templateId,
                 InspectionItemGroup.BASIC,
                 List.of(
@@ -332,7 +335,7 @@ class InspectionTemplateServiceTest {
                         new SortOrderUpdate(203L, 30)
                 )
         );
-        verify(inspectionTemplateMapper).touchTemplate(templateId);
+        verify(inspectionTemplateMapper).touchTemplate(companyId, templateId);
     }
 
     @Test
@@ -345,7 +348,7 @@ class InspectionTemplateServiceTest {
                 List.of(201L, 202L)
         );
         when(inspectionTemplateMapper.findTemplateById(companyId, templateId)).thenReturn(template);
-        when(inspectionTemplateMapper.countItemsByTemplateGroup(templateId, InspectionItemGroup.BASIC)).thenReturn(3);
+        when(inspectionTemplateMapper.countItemsByTemplateGroup(companyId, templateId, InspectionItemGroup.BASIC)).thenReturn(3);
 
         BusinessException exception = assertThrows(
                 BusinessException.class,
@@ -353,7 +356,7 @@ class InspectionTemplateServiceTest {
         );
 
         assertEquals(ErrorCode.INVALID_INPUT_VALUE, exception.getErrorCode());
-        verify(inspectionTemplateMapper, never()).updateItemSortOrders(any(), any(), any());
+        verify(inspectionTemplateMapper, never()).updateItemSortOrders(any(), any(), any(), any());
     }
 
     @Test
@@ -373,7 +376,7 @@ class InspectionTemplateServiceTest {
         );
 
         assertEquals(ErrorCode.INVALID_INPUT_VALUE, exception.getErrorCode());
-        verify(inspectionTemplateMapper, never()).updateItemSortOrders(any(), any(), any());
+        verify(inspectionTemplateMapper, never()).updateItemSortOrders(any(), any(), any(), any());
     }
 
     @Test
@@ -388,23 +391,25 @@ class InspectionTemplateServiceTest {
                 List.of(301L, 302L)
         );
         when(inspectionTemplateMapper.findItemById(companyId, templateId, itemId)).thenReturn(item);
-        when(inspectionTemplateMapper.countOptionsByItemId(itemId)).thenReturn(2);
-        when(inspectionTemplateMapper.countOptionsByItemIdAndIds(itemId, List.of(301L, 302L))).thenReturn(2);
+        when(inspectionTemplateMapper.countOptionsByItemId(companyId, templateId, itemId)).thenReturn(2);
+        when(inspectionTemplateMapper.countOptionsByItemIdAndIds(companyId, templateId, itemId, List.of(301L, 302L))).thenReturn(2);
         when(inspectionTemplateMapper.findTemplateSummaryById(companyId, templateId)).thenReturn(summary);
-        when(inspectionTemplateMapper.findItemsByTemplateId(templateId)).thenReturn(List.of(item));
-        when(inspectionTemplateMapper.findOptionsByTemplateId(templateId)).thenReturn(List.of());
+        when(inspectionTemplateMapper.findItemsByTemplateId(companyId, templateId)).thenReturn(List.of(item));
+        when(inspectionTemplateMapper.findOptionsByTemplateId(companyId, templateId)).thenReturn(List.of());
         when(inspectionTemplateMapper.findTemplateById(companyId, templateId)).thenReturn(template);
 
         inspectionTemplateService.updateOptionSortOrder(companyId, templateId, itemId, request);
 
         verify(inspectionTemplateMapper).updateOptionSortOrders(
+                companyId,
+                templateId,
                 itemId,
                 List.of(
                         new SortOrderUpdate(301L, 10),
                         new SortOrderUpdate(302L, 20)
                 )
         );
-        verify(inspectionTemplateMapper).touchTemplate(templateId);
+        verify(inspectionTemplateMapper).touchTemplate(companyId, templateId);
     }
 
     private InspectionTemplate template(

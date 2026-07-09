@@ -123,6 +123,7 @@ public interface StockMapper {
     );
 
     List<Long> findMovementUnitIds(
+            @Param("companyId") Long companyId,
             @Param("movementId") Long movementId
     );
 
@@ -177,13 +178,15 @@ public interface StockMapper {
 
     void insertPartUnit(StockPartUnit unit);
 
-    void insertMovementUnit(
+    int insertMovementUnit(
+            @Param("companyId") Long companyId,
             @Param("movementId") Long movementId,
             @Param("unitId") Long unitId,
             @Param("afterUnitStatus") UnitStatus afterUnitStatus
     );
 
-    void insertMovementUnitStatusChange(
+    int insertMovementUnitStatusChange(
+            @Param("companyId") Long companyId,
             @Param("movementId") Long movementId,
             @Param("unitId") Long unitId,
             @Param("beforeUnitStatus") UnitStatus beforeUnitStatus,

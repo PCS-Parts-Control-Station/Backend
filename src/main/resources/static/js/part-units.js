@@ -406,7 +406,8 @@
             container: pagination,
             info: pageInfo,
             prevButton,
-            nextButton
+            nextButton,
+            onPageClick: (page) => loadPartUnits(page, { preserveScroll: true })
         });
     };
 

@@ -41,6 +41,130 @@
     box-shadow: none;
 }
 
+.template-drawer-builder {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+}
+
+.template-drawer-builder > .section-title-row {
+    align-items: flex-start;
+}
+
+.template-drawer-builder > .section-title-row p {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.template-drawer-builder .management-editor-empty {
+    margin: 0;
+}
+
+.template-drawer-builder .management-editor-body {
+    padding: 0;
+}
+
+.template-drawer-builder .management-editor-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+}
+
+.template-drawer-builder .management-editor-list-panel,
+.template-drawer-builder .management-editor-detail-panel {
+    gap: 10px;
+    padding: 0;
+    border: 0;
+}
+
+.template-drawer-builder .management-editor-detail-panel {
+    margin-top: 2px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+}
+
+.template-drawer-builder .management-editor-list-panel > .section-title-row,
+.template-drawer-builder .management-editor-detail-panel > .section-title-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    align-items: start;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.template-drawer-builder .management-editor-title-actions {
+    justify-content: flex-start;
+    width: 100%;
+}
+
+.template-drawer-builder .management-editor-count {
+    justify-content: flex-start;
+}
+
+.template-drawer-builder .inspection-template-add-item-button {
+    border-color: var(--line-strong);
+    background: var(--surface);
+    color: var(--cyan-dark);
+    box-shadow: none;
+}
+
+.template-drawer-builder .inspection-template-add-item-button:hover,
+.template-drawer-builder .inspection-template-add-item-button:focus-visible {
+    border-color: var(--cyan);
+    background: var(--cyan-soft);
+    color: var(--cyan-dark);
+}
+
+.template-drawer-builder .management-editor-item-summary {
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 8px 10px;
+    padding: 12px;
+}
+
+.template-drawer-builder .management-editor-item-name {
+    grid-column: 2 / -1;
+}
+
+.template-drawer-builder .management-editor-item-name strong {
+    white-space: normal;
+}
+
+.template-drawer-builder .management-editor-item-badges {
+    grid-column: 2 / -1;
+    justify-content: flex-start;
+    gap: 6px;
+}
+
+.template-drawer-builder .management-editor-selected-detail {
+    gap: 10px;
+    padding: 12px;
+}
+
+.template-drawer-builder .management-editor-selected-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+}
+
+.template-drawer-builder .management-editor-selected-head-actions {
+    justify-content: flex-start;
+}
+
+.template-drawer-builder .management-editor-option-value {
+    grid-template-columns: 24px minmax(0, 1fr) auto auto;
+    gap: 8px;
+}
+
+.template-drawer-builder .management-editor-option-actions {
+    grid-column: auto;
+    justify-content: flex-start;
+}
+
 .page-inspection-templates .management-filter-form-compact {
     grid-template-columns: minmax(380px, 1.8fr) minmax(150px, 0.42fr) minmax(150px, 0.42fr) 96px;
 }

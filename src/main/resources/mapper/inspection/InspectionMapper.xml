@@ -611,20 +611,23 @@
 
     <select id="findItemResults" resultType="com.pcs.domain.inspection.dto.response.InspectionItemResultResponse">
         SELECT
-            item_result_id,
-            inspection_id,
-            item_id,
-            item_name_snapshot,
-            result,
-            value_text,
-            value_number,
-            selected_option_id,
-            selected_option_label_snapshot,
-            selected_option_value_snapshot,
-            memo
-        FROM tb_inspection_item_result
-        WHERE inspection_id = #{inspectionId}
-        ORDER BY item_result_id ASC
+            r.item_result_id,
+            r.inspection_id,
+            r.item_id,
+            r.item_name_snapshot,
+            r.result,
+            r.value_text,
+            r.value_number,
+            r.selected_option_id,
+            r.selected_option_label_snapshot,
+            r.selected_option_value_snapshot,
+            r.memo
+        FROM tb_inspection_item_result r
+        INNER JOIN tb_inspection i
+            ON i.inspection_id = r.inspection_id
+        WHERE i.company_id = #{companyId}
+          AND r.inspection_id = #{inspectionId}
+        ORDER BY r.item_result_id ASC
     </select>
 
     <select id="findInspection" resultType="com.pcs.domain.inspection.entity.Inspection">
@@ -705,71 +708,79 @@
 
     <select id="findActiveTemplateItems" resultType="com.pcs.domain.inspection.entity.InspectionTemplateItem">
         SELECT
-            item_id,
-            template_id,
-            item_group,
-            item_name,
-            input_type,
-            required,
-            sort_order,
-            grade_impact,
-            fail_policy,
-            active
-        FROM tb_inspection_template_item
-        WHERE template_id = #{templateId}
-          AND active = TRUE
-        ORDER BY item_group ASC, sort_order ASC, item_id ASC
+            i.item_id,
+            i.template_id,
+            i.item_group,
+            i.item_name,
+            i.input_type,
+            i.required,
+            i.sort_order,
+            i.grade_impact,
+            i.fail_policy,
+            i.active
+        FROM tb_inspection_template_item i
+        INNER JOIN tb_inspection_template t
+            ON t.template_id = i.template_id
+        WHERE t.company_id = #{companyId}
+          AND i.template_id = #{templateId}
+          AND i.active = TRUE
+        ORDER BY i.item_group ASC, i.sort_order ASC, i.item_id ASC
     </select>
 
     <select id="findTemplateItems" resultType="com.pcs.domain.inspection.entity.InspectionTemplateItem">
         SELECT
-            item_id,
-            template_id,
-            item_group,
-            item_name,
-            input_type,
-            required,
-            sort_order,
-            grade_impact,
-            fail_policy,
-            active
-        FROM tb_inspection_template_item
-        WHERE template_id = #{templateId}
-        ORDER BY item_group ASC, sort_order ASC, item_id ASC
+            i.item_id,
+            i.template_id,
+            i.item_group,
+            i.item_name,
+            i.input_type,
+            i.required,
+            i.sort_order,
+            i.grade_impact,
+            i.fail_policy,
+            i.active
+        FROM tb_inspection_template_item i
+        INNER JOIN tb_inspection_template t
+            ON t.template_id = i.template_id
+        WHERE t.company_id = #{companyId}
+          AND i.template_id = #{templateId}
+        ORDER BY i.item_group ASC, i.sort_order ASC, i.item_id ASC
     </select>
 
     <select id="findActiveTemplateOptions" resultType="com.pcs.domain.inspection.dto.response.InspectionTemplateOptionRow">
         SELECT
-            option_id,
-            item_id,
-            option_label,
-            option_value,
-            active
-        FROM tb_inspection_template_item_option
-        WHERE item_id IN (
-            SELECT item_id
-            FROM tb_inspection_template_item
-            WHERE template_id = #{templateId}
-              AND active = TRUE
-        )
-          AND active = TRUE
-        ORDER BY item_id ASC, sort_order ASC, option_id ASC
+            o.option_id,
+            o.item_id,
+            o.option_label,
+            o.option_value,
+            o.active
+        FROM tb_inspection_template_item_option o
+        INNER JOIN tb_inspection_template_item i
+            ON i.item_id = o.item_id
+        INNER JOIN tb_inspection_template t
+            ON t.template_id = i.template_id
+        WHERE t.company_id = #{companyId}
+          AND i.template_id = #{templateId}
+          AND i.active = TRUE
+          AND o.active = TRUE
+        ORDER BY o.item_id ASC, o.sort_order ASC, o.option_id ASC
     </select>
 
     <select id="findTemplateOptions" resultType="com.pcs.domain.inspection.dto.response.InspectionTemplateOptionRow">
         SELECT
-            option_id,
-            item_id,
-            option_label,
-            option_value,
-            active
-        FROM tb_inspection_template_item_option
-        WHERE item_id IN (
-            SELECT item_id
-            FROM tb_inspection_template_item
-            WHERE template_id = #{templateId}
-        )
-        ORDER BY item_id ASC, sort_order ASC, option_id ASC
+            o.option_id,
+            o.item_id,
+            o.option_label,
+            o.option_value,
+            o.active
+        FROM tb_inspection_template_item_option o
+        INNER JOIN tb_inspection_template_item i
+            ON i.item_id = o.item_id
+        INNER JOIN tb_inspection_template t
+            ON t.template_id = i.template_id
+        WHERE t.company_id = #{companyId}
+          AND i.template_id = #{templateId}
+        ORDER BY o.item_id ASC, o.sort_order ASC, o.option_id ASC
     </select>
 
     <insert id="insertInspection"
