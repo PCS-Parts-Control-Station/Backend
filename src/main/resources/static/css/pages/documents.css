@@ -363,8 +363,12 @@
     padding: 22px 0 22px 22px;
 }
 
+.documents-detail-panel > .panel-title-bar {
+    padding-right: 18px;
+}
+
 .documents-detail-panel > .panel-title-bar .panel-link-button {
-    margin-right: 10px;
+    margin-right: 0;
 }
 
 .documents-detail-body {

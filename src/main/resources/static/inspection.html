@@ -13,9 +13,10 @@
     <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
     <link rel="stylesheet" href="/css/layouts/workspace.css?20260703_quick_bar_no_overlap">
     <link rel="stylesheet" href="/css/components/components.css?20260703_modal_scroll_lock">
+    <link rel="stylesheet" href="/css/components/management-page.css?20260625_management_header">
     <link rel="stylesheet" href="/css/components/workflow.css?20260618_layers">
     <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
-    <link rel="stylesheet" href="/css/pages/inspection.css?20260702_pagination_center">
+    <link rel="stylesheet" href="/css/pages/inspection.css?20260709_route_filter">
 </head>
 <body class="has-collapsible-sidebar inspection-page page-inspection workspace-page">
 <div class="workspace-layout">
@@ -71,10 +72,30 @@
         <section class="content-grid">
             <div class="content-main inspection-step-flow">
                 <section class="table-card inspection-step-card inspection-document-card" aria-labelledby="inspection-filter-title">
-                    <div class="table-header inspection-step-header">
+                    <div class="table-header inspection-step-header inline-summary-header management-summary-header">
                         <div>
                             <h2 id="inspection-filter-title"><span class="inspection-step-number">1</span> 전표 선택</h2>
                             <p>검수할 입고 전표를 선택하세요.</p>
+                        </div>
+                        <div class="list-summary-box" aria-label="검수 대상 전표 요약">
+                            <dl class="list-summary">
+                                <div>
+                                    <dt>전표</dt>
+                                    <dd data-summary-total>0</dd>
+                                </div>
+                                <div>
+                                    <dt>대기</dt>
+                                    <dd data-summary-waiting>0</dd>
+                                </div>
+                                <div>
+                                    <dt>완료</dt>
+                                    <dd data-summary-completed>0</dd>
+                                </div>
+                                <div>
+                                    <dt>검수 대상</dt>
+                                    <dd data-summary-total-units>0</dd>
+                                </div>
+                            </dl>
                         </div>
                     </div>
 
@@ -118,11 +139,9 @@
                         </details>
                     </form>
 
-                    <div class="inspection-result-summary" aria-label="검수 대상 전표 요약">
-                        <span>전표 <strong data-summary-total>0</strong>건</span>
-                        <span>대기 <strong data-summary-waiting>0</strong>개</span>
-                        <span>완료 <strong data-summary-completed>0</strong>개</span>
-                        <span>검수 대상 <strong data-summary-total-units>0</strong>개</span>
+                    <div class="inspection-route-filter" data-inspection-route-filter hidden>
+                        <span data-inspection-route-filter-text>운영현황 필터 적용 중</span>
+                        <button type="button" class="panel-link-button" data-inspection-route-filter-clear>해제</button>
                     </div>
 
                     <div class="inspection-document-list-frame list-loading-frame" data-inspection-document-list-frame>
@@ -578,6 +597,6 @@
 <script src="/js/pcs-ui.js?20260703_modal_scroll_lock"></script>
 <script src="/js/pcs-pagination.js?20260527_pagination"></script>
 <script src="/js/pcs-common.js?20260705_common_helpers"></script>
-<script src="/js/inspection.js?20260702_document_list_loading"></script>
+<script src="/js/inspection.js?20260709_route_filter"></script>
 </body>
 </html>

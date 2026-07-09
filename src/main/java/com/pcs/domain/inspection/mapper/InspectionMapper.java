@@ -33,6 +33,8 @@ public interface InspectionMapper {
     List<SearchWaitingInspectionDocumentResponse> searchWaitingDocuments(
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,
+            @Param("partId") Long partId,
+            @Param("hasWaiting") Boolean hasWaiting,
             @Param("partnerId") Long partnerId,
             @Param("inspectionStatus") String inspectionStatus,
             @Param("dateFrom") LocalDateTime dateFrom,
@@ -44,6 +46,8 @@ public interface InspectionMapper {
     long countWaitingDocuments(
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,
+            @Param("partId") Long partId,
+            @Param("hasWaiting") Boolean hasWaiting,
             @Param("partnerId") Long partnerId,
             @Param("inspectionStatus") String inspectionStatus,
             @Param("dateFrom") LocalDateTime dateFrom,
@@ -53,6 +57,8 @@ public interface InspectionMapper {
     SearchWaitingInspectionDocumentSummaryResponse summarizeWaitingDocuments(
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,
+            @Param("partId") Long partId,
+            @Param("hasWaiting") Boolean hasWaiting,
             @Param("partnerId") Long partnerId,
             @Param("inspectionStatus") String inspectionStatus,
             @Param("dateFrom") LocalDateTime dateFrom,

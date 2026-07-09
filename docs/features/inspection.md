@@ -18,7 +18,7 @@ com.pcs.domain.inspection
 
 | Method | API | 설명 |
 |---|---|---|
-| GET | `/api/workspaces/{companyCode}/inspections/waiting-documents` | 검수 대상 입고 전표 목록. `keyword`, `partnerId`, `inspectionStatus`, `dateFrom`, `dateTo`, `page`, `size`, `limit` 지원 |
+| GET | `/api/workspaces/{companyCode}/inspections/waiting-documents` | 검수 대상 입고 전표 목록. `keyword`, `partId`, `hasWaiting`, `partnerId`, `inspectionStatus`, `dateFrom`, `dateTo`, `page`, `size`, `limit` 지원 |
 | GET | `/api/workspaces/{companyCode}/inspections/waiting-documents/{documentId}/units` | 전표별 검수 대상 관리번호 목록 |
 | POST | `/api/workspaces/{companyCode}/inspections` | 최초 검수 등록 |
 | POST | `/api/workspaces/{companyCode}/inspections/bulk` | 여러 관리번호 일괄 최초 검수 등록 |

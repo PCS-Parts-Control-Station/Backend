@@ -32,10 +32,16 @@
               OR u.internal_serial_no LIKE CONCAT('%', #{keyword}, '%')
           )
         </if>
+        <if test="partId != null">
+          AND p.part_id = #{partId}
+        </if>
     </sql>
 
     <sql id="waitingDocumentOuterWhere">
         <where>
+            <if test="hasWaiting == true">
+                filtered.waiting_count &gt; 0
+            </if>
             <if test="inspectionStatus != null and inspectionStatus != ''">
                 <choose>
                     <when test="inspectionStatus == 'WAITING'">

@@ -30,6 +30,9 @@
     const formStep = document.querySelector("[data-inspection-form-step]");
     const confirmModal = document.querySelector("[data-inspection-confirm-modal]");
     const sideStepItems = document.querySelectorAll("[data-inspection-side-step]");
+    const routeFilter = document.querySelector("[data-inspection-route-filter]");
+    const routeFilterText = document.querySelector("[data-inspection-route-filter-text]");
+    const routeFilterClear = document.querySelector("[data-inspection-route-filter-clear]");
 
     const summaryFields = {
         documents: document.querySelector("[data-summary-total]"),
@@ -124,6 +127,10 @@
     let historyRequestId = 0;
     let historyDetailRequestId = 0;
     let targetStepHighlightTimer = null;
+    let initialPartIdFilter = null;
+    let initialHasWaitingFilter = false;
+    let initialPartNameFilter = "";
+    let initialCategoryNameFilter = "";
 
     const readInspectionPrefill = () => {
         const params = new URLSearchParams(window.location.search);
@@ -282,6 +289,39 @@
         workflowFields.message.textContent = message || "";
         workflowFields.message.hidden = !message;
         workflowFields.message.classList.toggle("is-error", isError);
+    };
+
+    const renderRouteFilter = () => {
+        if (!routeFilter || !routeFilterText) {
+            return;
+        }
+        const hasRouteFilter = Boolean(initialPartIdFilter || initialHasWaitingFilter);
+        routeFilter.hidden = !hasRouteFilter;
+        if (!hasRouteFilter) {
+            routeFilterText.textContent = "";
+            return;
+        }
+        const targetText = [initialCategoryNameFilter, initialPartNameFilter].filter(Boolean).join(" · ");
+        routeFilterText.textContent = targetText
+                ? `운영현황에서 이동: ${targetText} 검수 대기`
+                : "운영현황에서 이동한 검수 대기 항목";
+    };
+
+    const removeRouteFilterParams = () => {
+        const url = new URL(window.location.href);
+        ["partId", "hasWaiting", "partName", "categoryName"].forEach((key) => url.searchParams.delete(key));
+        window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}`);
+    };
+
+    const clearRouteFilter = () => {
+        initialPartIdFilter = null;
+        initialHasWaitingFilter = false;
+        initialPartNameFilter = "";
+        initialCategoryNameFilter = "";
+        removeRouteFilterParams();
+        renderRouteFilter();
+        resetDocumentSelectionContext();
+        loadWaitingDocuments(0);
     };
 
     function setCurrentSideStep(step) {
@@ -653,6 +693,8 @@
         const inspectionStatus = filterForm?.elements.inspectionStatus?.value;
         const partnerId = filterForm?.elements.partnerId?.value;
         if (keyword) params.set("keyword", keyword);
+        if (initialPartIdFilter) params.set("partId", initialPartIdFilter);
+        if (initialHasWaitingFilter) params.set("hasWaiting", "true");
         if (inspectionStatus) params.set("inspectionStatus", inspectionStatus);
         if (partnerId) params.set("partnerId", partnerId);
         buildPeriodParams(params);
@@ -1897,11 +1939,19 @@
     });
 
     filterForm?.addEventListener("reset", () => {
+        initialPartIdFilter = null;
+        initialHasWaitingFilter = false;
+        initialPartNameFilter = "";
+        initialCategoryNameFilter = "";
+        renderRouteFilter();
+        removeRouteFilterParams();
         window.setTimeout(() => {
             resetDocumentSelectionContext();
             loadWaitingDocuments(0);
         }, 0);
     });
+
+    routeFilterClear?.addEventListener("click", clearRouteFilter);
 
     documentPrevButton?.addEventListener("click", () => {
         if (!currentDocumentPageData?.hasPrevious) {
@@ -2033,9 +2083,20 @@
     const applyInitialSearchParams = () => {
         const params = new URLSearchParams(window.location.search);
         const keyword = params.get("documentNo") || params.get("keyword");
+        const partId = params.get("partId");
+        initialHasWaitingFilter = params.get("hasWaiting") === "true";
+        initialPartNameFilter = params.get("partName") || "";
+        initialCategoryNameFilter = params.get("categoryName") || "";
         if (keyword && filterForm?.elements.keyword) {
             filterForm.elements.keyword.value = keyword;
         }
+        if (partId && /^\d+$/.test(partId)) {
+            initialPartIdFilter = partId;
+        }
+        if (params.get("inspectionStatus") && filterForm?.elements.inspectionStatus) {
+            filterForm.elements.inspectionStatus.value = params.get("inspectionStatus");
+        }
+        renderRouteFilter();
     };
 
     const init = async () => {
