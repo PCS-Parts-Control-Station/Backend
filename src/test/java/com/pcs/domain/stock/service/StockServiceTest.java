@@ -8,7 +8,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -74,6 +76,9 @@ class StockServiceTest {
     @BeforeEach
     void setUp() {
         stockService = new StockService(stockMapper, workspaceAccessValidator);
+        lenient().when(stockMapper.insertMovementUnit(anyLong(), anyLong(), anyLong(), any())).thenReturn(1);
+        lenient().when(stockMapper.insertMovementUnitStatusChange(anyLong(), anyLong(), anyLong(), any(), any()))
+                .thenReturn(1);
     }
 
     @Test
@@ -369,7 +374,7 @@ class StockServiceTest {
         when(stockMapper.findOriginalInboundMovementsForUpdate(companyId, documentId)).thenReturn(List.of(movement));
         when(stockMapper.countInvalidInboundCancelUnits(companyId, documentId)).thenReturn(0);
         when(stockMapper.findPartStockQuantityForUpdate(companyId, 1000L)).thenReturn(5);
-        when(stockMapper.findMovementUnitIds(900L)).thenReturn(List.of(10000L, 10001L));
+        when(stockMapper.findMovementUnitIds(companyId, 900L)).thenReturn(List.of(10000L, 10001L));
         doAnswer(invocation -> {
             StockMovement cancelMovement = invocation.getArgument(0);
             cancelMovement.setMovementId(901L);
@@ -383,8 +388,8 @@ class StockServiceTest {
         assertEquals(1, response.canceledMovementCount());
         assertEquals(2, response.canceledUnitCount());
         verify(stockMapper).updatePartStockQuantity(companyId, 1000L, 3);
-        verify(stockMapper).insertMovementUnitStatusChange(901L, 10000L, UnitStatus.IN_STOCK, UnitStatus.CANCELED);
-        verify(stockMapper).insertMovementUnitStatusChange(901L, 10001L, UnitStatus.IN_STOCK, UnitStatus.CANCELED);
+        verify(stockMapper).insertMovementUnitStatusChange(companyId, 901L, 10000L, UnitStatus.IN_STOCK, UnitStatus.CANCELED);
+        verify(stockMapper).insertMovementUnitStatusChange(companyId, 901L, 10001L, UnitStatus.IN_STOCK, UnitStatus.CANCELED);
         verify(stockMapper).updatePartUnitStatusForInboundCancel(companyId, 10000L);
         verify(stockMapper).updatePartUnitStatusForInboundCancel(companyId, 10001L);
         verify(stockMapper).updateDocumentMovementStatus(companyId, documentId, MovementStatus.CANCELED);
@@ -426,7 +431,7 @@ class StockServiceTest {
         when(stockMapper.findOriginalOutboundMovementsForUpdate(companyId, documentId)).thenReturn(List.of(movement));
         when(stockMapper.countInvalidOutboundCancelUnits(companyId, documentId)).thenReturn(0);
         when(stockMapper.findPartStockQuantityForUpdate(companyId, 1000L)).thenReturn(3);
-        when(stockMapper.findMovementUnitIds(950L)).thenReturn(List.of(10000L, 10001L));
+        when(stockMapper.findMovementUnitIds(companyId, 950L)).thenReturn(List.of(10000L, 10001L));
         doAnswer(invocation -> {
             StockMovement cancelMovement = invocation.getArgument(0);
             cancelMovement.setMovementId(951L);
@@ -440,8 +445,8 @@ class StockServiceTest {
         assertEquals(1, response.canceledMovementCount());
         assertEquals(2, response.canceledUnitCount());
         verify(stockMapper).updatePartStockQuantity(companyId, 1000L, 5);
-        verify(stockMapper).insertMovementUnitStatusChange(951L, 10000L, UnitStatus.OUTBOUND, UnitStatus.IN_STOCK);
-        verify(stockMapper).insertMovementUnitStatusChange(951L, 10001L, UnitStatus.OUTBOUND, UnitStatus.IN_STOCK);
+        verify(stockMapper).insertMovementUnitStatusChange(companyId, 951L, 10000L, UnitStatus.OUTBOUND, UnitStatus.IN_STOCK);
+        verify(stockMapper).insertMovementUnitStatusChange(companyId, 951L, 10001L, UnitStatus.OUTBOUND, UnitStatus.IN_STOCK);
         verify(stockMapper).updatePartUnitStatusForOutboundCancel(companyId, 10000L);
         verify(stockMapper).updatePartUnitStatusForOutboundCancel(companyId, 10001L);
         verify(stockMapper).updateDocumentMovementStatus(companyId, documentId, MovementStatus.CANCELED);
@@ -508,7 +513,7 @@ class StockServiceTest {
         verify(stockMapper).updatePartStockQuantity(companyId, partId, 12);
         verify(stockMapper, never()).insertPartStock(anyLong(), anyLong(), anyInt());
         verify(stockMapper, times(2)).insertPartUnit(any(StockPartUnit.class));
-        verify(stockMapper, times(2)).insertMovementUnit(anyLong(), anyLong(), any());
+        verify(stockMapper, times(2)).insertMovementUnit(eq(companyId), anyLong(), anyLong(), any());
 
         ArgumentCaptor<StockPartUnit> unitCaptor = ArgumentCaptor.forClass(StockPartUnit.class);
         verify(stockMapper, times(2)).insertPartUnit(unitCaptor.capture());
@@ -576,7 +581,7 @@ class StockServiceTest {
         verify(stockMapper).insertPartStock(companyId, partId, 3);
         verify(stockMapper, never()).updatePartStockQuantity(anyLong(), anyLong(), anyInt());
         verify(stockMapper, times(3)).insertPartUnit(any(StockPartUnit.class));
-        verify(stockMapper, times(3)).insertMovementUnit(anyLong(), anyLong(), any());
+        verify(stockMapper, times(3)).insertMovementUnit(eq(companyId), anyLong(), anyLong(), any());
     }
 
     @Test
@@ -643,7 +648,7 @@ class StockServiceTest {
         verify(stockMapper).insertPartStock(companyId, partId, 2);
         verify(stockMapper).updatePartStockQuantity(companyId, partId, 9);
         verify(stockMapper, times(2)).insertPartUnit(any(StockPartUnit.class));
-        verify(stockMapper, times(2)).insertMovementUnit(anyLong(), anyLong(), any());
+        verify(stockMapper, times(2)).insertMovementUnit(eq(companyId), anyLong(), anyLong(), any());
     }
 
     @Test
@@ -737,8 +742,8 @@ class StockServiceTest {
         assertEquals(2, response.outboundUnitCount());
 
         verify(stockMapper).updatePartStockQuantity(companyId, partId, 3);
-        verify(stockMapper).insertMovementUnitStatusChange(950L, 10000L, UnitStatus.IN_STOCK, UnitStatus.OUTBOUND);
-        verify(stockMapper).insertMovementUnitStatusChange(950L, 10001L, UnitStatus.IN_STOCK, UnitStatus.OUTBOUND);
+        verify(stockMapper).insertMovementUnitStatusChange(companyId, 950L, 10000L, UnitStatus.IN_STOCK, UnitStatus.OUTBOUND);
+        verify(stockMapper).insertMovementUnitStatusChange(companyId, 950L, 10001L, UnitStatus.IN_STOCK, UnitStatus.OUTBOUND);
         verify(stockMapper).updatePartUnitStatusForOutbound(companyId, 10000L);
         verify(stockMapper).updatePartUnitStatusForOutbound(companyId, 10001L);
     }

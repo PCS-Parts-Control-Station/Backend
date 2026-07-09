@@ -3,6 +3,7 @@ package com.pcs.domain.dashboard.facade;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -13,8 +14,8 @@ import com.pcs.domain.dashboard.service.DashboardService;
 import com.pcs.domain.member.type.MemberRole;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
-import com.pcs.global.jwt.JwtClaims;
-import com.pcs.global.jwt.JwtTokenProvider;
+import com.pcs.global.security.PcsPrincipal;
+import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,17 +31,18 @@ class DashboardFacadeTest {
     private DashboardService dashboardService;
 
     @Mock
-    private JwtTokenProvider jwtTokenProvider;
+    private WorkspaceAccessValidator workspaceAccessValidator;
 
     private DashboardFacade dashboardFacade;
 
     @BeforeEach
     void setUp() {
-        dashboardFacade = new DashboardFacade(dashboardService, jwtTokenProvider);
+        dashboardFacade = new DashboardFacade(dashboardService, workspaceAccessValidator);
     }
 
     @Test
     void getDashboard_success() {
+        PcsPrincipal principal = principal(1L, 10L, "acme");
         DashboardResponse expected = new DashboardResponse(
                 new DashboardSummaryResponse(0L, 0L, 0L, 0L, 0L, 0L, 0L),
                 List.of(),
@@ -48,17 +50,21 @@ class DashboardFacadeTest {
                 List.of()
         );
 
-        when(jwtTokenProvider.parseAccessToken("token")).thenReturn(claims(1L, 10L, "acme"));
+        when(workspaceAccessValidator.validateAuthenticatedWorkspace(principal, "acme")).thenReturn(principal);
         when(dashboardService.getDashboard(1L)).thenReturn(expected);
 
-        DashboardResponse response = dashboardFacade.getDashboard("Bearer token", "acme");
+        DashboardResponse response = dashboardFacade.getDashboard(principal, "acme");
 
         assertSame(expected, response);
         verify(dashboardService).getDashboard(1L);
     }
 
     @Test
-    void getDashboard_fail_whenAuthHeaderMissing() {
+    void getDashboard_fail_whenAuthPrincipalMissing() {
+        doThrow(new BusinessException(ErrorCode.AUTH_REQUIRED))
+                .when(workspaceAccessValidator)
+                .validateAuthenticatedWorkspace(null, "acme");
+
         BusinessException exception = assertThrows(
                 BusinessException.class,
                 () -> dashboardFacade.getDashboard(null, "acme")
@@ -69,24 +75,26 @@ class DashboardFacadeTest {
 
     @Test
     void getDashboard_fail_whenWorkspaceMismatch() {
-        when(jwtTokenProvider.parseAccessToken("token")).thenReturn(claims(1L, 10L, "acme"));
+        PcsPrincipal principal = principal(1L, 10L, "acme");
+        doThrow(new BusinessException(ErrorCode.AUTH_WORKSPACE_MISMATCH))
+                .when(workspaceAccessValidator)
+                .validateAuthenticatedWorkspace(principal, "other");
 
         BusinessException exception = assertThrows(
                 BusinessException.class,
-                () -> dashboardFacade.getDashboard("Bearer token", "other")
+                () -> dashboardFacade.getDashboard(principal, "other")
         );
 
         assertEquals(ErrorCode.AUTH_WORKSPACE_MISMATCH, exception.getErrorCode());
     }
 
-    private JwtClaims claims(Long companyId, Long memberId, String companyCode) {
-        return new JwtClaims(
+    private PcsPrincipal principal(Long companyId, Long memberId, String companyCode) {
+        return new PcsPrincipal(
                 memberId,
                 companyId,
                 companyCode,
                 "admin",
                 MemberRole.ADMIN,
-                "ACCESS",
                 Instant.now().plusSeconds(1800)
         );
     }
