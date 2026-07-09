@@ -54,6 +54,59 @@
 
     const routeHref = (route) => `/w/${encodeURIComponent(companyCode)}/${String(route || "dashboard")}`;
 
+    const withQuery = (href, params = {}) => {
+        const url = new URL(href, window.location.origin);
+        Object.entries(params).forEach(([key, value]) => {
+            if (value === null || value === undefined || String(value).trim() === "") {
+                return;
+            }
+            url.searchParams.set(key, String(value).trim());
+        });
+        return `${url.pathname}${url.search}`;
+    };
+
+    const todoRoute = (todo) => {
+        if (todo?.type === "STOCK_HOLD" || todo?.type === "STOCK_UNAVAILABLE") {
+            return "part-units";
+        }
+        return todo?.route || "dashboard";
+    };
+
+    const todoParams = (todo) => {
+        const params = {};
+        if (todo?.type === "INSPECTION_WAITING") {
+            params.partId = todo?.partId || "";
+            params.hasWaiting = "true";
+            params.partName = todo?.title || "";
+            params.categoryName = todo?.categoryName || "";
+            return params;
+        }
+        params.keyword = todo?.title || "";
+        if (todo?.type === "STOCK_HOLD") {
+            params.partState = "SALES_HOLD";
+        }
+        if (todo?.type === "STOCK_UNAVAILABLE") {
+            params.partState = "SALES_UNAVAILABLE";
+        }
+        return params;
+    };
+
+    const todoHref = (todo) => withQuery(routeHref(todoRoute(todo)), todoParams(todo));
+
+    const recentHref = (activity) => {
+        const isStockDocument = activity?.type === "INBOUND" || activity?.type === "OUTBOUND";
+        const route = isStockDocument ? "documents" : activity?.route;
+        const params = {};
+        if (activity?.documentNo && activity.documentNo !== "-") {
+            params.documentNo = activity.documentNo;
+            params.keyword = activity.documentNo;
+        }
+        if (isStockDocument) {
+            params.documentType = activity.type;
+        }
+        return withQuery(routeHref(route), params);
+    };
+
     const badgeClass = (type) => {
         switch (type) {
             case "INSPECTION_WAITING":
@@ -151,11 +204,14 @@
         }
 
         todoList.innerHTML = pageItems(todosState, todoPage).map((todo, index) => `
-            <a href="${escapeHtml(routeHref(todo.route))}">
+            <a href="${escapeHtml(todoHref(todo))}">
                 <span class="todo-rank">${todoPage * PAGE_SIZE + index + 1}</span>
                 <span class="todo-main">
                     <strong>${escapeHtml(todo.title || "-")}</strong>
-                    <small class="badge ${badgeClass(todo.type)}">${escapeHtml(todo.label || "-")}</small>
+                    <span class="todo-meta">
+                        <small class="badge ${badgeClass(todo.type)}">${escapeHtml(todo.label || "-")}</small>
+                        <small class="todo-category">품목: ${escapeHtml(todo.categoryName || "-")}</small>
+                    </span>
                 </span>
                 <em>${numberText(todo.count)}개</em>
             </a>
@@ -174,7 +230,7 @@
         }
 
         recentList.innerHTML = pageItems(recentState, recentPage).map((activity) => `
-            <a class="recent-activity-item" href="${escapeHtml(routeHref(activity.route))}">
+            <a class="recent-activity-item" href="${escapeHtml(recentHref(activity))}">
                 <span class="badge ${activityBadgeClass(activity.type)}">${escapeHtml(activity.label || "-")}</span>
                 <span>
                     <strong>${escapeHtml(activity.title || "-")}</strong>
