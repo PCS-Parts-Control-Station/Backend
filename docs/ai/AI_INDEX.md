@@ -213,6 +213,8 @@ SQL 참조 기준:
 
 ### 6. 하네스 수정 작업
 
+`harness/*.ps1`, `.codex/hooks/*.ps1`, `harness/hooks/*`, `.codex/hooks.json`을 한 줄이라도 수정하는 작업이면 이 섹션을 먼저 적용한다.
+
 읽을 문서:
 
 - `docs/ai/pcs-harness-rules.md`
@@ -236,6 +238,7 @@ SQL 참조 기준:
 - Feature 경로와 DB 의존성은 `harness/config/features.json` 한 곳에서 관리한다.
 - 실제 검사는 `run-harness.ps1`에 구현하고, `run-feedback-loop.ps1`은 옵션 전달과 실패 요약 생성을 담당한다.
 - PowerShell 하네스 코드는 Windows/macOS 검증 로직을 복제하지 않고, 공통 검증 로직 + OS 어댑터 구조를 따른다.
+- Windows 전용 옵션이나 명령은 `docs/ai/pcs-powershell-harness-rules.md` 기준으로 어댑터 함수 또는 Windows 분기 안에서만 사용한다.
 - Git pre-push 훅은 `bootstrap`이나 `full`이 아니라 `gate` 모드로 변경 파일 기준 feature 검사와 공통 검증을 실행한다.
 - Codex Stop 훅도 `gate`를 사용하며 서버를 제어하지 않는다.
 - `.gitignore` 필수 패턴, Git 추적 금지 파일, pre-push 변경 파일 금지 검사는 `docs/ai/pcs-harness-rules.md`의 `.gitignore 규칙` 기준을 따른다.

@@ -510,3 +510,4 @@ Codex 작업 종료 시 자동 검증은 `.codex/hooks.json`과 `.codex/hooks/st
 - 실제 검사 규칙을 Stop 스크립트에 중복 작성하지 않는다.
 - DB 관련 변경일 때만 `-RunDb`를 추가한다.
 - 서버를 시작, 종료, 재시작하지 않는다.
+- pre-push와 Stop 훅이 넘긴 변경 파일 목록에 하네스/훅 파일이 포함되면 `run-harness.ps1`이 `docs/ai/pcs-powershell-harness-rules.md` 기준으로 Windows/macOS 공통 실행 규칙을 검사한다.

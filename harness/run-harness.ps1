@@ -154,6 +154,29 @@ function Get-JavaExecutablePath {
     return $null
 }
 
+function Get-JavacExecutablePath {
+    param(
+        [string] $JavaHome
+    )
+
+    if ([string]::IsNullOrWhiteSpace($JavaHome)) {
+        return $null
+    }
+
+    $candidates = @(
+        (Join-Path $JavaHome "bin/javac"),
+        (Join-Path $JavaHome "bin/javac.exe")
+    )
+
+    foreach ($candidate in $candidates) {
+        if (Test-Path $candidate) {
+            return $candidate
+        }
+    }
+
+    return $null
+}
+
 function Get-GitCommandPath {
     $gitCommand = Get-Command git -ErrorAction SilentlyContinue
     if ($gitCommand) {
@@ -607,12 +630,40 @@ function Test-JavaVersion {
     }
 }
 
+function Get-PortListeners {
+    param(
+        [int] $Port
+    )
+
+    if (Test-IsWindowsHost) {
+        $connection = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
+        return @($connection | ForEach-Object { "PID $($_.OwningProcess)" })
+    }
+
+    $lsof = Get-Command "lsof" -ErrorAction SilentlyContinue
+    if ($lsof) {
+        $lsofOutput = @(& $lsof.Source "-nP" "-iTCP:$Port" "-sTCP:LISTEN" 2>$null | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+        return @($lsofOutput | Select-Object -Skip 1)
+    }
+
+    $netstat = Get-Command "netstat" -ErrorAction SilentlyContinue
+    if ($netstat) {
+        return @(& $netstat.Source "-an" 2>$null | Where-Object { $_ -match "[:.]$Port\s+.*LISTEN" })
+    }
+
+    return $null
+}
+
 function Test-PortAvailable {
     try {
-        $connection = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
-        if ($connection) {
-            $owners = ($connection | Select-Object -ExpandProperty OwningProcess -Unique) -join ", "
-            Add-Result "WARN" "PORT_IN_USE" "Port $Port is already in use. PID: $owners" "Stop the running server before clean/build if needed."
+        $listeners = Get-PortListeners $Port
+        if ($null -eq $listeners) {
+            Add-Result "WARN" "PORT_CHECK_SKIPPED" "Port check was skipped because no supported port checker was found." "Install lsof or netstat on macOS/Linux if port checks are required."
+            return
+        }
+        if ($listeners.Count -gt 0) {
+            $owners = ($listeners | Select-Object -Unique) -join ", "
+            Add-Result "WARN" "PORT_IN_USE" "Port $Port is already in use. Listener: $owners" "Stop the running server before clean/build if needed."
         } else {
             Add-Result "INFO" "PORT_AVAILABLE" "Port $Port is available."
         }
@@ -861,6 +912,169 @@ function Test-FeatureRegistry {
     }
 
     Add-Result "INFO" "FEATURE_REGISTRY" "Feature registry checks completed for $($names.Count) features."
+}
+
+function Test-PowerShellHarnessRules {
+    Test-PathRequired "docs/ai/pcs-powershell-harness-rules.md" "POWERSHELL_HARNESS_RULES_DOC" "Keep cross-platform PowerShell harness rules available."
+
+    $aiIndexPath = Join-Path $ProjectRoot "docs/ai/AI_INDEX.md"
+    if (Test-Path $aiIndexPath) {
+        $aiIndexContent = Get-Content -Raw -Encoding UTF8 -Path $aiIndexPath
+        foreach ($pattern in @("docs/ai/pcs-harness-rules.md", "docs/ai/pcs-powershell-harness-rules.md", "docs/ai/pcs-codex-hook-rules.md")) {
+            if ($aiIndexContent -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "POWERSHELL_HARNESS_AI_INDEX_ROUTING" "AI_INDEX.md is missing PowerShell harness routing pattern: $pattern" "Make PS1/hook edits route through docs/ai/pcs-powershell-harness-rules.md."
+            }
+        }
+    }
+
+    $rulesPath = Join-Path $ProjectRoot "docs/ai/pcs-powershell-harness-rules.md"
+    if (Test-Path $rulesPath) {
+        $rulesContent = Get-Content -Raw -Encoding UTF8 -Path $rulesPath
+        foreach ($pattern in @("-ExecutionPolicy", "Bypass", "macOS")) {
+            if ($rulesContent -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "POWERSHELL_HARNESS_RULES_PATTERN" "pcs-powershell-harness-rules.md is missing cross-platform rule pattern: $pattern" "Document Windows-only PowerShell options and macOS pwsh behavior."
+            }
+        }
+    }
+
+    foreach ($relativePath in @(
+        "harness/run-feedback-loop.ps1",
+        "harness/install-hooks.ps1",
+        ".codex/hooks/stop.ps1"
+    )) {
+        $scriptPath = Join-Path $ProjectRoot $relativePath
+        if (-not (Test-Path $scriptPath)) {
+            continue
+        }
+
+        $content = Get-Content -Raw -Encoding UTF8 -Path $scriptPath
+        if ($content -match [regex]::Escape("-ExecutionPolicy")) {
+            $isWindowsGuarded = $content -match 'if\s*\(\s*Test-IsWindowsHost\s*\)\s*\{[\s\S]{0,400}-ExecutionPolicy'
+            if (-not $isWindowsGuarded) {
+                Add-Result "FAIL" "POWERSHELL_HARNESS_EXECUTION_POLICY_GUARD" "$relativePath uses -ExecutionPolicy without a Windows host guard." "Keep -ExecutionPolicy Bypass inside a Test-IsWindowsHost branch only."
+            }
+        }
+    }
+
+    $changedHarnessFiles = @(Get-ChangedHarnessFilesForCrossPlatformCheck)
+    if (-not [string]::IsNullOrWhiteSpace($ChangedFilesPath)) {
+        if ($changedHarnessFiles.Count -eq 0) {
+            Add-Result "INFO" "POWERSHELL_HARNESS_CHANGED_FILES" "No changed harness or hook files require cross-platform compatibility checks."
+        } else {
+            Add-Result "INFO" "POWERSHELL_HARNESS_CHANGED_FILES" "Checking changed harness or hook files for Windows/macOS compatibility: $($changedHarnessFiles -join ', ')"
+        }
+    }
+
+    foreach ($changedHarnessFile in $changedHarnessFiles) {
+        Test-ChangedHarnessFileCrossPlatform $changedHarnessFile
+    }
+
+    Add-Result "INFO" "POWERSHELL_HARNESS_RULES" "PowerShell harness cross-platform rule checks completed."
+}
+
+function Get-ChangedHarnessFilesForCrossPlatformCheck {
+    if ([string]::IsNullOrWhiteSpace($ChangedFilesPath)) {
+        return @()
+    }
+
+    $patterns = @(
+        '^harness/run-harness\.ps1$',
+        '^harness/run-feedback-loop\.ps1$',
+        '^harness/install-hooks\.ps1$',
+        '^harness/hooks/[^/]+$',
+        '^harness/config/features\.json$',
+        '^\.codex/hooks\.json$',
+        '^\.codex/hooks/[^/]+\.ps1$'
+    )
+
+    $changedHarnessMatches = New-Object System.Collections.Generic.List[string]
+    foreach ($changedFile in @(Get-ChangedFilesForGate)) {
+        $normalizedPath = Normalize-HarnessPath $changedFile
+        foreach ($pattern in $patterns) {
+            if ($normalizedPath -match $pattern) {
+                $changedHarnessMatches.Add($normalizedPath) | Out-Null
+                break
+            }
+        }
+    }
+
+    return @($changedHarnessMatches | Select-Object -Unique)
+}
+
+function Test-ExecutionPolicyGuard {
+    param(
+        [string] $RelativePath,
+        [string] $Content
+    )
+
+    if ($Content -notmatch [regex]::Escape("-ExecutionPolicy")) {
+        return
+    }
+
+    $isPowerShellScriptGuarded = $Content -match 'if\s*\(\s*Test-IsWindowsHost\s*\)\s*\{[\s\S]{0,400}-ExecutionPolicy'
+    $isShellHookWindowsBranch = $RelativePath -match '^harness/hooks/' -and
+            $Content -match 'elif\s+command\s+-v\s+powershell\.exe' -and
+            $Content -match 'pwsh\s+-NoProfile\s+-File'
+    $isHookJsonSplitCommand = $RelativePath -eq ".codex/hooks.json" -and
+            $Content -match '"command"\s*:' -and
+            $Content -match '"commandWindows"\s*:'
+
+    if (-not ($isPowerShellScriptGuarded -or $isShellHookWindowsBranch -or $isHookJsonSplitCommand)) {
+        Add-Result "FAIL" "POWERSHELL_HARNESS_EXECUTION_POLICY_GUARD" "$RelativePath uses -ExecutionPolicy without a Windows-only execution branch." "Keep -ExecutionPolicy Bypass in commandWindows, powershell.exe shell branch, or Test-IsWindowsHost branch only."
+    }
+}
+
+function Test-ChangedHarnessFileCrossPlatform {
+    param(
+        [string] $RelativePath
+    )
+
+    $scriptPath = Join-Path $ProjectRoot $RelativePath
+    if (-not (Test-Path $scriptPath)) {
+        return
+    }
+
+    $content = Get-Content -Raw -Encoding UTF8 -Path $scriptPath
+    if ($RelativePath -ne "harness/run-harness.ps1") {
+        Test-ExecutionPolicyGuard $RelativePath $content
+    }
+
+    if ($RelativePath -eq "harness/run-harness.ps1") {
+        foreach ($pattern in @("Test-IsWindowsHost", "Get-GradleWrapperPath", "Invoke-GradleWrapper", "Get-JavaExecutablePath", "Resolve-Java17Home")) {
+            if ($content -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "POWERSHELL_HARNESS_RUN_HARNESS_ADAPTER" "run-harness.ps1 is missing cross-platform adapter pattern: $pattern" "Keep Gradle and Java execution behind shared Windows/macOS adapters."
+            }
+        }
+    } elseif ($RelativePath -eq "harness/run-feedback-loop.ps1") {
+        foreach ($pattern in @("Get-PowerShellRunner", "Test-IsWindowsHost", "run-harness.ps1", "agent-failures.md")) {
+            if ($content -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "POWERSHELL_HARNESS_FEEDBACK_LOOP_ADAPTER" "run-feedback-loop.ps1 is missing wrapper pattern: $pattern" "Keep feedback-loop as a cross-platform wrapper around run-harness.ps1."
+            }
+        }
+    } elseif ($RelativePath -eq ".codex/hooks/stop.ps1") {
+        foreach ($pattern in @("run-feedback-loop.ps1", "ChangedFilesPath", "TrackedFilesPath", "Mode = `"gate`"")) {
+            if ($content -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "POWERSHELL_HARNESS_STOP_HOOK_ADAPTER" "stop.ps1 is missing cross-platform Stop hook pattern: $pattern" "Keep Stop hook as a thin changed-file adapter into run-feedback-loop.ps1."
+            }
+        }
+        foreach ($forbidden in @("-Mode full", "bootRun", "Stop-Process", "Start-Process")) {
+            if ($content -match [regex]::Escape($forbidden)) {
+                Add-Result "FAIL" "POWERSHELL_HARNESS_STOP_HOOK_FORBIDDEN" "stop.ps1 contains forbidden cross-platform hook behavior: $forbidden" "Do not run full regression, start servers, or stop processes from Stop hook."
+            }
+        }
+    } elseif ($RelativePath -match '^harness/hooks/') {
+        foreach ($pattern in @("pwsh -NoProfile -File", "powershell.exe -NoProfile -ExecutionPolicy Bypass -File", "macOS: brew install --cask powershell")) {
+            if ($content -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "POWERSHELL_HARNESS_PRE_PUSH_ADAPTER" "$RelativePath is missing cross-platform pre-push pattern: $pattern" "Keep pre-push able to run through pwsh on macOS and powershell.exe on Windows."
+            }
+        }
+    } elseif ($RelativePath -eq ".codex/hooks.json") {
+        foreach ($pattern in @('"command"', '"commandWindows"', "pwsh -NoProfile", "powershell.exe -NoProfile -ExecutionPolicy Bypass")) {
+            if ($content -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "POWERSHELL_HARNESS_CODEX_HOOKS_JSON" "hooks.json is missing cross-platform hook command pattern: $pattern" "Keep Codex Stop hook commands split for macOS/Linux and Windows."
+            }
+        }
+    }
 }
 
 function Test-CodexHookConfiguration {
@@ -3418,15 +3632,26 @@ function Invoke-HarnessDbJava {
 
     $sourcePath = Join-Path $tempRoot "PcsHarnessDbCheck.java"
     New-HarnessDbCheckerSource $sourcePath
+    if (-not (Ensure-JavaHome17)) {
+        Add-Result "FAIL" "DB_CHECKER_JDK_REQUIRED" "DB harness checks require JDK 17 or later." "Set JAVA_HOME to JDK 17 or later."
+        return
+    }
+
+    $javaCommand = Get-JavaExecutablePath $env:JAVA_HOME
+    $javacCommand = Get-JavacExecutablePath $env:JAVA_HOME
+    if (-not $javaCommand -or -not $javacCommand) {
+        Add-Result "FAIL" "DB_CHECKER_JDK_REQUIRED" "DB harness checks require both java and javac from JAVA_HOME." "Set JAVA_HOME to a full JDK 17 or later, not a JRE."
+        return
+    }
 
     try {
-        & javac "-encoding" "UTF-8" "-d" $tempRoot $sourcePath | Out-Null
+        & $javacCommand "-encoding" "UTF-8" "-d" $tempRoot $sourcePath | Out-Null
         if ($LASTEXITCODE -ne 0) {
             Add-Result "FAIL" "DB_CHECKER_COMPILE" "Failed to compile the harness DB checker." "Check that JDK javac is available."
             return
         }
     } catch {
-        Add-Result "FAIL" "DB_CHECKER_JAVAC" "javac command is not available for DB harness checks." "Use JDK 17 and make javac available in PATH."
+        Add-Result "FAIL" "DB_CHECKER_JAVAC" "javac command is not available for DB harness checks." "Use JDK 17 and check JAVA_HOME/bin/javac."
         return
     }
 
@@ -3435,7 +3660,7 @@ function Invoke-HarnessDbJava {
     $previousErrorActionPreference = $ErrorActionPreference
     $ErrorActionPreference = "Continue"
     try {
-        $output = & java "-cp" $classPath "PcsHarnessDbCheck" $dbConfig.Url $dbConfig.User $dbConfig.Password $checksArg 2>&1
+        $output = & $javaCommand "-cp" $classPath "PcsHarnessDbCheck" $dbConfig.Url $dbConfig.User $dbConfig.Password $checksArg 2>&1
         $exitCode = $LASTEXITCODE
     } finally {
         $ErrorActionPreference = $previousErrorActionPreference
@@ -3710,6 +3935,7 @@ Test-NoFeatureCodeBeforeSpec
 Test-JavaScriptSyntax
 Test-CssArchitecture
 Test-FeatureRegistry
+Test-PowerShellHarnessRules
 Test-CodexHookConfiguration
 Test-WorkspaceNavigation
 Test-FrontendCommonUtilityReuse
