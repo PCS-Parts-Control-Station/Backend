@@ -240,9 +240,10 @@ public class StockService {
             stockMapper.insertMovement(cancelMovement);
             stockMapper.updatePartStockQuantity(companyId, movement.partId(), afterQuantity);
 
-            List<Long> unitIds = stockMapper.findMovementUnitIds(movement.movementId());
+            List<Long> unitIds = stockMapper.findMovementUnitIds(companyId, movement.movementId());
             for (Long unitId : unitIds) {
-                stockMapper.insertMovementUnitStatusChange(
+                insertMovementUnitStatusChange(
+                        companyId,
                         cancelMovement.getMovementId(),
                         unitId,
                         UnitStatus.IN_STOCK,
@@ -310,9 +311,10 @@ public class StockService {
                 stockMapper.updatePartStockQuantity(companyId, movement.partId(), afterQuantity);
             }
 
-            List<Long> unitIds = stockMapper.findMovementUnitIds(movement.movementId());
+            List<Long> unitIds = stockMapper.findMovementUnitIds(companyId, movement.movementId());
             for (Long unitId : unitIds) {
-                stockMapper.insertMovementUnitStatusChange(
+                insertMovementUnitStatusChange(
+                        companyId,
                         cancelMovement.getMovementId(),
                         unitId,
                         UnitStatus.OUTBOUND,
@@ -414,7 +416,7 @@ public class StockService {
                         serialSequence
                 );
                 serialSequence = parseSerialSequence(partUnit.getInternalSerialNo());
-                stockMapper.insertMovementUnit(movement.getMovementId(), partUnit.getUnitId(), UnitStatus.IN_STOCK);
+                insertMovementUnit(companyId, movement.getMovementId(), partUnit.getUnitId(), UnitStatus.IN_STOCK);
                 createdUnitCount++;
             }
 
@@ -500,7 +502,8 @@ public class StockService {
             stockMapper.updatePartStockQuantity(companyId, line.partId(), afterQuantity);
 
             for (SearchOutboundCandidateResponse candidate : candidates) {
-                stockMapper.insertMovementUnitStatusChange(
+                insertMovementUnitStatusChange(
+                        companyId,
                         movement.getMovementId(),
                         candidate.unitId(),
                         UnitStatus.IN_STOCK,
@@ -612,6 +615,37 @@ public class StockService {
 
     private void validateCompanyActive(Long companyId) {
         workspaceAccessValidator.validateCompanyActive(companyId);
+    }
+
+    private void insertMovementUnit(
+            Long companyId,
+            Long movementId,
+            Long unitId,
+            UnitStatus afterUnitStatus
+    ) {
+        int inserted = stockMapper.insertMovementUnit(companyId, movementId, unitId, afterUnitStatus);
+        if (inserted != 1) {
+            throw new BusinessException(ErrorCode.PART_UNIT_NOT_FOUND);
+        }
+    }
+
+    private void insertMovementUnitStatusChange(
+            Long companyId,
+            Long movementId,
+            Long unitId,
+            UnitStatus beforeUnitStatus,
+            UnitStatus afterUnitStatus
+    ) {
+        int inserted = stockMapper.insertMovementUnitStatusChange(
+                companyId,
+                movementId,
+                unitId,
+                beforeUnitStatus,
+                afterUnitStatus
+        );
+        if (inserted != 1) {
+            throw new BusinessException(ErrorCode.PART_UNIT_NOT_FOUND);
+        }
     }
 
     private void validateOutboundLines(List<CreateOutboundDocumentLineRequest> lines) {

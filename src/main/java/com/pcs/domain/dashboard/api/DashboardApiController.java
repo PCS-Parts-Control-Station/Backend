@@ -3,11 +3,11 @@ package com.pcs.domain.dashboard.api;
 import com.pcs.domain.dashboard.dto.response.DashboardResponse;
 import com.pcs.domain.dashboard.facade.DashboardFacade;
 import com.pcs.global.dto.ApiResultDto;
-import org.springframework.http.HttpHeaders;
+import com.pcs.global.security.PcsPrincipal;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,9 +24,9 @@ public class DashboardApiController {
     @GetMapping("/workspaces/{companyCode}/dashboard")
     public ResponseEntity<ApiResultDto<DashboardResponse>> getDashboard(
             @PathVariable String companyCode,
-            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader
+            @AuthenticationPrincipal PcsPrincipal principal
     ) {
-        DashboardResponse response = dashboardFacade.getDashboard(authorizationHeader, companyCode);
+        DashboardResponse response = dashboardFacade.getDashboard(principal, companyCode);
         return ResponseEntity.ok(ApiResultDto.ok(response));
     }
 }

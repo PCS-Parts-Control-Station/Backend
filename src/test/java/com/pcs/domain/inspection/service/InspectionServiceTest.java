@@ -90,8 +90,8 @@ class InspectionServiceTest {
         );
         when(inspectionMapper.findPartUnitForUpdate(companyId, unitId)).thenReturn(waitingUnit(companyId, unitId));
         when(inspectionMapper.findActiveTemplate(companyId, templateId)).thenReturn(template(companyId, templateId));
-        when(inspectionMapper.findActiveTemplateItems(templateId)).thenReturn(List.of(selectItem(templateId, itemId)));
-        when(inspectionMapper.findActiveTemplateOptions(templateId)).thenReturn(List.of(
+        when(inspectionMapper.findActiveTemplateItems(companyId, templateId)).thenReturn(List.of(selectItem(templateId, itemId)));
+        when(inspectionMapper.findActiveTemplateOptions(companyId, templateId)).thenReturn(List.of(
                 new InspectionTemplateOptionRow(optionId, itemId, "정상", "NORMAL", true)
         ));
         doAnswer(invocation -> {
@@ -174,8 +174,8 @@ class InspectionServiceTest {
         );
         when(inspectionMapper.findPartUnitForUpdate(companyId, unitId)).thenReturn(waitingUnit(companyId, unitId));
         when(inspectionMapper.findActiveTemplate(companyId, templateId)).thenReturn(template(companyId, templateId));
-        when(inspectionMapper.findActiveTemplateItems(templateId)).thenReturn(List.of(selectItem(templateId, itemId)));
-        when(inspectionMapper.findActiveTemplateOptions(templateId)).thenReturn(List.of());
+        when(inspectionMapper.findActiveTemplateItems(companyId, templateId)).thenReturn(List.of(selectItem(templateId, itemId)));
+        when(inspectionMapper.findActiveTemplateOptions(companyId, templateId)).thenReturn(List.of());
 
         BusinessException exception = assertThrows(
                 BusinessException.class,
@@ -211,8 +211,8 @@ class InspectionServiceTest {
         when(inspectionMapper.findInspection(companyId, baseInspectionId)).thenReturn(baseInspection);
         when(inspectionMapper.findPartUnitForUpdate(companyId, unitId)).thenReturn(completedUnit(companyId, unitId));
         when(inspectionMapper.findTemplate(companyId, templateId)).thenReturn(template(companyId, templateId));
-        when(inspectionMapper.findTemplateItems(templateId)).thenReturn(List.of());
-        when(inspectionMapper.findTemplateOptions(templateId)).thenReturn(List.of());
+        when(inspectionMapper.findTemplateItems(companyId, templateId)).thenReturn(List.of());
+        when(inspectionMapper.findTemplateOptions(companyId, templateId)).thenReturn(List.of());
         doAnswer(invocation -> {
             Inspection inspection = invocation.getArgument(0);
             inspection.setInspectionId(900L);
@@ -265,8 +265,8 @@ class InspectionServiceTest {
         when(inspectionMapper.findInspection(companyId, baseInspectionId)).thenReturn(baseInspection);
         when(inspectionMapper.findPartUnitForUpdate(companyId, unitId)).thenReturn(completedUnit(companyId, unitId));
         when(inspectionMapper.findTemplate(companyId, revisionTemplateId)).thenReturn(template(companyId, revisionTemplateId));
-        when(inspectionMapper.findTemplateItems(revisionTemplateId)).thenReturn(List.of());
-        when(inspectionMapper.findTemplateOptions(revisionTemplateId)).thenReturn(List.of());
+        when(inspectionMapper.findTemplateItems(companyId, revisionTemplateId)).thenReturn(List.of());
+        when(inspectionMapper.findTemplateOptions(companyId, revisionTemplateId)).thenReturn(List.of());
         doAnswer(invocation -> {
             Inspection inspection = invocation.getArgument(0);
             inspection.setInspectionId(901L);
@@ -493,7 +493,7 @@ class InspectionServiceTest {
                 null
         );
         when(inspectionMapper.findHistoryDetail(companyId, inspectionId)).thenReturn(row);
-        when(inspectionMapper.findItemResults(inspectionId)).thenReturn(List.of(itemResult));
+        when(inspectionMapper.findItemResults(companyId, inspectionId)).thenReturn(List.of(itemResult));
 
         var response = inspectionService.getHistoryDetail(companyId, inspectionId);
 

@@ -159,6 +159,7 @@ public interface InspectionMapper {
     );
 
     List<InspectionItemResultResponse> findItemResults(
+            @Param("companyId") Long companyId,
             @Param("inspectionId") Long inspectionId
     );
 
@@ -183,18 +184,22 @@ public interface InspectionMapper {
     );
 
     List<InspectionTemplateItem> findActiveTemplateItems(
+            @Param("companyId") Long companyId,
             @Param("templateId") Long templateId
     );
 
     List<InspectionTemplateItem> findTemplateItems(
+            @Param("companyId") Long companyId,
             @Param("templateId") Long templateId
     );
 
     List<InspectionTemplateOptionRow> findActiveTemplateOptions(
+            @Param("companyId") Long companyId,
             @Param("templateId") Long templateId
     );
 
     List<InspectionTemplateOptionRow> findTemplateOptions(
+            @Param("companyId") Long companyId,
             @Param("templateId") Long templateId
     );
 

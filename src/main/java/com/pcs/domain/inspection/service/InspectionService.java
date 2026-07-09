@@ -385,7 +385,7 @@ public class InspectionService {
         if (row == null) {
             throw new BusinessException(ErrorCode.INSPECTION_NOT_FOUND);
         }
-        List<InspectionItemResultResponse> itemResults = inspectionMapper.findItemResults(inspectionId);
+        List<InspectionItemResultResponse> itemResults = inspectionMapper.findItemResults(companyId, inspectionId);
         return new InspectionHistoryDetailResponse(
                 row.inspectionId(),
                 row.inspectionType(),
@@ -572,11 +572,11 @@ public class InspectionService {
         }
 
         List<InspectionTemplateItem> items = activeTemplateOnly
-                ? inspectionMapper.findActiveTemplateItems(templateId)
-                : inspectionMapper.findTemplateItems(templateId);
+                ? inspectionMapper.findActiveTemplateItems(companyId, templateId)
+                : inspectionMapper.findTemplateItems(companyId, templateId);
         List<InspectionTemplateOptionRow> options = activeTemplateOnly
-                ? inspectionMapper.findActiveTemplateOptions(templateId)
-                : inspectionMapper.findTemplateOptions(templateId);
+                ? inspectionMapper.findActiveTemplateOptions(companyId, templateId)
+                : inspectionMapper.findTemplateOptions(companyId, templateId);
         TemplateSnapshot snapshot = new TemplateSnapshot(items, options);
         snapshot.validateRequests(requests, enforceRequiredItems);
         return snapshot;

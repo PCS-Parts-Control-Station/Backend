@@ -453,10 +453,13 @@
     </select>
 
     <select id="findMovementUnitIds" resultType="long">
-        SELECT unit_id
-        FROM tb_stock_movement_unit
-        WHERE movement_id = #{movementId}
-        ORDER BY unit_id
+        SELECT mu.unit_id
+        FROM tb_stock_movement_unit mu
+        INNER JOIN tb_stock_movement m
+            ON m.movement_id = mu.movement_id
+        WHERE m.company_id = #{companyId}
+          AND mu.movement_id = #{movementId}
+        ORDER BY mu.unit_id
     </select>
 
     <select id="countInvalidInboundCancelUnits" resultType="int">
@@ -637,12 +640,18 @@
             unit_id,
             before_unit_status,
             after_unit_status
-        ) VALUES (
+        )
+        SELECT
             #{movementId},
             #{unitId},
             NULL,
             #{afterUnitStatus}
-        )
+        FROM tb_stock_movement m
+        INNER JOIN tb_pc_part_unit u
+            ON u.company_id = m.company_id
+           AND u.unit_id = #{unitId}
+        WHERE m.company_id = #{companyId}
+          AND m.movement_id = #{movementId}
     </insert>
 
     <insert id="insertMovementUnitStatusChange">
@@ -651,12 +660,18 @@
             unit_id,
             before_unit_status,
             after_unit_status
-        ) VALUES (
+        )
+        SELECT
             #{movementId},
             #{unitId},
             #{beforeUnitStatus},
             #{afterUnitStatus}
-        )
+        FROM tb_stock_movement m
+        INNER JOIN tb_pc_part_unit u
+            ON u.company_id = m.company_id
+           AND u.unit_id = #{unitId}
+        WHERE m.company_id = #{companyId}
+          AND m.movement_id = #{movementId}
     </insert>
 
     <update id="updatePartUnitStatusForInboundCancel">
