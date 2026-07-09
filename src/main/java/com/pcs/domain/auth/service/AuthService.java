@@ -206,9 +206,6 @@ public class AuthService {
         if (!session.isMemberActive()) {
             throw new BusinessException(ErrorCode.MEMBER_INACTIVE);
         }
-        if (session.getPasswordStatus() == PasswordStatus.TEMPORARY) {
-            throw new BusinessException(ErrorCode.MEMBER_PASSWORD_CHANGE_REQUIRED);
-        }
         return session;
     }
 
