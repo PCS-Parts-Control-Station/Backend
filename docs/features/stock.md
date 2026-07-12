@@ -128,7 +128,7 @@ src/main/resources/static/js/documents.js
 - 전표 행과 패널 내부를 제외한 영역을 클릭하면 패널을 닫는다.
 - 닫기는 `닫기` 버튼, `Escape` 키, 오른쪽 패널 밖 클릭을 지원한다.
 - 취소 처리는 상세 패널의 하단 고정 버튼에서 시작하고, 확인 모달에서 최종 실행한다.
-- 상세 패널의 `부품 관리` 버튼은 `/w/{companyCode}/part-units?documentId={documentId}&documentNo={documentNo}&partState={partState}`로 이동한다. 입고 전표는 `partState=HELD`, 출고 전표는 `partState=OUTBOUND`를 사용한다.
+- 상세 패널의 `부품 관리` 버튼은 `/w/{companyCode}/part-units?documentId={documentId}&documentNo={documentNo}&partState={partState}`로 이동한다. 완료 입고는 `HELD`, 완료 출고는 `OUTBOUND`, 취소 입고는 `CANCELED`, 취소 출고는 재고 복원 상태인 `HELD`를 사용한다. 취소 입고 전표에는 검수 이동 버튼을 표시하지 않는다.
 
 입고/출고 전표 상세는 품목별 상세 행을 길게 펼치기보다 품목별 수량 요약을 우선 보여준다. 관리번호 전체 목록은 상세 조회나 확장 영역에서 확인한다.
 

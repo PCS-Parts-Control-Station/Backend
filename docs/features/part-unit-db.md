@@ -95,10 +95,11 @@ idx_pc_part_unit_work_status
 - Required checks:
   - 관리번호 목록 검색은 `tb_pc_part_unit` 기준으로 페이징된다.
   - keyword와 categoryId 조건으로 다른 관리번호가 제외된다.
+  - partId 조건으로 다른 품목의 관리번호가 제외되고 목록과 summary에 동일하게 적용된다.
   - documentId 조건으로 해당 전표에 포함되지 않은 관리번호가 제외된다.
   - `partState=WAITING`은 검수 대기 관리번호만 반환한다.
   - `partState=HELD`, `SALES_AVAILABLE`, `SALES_UNAVAILABLE`, `SALES_HOLD`는 각각 업무상 보유, 판매 가능, 판매 불가, 판매 보류 기준으로 반환한다.
-  - `partState=CANCELED`는 입고 취소로 `unit_status = CANCELED`가 된 관리번호만 반환한다.
+  - `partState=CANCELED`는 입고 취소로 `unit_status = CANCELED`, `active = false`가 된 관리번호만 반환한다.
   - `partState=A`는 검수 완료 A 등급 관리번호만 반환한다.
   - `partState=OUTBOUND`은 출고 상태 관리번호만 반환한다.
   - 판매 상태는 검색 조건에 없고, 응답 필드로만 내려온다.
