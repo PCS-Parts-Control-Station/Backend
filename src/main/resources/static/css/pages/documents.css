@@ -372,6 +372,7 @@
 }
 
 .documents-detail-body {
+    align-content: start;
     display: grid;
     gap: 18px;
     padding-right: 0;
@@ -391,14 +392,20 @@
 .documents-detail-card > strong {
     color: var(--ink);
     font-family: "SFMono-Regular", "Cascadia Code", "Roboto Mono", monospace;
-    font-size: 1rem;
+    font-size: 0.92rem;
     line-height: 1.35;
 }
 
 .documents-detail-badges {
+    align-items: center;
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
+}
+
+.documents-detail-badges .badge {
+    flex: 0 0 auto;
+    align-self: center;
 }
 
 .documents-detail-list {
@@ -814,6 +821,12 @@
 
     .documents-row.is-selected {
         box-shadow: inset 4px 0 0 var(--cyan);
+    }
+}
+
+@media (max-width: 840px) {
+    .documents-detail-drawer {
+        width: auto;
     }
 }
 
