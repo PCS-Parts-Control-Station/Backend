@@ -223,7 +223,7 @@ class PartPersistenceIntegrationTest extends MariaDbIntegrationTest {
         insertStockHistory(802L, 902L, 102L, part.partId(), "IN-20260102-0001", "INBOUND", null, "IN_STOCK", "2026-01-02 10:00:00.000000");
         insertStockHistory(803L, 903L, 103L, part.partId(), "OUT-20260103-0001", "OUTBOUND", "IN_STOCK", "OUTBOUND", "2026-01-03 10:00:00.000000");
 
-        var all = partService.searchPartUnits(1L, "PCS-GPU", null, category.categoryId(), null, 0, 20, null);
+        var all = partService.searchPartUnits(1L, "PCS-GPU", null, null, category.categoryId(), null, 0, 20, null);
         assertThat(all.content()).hasSize(4);
         assertThat(all.summary().totalCount()).isEqualTo(4);
         assertThat(all.summary().heldCount()).isEqualTo(3);
@@ -231,7 +231,7 @@ class PartPersistenceIntegrationTest extends MariaDbIntegrationTest {
         assertThat(all.summary().salesHoldCount()).isEqualTo(1);
         assertThat(all.summary().outboundAvailableCount()).isEqualTo(1);
 
-        var firstPage = partService.searchPartUnits(1L, "PCS-GPU", null, category.categoryId(), null, 0, 2, null);
+        var firstPage = partService.searchPartUnits(1L, "PCS-GPU", null, null, category.categoryId(), null, 0, 2, null);
         assertThat(firstPage.content()).extracting("internalSerialNo")
                 .containsExactly("PCS-GPU-0003", "PCS-GPU-0002");
         assertThat(firstPage.content().get(0).recentEventLabel()).isEqualTo("출고");
@@ -241,40 +241,61 @@ class PartPersistenceIntegrationTest extends MariaDbIntegrationTest {
         assertThat(firstPage.hasNext()).isTrue();
         assertThat(firstPage.summary().totalCount()).isEqualTo(4);
 
-        var secondPage = partService.searchPartUnits(1L, "PCS-GPU", null, category.categoryId(), null, 1, 2, null);
+        var secondPage = partService.searchPartUnits(1L, "PCS-GPU", null, null, category.categoryId(), null, 1, 2, null);
         assertThat(secondPage.content()).extracting("internalSerialNo")
                 .containsExactly("PCS-GPU-0001", "PCS-GPU-0005");
         assertThat(secondPage.hasPrevious()).isTrue();
         assertThat(secondPage.hasNext()).isFalse();
 
-        var gradeA = partService.searchPartUnits(1L, "PCS-GPU", null, category.categoryId(), "A", 0, 20, null);
+        var gradeA = partService.searchPartUnits(1L, "PCS-GPU", null, null, category.categoryId(), "A", 0, 20, null);
         assertThat(gradeA.content()).extracting("internalSerialNo").containsExactly("PCS-GPU-0002");
         assertThat(gradeA.content().get(0).salesStatus()).isEqualTo(SalesStatus.AVAILABLE);
         assertThat(gradeA.summary().totalCount()).isEqualTo(1);
         assertThat(gradeA.summary().heldCount()).isEqualTo(3);
         assertThat(gradeA.summary().outboundAvailableCount()).isEqualTo(1);
 
-        var held = partService.searchPartUnits(1L, "PCS-GPU", null, category.categoryId(), "HELD", 0, 20, null);
+        var held = partService.searchPartUnits(1L, "PCS-GPU", null, null, category.categoryId(), "HELD", 0, 20, null);
         assertThat(held.content()).extracting("internalSerialNo")
                 .containsExactly("PCS-GPU-0002", "PCS-GPU-0001", "PCS-GPU-0005");
 
-        var waiting = partService.searchPartUnits(1L, "PCS-GPU", null, category.categoryId(), "WAITING", 0, 20, null);
+        var waiting = partService.searchPartUnits(1L, "PCS-GPU", null, null, category.categoryId(), "WAITING", 0, 20, null);
         assertThat(waiting.content()).extracting("internalSerialNo").containsExactly("PCS-GPU-0001");
         assertThat(waiting.content().get(0).inspectionStatus()).isEqualTo(InspectionStatus.WAITING);
 
-        var salesAvailable = partService.searchPartUnits(1L, "PCS-GPU", null, category.categoryId(), "SALES_AVAILABLE", 0, 20, null);
+        var salesAvailable = partService.searchPartUnits(1L, "PCS-GPU", null, null, category.categoryId(), "SALES_AVAILABLE", 0, 20, null);
         assertThat(salesAvailable.content()).extracting("internalSerialNo").containsExactly("PCS-GPU-0002");
 
-        var salesHold = partService.searchPartUnits(1L, "PCS-GPU", null, category.categoryId(), "SALES_HOLD", 0, 20, null);
+        var salesHold = partService.searchPartUnits(1L, "PCS-GPU", null, null, category.categoryId(), "SALES_HOLD", 0, 20, null);
         assertThat(salesHold.content()).extracting("internalSerialNo").containsExactly("PCS-GPU-0005");
 
-        var outbound = partService.searchPartUnits(1L, "PCS-GPU", null, category.categoryId(), "OUTBOUND", 0, 20, null);
+        var outbound = partService.searchPartUnits(1L, "PCS-GPU", null, null, category.categoryId(), "OUTBOUND", 0, 20, null);
         assertThat(outbound.content()).extracting("internalSerialNo").containsExactly("PCS-GPU-0003");
         assertThat(outbound.content().get(0).unitStatus()).isEqualTo(UnitStatus.OUTBOUND);
 
-        var documentFiltered = partService.searchPartUnits(1L, "PCS-GPU", 901L, category.categoryId(), null, 0, 20, null);
+        var documentFiltered = partService.searchPartUnits(1L, "PCS-GPU", null, 901L, category.categoryId(), null, 0, 20, null);
         assertThat(documentFiltered.content()).extracting("internalSerialNo").containsExactly("PCS-GPU-0001");
         assertThat(documentFiltered.summary().totalCount()).isEqualTo(1);
+
+        var otherPart = partService.createPart(
+                1L,
+                new CreatePartRequest(
+                        category.categoryId(),
+                        "RTX 3060 Office",
+                        "MSI",
+                        "RTX 3060 Office",
+                        5,
+                        List.of(
+                                new PartSpecValueRequest(chipSpecId, null, null, null, optionId),
+                                new PartSpecValueRequest(memorySpecId, null, new BigDecimal("12"), null, null)
+                        )
+                ),
+                7L
+        );
+        insertPartUnit(106L, 1L, otherPart.partId(), "PCS-OTHER-0001", null, "IN_STOCK", "COMPLETED", "A", "AVAILABLE", true, "2026-01-05 09:00:00.000000");
+
+        var partFiltered = partService.searchPartUnits(1L, null, part.partId(), null, null, null, 0, 20, null);
+        assertThat(partFiltered.content()).extracting("partId").containsOnly(part.partId());
+        assertThat(partFiltered.summary().totalCount()).isEqualTo(4);
     }
 
     @Test

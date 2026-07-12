@@ -118,14 +118,14 @@ class PartServiceTest {
     @Test
     void searchPartUnits_usesDefaultPageSizeAndNormalizedPartState() {
         SearchPartUnitResponse unit = partUnitResponse(101L, "PCS-GPU-0001", PartGrade.A, SalesStatus.AVAILABLE);
-        when(partMapper.summarizePartUnits(COMPANY_ID, "RTX", 77L, CATEGORY_ID, "A"))
+        when(partMapper.summarizePartUnits(COMPANY_ID, "RTX", 55L, 77L, CATEGORY_ID, "A"))
                 .thenReturn(new SearchPartUnitSummaryResponse(1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1));
-        when(partMapper.summarizePartUnits(COMPANY_ID, "RTX", 77L, CATEGORY_ID, null))
+        when(partMapper.summarizePartUnits(COMPANY_ID, "RTX", 55L, 77L, CATEGORY_ID, null))
                 .thenReturn(new SearchPartUnitSummaryResponse(3, 3, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1));
-        when(partMapper.searchPartUnits(COMPANY_ID, "RTX", 77L, CATEGORY_ID, "A", 20, 0))
+        when(partMapper.searchPartUnits(COMPANY_ID, "RTX", 55L, 77L, CATEGORY_ID, "A", 20, 0))
                 .thenReturn(List.of(unit));
 
-        var response = partService.searchPartUnits(COMPANY_ID, " RTX ", 77L, CATEGORY_ID, " a ", null, null, null);
+        var response = partService.searchPartUnits(COMPANY_ID, " RTX ", 55L, 77L, CATEGORY_ID, " a ", null, null, null);
 
         assertThat(response.content()).containsExactly(unit);
         assertThat(response.page()).isZero();
@@ -137,49 +137,49 @@ class PartServiceTest {
         assertThat(response.summary().gradeBCount()).isEqualTo(1);
         assertThat(response.summary().outboundAvailableCount()).isEqualTo(1);
         InOrder inOrder = inOrder(partMapper);
-        inOrder.verify(partMapper).summarizePartUnits(COMPANY_ID, "RTX", 77L, CATEGORY_ID, "A");
-        inOrder.verify(partMapper).summarizePartUnits(COMPANY_ID, "RTX", 77L, CATEGORY_ID, null);
-        inOrder.verify(partMapper).searchPartUnits(COMPANY_ID, "RTX", 77L, CATEGORY_ID, "A", 20, 0);
+        inOrder.verify(partMapper).summarizePartUnits(COMPANY_ID, "RTX", 55L, 77L, CATEGORY_ID, "A");
+        inOrder.verify(partMapper).summarizePartUnits(COMPANY_ID, "RTX", 55L, 77L, CATEGORY_ID, null);
+        inOrder.verify(partMapper).searchPartUnits(COMPANY_ID, "RTX", 55L, 77L, CATEGORY_ID, "A", 20, 0);
     }
 
     @Test
     void searchPartUnits_skipsListQueryWhenSummaryIsEmpty() {
-        when(partMapper.summarizePartUnits(COMPANY_ID, null, null, null, null))
+        when(partMapper.summarizePartUnits(COMPANY_ID, null, null, null, null, null))
                 .thenReturn(new SearchPartUnitSummaryResponse(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
 
-        var response = partService.searchPartUnits(COMPANY_ID, null, null, null, null, 0, 20, null);
+        var response = partService.searchPartUnits(COMPANY_ID, null, null, null, null, null, 0, 20, null);
 
         assertThat(response.content()).isEmpty();
         assertThat(response.totalElements()).isZero();
         assertThat(response.summary().totalCount()).isZero();
-        verify(partMapper, never()).searchPartUnits(any(), any(), any(), any(), any(), anyInt(), anyInt());
+        verify(partMapper, never()).searchPartUnits(any(), any(), any(), any(), any(), any(), anyInt(), anyInt());
     }
 
     @Test
     void searchPartUnits_acceptsCanceledStateForInboundCancelDocumentLink() {
         SearchPartUnitResponse unit = partUnitResponse(101L, "PCS-GPU-0001", PartGrade.NONE, SalesStatus.HOLD);
-        when(partMapper.summarizePartUnits(COMPANY_ID, null, 77L, null, "CANCELED"))
+        when(partMapper.summarizePartUnits(COMPANY_ID, null, null, 77L, null, "CANCELED"))
                 .thenReturn(new SearchPartUnitSummaryResponse(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
-        when(partMapper.summarizePartUnits(COMPANY_ID, null, 77L, null, null))
+        when(partMapper.summarizePartUnits(COMPANY_ID, null, null, 77L, null, null))
                 .thenReturn(new SearchPartUnitSummaryResponse(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
-        when(partMapper.searchPartUnits(COMPANY_ID, null, 77L, null, "CANCELED", 20, 0))
+        when(partMapper.searchPartUnits(COMPANY_ID, null, null, 77L, null, "CANCELED", 20, 0))
                 .thenReturn(List.of(unit));
 
-        var response = partService.searchPartUnits(COMPANY_ID, null, 77L, null, " canceled ", null, null, null);
+        var response = partService.searchPartUnits(COMPANY_ID, null, null, 77L, null, " canceled ", null, null, null);
 
         assertThat(response.content()).containsExactly(unit);
         assertThat(response.totalElements()).isEqualTo(1);
-        verify(partMapper).searchPartUnits(COMPANY_ID, null, 77L, null, "CANCELED", 20, 0);
+        verify(partMapper).searchPartUnits(COMPANY_ID, null, null, 77L, null, "CANCELED", 20, 0);
     }
 
     @Test
     void searchPartUnits_failsWhenPartStateIsInvalid() {
-        assertThatThrownBy(() -> partService.searchPartUnits(COMPANY_ID, null, null, null, "SOLD", null, null, null))
+        assertThatThrownBy(() -> partService.searchPartUnits(COMPANY_ID, null, null, null, null, "SOLD", null, null, null))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.INVALID_INPUT_VALUE);
-        verify(partMapper, never()).summarizePartUnits(any(), any(), any(), any(), any());
-        verify(partMapper, never()).searchPartUnits(any(), any(), any(), any(), any(), anyInt(), anyInt());
+        verify(partMapper, never()).summarizePartUnits(any(), any(), any(), any(), any(), any());
+        verify(partMapper, never()).searchPartUnits(any(), any(), any(), any(), any(), any(), anyInt(), anyInt());
     }
 
     @Test

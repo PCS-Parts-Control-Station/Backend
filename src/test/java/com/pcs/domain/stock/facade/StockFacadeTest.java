@@ -5,9 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 import com.pcs.domain.member.type.MemberRole;
+import com.pcs.domain.member.type.StaffPermission;
+import com.pcs.domain.member.service.StaffPermissionService;
 import com.pcs.domain.stock.dto.request.CreateInboundDocumentLineRequest;
 import com.pcs.domain.stock.dto.request.CreateInboundDocumentRequest;
 import com.pcs.domain.stock.dto.request.CreateOutboundDocumentLineRequest;
@@ -48,11 +51,14 @@ class StockFacadeTest {
     @Mock
     private WorkspaceMapper workspaceMapper;
 
+    @Mock
+    private StaffPermissionService staffPermissionService;
+
     private StockFacade stockFacade;
 
     @BeforeEach
     void setUp() {
-        stockFacade = new StockFacade(stockService, new WorkspaceAccessValidator(workspaceMapper));
+        stockFacade = new StockFacade(stockService, new WorkspaceAccessValidator(workspaceMapper), staffPermissionService);
     }
 
     @Test
@@ -237,6 +243,35 @@ class StockFacadeTest {
     }
 
     @Test
+    void cancelDocument_blocksStaffWithoutPermissionForDocumentType() {
+        StockDocumentDetailResponse outbound = documentDetail(500L, StockDocumentType.OUTBOUND);
+        when(stockService.getDocument(1L, 500L)).thenReturn(outbound);
+        when(staffPermissionService.isEnabled(1L, StaffPermission.STAFF_OUTBOUND)).thenReturn(false);
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> stockFacade.cancelDocument(staffPrincipal(), "acme", 500L)
+        );
+
+        assertEquals(ErrorCode.AUTH_STAFF_PERMISSION_DENIED, exception.getErrorCode());
+        verify(stockService, never()).cancelDocument(1L, 10L, 500L);
+    }
+
+    @Test
+    void cancelDocument_usesInboundPermissionForInboundDocument() {
+        StockDocumentDetailResponse inbound = documentDetail(500L, StockDocumentType.INBOUND);
+        CancelStockDocumentResponse expected = new CancelStockDocumentResponse(
+                500L, "IN-20260529-23456789ABCDEFGH", StockDocumentStatus.CANCELED, 1, 2
+        );
+        when(stockService.getDocument(1L, 500L)).thenReturn(inbound);
+        when(staffPermissionService.isEnabled(1L, StaffPermission.STAFF_INBOUND)).thenReturn(true);
+        when(stockService.cancelDocument(1L, 10L, 500L)).thenReturn(expected);
+
+        assertSame(expected, stockFacade.cancelDocument(staffPrincipal(), "acme", 500L));
+        verify(staffPermissionService).isEnabled(1L, StaffPermission.STAFF_INBOUND);
+    }
+
+    @Test
     void createInboundDocument_success() {
         CreateInboundDocumentRequest request = new CreateInboundDocumentRequest(
                 100L,
@@ -369,6 +404,30 @@ class StockFacadeTest {
                 "admin",
                 MemberRole.ADMIN,
                 Instant.now().plusSeconds(1800)
+        );
+    }
+
+    private PcsPrincipal staffPrincipal() {
+        return new PcsPrincipal(10L, 1L, "acme", "staff", MemberRole.STAFF, Instant.now().plusSeconds(1800));
+    }
+
+    private StockDocumentDetailResponse documentDetail(Long documentId, StockDocumentType documentType) {
+        String prefix = documentType == StockDocumentType.INBOUND ? "IN" : "OUT";
+        return new StockDocumentDetailResponse(
+                documentId,
+                prefix + "-20260529-23456789ABCDEFGH",
+                documentType,
+                StockDocumentStatus.COMPLETED,
+                100L,
+                "서울 부품사",
+                null,
+                "관리자",
+                LocalDateTime.of(2026, 5, 29, 10, 0),
+                1,
+                2,
+                true,
+                null,
+                List.of()
         );
     }
 }
