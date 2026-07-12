@@ -42,6 +42,7 @@ public interface PartMapper {
     List<SearchPartUnitResponse> searchPartUnits(
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,
+            @Param("partId") Long partId,
             @Param("documentId") Long documentId,
             @Param("categoryId") Long categoryId,
             @Param("partState") String partState,
@@ -52,6 +53,7 @@ public interface PartMapper {
     SearchPartUnitSummaryResponse summarizePartUnits(
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,
+            @Param("partId") Long partId,
             @Param("documentId") Long documentId,
             @Param("categoryId") Long categoryId,
             @Param("partState") String partState

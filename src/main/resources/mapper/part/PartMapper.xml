@@ -79,7 +79,17 @@
 
     <sql id="partUnitSearchWhere">
         WHERE u.company_id = #{companyId}
-          AND u.active = TRUE
+        <choose>
+          <when test="partState == 'CANCELED'">
+            AND u.active = FALSE
+          </when>
+          <otherwise>
+            AND u.active = TRUE
+          </otherwise>
+        </choose>
+        <if test="partId != null">
+          AND u.part_id = #{partId}
+        </if>
         <if test="categoryId != null">
           AND p.category_id = #{categoryId}
         </if>

@@ -36,6 +36,7 @@
     let detailRequestId = 0;
     let documentSearchTimer = null;
     let selectedDocument = null;
+    let selectedPartId = "";
     let categoryPicker = null;
     let detailDrawer = null;
     let isRestoringNavigationState = false;
@@ -48,7 +49,7 @@
     });
     const navigationState = window.PcsNavigationState?.createUrlStateController({
         namespace: "part-units",
-        managedKeys: ["keyword", "documentId", "documentNo", "categoryId", "partState", "page", "unitId"],
+        managedKeys: ["keyword", "partId", "documentId", "documentNo", "categoryId", "partState", "page", "unitId"],
         defaults: {
             partState: DEFAULT_PART_STATE,
             page: "0"
@@ -185,6 +186,7 @@
             fields: ["keyword", "documentId", "categoryId", "partState"]
         }),
         documentNo: selectedDocument?.documentNo || "",
+        partId: selectedPartId,
     });
 
     const syncNavigationState = (overrides = {}, options = {}) => {
@@ -255,6 +257,7 @@
                 fields: ["keyword", "categoryId"]
             });
             setPartState(state.partState || DEFAULT_PART_STATE);
+            selectedPartId = state.partId || "";
             setSelectedDocument(state.documentId ? {
                 documentId: state.documentId,
                 documentNo: state.documentNo || `전표 ${state.documentId}`
@@ -449,6 +452,9 @@
             form: filterForm
         });
         params.delete("salesStatus");
+        if (selectedPartId) {
+            params.set("partId", selectedPartId);
+        }
         return params;
     };
 
@@ -1009,6 +1015,7 @@
 
     resetButton?.addEventListener("click", () => {
         filterForm?.reset();
+        selectedPartId = "";
         setPartState(DEFAULT_PART_STATE);
         setSelectedDocument(null);
         setCategoryValue("");

@@ -78,7 +78,10 @@ public class StaffPermissionAuthorizationFilter extends OncePerRequestFilter {
         if (path.startsWith("stock/documents/outbounds")) {
             return StaffPermission.STAFF_OUTBOUND;
         }
-        if (path.startsWith("stock/documents/inbounds") || path.startsWith("stock/documents")) {
+        if (path.startsWith("stock/outbound-candidates")) {
+            return StaffPermission.STAFF_OUTBOUND;
+        }
+        if (path.startsWith("stock/documents/inbounds")) {
             return StaffPermission.STAFF_INBOUND;
         }
         if (path.startsWith("inspections") || path.startsWith("inspection-templates")) {

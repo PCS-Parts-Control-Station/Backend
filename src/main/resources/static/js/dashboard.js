@@ -81,7 +81,7 @@
             params.categoryName = todo?.categoryName || "";
             return params;
         }
-        params.keyword = todo?.title || "";
+        params.partId = todo?.partId || "";
         if (todo?.type === "STOCK_HOLD") {
             params.partState = "SALES_HOLD";
         }
