@@ -234,12 +234,28 @@
         return `/w/${companyCode}/${route}?documentNo=${keyword}&keyword=${keyword}`;
     };
 
+    const buildPartUnitsRouteUrl = (stockDocument) => {
+        const companyCode = encodeURIComponent(getCompanyCode());
+        const params = new URLSearchParams();
+        if (stockDocument?.documentId) {
+            params.set("documentId", String(stockDocument.documentId));
+        }
+        if (stockDocument?.documentNo) {
+            params.set("documentNo", stockDocument.documentNo);
+        }
+        params.set("partState", stockDocument?.documentType === "OUTBOUND" ? "OUTBOUND" : "HELD");
+        return `/w/${companyCode}/part-units?${params.toString()}`;
+    };
+
     const renderActionLinks = (stockDocument, options = {}) => {
         const documentNo = stockDocument?.documentNo || "";
         const className = options.className || "document-action-link";
         const links = [];
         if (stockDocument?.documentType === "INBOUND") {
             links.push(`<a class="${className} document-action-link-primary" href="${buildRouteUrl("inspection", documentNo)}">검수</a>`);
+        }
+        if (stockDocument?.documentId) {
+            links.push(`<a class="${className}" href="${escapeHtml(buildPartUnitsRouteUrl(stockDocument))}">부품 관리</a>`);
         }
         return links.join("");
     };

@@ -26,6 +26,7 @@
         reason: document.querySelector("[data-detail-reason]"),
         lineSummary: document.querySelector("[data-detail-line-summary]"),
         lines: document.querySelector("[data-detail-lines]"),
+        actions: document.querySelector("[data-detail-actions]"),
     };
 
     let currentPage = 0;
@@ -185,6 +186,39 @@
         const extra = lineCount > 1 ? ` 외 ${lineCount - 1}종` : "";
         const processedByName = document.processedByName || "-";
         return `${firstPartName}${extra} · ${processedByName} 처리`;
+    };
+
+    const partStateForDocument = (stockDocument) => {
+        const isCanceledInbound = stockDocument?.documentStatus === "CANCELED" && stockDocument?.documentType === "INBOUND";
+        const isActiveOutbound = stockDocument?.documentType === "OUTBOUND" && stockDocument?.documentStatus !== "CANCELED";
+        if (isCanceledInbound) {
+            return "CANCELED";
+        }
+        return isActiveOutbound ? "OUTBOUND" : "HELD";
+    };
+
+    const buildPartUnitsRouteUrl = (stockDocument) => {
+        const companyCode = encodeURIComponent(getCompanyCode());
+        const params = new URLSearchParams();
+        if (stockDocument?.documentId) {
+            params.set("documentId", String(stockDocument.documentId));
+        }
+        if (stockDocument?.documentNo) {
+            params.set("documentNo", stockDocument.documentNo);
+        }
+        params.set("partState", partStateForDocument(stockDocument));
+        return `/w/${companyCode}/part-units?${params.toString()}`;
+    };
+
+    const renderDetailActions = (stockDocument = null) => {
+        if (!detailFields.actions) {
+            return;
+        }
+        if (!stockDocument?.documentId) {
+            detailFields.actions.innerHTML = "";
+            return;
+        }
+        detailFields.actions.innerHTML = `<a class="btn btn-secondary stock-history-detail-action" href="${escapeHtml(buildPartUnitsRouteUrl(stockDocument))}">부품 관리</a>`;
     };
 
     const createDocumentRow = (stockDocument) => {
@@ -361,6 +395,7 @@
         if (detailFields.reason) detailFields.reason.textContent = "-";
         if (detailFields.lineSummary) detailFields.lineSummary.textContent = "-";
         if (detailFields.lines) detailFields.lines.innerHTML = `<p class="detail-empty-text">${escapeHtml(message)}</p>`;
+        renderDetailActions();
         updateSelectedRows();
     };
 
@@ -377,6 +412,7 @@
         if (detailFields.processedBy) detailFields.processedBy.textContent = detail.processedByName || "-";
         if (detailFields.reason) detailFields.reason.textContent = detail.reason || "-";
         renderDetailLines(detail.lines || []);
+        renderDetailActions(detail);
         updateSelectedRows();
     };
 

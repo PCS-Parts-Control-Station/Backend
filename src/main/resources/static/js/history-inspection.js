@@ -103,6 +103,11 @@
         };
     };
 
+    const readInitialKeyword = () => {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("documentNo") || params.get("keyword") || "";
+    };
+
     const hasDeepLinkTarget = (target) => {
         return Boolean(target?.documentId || target?.partId || target?.unitId || target?.inspectionId);
     };
@@ -1122,6 +1127,10 @@
             filterForm.elements.dateTo.value = formatLocalDate(end);
 
             const deepLinkTarget = readDeepLinkTarget();
+            const initialKeyword = readInitialKeyword();
+            if (!hasDeepLinkTarget(deepLinkTarget) && initialKeyword) {
+                filterForm.elements.keyword.value = initialKeyword;
+            }
             await loadDocumentGroups(0, hasDeepLinkTarget(deepLinkTarget) ? {restoreTarget: deepLinkTarget} : {});
         } catch (error) {
             setTableMessage(documentTable, error?.message || "업체 주소를 확인할 수 없습니다.");

@@ -67,6 +67,8 @@ public class InspectionService {
     public PageResultDto<SearchWaitingInspectionDocumentResponse, SearchWaitingInspectionDocumentSummaryResponse> searchWaitingDocuments(
             Long companyId,
             String keyword,
+            Long partId,
+            Boolean hasWaiting,
             Long partnerId,
             String inspectionStatus,
             LocalDate dateFrom,
@@ -85,6 +87,8 @@ public class InspectionService {
         long totalElements = inspectionMapper.countWaitingDocuments(
                 companyId,
                 normalizedKeyword,
+                partId,
+                hasWaiting,
                 partnerId,
                 normalizedInspectionStatus,
                 from,
@@ -95,6 +99,8 @@ public class InspectionService {
                 : inspectionMapper.searchWaitingDocuments(
                         companyId,
                         normalizedKeyword,
+                        partId,
+                        hasWaiting,
                         partnerId,
                         normalizedInspectionStatus,
                         from,
@@ -105,6 +111,8 @@ public class InspectionService {
         SearchWaitingInspectionDocumentSummaryResponse summary = inspectionMapper.summarizeWaitingDocuments(
                 companyId,
                 normalizedKeyword,
+                partId,
+                hasWaiting,
                 partnerId,
                 normalizedInspectionStatus,
                 from,
