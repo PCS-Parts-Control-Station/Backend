@@ -262,3 +262,13 @@ canceled_movement_id = 원본 movement_id
 - `beforeQuantity`와 `afterQuantity`를 저장해야 한다.
 - 출고 재고 차감에는 DB 동시성 전략이 필요하다.
 - `tb_part_stock.quantity`와 `IN_STOCK` unit 수량 정합성을 검증해야 한다.
+
+## Test Coverage
+
+- Unit/service tests: `src/test/java/com/pcs/domain/stock/service/StockServiceTest.java`, `src/test/java/com/pcs/domain/stock/facade/StockFacadeTest.java`
+- API tests: `src/test/java/com/pcs/domain/stock/api/StockApiControllerTest.java`
+- Permission tests: `src/test/java/com/pcs/global/security/StaffPermissionAuthorizationFilterTest.java`
+- Required checks:
+  - 입고·출고·취소 상태 규칙과 관리번호 중복, 재고 부족을 검증한다.
+  - 전표 목록 필터와 입고·출고 등록 요청/응답, validation 오류를 검증한다.
+  - 작업자의 입고·출고 권한이 없으면 API 접근을 차단한다.

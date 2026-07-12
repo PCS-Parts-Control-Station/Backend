@@ -129,6 +129,9 @@
       "pathPatterns": [
         "^src/main/java/com/pcs/domain/stock/",
         "^src/main/resources/mapper/stock/",
+        "^src/test/java/com/pcs/domain/stock/",
+        "^src/integrationTest/java/com/pcs/domain/stock/",
+        "^src/integrationTest/resources/pcs-operations-test-schema-extension\\.sql$",
         "^docs/features/stock(-db)?\\.md$",
         "^src/main/resources/static/(inbound|inbound-register|outbound|outbound-register|history-stock)\\.html$",
         "^src/main/resources/static/js/(inbound|inbound-register|outbound|outbound-register|history-stock)\\.js$",
@@ -141,6 +144,9 @@
       "pathPatterns": [
         "^src/main/java/com/pcs/domain/inspection/",
         "^src/main/resources/mapper/inspection/",
+        "^src/test/java/com/pcs/domain/inspection/",
+        "^src/integrationTest/java/com/pcs/domain/inspection/",
+        "^src/integrationTest/resources/pcs-operations-test-schema-extension\\.sql$",
         "^docs/features/inspection(-db|-history|-template)?\\.md$",
         "^src/main/resources/static/(inspection|inspection-templates|history-inspection)\\.html$",
         "^src/main/resources/static/js/(inspection|inspection-templates|history-inspection)\\.js$",
@@ -161,6 +167,11 @@
       "name": "dashboard",
       "dbChecks": ["stock", "inspection", "part"],
       "pathPatterns": [
+        "^src/main/java/com/pcs/domain/dashboard/",
+        "^src/main/resources/mapper/dashboard/",
+        "^src/test/java/com/pcs/domain/dashboard/",
+        "^src/integrationTest/java/com/pcs/domain/dashboard/",
+        "^src/integrationTest/resources/pcs-operations-test-schema-extension\\.sql$",
         "^docs/features/dashboard\\.md$",
         "^src/main/resources/static/dashboard\\.html$",
         "^src/main/resources/static/js/dashboard\\.js$",

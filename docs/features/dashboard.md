@@ -468,3 +468,13 @@ com.pcs.domain.dashboard
 - 최근 처리 목록에는 `ORDER BY`와 `LIMIT`이 있어야 한다.
 - 취소된 입출고 이동은 수량 집계에서 제외한다.
 - 프론트 화면에 운영 수치를 하드코딩하지 않는다.
+
+## Test Coverage
+
+- Unit/service tests: `DashboardServiceTest`, `DashboardFacadeTest`
+- API tests: `DashboardApiControllerTest`
+- DB integration test: `DashboardPersistenceIntegrationTest`
+- Required checks:
+  - 워크스페이스 불일치 예외와 통합 응답 구조를 검증한다.
+  - 취소된 이동과 다른 회사 데이터를 오늘 수량·최근 처리에서 제외한다.
+  - 검수 대기, 판매 상태, 처리 필요 TOP의 품목·분류 집계를 실제 MariaDB에서 검증한다.
