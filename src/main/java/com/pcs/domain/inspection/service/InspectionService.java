@@ -38,6 +38,7 @@ import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.pagination.PageQuery;
 import com.pcs.global.util.TextNormalizer;
+import com.pcs.global.validation.DateRangeValidator;
 import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -78,13 +79,14 @@ public class InspectionService {
             Integer limit
     ) {
         validateCompanyActive(companyId);
+        DateRangeValidator.validate(dateFrom, dateTo);
         String normalizedKeyword = TextNormalizer.optional(keyword);
         String normalizedInspectionStatus = normalizeInspectionStatus(inspectionStatus);
         PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
-        LocalDateTime from = toStartOfDay(dateFrom);
-        LocalDateTime to = toExclusiveEnd(dateTo);
+        LocalDateTime from = DateRangeValidator.toStartOfDay(dateFrom);
+        LocalDateTime to = DateRangeValidator.toExclusiveEnd(dateTo);
 
-        long totalElements = inspectionMapper.countWaitingDocuments(
+        SearchWaitingInspectionDocumentSummaryResponse summary = inspectionMapper.summarizeWaitingDocuments(
                 companyId,
                 normalizedKeyword,
                 partId,
@@ -94,6 +96,7 @@ public class InspectionService {
                 from,
                 to
         );
+        long totalElements = summary.documentCount();
         List<SearchWaitingInspectionDocumentResponse> items = totalElements == 0
                 ? List.of()
                 : inspectionMapper.searchWaitingDocuments(
@@ -108,16 +111,6 @@ public class InspectionService {
                         pageQuery.size(),
                         pageQuery.offset()
                 );
-        SearchWaitingInspectionDocumentSummaryResponse summary = inspectionMapper.summarizeWaitingDocuments(
-                companyId,
-                normalizedKeyword,
-                partId,
-                hasWaiting,
-                partnerId,
-                normalizedInspectionStatus,
-                from,
-                to
-        );
         return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, summary);
     }
 
@@ -213,9 +206,37 @@ public class InspectionService {
         validateCompanyActive(companyId);
         validateUniqueIds(request.unitIds());
         LocalDateTime inspectedAt = LocalDateTime.now();
+        List<InspectionPartUnitRow> units = inspectionMapper.findPartUnitsForUpdate(companyId, request.unitIds());
+        Map<Long, InspectionPartUnitRow> unitsById = units.stream()
+                .collect(Collectors.toMap(InspectionPartUnitRow::unitId, Function.identity()));
+        if (unitsById.size() != request.unitIds().size()) {
+            throw new BusinessException(ErrorCode.PART_UNIT_NOT_FOUND);
+        }
+
+        for (InspectionPartUnitRow unit : units) {
+            validateUnit(unit, true);
+        }
+        if (request.templateId() != null) {
+            Long categoryId = units.get(0).categoryId();
+            if (units.stream().anyMatch(unit -> !unit.categoryId().equals(categoryId))) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "같은 템플릿으로 검수할 부품의 카테고리가 일치해야 합니다.");
+            }
+        }
+        TemplateSnapshot templateSnapshot = validateTemplateAndBuildSnapshot(
+                companyId,
+                units.get(0).categoryId(),
+                request.templateId(),
+                request.itemResults(),
+                true,
+                true
+        );
+
         List<Long> inspectionIds = new ArrayList<>();
+        List<InspectionItemResult> itemResults = new ArrayList<>();
+        List<PartStatusHistory> histories = new ArrayList<>();
         for (Long unitId : request.unitIds()) {
-            Inspection inspection = saveInspection(
+            InspectionPartUnitRow unit = unitsById.get(unitId);
+            Inspection inspection = insertInspection(
                     companyId,
                     memberId,
                     unitId,
@@ -226,14 +247,23 @@ public class InspectionService {
                     request.grade(),
                     request.salesStatus(),
                     request.memo(),
-                    request.itemResults(),
-                    inspectedAt,
-                    true,
-                    true,
-                    true
+                    inspectedAt
             );
             inspectionIds.add(inspection.getInspectionId());
+            itemResults.addAll(templateSnapshot.toItemResults(inspection.getInspectionId(), request.itemResults()));
+            histories.add(toStatusHistory(companyId, memberId, unit, request.grade(), request.salesStatus(), InspectionType.INITIAL));
         }
+        if (!itemResults.isEmpty()) {
+            inspectionMapper.insertItemResults(itemResults);
+        }
+        inspectionMapper.updatePartUnitInspectionStatuses(
+                companyId,
+                request.unitIds(),
+                InspectionStatus.COMPLETED,
+                request.grade(),
+                request.salesStatus()
+        );
+        inspectionMapper.insertPartStatusHistories(histories);
         return new CreateInspectionResponse(
                 inspectionIds,
                 inspectionIds.size(),
@@ -279,12 +309,13 @@ public class InspectionService {
             Integer limit
     ) {
         validateCompanyActive(companyId);
+        DateRangeValidator.validate(dateFrom, dateTo);
         String normalizedKeyword = TextNormalizer.optional(keyword);
         PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
-        LocalDateTime from = toStartOfDay(dateFrom);
-        LocalDateTime to = toExclusiveEnd(dateTo);
+        LocalDateTime from = DateRangeValidator.toStartOfDay(dateFrom);
+        LocalDateTime to = DateRangeValidator.toExclusiveEnd(dateTo);
 
-        long totalElements = inspectionMapper.countHistories(
+        SearchInspectionHistorySummaryResponse summary = inspectionMapper.summarizeHistories(
                 companyId,
                 normalizedKeyword,
                 documentId,
@@ -296,6 +327,7 @@ public class InspectionService {
                 from,
                 to
         );
+        long totalElements = summary.totalCount();
         List<SearchInspectionHistoryResponse> items = totalElements == 0
                 ? List.of()
                 : inspectionMapper.searchHistories(
@@ -312,18 +344,6 @@ public class InspectionService {
                         pageQuery.size(),
                         pageQuery.offset()
                 );
-        SearchInspectionHistorySummaryResponse summary = inspectionMapper.summarizeHistories(
-                companyId,
-                normalizedKeyword,
-                documentId,
-                unitId,
-                partId,
-                inspectionType,
-                result,
-                grade,
-                from,
-                to
-        );
         return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, summary);
     }
 
@@ -342,12 +362,13 @@ public class InspectionService {
             Integer limit
     ) {
         validateCompanyActive(companyId);
+        DateRangeValidator.validate(dateFrom, dateTo);
         String normalizedKeyword = TextNormalizer.optional(keyword);
         PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
-        LocalDateTime from = toStartOfDay(dateFrom);
-        LocalDateTime to = toExclusiveEnd(dateTo);
+        LocalDateTime from = DateRangeValidator.toStartOfDay(dateFrom);
+        LocalDateTime to = DateRangeValidator.toExclusiveEnd(dateTo);
 
-        long totalElements = inspectionMapper.countHistoryDocuments(
+        SearchInspectionHistoryDocumentSummaryResponse summary = inspectionMapper.summarizeHistoryDocuments(
                 companyId,
                 normalizedKeyword,
                 documentId,
@@ -358,6 +379,7 @@ public class InspectionService {
                 from,
                 to
         );
+        long totalElements = summary.documentCount();
         List<SearchInspectionHistoryDocumentResponse> items = totalElements == 0
                 ? List.of()
                 : inspectionMapper.searchHistoryDocuments(
@@ -373,17 +395,6 @@ public class InspectionService {
                         pageQuery.size(),
                         pageQuery.offset()
                 );
-        SearchInspectionHistoryDocumentSummaryResponse summary = inspectionMapper.summarizeHistoryDocuments(
-                companyId,
-                normalizedKeyword,
-                documentId,
-                partId,
-                inspectionType,
-                result,
-                grade,
-                from,
-                to
-        );
         return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, summary);
     }
 
@@ -495,20 +506,19 @@ public class InspectionService {
                 enforceRequiredItems
         );
 
-        Inspection inspection = new Inspection(
+        Inspection inspection = insertInspection(
                 companyId,
+                memberId,
                 unitId,
                 templateId,
-                memberId,
                 inspectionType,
                 originalInspectionId,
-                salesStatus,
                 result,
                 grade,
+                salesStatus,
                 TextNormalizer.optional(memo),
                 inspectedAt
         );
-        inspectionMapper.insertInspection(inspection);
 
         for (InspectionItemResult itemResult : templateSnapshot.toItemResults(
                 inspection.getInspectionId(),
@@ -524,9 +534,58 @@ public class InspectionService {
                 grade,
                 salesStatus
         );
-        inspectionMapper.insertPartStatusHistory(new PartStatusHistory(
+        inspectionMapper.insertPartStatusHistory(toStatusHistory(
+                companyId,
+                memberId,
+                unit,
+                grade,
+                salesStatus,
+                inspectionType
+        ));
+        return inspection;
+    }
+
+    private Inspection insertInspection(
+            Long companyId,
+            Long memberId,
+            Long unitId,
+            Long templateId,
+            InspectionType inspectionType,
+            Long originalInspectionId,
+            InspectionResult result,
+            PartGrade grade,
+            SalesStatus salesStatus,
+            String memo,
+            LocalDateTime inspectedAt
+    ) {
+        Inspection inspection = new Inspection(
                 companyId,
                 unitId,
+                templateId,
+                memberId,
+                inspectionType,
+                originalInspectionId,
+                salesStatus,
+                result,
+                grade,
+                TextNormalizer.optional(memo),
+                inspectedAt
+        );
+        inspectionMapper.insertInspection(inspection);
+        return inspection;
+    }
+
+    private PartStatusHistory toStatusHistory(
+            Long companyId,
+            Long memberId,
+            InspectionPartUnitRow unit,
+            PartGrade grade,
+            SalesStatus salesStatus,
+            InspectionType inspectionType
+    ) {
+        return new PartStatusHistory(
+                companyId,
+                unit.unitId(),
                 memberId,
                 unit.inspectionStatus(),
                 InspectionStatus.COMPLETED,
@@ -535,8 +594,7 @@ public class InspectionService {
                 unit.salesStatus(),
                 salesStatus,
                 inspectionType.name()
-        ));
-        return inspection;
+        );
     }
 
     private InspectionPartUnitRow validateAndFindUnit(Long companyId, Long unitId, boolean requireWaitingUnit) {
@@ -544,13 +602,17 @@ public class InspectionService {
         if (unit == null) {
             throw new BusinessException(ErrorCode.PART_UNIT_NOT_FOUND);
         }
+        validateUnit(unit, requireWaitingUnit);
+        return unit;
+    }
+
+    private void validateUnit(InspectionPartUnitRow unit, boolean requireWaitingUnit) {
         if (!unit.active() || unit.unitStatus() != UnitStatus.IN_STOCK) {
             throw new BusinessException(ErrorCode.PART_INVALID_STATUS_CHANGE, "검수 가능한 재고 상태가 아닙니다.");
         }
         if (requireWaitingUnit && unit.inspectionStatus() == InspectionStatus.COMPLETED) {
             throw new BusinessException(ErrorCode.INSPECTION_ALREADY_COMPLETED);
         }
-        return unit;
     }
 
     private TemplateSnapshot validateTemplateAndBuildSnapshot(
@@ -623,22 +685,13 @@ public class InspectionService {
         return value;
     }
 
-    private LocalDateTime toStartOfDay(LocalDate date) {
-        return date == null ? null : date.atStartOfDay();
-    }
-
-    private LocalDateTime toExclusiveEnd(LocalDate date) {
-        return date == null ? null : date.plusDays(1).atStartOfDay();
-    }
-
     private record TemplateSnapshot(
             Map<Long, InspectionTemplateItem> itemsById,
-            Map<Long, List<InspectionTemplateOptionRow>> optionsByItemId,
             Map<Long, InspectionTemplateOptionRow> optionsById
     ) {
 
         static TemplateSnapshot empty() {
-            return new TemplateSnapshot(Map.of(), Map.of(), Map.of());
+            return new TemplateSnapshot(Map.of(), Map.of());
         }
 
         TemplateSnapshot(
@@ -651,11 +704,6 @@ public class InspectionService {
                             Function.identity(),
                             (left, right) -> left,
                             LinkedHashMap::new
-                    )),
-                    options.stream().collect(Collectors.groupingBy(
-                            InspectionTemplateOptionRow::itemId,
-                            LinkedHashMap::new,
-                            Collectors.toList()
                     )),
                     options.stream().collect(Collectors.toMap(
                             InspectionTemplateOptionRow::optionId,

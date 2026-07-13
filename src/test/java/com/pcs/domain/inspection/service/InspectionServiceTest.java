@@ -5,9 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.pcs.domain.inspection.dto.request.CreateBulkInspectionRequest;
 import com.pcs.domain.inspection.dto.request.CreateInspectionItemResultRequest;
 import com.pcs.domain.inspection.dto.request.CreateInspectionRequest;
 import com.pcs.domain.inspection.dto.request.CreateInspectionRevisionRequest;
@@ -43,6 +45,7 @@ import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -116,6 +119,50 @@ class InspectionServiceTest {
                 SalesStatus.AVAILABLE
         );
         verify(inspectionMapper).insertPartStatusHistory(any());
+    }
+
+    @Test
+    void createBulkInitialInspection_loadsTemplateOnceAndUpdatesUnitsInBatch() {
+        Long companyId = 1L;
+        Long memberId = 10L;
+        Long templateId = 200L;
+        List<Long> unitIds = List.of(100L, 101L);
+        CreateBulkInspectionRequest request = new CreateBulkInspectionRequest(
+                unitIds,
+                templateId,
+                InspectionResult.PASS,
+                PartGrade.A,
+                SalesStatus.AVAILABLE,
+                null,
+                List.of()
+        );
+        when(inspectionMapper.findPartUnitsForUpdate(companyId, unitIds)).thenReturn(List.of(
+                waitingUnit(companyId, 100L),
+                waitingUnit(companyId, 101L)
+        ));
+        when(inspectionMapper.findActiveTemplate(companyId, templateId)).thenReturn(template(companyId, templateId));
+        when(inspectionMapper.findActiveTemplateItems(companyId, templateId)).thenReturn(List.of());
+        when(inspectionMapper.findActiveTemplateOptions(companyId, templateId)).thenReturn(List.of());
+        AtomicLong sequence = new AtomicLong(500L);
+        doAnswer(invocation -> {
+            Inspection inspection = invocation.getArgument(0);
+            inspection.setInspectionId(sequence.getAndIncrement());
+            return null;
+        }).when(inspectionMapper).insertInspection(any(Inspection.class));
+
+        var response = inspectionService.createBulkInitialInspection(companyId, memberId, request);
+
+        assertEquals(List.of(500L, 501L), response.inspectionIds());
+        verify(inspectionMapper, times(1)).findActiveTemplate(companyId, templateId);
+        verify(inspectionMapper, times(2)).insertInspection(any(Inspection.class));
+        verify(inspectionMapper).updatePartUnitInspectionStatuses(
+                companyId,
+                unitIds,
+                InspectionStatus.COMPLETED,
+                PartGrade.A,
+                SalesStatus.AVAILABLE
+        );
+        verify(inspectionMapper).insertPartStatusHistories(any());
     }
 
     @Test
@@ -312,16 +359,6 @@ class InspectionServiceTest {
                 "IN_PROGRESS",
                 LocalDateTime.of(2026, 6, 8, 10, 0)
         );
-        when(inspectionMapper.countWaitingDocuments(
-                companyId,
-                "RAM",
-                partId,
-                true,
-                partnerId,
-                null,
-                dateFrom.atStartOfDay(),
-                dateTo.plusDays(1).atStartOfDay()
-        )).thenReturn(1L);
         when(inspectionMapper.searchWaitingDocuments(
                 companyId,
                 "RAM",
@@ -395,18 +432,6 @@ class InspectionServiceTest {
                 "홍길동",
                 LocalDateTime.of(2026, 6, 8, 10, 0)
         );
-        when(inspectionMapper.countHistories(
-                companyId,
-                "RTX",
-                20L,
-                100L,
-                11L,
-                InspectionType.INITIAL,
-                InspectionResult.PASS,
-                PartGrade.A,
-                dateFrom.atStartOfDay(),
-                dateTo.plusDays(1).atStartOfDay()
-        )).thenReturn(1L);
         when(inspectionMapper.searchHistories(
                 companyId,
                 "RTX",
@@ -474,17 +499,6 @@ class InspectionServiceTest {
                 1,
                 LocalDateTime.of(2026, 6, 8, 10, 0)
         );
-        when(inspectionMapper.countHistoryDocuments(
-                companyId,
-                "RAM",
-                null,
-                11L,
-                InspectionType.INITIAL,
-                InspectionResult.PASS,
-                PartGrade.A,
-                dateFrom.atStartOfDay(),
-                dateTo.plusDays(1).atStartOfDay()
-        )).thenReturn(1L);
         when(inspectionMapper.searchHistoryDocuments(
                 companyId,
                 "RAM",

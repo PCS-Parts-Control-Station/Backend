@@ -22,7 +22,6 @@ import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.security.PcsPrincipal;
 import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.time.LocalDate;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -139,15 +138,11 @@ public class StockFacade {
     ) {
         PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
 
-        try {
-            return stockService.createInboundDocument(
-                    checkedPrincipal.companyId(),
-                    checkedPrincipal.memberId(),
-                    request
-            );
-        } catch (DuplicateKeyException exception) {
-            throw mapDuplicateKeyException(exception);
-        }
+        return stockService.createInboundDocument(
+                checkedPrincipal.companyId(),
+                checkedPrincipal.memberId(),
+                request
+        );
     }
 
     @Transactional
@@ -158,32 +153,11 @@ public class StockFacade {
     ) {
         PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
 
-        try {
-            return stockService.createOutboundDocument(
-                    checkedPrincipal.companyId(),
-                    checkedPrincipal.memberId(),
-                    request
-            );
-        } catch (DuplicateKeyException exception) {
-            throw mapDuplicateKeyException(exception);
-        }
-    }
-
-    private BusinessException mapDuplicateKeyException(DuplicateKeyException exception) {
-        String message = exception.getMostSpecificCause().getMessage();
-        if (message != null && (
-                message.contains("uk_stock_document_document_no")
-                        || message.contains("uk_stock_document_company_document_no")
-        )) {
-            return new BusinessException(ErrorCode.STOCK_DOCUMENT_NO_DUPLICATED);
-        }
-        if (message != null && (
-                message.contains("uk_pc_part_unit_internal_serial")
-                        || message.contains("uk_pc_part_unit_manufacturer_serial")
-        )) {
-            return new BusinessException(ErrorCode.PART_UNIT_SERIAL_DUPLICATED);
-        }
-        return new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+        return stockService.createOutboundDocument(
+                checkedPrincipal.companyId(),
+                checkedPrincipal.memberId(),
+                request
+        );
     }
 
 }

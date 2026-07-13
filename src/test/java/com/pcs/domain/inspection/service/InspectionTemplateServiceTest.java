@@ -16,6 +16,7 @@ import com.pcs.domain.inspection.dto.request.UpdateInspectionTemplateItemRequest
 import com.pcs.domain.inspection.dto.request.UpdateInspectionTemplateItemSortOrderRequest;
 import com.pcs.domain.inspection.dto.request.UpdateInspectionTemplateOptionRequest;
 import com.pcs.domain.inspection.dto.request.UpdateInspectionTemplateOptionSortOrderRequest;
+import com.pcs.domain.inspection.dto.response.InspectionTemplateReorderValidationRow;
 import com.pcs.domain.inspection.dto.response.SearchInspectionTemplateResponse;
 import com.pcs.domain.inspection.entity.InspectionTemplate;
 import com.pcs.domain.inspection.entity.InspectionTemplateItem;
@@ -103,7 +104,6 @@ class InspectionTemplateServiceTest {
         when(inspectionTemplateMapper.findTemplateSummaryById(companyId, 100L)).thenReturn(summary);
         when(inspectionTemplateMapper.findItemsByTemplateId(companyId, 100L)).thenReturn(List.of());
         when(inspectionTemplateMapper.findOptionsByTemplateId(companyId, 100L)).thenReturn(List.of());
-        when(inspectionTemplateMapper.findTemplateById(companyId, 100L)).thenReturn(template);
 
         var response = inspectionTemplateService.createTemplate(companyId, 20L, request);
 
@@ -140,7 +140,6 @@ class InspectionTemplateServiceTest {
         Long companyId = 1L;
         SearchInspectionTemplateResponse row = summary(100L, 10L, "그래픽카드", "그래픽카드 기본 검수");
         var summary = new com.pcs.domain.inspection.dto.response.SearchInspectionTemplateSummaryResponse(1, 1, 3, 4);
-        when(inspectionTemplateMapper.countTemplates(companyId, "그래픽", 10L, true)).thenReturn(1L);
         when(inspectionTemplateMapper.searchTemplates(companyId, "그래픽", 10L, true, 100, 100))
                 .thenReturn(List.of(row));
         when(inspectionTemplateMapper.summarizeTemplates(companyId, "그래픽", 10L, true)).thenReturn(summary);
@@ -233,12 +232,17 @@ class InspectionTemplateServiceTest {
         );
         when(inspectionTemplateMapper.findItemById(companyId, templateId, itemId)).thenReturn(item);
         when(inspectionTemplateMapper.findOptionById(companyId, templateId, itemId, optionId)).thenReturn(option);
-        when(inspectionTemplateMapper.existsOptionLabel(companyId, templateId, itemId, "팬 소음", optionId)).thenReturn(false);
-        when(inspectionTemplateMapper.existsOptionValue(companyId, templateId, itemId, "팬 소음", optionId)).thenReturn(false);
+        when(inspectionTemplateMapper.existsOptionDuplicate(
+                companyId,
+                templateId,
+                itemId,
+                "팬 소음",
+                "팬 소음",
+                optionId
+        )).thenReturn(false);
         when(inspectionTemplateMapper.findTemplateSummaryById(companyId, templateId)).thenReturn(summary);
         when(inspectionTemplateMapper.findItemsByTemplateId(companyId, templateId)).thenReturn(List.of(item));
         when(inspectionTemplateMapper.findOptionsByTemplateId(companyId, templateId)).thenReturn(List.of());
-        when(inspectionTemplateMapper.findTemplateById(companyId, templateId)).thenReturn(template);
 
         inspectionTemplateService.updateOption(companyId, templateId, itemId, optionId, request);
 
@@ -292,7 +296,6 @@ class InspectionTemplateServiceTest {
         when(inspectionTemplateMapper.findTemplateSummaryById(companyId, templateId)).thenReturn(summary);
         when(inspectionTemplateMapper.findItemsByTemplateId(companyId, templateId)).thenReturn(List.of(item));
         when(inspectionTemplateMapper.findOptionsByTemplateId(companyId, templateId)).thenReturn(List.of());
-        when(inspectionTemplateMapper.findTemplateById(companyId, templateId)).thenReturn(template);
 
         inspectionTemplateService.updateItem(companyId, templateId, itemId, request);
 
@@ -312,13 +315,12 @@ class InspectionTemplateServiceTest {
                 List.of(201L, 202L, 203L)
         );
         when(inspectionTemplateMapper.findTemplateById(companyId, templateId)).thenReturn(template);
-        when(inspectionTemplateMapper.countItemsByTemplateGroup(companyId, templateId, InspectionItemGroup.BASIC)).thenReturn(3);
-        when(inspectionTemplateMapper.countItemsByTemplateGroupAndIds(
+        when(inspectionTemplateMapper.validateItemReorderTargets(
                 companyId,
                 templateId,
                 InspectionItemGroup.BASIC,
                 List.of(201L, 202L, 203L)
-        )).thenReturn(3);
+        )).thenReturn(new InspectionTemplateReorderValidationRow(3, 3));
         when(inspectionTemplateMapper.findTemplateSummaryById(companyId, templateId)).thenReturn(summary);
         when(inspectionTemplateMapper.findItemsByTemplateId(companyId, templateId)).thenReturn(List.of());
         when(inspectionTemplateMapper.findOptionsByTemplateId(companyId, templateId)).thenReturn(List.of());
@@ -348,7 +350,12 @@ class InspectionTemplateServiceTest {
                 List.of(201L, 202L)
         );
         when(inspectionTemplateMapper.findTemplateById(companyId, templateId)).thenReturn(template);
-        when(inspectionTemplateMapper.countItemsByTemplateGroup(companyId, templateId, InspectionItemGroup.BASIC)).thenReturn(3);
+        when(inspectionTemplateMapper.validateItemReorderTargets(
+                companyId,
+                templateId,
+                InspectionItemGroup.BASIC,
+                List.of(201L, 202L)
+        )).thenReturn(new InspectionTemplateReorderValidationRow(3, 2));
 
         BusinessException exception = assertThrows(
                 BusinessException.class,
@@ -391,12 +398,15 @@ class InspectionTemplateServiceTest {
                 List.of(301L, 302L)
         );
         when(inspectionTemplateMapper.findItemById(companyId, templateId, itemId)).thenReturn(item);
-        when(inspectionTemplateMapper.countOptionsByItemId(companyId, templateId, itemId)).thenReturn(2);
-        when(inspectionTemplateMapper.countOptionsByItemIdAndIds(companyId, templateId, itemId, List.of(301L, 302L))).thenReturn(2);
+        when(inspectionTemplateMapper.validateOptionReorderTargets(
+                companyId,
+                templateId,
+                itemId,
+                List.of(301L, 302L)
+        )).thenReturn(new InspectionTemplateReorderValidationRow(2, 2));
         when(inspectionTemplateMapper.findTemplateSummaryById(companyId, templateId)).thenReturn(summary);
         when(inspectionTemplateMapper.findItemsByTemplateId(companyId, templateId)).thenReturn(List.of(item));
         when(inspectionTemplateMapper.findOptionsByTemplateId(companyId, templateId)).thenReturn(List.of());
-        when(inspectionTemplateMapper.findTemplateById(companyId, templateId)).thenReturn(template);
 
         inspectionTemplateService.updateOptionSortOrder(companyId, templateId, itemId, request);
 
@@ -443,6 +453,7 @@ class InspectionTemplateServiceTest {
                 0,
                 0,
                 "관리자",
+                LocalDateTime.of(2026, 6, 1, 9, 0),
                 LocalDateTime.of(2026, 6, 7, 10, 0)
         );
     }

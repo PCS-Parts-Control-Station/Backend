@@ -103,15 +103,6 @@ class StockServiceTest {
                 5L,
                 0L
         );
-        when(stockMapper.countDocuments(
-                companyId,
-                StockDocumentType.INBOUND,
-                "RTX",
-                100L,
-                StockDocumentStatus.COMPLETED,
-                null,
-                null
-        )).thenReturn(1L);
         when(stockMapper.searchDocuments(
                 companyId,
                 StockDocumentType.INBOUND,
@@ -178,15 +169,6 @@ class StockServiceTest {
         );
         LocalDate dateFrom = LocalDate.of(2026, 6, 1);
         LocalDate dateTo = LocalDate.of(2026, 6, 30);
-        when(stockMapper.countDocuments(
-                companyId,
-                StockDocumentType.OUTBOUND,
-                "RAM",
-                200L,
-                StockDocumentStatus.COMPLETED,
-                dateFrom,
-                dateTo
-        )).thenReturn(1L);
         when(stockMapper.searchDocuments(
                 companyId,
                 StockDocumentType.OUTBOUND,
@@ -226,6 +208,47 @@ class StockServiceTest {
         assertEquals(row, response.content().get(0));
         assertEquals(summary, response.summary());
         assertEquals(10, response.size());
+    }
+
+    @Test
+    void searchDocuments_rejectsReversedDateRange() {
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> stockService.searchDocuments(
+                        1L,
+                        null,
+                        null,
+                        null,
+                        null,
+                        LocalDate.of(2026, 7, 14),
+                        LocalDate.of(2026, 7, 13),
+                        0,
+                        20,
+                        null
+                )
+        );
+
+        assertEquals(ErrorCode.INVALID_INPUT_VALUE, exception.getErrorCode());
+    }
+
+    @Test
+    void createInboundDocument_rejectsDuplicatePartLines() {
+        CreateInboundDocumentRequest request = new CreateInboundDocumentRequest(
+                100L,
+                null,
+                List.of(
+                        new CreateInboundDocumentLineRequest(1000L, 1, null),
+                        new CreateInboundDocumentLineRequest(1000L, 2, null)
+                )
+        );
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> stockService.createInboundDocument(1L, 10L, request)
+        );
+
+        assertEquals(ErrorCode.INVALID_INPUT_VALUE, exception.getErrorCode());
+        verify(stockMapper, never()).insertDocument(any());
     }
 
     @Test
@@ -381,7 +404,7 @@ class StockServiceTest {
             return null;
         }).when(stockMapper).insertMovement(any(StockMovement.class));
 
-        CancelStockDocumentResponse response = stockService.cancelInboundDocument(companyId, memberId, documentId);
+        CancelStockDocumentResponse response = stockService.cancelDocument(companyId, memberId, documentId);
 
         assertEquals(documentId, response.documentId());
         assertEquals(StockDocumentStatus.CANCELED, response.documentStatus());

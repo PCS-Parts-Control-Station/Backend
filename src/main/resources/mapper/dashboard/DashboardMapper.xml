@@ -4,197 +4,157 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.pcs.domain.dashboard.mapper.DashboardMapper">
 
-    <select id="summarize" resultType="com.pcs.domain.dashboard.dto.response.DashboardSummaryResponse">
+    <select id="summarizeOverview" resultType="com.pcs.domain.dashboard.dto.response.DashboardOverviewRow">
         SELECT
-            COALESCE((
-                SELECT SUM(m.quantity)
-                FROM tb_stock_movement m
-                WHERE m.company_id = #{companyId}
-                  AND m.movement_type = 'INBOUND'
-                  AND m.movement_status = 'COMPLETED'
-                  AND m.canceled_movement_id IS NULL
-                  AND m.created_at &gt;= #{todayStart}
-                  AND m.created_at &lt; #{tomorrowStart}
-            ), 0) AS today_inbound_quantity,
-            COALESCE((
-                SELECT SUM(m.quantity)
-                FROM tb_stock_movement m
-                WHERE m.company_id = #{companyId}
-                  AND m.movement_type = 'OUTBOUND'
-                  AND m.movement_status = 'COMPLETED'
-                  AND m.canceled_movement_id IS NULL
-                  AND m.created_at &gt;= #{todayStart}
-                  AND m.created_at &lt; #{tomorrowStart}
-            ), 0) AS today_outbound_quantity,
-            COALESCE((
-                SELECT COUNT(*)
-                FROM tb_pc_part_unit u
-                WHERE u.company_id = #{companyId}
-                  AND u.active = TRUE
-                  AND u.unit_status = 'IN_STOCK'
-                  AND u.inspection_status = 'WAITING'
-            ), 0) AS waiting_inspection_quantity,
-            COALESCE((
-                SELECT COUNT(*)
-                FROM tb_pc_part_unit u
-                WHERE u.company_id = #{companyId}
-                  AND u.active = TRUE
-                  AND u.unit_status = 'IN_STOCK'
-                  AND u.inspection_status = 'COMPLETED'
-                  AND u.sales_status = 'AVAILABLE'
-            ), 0) AS available_quantity,
-            COALESCE((
-                SELECT COUNT(*)
-                FROM tb_pc_part_unit u
-                WHERE u.company_id = #{companyId}
-                  AND <include refid="com.pcs.global.mapper.PartUnitConditionSql.salesHold" />
-            ), 0) AS hold_quantity,
-            COALESCE((
-                SELECT COUNT(*)
-                FROM tb_pc_part_unit u
-                WHERE u.company_id = #{companyId}
-                  AND <include refid="com.pcs.global.mapper.PartUnitConditionSql.salesUnavailable" />
-            ), 0) AS unavailable_quantity,
-            COALESCE((
-                SELECT COUNT(*)
-                FROM tb_inspection i
-                WHERE i.company_id = #{companyId}
-                  AND i.inspected_at &gt;= #{todayStart}
-                  AND i.inspected_at &lt; #{tomorrowStart}
-                  AND (i.result = 'FAIL' OR i.grade = 'DEFECTIVE')
-            ), 0) AS today_defective_inspection_count
-    </select>
-
-    <select id="summarizeStockStatus" resultType="com.pcs.domain.dashboard.dto.response.DashboardStockStatusResponse">
-        SELECT
-            status.available_quantity,
-            status.hold_quantity,
-            status.unavailable_quantity,
-            CASE
-                WHEN status.total_quantity = 0 THEN 0
-                ELSE FLOOR(status.available_quantity * 100 / status.total_quantity)
-            END AS available_ratio,
-            CASE
-                WHEN status.total_quantity = 0 THEN 0
-                ELSE FLOOR(status.hold_quantity * 100 / status.total_quantity)
-            END AS hold_ratio,
-            CASE
-                WHEN status.total_quantity = 0 THEN 0
-                ELSE FLOOR(status.unavailable_quantity * 100 / status.total_quantity)
-            END AS unavailable_ratio
+            movement.today_inbound_quantity,
+            movement.today_outbound_quantity,
+            stock.waiting_inspection_quantity,
+            stock.available_quantity,
+            stock.hold_quantity,
+            stock.unavailable_quantity,
+            stock.total_stock_quantity,
+            inspection.today_defective_inspection_count
         FROM (
             SELECT
+                COALESCE(SUM(CASE WHEN m.movement_type = 'INBOUND' THEN m.quantity ELSE 0 END), 0)
+                    AS today_inbound_quantity,
+                COALESCE(SUM(CASE WHEN m.movement_type = 'OUTBOUND' THEN m.quantity ELSE 0 END), 0)
+                    AS today_outbound_quantity
+            FROM tb_stock_movement m
+            WHERE m.company_id = #{companyId}
+              AND m.movement_type IN ('INBOUND', 'OUTBOUND')
+              AND m.movement_status = 'COMPLETED'
+              AND m.canceled_movement_id IS NULL
+              AND m.created_at &gt;= #{todayStart}
+              AND m.created_at &lt; #{tomorrowStart}
+        ) movement
+        CROSS JOIN (
+            SELECT
+                COALESCE(SUM(CASE WHEN u.inspection_status = 'WAITING' THEN 1 ELSE 0 END), 0)
+                    AS waiting_inspection_quantity,
                 COALESCE(SUM(CASE
-                    WHEN u.inspection_status = 'COMPLETED' AND u.sales_status = 'AVAILABLE'
-                    THEN 1 ELSE 0
+                    WHEN u.inspection_status = 'COMPLETED' AND u.sales_status = 'AVAILABLE' THEN 1 ELSE 0
                 END), 0) AS available_quantity,
                 COALESCE(SUM(CASE WHEN u.sales_status = 'HOLD' THEN 1 ELSE 0 END), 0) AS hold_quantity,
                 COALESCE(SUM(CASE WHEN u.sales_status = 'UNAVAILABLE' THEN 1 ELSE 0 END), 0) AS unavailable_quantity,
-                COUNT(*) AS total_quantity
+                COUNT(*) AS total_stock_quantity
             FROM tb_pc_part_unit u
             WHERE u.company_id = #{companyId}
               AND <include refid="com.pcs.global.mapper.PartUnitConditionSql.activeInStock" />
-        ) status
+        ) stock
+        CROSS JOIN (
+            SELECT COUNT(*) AS today_defective_inspection_count
+            FROM tb_inspection i
+            WHERE i.company_id = #{companyId}
+              AND i.inspected_at &gt;= #{todayStart}
+              AND i.inspected_at &lt; #{tomorrowStart}
+              AND (i.result = 'FAIL' OR i.grade = 'DEFECTIVE')
+        ) inspection
     </select>
 
     <select id="findTodos" resultType="com.pcs.domain.dashboard.dto.response.DashboardTodoResponse">
+        WITH part_counts AS (
+            SELECT
+                p.part_id,
+                c.category_name,
+                CONCAT(p.part_name, CASE
+                    WHEN p.model_name IS NOT NULL AND p.model_name != '' THEN CONCAT(' ', p.model_name)
+                    ELSE ''
+                END) AS title,
+                SUM(CASE WHEN u.inspection_status = 'WAITING' THEN 1 ELSE 0 END) AS waiting_count,
+                SUM(CASE WHEN u.sales_status = 'HOLD' THEN 1 ELSE 0 END) AS hold_count,
+                SUM(CASE WHEN u.sales_status = 'UNAVAILABLE' THEN 1 ELSE 0 END) AS unavailable_count
+            FROM tb_pc_part_unit u
+            INNER JOIN tb_pc_part p
+                ON p.company_id = u.company_id
+               AND p.part_id = u.part_id
+            INNER JOIN tb_part_category c
+                ON c.company_id = p.company_id
+               AND c.category_id = p.category_id
+            WHERE u.company_id = #{companyId}
+              AND <include refid="com.pcs.global.mapper.PartUnitConditionSql.activeInStock" />
+            GROUP BY p.part_id, c.category_name, p.part_name, p.model_name
+        )
         SELECT
-            todo.type,
-            todo.label,
-            todo.title,
-            todo.count,
-            todo.part_id,
-            todo.category_name,
-            todo.route,
-            todo.part_state
-        FROM (
-            SELECT
-                1 AS sort_order,
-                'INSPECTION_WAITING' AS type,
-                '검수 대기' AS label,
-                p.part_id,
-                c.category_name,
-                CONCAT(p.part_name, CASE
-                    WHEN p.model_name IS NOT NULL AND p.model_name != ''
-                    THEN CONCAT(' ', p.model_name)
-                    ELSE ''
-                END) AS title,
-                COUNT(*) AS count,
-                'inspection' AS route,
-                NULL AS part_state
-            FROM tb_pc_part_unit u
-            INNER JOIN tb_pc_part p
-                ON p.company_id = u.company_id
-               AND p.part_id = u.part_id
-            INNER JOIN tb_part_category c
-                ON c.company_id = p.company_id
-               AND c.category_id = p.category_id
-            WHERE u.company_id = #{companyId}
-              AND u.active = TRUE
-              AND u.unit_status = 'IN_STOCK'
-              AND u.inspection_status = 'WAITING'
-            GROUP BY p.part_id, c.category_name, p.part_name, p.model_name
-
+            todo_type.type,
+            todo_type.label,
+            part_counts.title,
+            CASE todo_type.sort_order
+                WHEN 1 THEN part_counts.waiting_count
+                WHEN 2 THEN part_counts.hold_count
+                ELSE part_counts.unavailable_count
+            END AS count,
+            part_counts.part_id,
+            part_counts.category_name,
+            todo_type.route,
+            todo_type.part_state
+        FROM part_counts
+        CROSS JOIN (
+            SELECT 1 AS sort_order, 'INSPECTION_WAITING' AS type, '검수 대기' AS label,
+                   'inspection' AS route, NULL AS part_state
             UNION ALL
-
-            SELECT
-                2 AS sort_order,
-                'STOCK_HOLD' AS type,
-                '판매 보류' AS label,
-                p.part_id,
-                c.category_name,
-                CONCAT(p.part_name, CASE
-                    WHEN p.model_name IS NOT NULL AND p.model_name != ''
-                    THEN CONCAT(' ', p.model_name)
-                    ELSE ''
-                END) AS title,
-                COUNT(*) AS count,
-                'part-units' AS route,
-                'STOCK_HOLD' AS part_state
-            FROM tb_pc_part_unit u
-            INNER JOIN tb_pc_part p
-                ON p.company_id = u.company_id
-               AND p.part_id = u.part_id
-            INNER JOIN tb_part_category c
-                ON c.company_id = p.company_id
-               AND c.category_id = p.category_id
-            WHERE u.company_id = #{companyId}
-              AND <include refid="com.pcs.global.mapper.PartUnitConditionSql.salesHold" />
-            GROUP BY p.part_id, c.category_name, p.part_name, p.model_name
-
+            SELECT 2, 'STOCK_HOLD', '판매 보류', 'part-units', 'STOCK_HOLD'
             UNION ALL
-
-            SELECT
-                3 AS sort_order,
-                'STOCK_UNAVAILABLE' AS type,
-                '판매 불가' AS label,
-                p.part_id,
-                c.category_name,
-                CONCAT(p.part_name, CASE
-                    WHEN p.model_name IS NOT NULL AND p.model_name != ''
-                    THEN CONCAT(' ', p.model_name)
-                    ELSE ''
-                END) AS title,
-                COUNT(*) AS count,
-                'part-units' AS route,
-                'STOCK_UNAVAILABLE' AS part_state
-            FROM tb_pc_part_unit u
-            INNER JOIN tb_pc_part p
-                ON p.company_id = u.company_id
-               AND p.part_id = u.part_id
-            INNER JOIN tb_part_category c
-                ON c.company_id = p.company_id
-               AND c.category_id = p.category_id
-            WHERE u.company_id = #{companyId}
-              AND <include refid="com.pcs.global.mapper.PartUnitConditionSql.salesUnavailable" />
-            GROUP BY p.part_id, c.category_name, p.part_name, p.model_name
-        ) todo
-        WHERE todo.count &gt; 0
-        ORDER BY todo.sort_order ASC, todo.count DESC, todo.title ASC
+            SELECT 3, 'STOCK_UNAVAILABLE', '판매 불가', 'part-units', 'STOCK_UNAVAILABLE'
+        ) todo_type
+        WHERE CASE todo_type.sort_order
+            WHEN 1 THEN part_counts.waiting_count
+            WHEN 2 THEN part_counts.hold_count
+            ELSE part_counts.unavailable_count
+        END &gt; 0
+        ORDER BY todo_type.sort_order ASC, count DESC, part_counts.title ASC
         LIMIT #{size}
     </select>
 
     <select id="findRecentActivities" resultType="com.pcs.domain.dashboard.dto.response.DashboardRecentActivityResponse">
+        WITH recent_documents AS (
+            SELECT d.document_id
+            FROM tb_stock_document d
+            WHERE d.company_id = #{companyId}
+              AND d.document_status = 'COMPLETED'
+            ORDER BY d.created_at DESC, d.document_id DESC
+            LIMIT #{size}
+        ),
+        recent_inspection_times AS (
+            SELECT i.inspection_type, i.inspected_at
+            FROM tb_inspection i
+            WHERE i.company_id = #{companyId}
+            GROUP BY i.inspection_type, i.inspected_at
+            ORDER BY i.inspected_at DESC
+            LIMIT #{size}
+        ),
+        recent_inspection_units AS (
+            SELECT DISTINCT i.unit_id
+            FROM tb_inspection i
+            INNER JOIN recent_inspection_times recent_time
+                ON recent_time.inspection_type = i.inspection_type
+               AND recent_time.inspected_at = i.inspected_at
+            WHERE i.company_id = #{companyId}
+        ),
+        latest_inbound_documents AS (
+            SELECT ranked.unit_id, ranked.document_no
+            FROM (
+                SELECT
+                    mu.unit_id,
+                    d.document_no,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY mu.unit_id
+                        ORDER BY d.created_at DESC, d.document_id DESC
+                    ) AS rn
+                FROM recent_inspection_units recent_unit
+                INNER JOIN tb_stock_movement_unit mu
+                    ON mu.unit_id = recent_unit.unit_id
+                INNER JOIN tb_stock_movement m
+                    ON m.movement_id = mu.movement_id
+                   AND m.company_id = #{companyId}
+                   AND m.movement_type = 'INBOUND'
+                   AND m.canceled_movement_id IS NULL
+                INNER JOIN tb_stock_document d
+                    ON d.company_id = m.company_id
+                   AND d.document_id = m.document_id
+            ) ranked
+            WHERE ranked.rn = 1
+        )
         SELECT
             activity.type,
             activity.label,
@@ -228,7 +188,10 @@
                     WHEN d.document_type = 'INBOUND' THEN 'inbound'
                     ELSE 'outbound'
                 END AS route
-            FROM tb_stock_document d
+            FROM recent_documents recent_document
+            INNER JOIN tb_stock_document d
+                ON d.company_id = #{companyId}
+               AND d.document_id = recent_document.document_id
             LEFT JOIN tb_stock_movement m
                 ON m.company_id = d.company_id
                AND m.document_id = d.document_id
@@ -236,8 +199,6 @@
             LEFT JOIN tb_pc_part p
                 ON p.company_id = m.company_id
                AND p.part_id = m.part_id
-            WHERE d.company_id = #{companyId}
-              AND d.document_status = 'COMPLETED'
             GROUP BY d.document_id, d.document_type, d.document_no, d.created_at
 
             UNION ALL
@@ -269,21 +230,7 @@
                         WHEN i.inspection_type = 'CORRECTION' THEN '정정'
                         ELSE '재검수'
                     END AS label,
-                    COALESCE((
-                        SELECT d2.document_no
-                        FROM tb_stock_movement_unit mu2
-                        INNER JOIN tb_stock_movement m2
-                            ON m2.movement_id = mu2.movement_id
-                           AND m2.company_id = i.company_id
-                           AND m2.movement_type = 'INBOUND'
-                           AND m2.canceled_movement_id IS NULL
-                        INNER JOIN tb_stock_document d2
-                            ON d2.company_id = m2.company_id
-                           AND d2.document_id = m2.document_id
-                        WHERE mu2.unit_id = i.unit_id
-                        ORDER BY d2.created_at DESC, d2.document_id DESC
-                        LIMIT 1
-                    ), '-') AS document_no,
+                    COALESCE(inbound_document.document_no, '-') AS document_no,
                     p.part_id,
                     CONCAT(p.part_name, CASE
                         WHEN p.model_name IS NOT NULL AND p.model_name != ''
@@ -293,12 +240,17 @@
                     i.inspected_at AS processed_at,
                     'history/inspection' AS route
                 FROM tb_inspection i
+                INNER JOIN recent_inspection_times recent_time
+                    ON recent_time.inspection_type = i.inspection_type
+                   AND recent_time.inspected_at = i.inspected_at
                 INNER JOIN tb_pc_part_unit u
                     ON u.company_id = i.company_id
                    AND u.unit_id = i.unit_id
                 INNER JOIN tb_pc_part p
                     ON p.company_id = u.company_id
                    AND p.part_id = u.part_id
+                LEFT JOIN latest_inbound_documents inbound_document
+                    ON inbound_document.unit_id = i.unit_id
                 WHERE i.company_id = #{companyId}
             ) inspection_activity
             GROUP BY

@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.pcs.domain.inspection.dto.request.CreateBulkInspectionRequest;
 import com.pcs.domain.inspection.dto.request.CreateInspectionRequest;
 import com.pcs.domain.inspection.dto.response.CreateInspectionResponse;
 import com.pcs.domain.inspection.dto.response.SearchInspectionHistorySummaryResponse;
@@ -30,6 +31,7 @@ import com.pcs.global.security.PcsPrincipal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -128,6 +130,34 @@ class InspectionApiControllerTest {
     }
 
     @Test
+    void createBulkInspection_acceptsUpToThreeHundredUnits() throws Exception {
+        var request = bulkRequest(300);
+        when(inspectionFacade.createBulkInitialInspection(
+                eq(principal), eq("acme"), any(CreateBulkInspectionRequest.class)
+        )).thenReturn(new CreateInspectionResponse(
+                List.of(200L), 300, InspectionType.INITIAL, InspectionResult.PASS,
+                PartGrade.A, SalesStatus.AVAILABLE, LocalDateTime.of(2026, 7, 1, 10, 0)
+        ));
+
+        mockMvc.perform(post("/api/workspaces/acme/inspections/bulk")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.savedCount").value(300));
+    }
+
+    @Test
+    void createBulkInspection_rejectsMoreThanThreeHundredUnits() throws Exception {
+        mockMvc.perform(post("/api/workspaces/acme/inspections/bulk")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(bulkRequest(301))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("COMMON-001"))
+                .andExpect(jsonPath("$.data[0].field").value("unitIds"))
+                .andExpect(jsonPath("$.data[0].message").value("한 번에 최대 300개까지 검수할 수 있습니다."));
+    }
+
+    @Test
     void searchHistories_returnsInspectionSummary() throws Exception {
         var summary = new SearchInspectionHistorySummaryResponse(3, 1, 1, 1, 1, 0);
         when(inspectionFacade.searchHistories(
@@ -152,5 +182,14 @@ class InspectionApiControllerTest {
         mockMvc.perform(get("/api/workspaces/acme/inspections/999"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false));
+    }
+
+    private CreateBulkInspectionRequest bulkRequest(int unitCount) {
+        List<Long> unitIds = IntStream.rangeClosed(1, unitCount)
+                .mapToObj(value -> (long) value)
+                .toList();
+        return new CreateBulkInspectionRequest(
+                unitIds, null, InspectionResult.PASS, PartGrade.A, SalesStatus.AVAILABLE, null, List.of()
+        );
     }
 }

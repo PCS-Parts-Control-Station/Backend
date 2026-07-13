@@ -48,16 +48,6 @@ public interface StockMapper {
             @Param("offset") int offset
     );
 
-    long countDocuments(
-            @Param("companyId") Long companyId,
-            @Param("documentType") StockDocumentType documentType,
-            @Param("keyword") String keyword,
-            @Param("partnerId") Long partnerId,
-            @Param("documentStatus") StockDocumentStatus documentStatus,
-            @Param("dateFrom") LocalDate dateFrom,
-            @Param("dateTo") LocalDate dateTo
-    );
-
     SearchStockDocumentSummaryResponse summarizeDocuments(
             @Param("companyId") Long companyId,
             @Param("documentType") StockDocumentType documentType,

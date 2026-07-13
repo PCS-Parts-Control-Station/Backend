@@ -131,14 +131,6 @@
         OFFSET #{offset}
     </select>
 
-    <select id="countWaitingDocuments" resultType="long">
-        SELECT COUNT(*)
-        FROM (
-            <include refid="waitingDocumentBase" />
-        ) filtered
-        <include refid="waitingDocumentOuterWhere" />
-    </select>
-
     <select id="summarizeWaitingDocuments" resultType="com.pcs.domain.inspection.dto.response.SearchWaitingInspectionDocumentSummaryResponse">
         SELECT
             COUNT(*) AS document_count,
@@ -370,36 +362,8 @@
             i.inspection_id,
             i.inspection_type,
             i.original_inspection_id,
-            (
-                SELECT d.document_id
-                FROM tb_stock_movement_unit mu
-                INNER JOIN tb_stock_movement m
-                    ON m.movement_id = mu.movement_id
-                INNER JOIN tb_stock_document d
-                    ON d.company_id = m.company_id
-                   AND d.document_id = m.document_id
-                WHERE mu.unit_id = i.unit_id
-                  AND m.company_id = i.company_id
-                  AND m.movement_type = 'INBOUND'
-                  AND m.canceled_movement_id IS NULL
-                ORDER BY d.created_at DESC, d.document_id DESC
-                LIMIT 1
-            ) AS document_id,
-            (
-                SELECT d.document_no
-                FROM tb_stock_movement_unit mu
-                INNER JOIN tb_stock_movement m
-                    ON m.movement_id = mu.movement_id
-                INNER JOIN tb_stock_document d
-                    ON d.company_id = m.company_id
-                   AND d.document_id = m.document_id
-                WHERE mu.unit_id = i.unit_id
-                  AND m.company_id = i.company_id
-                  AND m.movement_type = 'INBOUND'
-                  AND m.canceled_movement_id IS NULL
-                ORDER BY d.created_at DESC, d.document_id DESC
-                LIMIT 1
-            ) AS document_no,
+            inbound_document.document_id,
+            inbound_document.document_no,
             i.unit_id,
             u.internal_serial_no,
             u.unit_status,
@@ -432,6 +396,23 @@
         LEFT JOIN tb_member mb
             ON mb.company_id = i.company_id
            AND mb.member_id = i.inspected_by
+        LEFT JOIN tb_stock_document inbound_document
+            ON inbound_document.company_id = i.company_id
+           AND inbound_document.document_id = (
+               SELECT d2.document_id
+               FROM tb_stock_movement_unit mu2
+               INNER JOIN tb_stock_movement m2
+                   ON m2.movement_id = mu2.movement_id
+                  AND m2.company_id = i.company_id
+                  AND m2.movement_type = 'INBOUND'
+                  AND m2.canceled_movement_id IS NULL
+               INNER JOIN tb_stock_document d2
+                   ON d2.company_id = m2.company_id
+                  AND d2.document_id = m2.document_id
+               WHERE mu2.unit_id = i.unit_id
+               ORDER BY d2.created_at DESC, d2.document_id DESC
+               LIMIT 1
+           )
     </sql>
 
     <select id="searchHistories" resultType="com.pcs.domain.inspection.dto.response.SearchInspectionHistoryResponse">
@@ -549,13 +530,6 @@
         OFFSET #{offset}
     </select>
 
-    <select id="countHistoryDocuments" resultType="long">
-        SELECT COUNT(*)
-        FROM (
-            <include refid="historyDocumentBase" />
-        ) filtered
-    </select>
-
     <select id="summarizeHistoryDocuments" resultType="com.pcs.domain.inspection.dto.response.SearchInspectionHistoryDocumentSummaryResponse">
         SELECT
             COUNT(*) AS document_count,
@@ -564,21 +538,6 @@
         FROM (
             <include refid="historyDocumentBase" />
         ) filtered
-    </select>
-
-    <select id="countHistories" resultType="long">
-        SELECT COUNT(*)
-        FROM tb_inspection i
-        INNER JOIN tb_pc_part_unit u
-            ON u.company_id = i.company_id
-           AND u.unit_id = i.unit_id
-        INNER JOIN tb_pc_part p
-            ON p.company_id = u.company_id
-           AND p.part_id = u.part_id
-        LEFT JOIN tb_part_category c
-            ON c.company_id = p.company_id
-           AND c.category_id = p.category_id
-        <include refid="historyWhere" />
     </select>
 
     <select id="summarizeHistories" resultType="com.pcs.domain.inspection.dto.response.SearchInspectionHistorySummaryResponse">
@@ -668,6 +627,31 @@
            AND p.part_id = u.part_id
         WHERE u.company_id = #{companyId}
           AND u.unit_id = #{unitId}
+        FOR UPDATE
+    </select>
+
+    <select id="findPartUnitsForUpdate" resultType="com.pcs.domain.inspection.dto.response.InspectionPartUnitRow">
+        SELECT
+            u.unit_id,
+            u.company_id,
+            u.part_id,
+            p.category_id,
+            u.internal_serial_no,
+            u.unit_status,
+            u.grade,
+            u.inspection_status,
+            u.sales_status,
+            u.active
+        FROM tb_pc_part_unit u
+        INNER JOIN tb_pc_part p
+            ON p.company_id = u.company_id
+           AND p.part_id = u.part_id
+        WHERE u.company_id = #{companyId}
+          AND u.unit_id IN
+          <foreach collection="unitIds" item="unitId" open="(" separator="," close=")">
+              #{unitId}
+          </foreach>
+        ORDER BY u.unit_id ASC
         FOR UPDATE
     </select>
 
@@ -843,6 +827,35 @@
         )
     </insert>
 
+    <insert id="insertItemResults">
+        INSERT INTO tb_inspection_item_result (
+            inspection_id,
+            item_id,
+            item_name_snapshot,
+            result,
+            value_text,
+            value_number,
+            selected_option_id,
+            selected_option_label_snapshot,
+            selected_option_value_snapshot,
+            memo
+        ) VALUES
+        <foreach collection="itemResults" item="itemResult" separator=",">
+            (
+                #{itemResult.inspectionId},
+                #{itemResult.itemId},
+                #{itemResult.itemNameSnapshot},
+                #{itemResult.result},
+                #{itemResult.valueText},
+                #{itemResult.valueNumber},
+                #{itemResult.selectedOptionId},
+                #{itemResult.selectedOptionLabelSnapshot},
+                #{itemResult.selectedOptionValueSnapshot},
+                #{itemResult.memo}
+            )
+        </foreach>
+    </insert>
+
     <update id="updatePartUnitInspectionStatus">
         UPDATE tb_pc_part_unit
         SET inspection_status = #{inspectionStatus},
@@ -850,6 +863,18 @@
             sales_status = #{salesStatus}
         WHERE company_id = #{companyId}
           AND unit_id = #{unitId}
+    </update>
+
+    <update id="updatePartUnitInspectionStatuses">
+        UPDATE tb_pc_part_unit
+        SET inspection_status = #{inspectionStatus},
+            grade = #{grade},
+            sales_status = #{salesStatus}
+        WHERE company_id = #{companyId}
+          AND unit_id IN
+          <foreach collection="unitIds" item="unitId" open="(" separator="," close=")">
+              #{unitId}
+          </foreach>
     </update>
 
     <insert id="insertPartStatusHistory"
@@ -879,6 +904,35 @@
             #{toSalesStatus},
             #{reason}
         )
+    </insert>
+
+    <insert id="insertPartStatusHistories">
+        INSERT INTO tb_part_status_history (
+            company_id,
+            unit_id,
+            changed_by,
+            from_inspection_status,
+            to_inspection_status,
+            from_grade,
+            to_grade,
+            from_sales_status,
+            to_sales_status,
+            reason
+        ) VALUES
+        <foreach collection="histories" item="history" separator=",">
+            (
+                #{history.companyId},
+                #{history.unitId},
+                #{history.changedBy},
+                #{history.fromInspectionStatus},
+                #{history.toInspectionStatus},
+                #{history.fromGrade},
+                #{history.toGrade},
+                #{history.fromSalesStatus},
+                #{history.toSalesStatus},
+                #{history.reason}
+            )
+        </foreach>
     </insert>
 
 </mapper>

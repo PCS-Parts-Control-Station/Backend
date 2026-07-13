@@ -46,10 +46,10 @@
           AND d.document_status = #{documentStatus}
         </if>
         <if test="dateFrom != null">
-          AND DATE(d.created_at) <![CDATA[>=]]> #{dateFrom}
+          AND d.created_at <![CDATA[>=]]> #{dateFrom}
         </if>
         <if test="dateTo != null">
-          AND DATE(d.created_at) <![CDATA[<=]]> #{dateTo}
+          AND d.created_at <![CDATA[<]]> DATE_ADD(#{dateTo}, INTERVAL 1 DAY)
         </if>
         <if test="keyword != null and keyword != ''">
           AND (
@@ -123,22 +123,6 @@
         OFFSET #{offset}
     </select>
 
-    <select id="countDocuments" resultType="long">
-        SELECT COUNT(DISTINCT d.document_id)
-        FROM tb_stock_document d
-        LEFT JOIN tb_trade_partner tp
-            ON tp.company_id = d.company_id
-           AND tp.partner_id = d.partner_id
-        LEFT JOIN tb_stock_movement m
-            ON m.company_id = d.company_id
-           AND m.document_id = d.document_id
-           AND m.canceled_movement_id IS NULL
-        LEFT JOIN tb_pc_part p
-            ON p.company_id = m.company_id
-           AND p.part_id = m.part_id
-        <include refid="documentSearchWhere" />
-    </select>
-
     <select id="summarizeDocuments" resultType="com.pcs.domain.stock.dto.response.SearchStockDocumentSummaryResponse">
         SELECT
             COUNT(DISTINCT filtered.document_id) AS total_count,
@@ -150,21 +134,7 @@
                 d.document_id,
                 d.document_status,
                 COALESCE(SUM(m.quantity), 0) AS total_quantity,
-                COALESCE((
-                    SELECT COUNT(*)
-                    FROM tb_stock_movement mw
-                    JOIN tb_stock_movement_unit mu
-                        ON mu.movement_id = mw.movement_id
-                    JOIN tb_pc_part_unit u
-                        ON u.company_id = mw.company_id
-                       AND u.unit_id = mu.unit_id
-                    WHERE mw.company_id = d.company_id
-                      AND mw.document_id = d.document_id
-                      AND mw.canceled_movement_id IS NULL
-                      AND u.inspection_status = 'WAITING'
-                      AND u.unit_status = 'IN_STOCK'
-                      AND u.active = TRUE
-                ), 0) AS waiting_quantity
+                COALESCE(waiting.waiting_quantity, 0) AS waiting_quantity
             FROM tb_stock_document d
             LEFT JOIN tb_trade_partner tp
                 ON tp.company_id = d.company_id
@@ -176,8 +146,28 @@
             LEFT JOIN tb_pc_part p
                 ON p.company_id = m.company_id
                AND p.part_id = m.part_id
+            LEFT JOIN (
+                SELECT
+                    mw.company_id,
+                    mw.document_id,
+                    COUNT(*) AS waiting_quantity
+                FROM tb_stock_movement mw
+                INNER JOIN tb_stock_movement_unit mu
+                    ON mu.movement_id = mw.movement_id
+                INNER JOIN tb_pc_part_unit u
+                    ON u.company_id = mw.company_id
+                   AND u.unit_id = mu.unit_id
+                WHERE mw.company_id = #{companyId}
+                  AND mw.canceled_movement_id IS NULL
+                  AND u.inspection_status = 'WAITING'
+                  AND u.unit_status = 'IN_STOCK'
+                  AND u.active = TRUE
+                GROUP BY mw.company_id, mw.document_id
+            ) waiting
+                ON waiting.company_id = d.company_id
+               AND waiting.document_id = d.document_id
             <include refid="documentSearchWhere" />
-            GROUP BY d.document_id, d.document_status
+            GROUP BY d.document_id, d.document_status, waiting.waiting_quantity
         ) filtered
     </select>
 
