@@ -67,6 +67,8 @@ class DashboardServiceTest {
                 "검수 대기",
                 "RAM DDR4 16GB",
                 7L,
+                10L,
+                "메모리",
                 "inspection"
         );
         DashboardRecentActivityResponse activity = new DashboardRecentActivityResponse(

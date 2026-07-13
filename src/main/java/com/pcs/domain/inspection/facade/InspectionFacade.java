@@ -38,6 +38,8 @@ public class InspectionFacade {
             PcsPrincipal principal,
             String pathCompanyCode,
             String keyword,
+            Long partId,
+            Boolean hasWaiting,
             Long partnerId,
             String inspectionStatus,
             LocalDate dateFrom,
@@ -50,6 +52,8 @@ public class InspectionFacade {
         return inspectionService.searchWaitingDocuments(
                 checkedPrincipal.companyId(),
                 keyword,
+                partId,
+                hasWaiting,
                 partnerId,
                 inspectionStatus,
                 dateFrom,

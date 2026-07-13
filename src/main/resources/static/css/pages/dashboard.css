@@ -173,11 +173,11 @@
 .dashboard-page .priority-list a {
     display: grid;
     grid-template-columns: 34px minmax(0, 1fr) auto;
-    gap: 10px;
+    gap: 12px;
     align-items: center;
-    min-height: 56px;
+    min-height: 72px;
     min-width: 0;
-    padding: 10px 12px;
+    padding: 12px 14px;
     border: 1px solid var(--line);
     border-radius: var(--radius-sm);
     background: var(--surface);
@@ -219,16 +219,39 @@
     white-space: nowrap;
 }
 
+.dashboard-page .todo-meta {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
 .dashboard-page .todo-main .badge {
     justify-self: start;
-    min-height: 24px;
-    padding: 3px 9px;
+    min-height: 26px;
+    padding: 0 9px;
     font-size: 11px;
+}
+
+.dashboard-page .todo-category {
+    display: inline-flex;
+    align-items: center;
+    min-height: 26px;
+    padding: 0 9px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.06);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 800;
 }
 
 .dashboard-page .priority-list em {
     color: var(--navy);
     font-size: 14px;
+    font-style: normal;
+    font-weight: 900;
+    white-space: nowrap;
 }
 
 .dashboard-page .stock-donut-layout {
@@ -368,6 +391,7 @@
     gap: 10px;
 }
 
+.dashboard-page .priority-list,
 .dashboard-page .recent-activity-list {
     gap: 10px;
     grid-auto-rows: minmax(72px, 1fr);
@@ -394,7 +418,7 @@
     display: block;
     color: var(--navy);
     overflow: hidden;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 800;
 }
 
@@ -422,7 +446,8 @@
 
 .dashboard-page .recent-activity-item em b {
     color: var(--navy);
-    font-size: 12px;
+    font-size: 14px;
+    font-weight: 900;
 }
 
 .dashboard-page .recent-activity-item em time {

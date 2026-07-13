@@ -58,6 +58,7 @@ public class PartService {
             "B",
             "C",
             "DEFECTIVE",
+            "CANCELED",
             "OUTBOUND"
     );
 

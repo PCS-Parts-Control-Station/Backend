@@ -156,6 +156,23 @@ class PartServiceTest {
     }
 
     @Test
+    void searchPartUnits_acceptsCanceledStateForInboundCancelDocumentLink() {
+        SearchPartUnitResponse unit = partUnitResponse(101L, "PCS-GPU-0001", PartGrade.NONE, SalesStatus.HOLD);
+        when(partMapper.summarizePartUnits(COMPANY_ID, null, 77L, null, "CANCELED"))
+                .thenReturn(new SearchPartUnitSummaryResponse(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
+        when(partMapper.summarizePartUnits(COMPANY_ID, null, 77L, null, null))
+                .thenReturn(new SearchPartUnitSummaryResponse(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
+        when(partMapper.searchPartUnits(COMPANY_ID, null, 77L, null, "CANCELED", 20, 0))
+                .thenReturn(List.of(unit));
+
+        var response = partService.searchPartUnits(COMPANY_ID, null, 77L, null, " canceled ", null, null, null);
+
+        assertThat(response.content()).containsExactly(unit);
+        assertThat(response.totalElements()).isEqualTo(1);
+        verify(partMapper).searchPartUnits(COMPANY_ID, null, 77L, null, "CANCELED", 20, 0);
+    }
+
+    @Test
     void searchPartUnits_failsWhenPartStateIsInvalid() {
         assertThatThrownBy(() -> partService.searchPartUnits(COMPANY_ID, null, null, null, "SOLD", null, null, null))
                 .isInstanceOf(BusinessException.class)

@@ -65,7 +65,7 @@ MariaDB
 | Persistence | MyBatis Spring Boot Starter 4.0.1 |
 | Database | MariaDB 10.11 호환 |
 | API 문서 | springdoc-openapi 3.0.3 |
-| Test | JUnit 5, Mockito, MockMvc, 로컬 격리 MariaDB 통합 테스트 |
+| Test | JUnit 5, Mockito, MockMvc, Testcontainers 또는 로컬 격리 MariaDB 통합 테스트 |
 
 ### 프론트엔드 기술
 
@@ -316,7 +316,16 @@ DB 통합 테스트:
 .\gradlew.bat integrationTest
 ```
 
-DB 통합 테스트는 Docker를 사용하지 않습니다. 로컬 MariaDB의 `test_pcs_integration` 데이터베이스만 사용하며 다음 안전 규칙을 적용합니다.
+DB 통합 테스트는 실행 환경에 따라 Testcontainers 또는 로컬 MariaDB를 사용합니다. 기본 `auto` 모드는 Docker가 사용 가능하면 MariaDB 10.11 컨테이너를 실행하고, 그렇지 않으면 로컬 MariaDB의 `test_pcs_integration` 데이터베이스를 사용합니다.
+
+실행 방식을 명시하려면 다음 시스템 속성을 사용합니다.
+
+```powershell
+.\gradlew.bat integrationTest "-Dpcs.test.db.mode=container"
+.\gradlew.bat integrationTest "-Dpcs.test.db.mode=local"
+```
+
+로컬 모드에는 다음 안전 규칙을 적용합니다.
 
 - 로컬 호스트 이외의 DB 연결은 거부합니다.
 - `pcs_db` 또는 다른 데이터베이스 이름은 거부합니다.

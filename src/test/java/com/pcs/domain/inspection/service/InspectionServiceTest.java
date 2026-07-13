@@ -21,6 +21,8 @@ import com.pcs.domain.inspection.dto.response.SearchInspectionHistoryDocumentRes
 import com.pcs.domain.inspection.dto.response.SearchInspectionHistoryDocumentSummaryResponse;
 import com.pcs.domain.inspection.dto.response.SearchInspectionHistoryResponse;
 import com.pcs.domain.inspection.dto.response.SearchInspectionHistorySummaryResponse;
+import com.pcs.domain.inspection.dto.response.SearchWaitingInspectionDocumentResponse;
+import com.pcs.domain.inspection.dto.response.SearchWaitingInspectionDocumentSummaryResponse;
 import com.pcs.domain.inspection.entity.Inspection;
 import com.pcs.domain.inspection.entity.InspectionTemplate;
 import com.pcs.domain.inspection.entity.InspectionTemplateItem;
@@ -367,6 +369,84 @@ class InspectionServiceTest {
         assertEquals(InspectionType.REINSPECTION, savedInspection.getInspectionType());
         assertEquals(originalInspectionId, savedInspection.getOriginalInspectionId());
         assertEquals(revisionTemplateId, savedInspection.getTemplateId());
+    }
+
+    @Test
+    void searchWaitingDocuments_passesDashboardWaitingFilter() {
+        Long companyId = 1L;
+        Long partId = 11L;
+        Long partnerId = 20L;
+        LocalDate dateFrom = LocalDate.of(2026, 6, 1);
+        LocalDate dateTo = LocalDate.of(2026, 6, 8);
+        SearchWaitingInspectionDocumentSummaryResponse summary =
+                new SearchWaitingInspectionDocumentSummaryResponse(1, 3, 1, 2, 0);
+        SearchWaitingInspectionDocumentResponse row = new SearchWaitingInspectionDocumentResponse(
+                100L,
+                "IN-20260608-001",
+                partnerId,
+                "서울 부품",
+                "RAM DDR4 8GB",
+                1,
+                3,
+                1,
+                2,
+                0,
+                33,
+                "IN_PROGRESS",
+                LocalDateTime.of(2026, 6, 8, 10, 0)
+        );
+        when(inspectionMapper.countWaitingDocuments(
+                companyId,
+                "RAM",
+                partId,
+                true,
+                partnerId,
+                null,
+                dateFrom.atStartOfDay(),
+                dateTo.plusDays(1).atStartOfDay()
+        )).thenReturn(1L);
+        when(inspectionMapper.searchWaitingDocuments(
+                companyId,
+                "RAM",
+                partId,
+                true,
+                partnerId,
+                null,
+                dateFrom.atStartOfDay(),
+                dateTo.plusDays(1).atStartOfDay(),
+                10,
+                10
+        )).thenReturn(List.of(row));
+        when(inspectionMapper.summarizeWaitingDocuments(
+                companyId,
+                "RAM",
+                partId,
+                true,
+                partnerId,
+                null,
+                dateFrom.atStartOfDay(),
+                dateTo.plusDays(1).atStartOfDay()
+        )).thenReturn(summary);
+
+        var result = inspectionService.searchWaitingDocuments(
+                companyId,
+                " RAM ",
+                partId,
+                true,
+                partnerId,
+                null,
+                dateFrom,
+                dateTo,
+                1,
+                10,
+                null
+        );
+
+        assertEquals(1, result.page());
+        assertEquals(10, result.size());
+        assertEquals(1, result.totalElements());
+        assertEquals(List.of(row), result.content());
+        assertEquals(summary, result.summary());
     }
 
     @Test

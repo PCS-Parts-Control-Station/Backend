@@ -62,6 +62,7 @@ src/main/resources/static/js/history-inspection.js
 - 전표 행과 패널 내부를 제외한 영역을 클릭하면 상세 슬라이드 패널을 닫는다.
 - 전표 상세는 품목 요약을 우선 보여주고, 개별 관리번호 목록은 기본 접힘 상태로 둔다.
 - 개별 관리번호 목록은 품목별로 한 번 더 구분해 긴 목록의 가독성을 유지한다.
+- 상세 패널의 `부품 관리` 버튼은 `/w/{companyCode}/part-units?documentId={documentId}&documentNo={documentNo}&partState={partState}`로 이동한다. 입고 전표는 `partState=HELD`, 출고 전표는 `partState=OUTBOUND`를 사용한다. 취소된 입고 전표는 `partState=CANCELED`, 취소된 출고 전표는 재고 복원 상태 기준으로 `partState=HELD`를 사용한다.
 
 입출고 이력 화면은 `GET /stock/documents`와 `GET /stock/documents/{documentId}`를 사용한다. 별도 `/history/stock-documents` API를 호출하지 않는다.
 

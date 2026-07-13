@@ -5,6 +5,8 @@ public record DashboardTodoResponse(
         String label,
         String title,
         Long count,
+        Long partId,
+        String categoryName,
         String route
 ) {
 }

@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="/css/components/components.css?20260623_drawer_clip_fix">
     <link rel="stylesheet" href="/css/components/workflow.css?20260618_layers">
     <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
-    <link rel="stylesheet" href="/css/pages/history-stock.css?20260622_management_drawer">
+    <link rel="stylesheet" href="/css/pages/history-stock.css?20260712_fixed_detail_cards">
 </head>
 <body class="has-collapsible-sidebar page-history-stock workspace-page">
 <div class="workspace-layout">
@@ -167,7 +167,7 @@
                             <button class="panel-link-button" type="button" data-close-detail-panel>닫기</button>
                         </div>
 
-                        <div class="drawer-scroll-body">
+                        <div class="drawer-scroll-body stock-history-detail-body">
                             <div class="document-detail-card">
                                 <strong data-detail-document-no>-</strong>
                                 <div class="detail-badge-row">
@@ -200,11 +200,12 @@
                                     <h3>품목 요약</h3>
                                     <span data-detail-line-summary>-</span>
                                 </div>
-                            <div class="document-line-list right-side-scroll-list" data-detail-lines>
+                                <div class="document-line-list right-side-scroll-list" data-detail-lines>
                                     <p class="detail-empty-text">전표를 선택해 주세요.</p>
                                 </div>
                             </div>
                         </div>
+                        <div class="stock-history-detail-actions" data-detail-actions></div>
                     </div>
                 </div>
             </aside>
@@ -216,6 +217,6 @@
 <script src="/js/workspace-layout.js?20260624_quick_bar"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
 <script src="/js/pcs-common.js?20260625_right_drawer_v2"></script>
-<script src="/js/history-stock.js?20260705_common_helpers"></script>
+<script src="/js/history-stock.js?20260709_part_units_link"></script>
 </body>
 </html>

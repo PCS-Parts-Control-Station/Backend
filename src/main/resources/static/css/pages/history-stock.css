@@ -213,21 +213,35 @@
     padding: 0 14px;
 }
 
+.stock-history-detail-drawer .panel-mode {
+    grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.stock-history-detail-drawer .document-detail-panel {
+    padding-bottom: 0;
+}
+
+.stock-history-detail-body {
+    padding-bottom: 0;
+}
+
 .stock-history-detail-drawer .document-line-section {
     display: grid;
     gap: 12px;
 }
 
 .stock-history-detail-drawer .document-line-list {
+    align-content: start;
     display: grid;
     gap: 10px;
+    grid-auto-rows: max-content;
 }
 
 .stock-history-detail-drawer .document-line-item {
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 8px;
-    padding: 14px;
+    padding: 12px;
 }
 
 .stock-history-line-summary,
@@ -250,13 +264,13 @@
 .stock-history-line-summary span {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
     min-width: 0;
 }
 
 .stock-history-line-summary strong {
     color: var(--ink);
-    font-size: 0.95rem;
+    font-size: 0.88rem;
     font-weight: 900;
     line-height: 1.25;
 }
@@ -264,13 +278,14 @@
 .stock-history-line-summary small,
 .stock-history-line .line-reason {
     color: var(--muted);
+    font-size: 0.8rem;
     font-weight: 800;
 }
 
 .stock-history-line-summary b {
     color: var(--blue);
     flex: 0 0 auto;
-    font-size: 0.95rem;
+    font-size: 0.86rem;
     font-weight: 900;
     white-space: nowrap;
 }
@@ -278,10 +293,10 @@
 .stock-history-grade-summary {
     border-top: 1px solid var(--line);
     color: var(--muted);
-    font-size: 0.86rem;
+    font-size: 0.8rem;
     font-weight: 800;
-    margin: 12px 0 0;
-    padding-top: 10px;
+    margin: 10px 0 0;
+    padding-top: 8px;
 }
 
 .stock-history-unit-details {
@@ -289,17 +304,18 @@
     border: 1px solid var(--line);
     border-radius: 8px;
     margin-top: 4px;
-    padding: 14px;
+    padding: 12px;
 }
 
 .stock-history-unit-details summary {
     color: var(--ink);
+    font-size: 0.86rem;
     font-weight: 900;
 }
 
 .stock-history-unit-details summary b {
     color: var(--blue);
-    font-size: 0.88rem;
+    font-size: 0.82rem;
 }
 
 .unit-group-list {
@@ -318,7 +334,7 @@
     background: #ffffff;
     border: 1px solid var(--line);
     border-radius: 8px;
-    padding: 12px;
+    padding: 10px;
 }
 
 .unit-group-title {
@@ -339,13 +355,14 @@
 
 .unit-group-title strong {
     color: var(--ink);
-    font-size: 0.9rem;
+    font-size: 0.84rem;
     font-weight: 900;
     line-height: 1.25;
 }
 
 .unit-group-title small {
     color: var(--muted);
+    font-size: 0.78rem;
     font-weight: 800;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -355,7 +372,7 @@
 .unit-group-title b {
     color: var(--blue);
     flex: 0 0 auto;
-    font-size: 0.86rem;
+    font-size: 0.8rem;
     font-weight: 900;
 }
 
@@ -372,15 +389,15 @@
     border-radius: 8px;
     display: inline-flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     min-height: 0;
     max-width: 100%;
-    padding: 10px 12px;
+    padding: 9px 10px;
     width: 100%;
 }
 
 .unit-chip code {
-    font-size: 0.8rem;
+    font-size: 0.76rem;
     line-height: 1.35;
     white-space: normal;
     word-break: break-all;
@@ -388,15 +405,40 @@
 
 .unit-chip em {
     color: var(--blue);
+    font-size: 0.78rem;
     font-style: normal;
     font-weight: 900;
 }
 
 .unit-chip small {
     color: var(--muted);
+    font-size: 0.76rem;
     font-weight: 800;
     min-width: 0;
     overflow-wrap: anywhere;
+}
+
+.stock-history-detail-actions {
+    align-items: center;
+    border-top: 1px solid var(--line);
+    background: var(--surface);
+    display: flex;
+    flex: 0 0 auto;
+    gap: 8px;
+    justify-content: flex-end;
+    margin: 0 -20px;
+    min-height: 72px;
+    padding: 14px 20px 18px;
+    position: relative;
+    z-index: 2;
+}
+
+.stock-history-detail-actions:empty {
+    display: none;
+}
+
+.stock-history-detail-action {
+    min-width: 118px;
 }
 
 @media (max-width: 1320px) {

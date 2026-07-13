@@ -108,12 +108,16 @@
             todo.label,
             todo.title,
             todo.count,
+            todo.part_id,
+            todo.category_name,
             todo.route
         FROM (
             SELECT
                 1 AS sort_order,
                 'INSPECTION_WAITING' AS type,
                 '검수 대기' AS label,
+                p.part_id,
+                c.category_name,
                 CONCAT(p.part_name, CASE
                     WHEN p.model_name IS NOT NULL AND p.model_name != ''
                     THEN CONCAT(' ', p.model_name)
@@ -125,11 +129,14 @@
             INNER JOIN tb_pc_part p
                 ON p.company_id = u.company_id
                AND p.part_id = u.part_id
+            INNER JOIN tb_part_category c
+                ON c.company_id = p.company_id
+               AND c.category_id = p.category_id
             WHERE u.company_id = #{companyId}
               AND u.active = TRUE
               AND u.unit_status = 'IN_STOCK'
               AND u.inspection_status = 'WAITING'
-            GROUP BY p.part_id, p.part_name, p.model_name
+            GROUP BY p.part_id, c.category_name, p.part_name, p.model_name
 
             UNION ALL
 
@@ -137,6 +144,8 @@
                 2 AS sort_order,
                 'STOCK_HOLD' AS type,
                 '출고 보류' AS label,
+                p.part_id,
+                c.category_name,
                 CONCAT(p.part_name, CASE
                     WHEN p.model_name IS NOT NULL AND p.model_name != ''
                     THEN CONCAT(' ', p.model_name)
@@ -148,11 +157,14 @@
             INNER JOIN tb_pc_part p
                 ON p.company_id = u.company_id
                AND p.part_id = u.part_id
+            INNER JOIN tb_part_category c
+                ON c.company_id = p.company_id
+               AND c.category_id = p.category_id
             WHERE u.company_id = #{companyId}
               AND u.active = TRUE
               AND u.unit_status = 'IN_STOCK'
               AND u.sales_status = 'HOLD'
-            GROUP BY p.part_id, p.part_name, p.model_name
+            GROUP BY p.part_id, c.category_name, p.part_name, p.model_name
 
             UNION ALL
 
@@ -160,6 +172,8 @@
                 3 AS sort_order,
                 'STOCK_UNAVAILABLE' AS type,
                 '출고 불가' AS label,
+                p.part_id,
+                c.category_name,
                 CONCAT(p.part_name, CASE
                     WHEN p.model_name IS NOT NULL AND p.model_name != ''
                     THEN CONCAT(' ', p.model_name)
@@ -171,11 +185,14 @@
             INNER JOIN tb_pc_part p
                 ON p.company_id = u.company_id
                AND p.part_id = u.part_id
+            INNER JOIN tb_part_category c
+                ON c.company_id = p.company_id
+               AND c.category_id = p.category_id
             WHERE u.company_id = #{companyId}
               AND u.active = TRUE
               AND u.unit_status = 'IN_STOCK'
               AND u.sales_status = 'UNAVAILABLE'
-            GROUP BY p.part_id, p.part_name, p.model_name
+            GROUP BY p.part_id, c.category_name, p.part_name, p.model_name
         ) todo
         WHERE todo.count &gt; 0
         ORDER BY todo.sort_order ASC, todo.count DESC, todo.title ASC

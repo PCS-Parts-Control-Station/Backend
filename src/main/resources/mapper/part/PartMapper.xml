@@ -149,6 +149,9 @@
             <when test="partState == 'OUTBOUND'">
               AND u.unit_status = 'OUTBOUND'
             </when>
+            <when test="partState == 'CANCELED'">
+              AND u.unit_status = 'CANCELED'
+            </when>
             <otherwise>
               AND u.unit_status = 'IN_STOCK'
               AND u.inspection_status = 'COMPLETED'
