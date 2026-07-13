@@ -194,63 +194,40 @@
         u.sales_status,
         u.created_at,
         u.updated_at,
-        (
-            SELECT sd.document_no
-            FROM tb_stock_movement_unit smu
-            JOIN tb_stock_movement sm
-              ON sm.movement_id = smu.movement_id
-             AND sm.company_id = u.company_id
-            JOIN tb_stock_document sd
-              ON sd.company_id = sm.company_id
-             AND sd.document_id = sm.document_id
-            WHERE smu.unit_id = u.unit_id
-            ORDER BY sm.created_at DESC, sm.movement_id DESC
+        latest_sd.document_no AS last_stock_document_no,
+        latest_sm.movement_type AS last_stock_movement_type,
+        latest_sm.created_at AS last_stock_processed_at,
+        latest_i.inspection_id AS last_inspection_id,
+        latest_i.inspection_type AS last_inspection_type,
+        latest_i.inspected_at AS last_inspected_at
+    </sql>
+
+    <sql id="partUnitRecentJoins">
+        LEFT JOIN tb_stock_movement latest_sm
+          ON latest_sm.company_id = u.company_id
+         AND latest_sm.movement_id = (
+            SELECT sm2.movement_id
+            FROM tb_stock_movement_unit smu2
+            JOIN tb_stock_movement sm2
+              ON sm2.movement_id = smu2.movement_id
+             AND sm2.company_id = u.company_id
+            WHERE smu2.unit_id = u.unit_id
+            ORDER BY sm2.created_at DESC, sm2.movement_id DESC
             LIMIT 1
-        ) AS last_stock_document_no,
-        (
-            SELECT sm.movement_type
-            FROM tb_stock_movement_unit smu
-            JOIN tb_stock_movement sm
-              ON sm.movement_id = smu.movement_id
-             AND sm.company_id = u.company_id
-            WHERE smu.unit_id = u.unit_id
-            ORDER BY sm.created_at DESC, sm.movement_id DESC
+         )
+        LEFT JOIN tb_stock_document latest_sd
+          ON latest_sd.company_id = latest_sm.company_id
+         AND latest_sd.document_id = latest_sm.document_id
+        LEFT JOIN tb_inspection latest_i
+          ON latest_i.company_id = u.company_id
+         AND latest_i.inspection_id = (
+            SELECT i2.inspection_id
+            FROM tb_inspection i2
+            WHERE i2.company_id = u.company_id
+              AND i2.unit_id = u.unit_id
+            ORDER BY i2.inspected_at DESC, i2.inspection_id DESC
             LIMIT 1
-        ) AS last_stock_movement_type,
-        (
-            SELECT sm.created_at
-            FROM tb_stock_movement_unit smu
-            JOIN tb_stock_movement sm
-              ON sm.movement_id = smu.movement_id
-             AND sm.company_id = u.company_id
-            WHERE smu.unit_id = u.unit_id
-            ORDER BY sm.created_at DESC, sm.movement_id DESC
-            LIMIT 1
-        ) AS last_stock_processed_at,
-        (
-            SELECT i.inspection_id
-            FROM tb_inspection i
-            WHERE i.company_id = u.company_id
-              AND i.unit_id = u.unit_id
-            ORDER BY i.inspected_at DESC, i.inspection_id DESC
-            LIMIT 1
-        ) AS last_inspection_id,
-        (
-            SELECT i.inspection_type
-            FROM tb_inspection i
-            WHERE i.company_id = u.company_id
-              AND i.unit_id = u.unit_id
-            ORDER BY i.inspected_at DESC, i.inspection_id DESC
-            LIMIT 1
-        ) AS last_inspection_type,
-        (
-            SELECT i.inspected_at
-            FROM tb_inspection i
-            WHERE i.company_id = u.company_id
-              AND i.unit_id = u.unit_id
-            ORDER BY i.inspected_at DESC, i.inspection_id DESC
-            LIMIT 1
-        ) AS last_inspected_at
+         )
     </sql>
 
     <sql id="partUnitRecentColumns">
@@ -324,6 +301,7 @@
             JOIN tb_part_category c
               ON c.company_id = p.company_id
              AND c.category_id = p.category_id
+            <include refid="partUnitRecentJoins" />
         ) base
         ORDER BY base.updated_at DESC, base.unit_id DESC
     </select>
@@ -445,6 +423,7 @@
             JOIN tb_part_category c
               ON c.company_id = p.company_id
              AND c.category_id = p.category_id
+            <include refid="partUnitRecentJoins" />
             WHERE u.company_id = #{companyId}
               AND u.unit_id = #{unitId}
               AND u.active = TRUE

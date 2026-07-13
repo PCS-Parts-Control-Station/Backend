@@ -1,10 +1,9 @@
 package com.pcs.global.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pcs.domain.auth.entity.AuthMember;
 import com.pcs.domain.auth.mapper.AuthMapper;
 import com.pcs.domain.member.type.PasswordStatus;
-import com.pcs.global.dto.ApiResultDto;
+import com.pcs.global.error.ApiErrorResponseWriter;
 import com.pcs.global.error.ErrorCode;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -13,7 +12,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.regex.Pattern;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -30,11 +28,11 @@ public class TemporaryPasswordAuthorizationFilter extends OncePerRequestFilter {
             Pattern.compile("^/api/workspaces/[^/]+/mypage/password$");
 
     private final AuthMapper authMapper;
-    private final ObjectMapper objectMapper;
+    private final ApiErrorResponseWriter errorResponseWriter;
 
-    public TemporaryPasswordAuthorizationFilter(AuthMapper authMapper, ObjectMapper objectMapper) {
+    public TemporaryPasswordAuthorizationFilter(AuthMapper authMapper, ApiErrorResponseWriter errorResponseWriter) {
         this.authMapper = authMapper;
-        this.objectMapper = objectMapper;
+        this.errorResponseWriter = errorResponseWriter;
     }
 
     @Override
@@ -62,10 +60,7 @@ public class TemporaryPasswordAuthorizationFilter extends OncePerRequestFilter {
         }
 
         ErrorCode errorCode = ErrorCode.MEMBER_PASSWORD_CHANGE_REQUIRED;
-        response.setStatus(errorCode.getHttpStatus().value());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setCharacterEncoding("UTF-8");
-        objectMapper.writeValue(response.getWriter(), ApiResultDto.error(errorCode));
+        errorResponseWriter.write(response, errorCode);
     }
 
     private boolean isAllowedRequest(HttpServletRequest request) {

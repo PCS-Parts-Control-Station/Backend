@@ -55,8 +55,10 @@ tb_member
 
 - 최근 입출고 이력은 `tb_stock_movement_unit -> tb_stock_movement -> tb_stock_document` 순서로 조회한다.
 - 최근 입출고 이력 정렬은 `tb_stock_movement.created_at DESC, tb_stock_movement.movement_id DESC`이다.
+- 목록에서는 최근 movement ID를 한 번만 찾고 전표번호, movement 유형, 처리일을 같은 JOIN 결과에서 가져온다.
 - 최근 검수 이력은 `tb_inspection`에서 조회한다.
 - 최근 검수 이력 정렬은 `tb_inspection.inspected_at DESC, tb_inspection.inspection_id DESC`이다.
+- 목록에서는 최근 inspection ID를 한 번만 찾고 검수 유형과 검수일을 같은 JOIN 결과에서 가져온다.
 - 목록의 최근 처리 표시값은 최근 입출고 이력과 최근 검수 이력 중 더 최근인 값을 사용한다.
 - 최근 처리 표시값이 입출고 이력일 때는 `movement_type` 기준으로 `입고`, `출고`, `입고 취소`, `출고 취소`를 구분한다. 화면에 `입출고`처럼 뭉뚱그린 라벨을 내려주지 않는다.
 - 상세의 이력 목록은 각 10건 이내로 제한한다.
@@ -79,7 +81,7 @@ idx_pc_part_unit_company_status
 idx_pc_part_unit_work_status
 ```
 
-이미 생성된 DB에는 `docs/sql/pcs-part-unit-list-index-alter.sql`의 세 목록 인덱스를 적용한다. 대상 DB에 인덱스가 이미 존재하면 같은 alter를 재실행하지 않는다.
+목록 인덱스는 `docs/sql/pcs-schema-ddl.sql`의 `tb_pc_part_unit` 정의를 기준으로 확인한다. 별도 alter 스크립트는 유지하지 않는다.
 
 ## 실패 시나리오
 

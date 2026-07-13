@@ -850,6 +850,9 @@
             sales_status = #{salesStatus}
         WHERE company_id = #{companyId}
           AND unit_id = #{unitId}
+          AND active = TRUE
+          AND unit_status = 'IN_STOCK'
+          AND inspection_status = #{expectedInspectionStatus}
     </update>
 
     <insert id="insertPartStatusHistory"

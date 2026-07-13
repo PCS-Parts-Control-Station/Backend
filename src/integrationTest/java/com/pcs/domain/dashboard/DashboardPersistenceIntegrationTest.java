@@ -108,9 +108,13 @@ class DashboardPersistenceIntegrationTest extends MariaDbIntegrationTest {
     }
 
     private void insertMovement(long movementId, long companyId, long documentId, long partId, String type, String status, Long canceledMovementId, int quantity, LocalDateTime createdAt) {
+        boolean increasesStock = "INBOUND".equals(type) || "OUTBOUND_CANCEL".equals(type);
+        int beforeQuantity = increasesStock ? 0 : quantity;
+        int afterQuantity = increasesStock ? quantity : 0;
         jdbcTemplate.update(
-                "INSERT INTO tb_stock_movement (movement_id, company_id, document_id, part_id, movement_type, movement_status, canceled_movement_id, quantity, before_quantity, after_quantity, processed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)",
-                movementId, companyId, documentId, partId, type, status, canceledMovementId, quantity, quantity, companyId == 1 ? 7 : 8, Timestamp.valueOf(createdAt)
+                "INSERT INTO tb_stock_movement (movement_id, company_id, document_id, part_id, movement_type, movement_status, canceled_movement_id, quantity, before_quantity, after_quantity, processed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                movementId, companyId, documentId, partId, type, status, canceledMovementId, quantity,
+                beforeQuantity, afterQuantity, companyId == 1 ? 7 : 8, Timestamp.valueOf(createdAt)
         );
     }
 }

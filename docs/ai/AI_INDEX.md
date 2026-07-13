@@ -24,7 +24,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 - `docs/ai/pcs-status-lifecycle-rules.md`
     - `active`, 사용 중지, 상태 보존 기준 확인
 - `docs/ai/pcs-test-strategy.md`
-    - JUnit, MockMvc, Testcontainers 테스트 작성 기준 확인
+    - JUnit, MockMvc, 로컬 격리 MariaDB 테스트 작성 기준 확인
 
 ## 문서 선택 규칙
 
@@ -206,7 +206,7 @@ PCS는 중고 PC 부품을 관리번호 단위로 입고, 검수, 재고, 출고
 SQL 참조 기준:
 
 - 기본 DB 구조 확인이 필요한 경우에만 `docs/sql/pcs-schema-ddl.sql`의 대상 테이블 블록을 본다.
-- `docs/sql/*-alter.sql` 파일은 과거 수동 반영 기록이므로, 사용자가 직접 지정하거나 특정 컬럼 변경 이력을 확인할 때만 본다.
+- `docs/sql`에는 현재 기준 DDL인 `pcs-schema-ddl.sql`만 유지한다. 기능별 alter/seed SQL 조각 파일은 별도로 유지하지 않는다.
 - DDL과 feature DB 문서가 충돌하면 먼저 실제 DB/DDL 기준을 확인하고 feature DB 문서를 최신화한다.
 
 ---
@@ -262,7 +262,7 @@ SQL 참조 기준:
 - 부족하면 테스트 작성 전에 MD의 테스트 기준을 보강한다.
 - 단위 테스트는 DB 없이 검증 가능한 정책과 계산 로직만 다룬다.
 - API 테스트는 MockMvc로 요청/응답, 예외 응답, 권한 차단을 검증한다.
-- DB 통합 테스트는 Testcontainers + MariaDB로 MyBatis SQL과 제약조건을 검증한다.
+- DB 통합 테스트는 로컬 전용 `test_pcs_integration` MariaDB로 MyBatis SQL과 제약조건을 검증한다.
 - 하네스는 테스트를 직접 재구현하지 않고 feature별 테스트 실행 명령만 연결한다.
 
 예시:

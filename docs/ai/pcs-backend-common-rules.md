@@ -33,7 +33,7 @@ Controller는 직접 `Map`이나 임의 JSON을 반환하지 않는다.
 사용:
 
 ```java
-return ApiResultDto.success(response);
+return ApiResultDto.ok(response);
 ```
 
 금지:
@@ -103,6 +103,11 @@ HISTORY_*
 - 예상 가능한 업무 오류를 fallback 500으로 보내지 않는다.
 - 사용자가 잘못 입력한 값은 400 계열로 처리한다.
 - 권한과 회사 범위 문제는 403 계열로 처리한다.
+- 프레임워크 예외의 원문 메시지나 클래스명은 API 응답에 노출하지 않는다.
+- 예상하지 못한 예외의 상세 내용은 서버 로그에만 남기고 응답에는 `INTERNAL_SERVER_ERROR` 메시지만 사용한다.
+
+Controller 밖의 Security Filter, `AuthenticationEntryPoint`, `AccessDeniedHandler`도 같은 원칙을 따른다.
+직접 JSON 문자열을 만들지 않고 공통 오류 응답 writer를 통해 `ApiResultDto`를 직렬화한다.
 
 ## Controller 기준
 
@@ -132,7 +137,7 @@ public ApiResultDto<CreatePartnerResponse> create(
         @AuthenticationPrincipal PcsPrincipal principal,
         @Valid @RequestBody CreatePartnerRequest request
 ) {
-    return ApiResultDto.success(partnerFacade.create(companyCode, principal, request));
+    return ApiResultDto.ok(partnerFacade.create(companyCode, principal, request));
 }
 ```
 
