@@ -133,9 +133,9 @@
         "^src/integrationTest/java/com/pcs/domain/stock/",
         "^src/integrationTest/resources/pcs-operations-test-schema-extension\\.sql$",
         "^docs/features/stock(-db)?\\.md$",
-        "^src/main/resources/static/(inbound|inbound-register|outbound|outbound-register|history-stock)\\.html$",
-        "^src/main/resources/static/js/(inbound|inbound-register|outbound|outbound-register|history-stock)\\.js$",
-        "^src/main/resources/static/css/pages/(inbound|inbound-register|outbound|outbound-register|history-stock)\\.css$"
+        "^src/main/resources/static/(documents|inbound|inbound-register|outbound|outbound-register)\\.html$",
+        "^src/main/resources/static/js/(documents|inbound|inbound-register|outbound|outbound-register)\\.js$",
+        "^src/main/resources/static/css/pages/(documents|inbound|inbound-register|outbound|outbound-register)\\.css$"
       ]
     },
     {
@@ -155,12 +155,12 @@
     },
     {
       "name": "history",
-      "dbChecks": ["stock", "inspection"],
+      "dbChecks": ["inspection"],
       "pathPatterns": [
         "^docs/features/history\\.md$",
-        "^src/main/resources/static/history-(stock|inspection)\\.html$",
-        "^src/main/resources/static/js/history-(stock|inspection)\\.js$",
-        "^src/main/resources/static/css/pages/history-(stock|inspection)\\.css$"
+        "^src/main/resources/static/history-inspection\\.html$",
+        "^src/main/resources/static/js/history-inspection\\.js$",
+        "^src/main/resources/static/css/pages/history-inspection\\.css$"
       ]
     },
     {

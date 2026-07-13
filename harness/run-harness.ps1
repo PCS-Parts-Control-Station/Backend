@@ -2432,22 +2432,10 @@ function Test-InspectionFeature {
 function Test-HistoryFeature {
     foreach ($required in @(
         @("docs/features/history.md", "HISTORY_FEATURE_DOC"),
-        @("src/main/resources/static/history-stock.html", "HISTORY_STOCK_HTML"),
-        @("src/main/resources/static/js/history-stock.js", "HISTORY_STOCK_JS"),
         @("src/main/resources/static/history-inspection.html", "HISTORY_INSPECTION_HTML"),
         @("src/main/resources/static/js/history-inspection.js", "HISTORY_INSPECTION_JS")
     )) {
         Test-PathRequired $required[0] $required[1] "Keep history pages connected to stock and inspection APIs."
-    }
-
-    $stockJs = Join-Path $ProjectRoot "src/main/resources/static/js/history-stock.js"
-    if (Test-Path $stockJs) {
-        $content = Get-Content -Raw -Encoding UTF8 -Path $stockJs
-        foreach ($pattern in @("window.PcsApi", "window.PcsPagination", "/stock/documents", "buildParams")) {
-            if ($content -notmatch [regex]::Escape($pattern)) {
-                Add-Result "FAIL" "HISTORY_STOCK_CLIENT_PATTERN" "history-stock.js is missing required pattern: $pattern" "Use the authenticated stock document API with server-side filters."
-            }
-        }
     }
 
     $inspectionJs = Join-Path $ProjectRoot "src/main/resources/static/js/history-inspection.js"
