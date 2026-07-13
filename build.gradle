@@ -32,8 +32,6 @@ configurations {
 }
 
 dependencies {
-    testImplementation platform('org.testcontainers:testcontainers-bom:1.20.6')
-
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
@@ -45,8 +43,6 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
-    testImplementation 'org.testcontainers:junit-jupiter'
-    testImplementation 'org.testcontainers:mariadb'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
@@ -61,4 +57,10 @@ tasks.register('integrationTest', Test) {
     classpath = sourceSets.integrationTest.runtimeClasspath
     shouldRunAfter tasks.named('test')
     useJUnitPlatform()
+
+    ['pcs.test.db.url', 'pcs.test.db.username', 'pcs.test.db.password'].each { propertyName ->
+        if (System.getProperty(propertyName) != null) {
+            systemProperty propertyName, System.getProperty(propertyName)
+        }
+    }
 }

@@ -55,6 +55,7 @@ public enum ErrorCode {
     STOCK_DOCUMENT_ALREADY_CANCELED(HttpStatus.CONFLICT, "STOCK-004", "이미 취소된 입출고 전표입니다."),
     STOCK_INVALID_CANCEL_REQUEST(HttpStatus.BAD_REQUEST, "STOCK-005", "취소할 수 없는 입출고 전표입니다."),
     STOCK_DOCUMENT_NO_DUPLICATED(HttpStatus.CONFLICT, "STOCK-006", "이미 사용 중인 입출고 전표 번호입니다."),
+    STOCK_STATE_CONFLICT(HttpStatus.CONFLICT, "STOCK-007", "재고 상태가 변경되어 요청을 처리할 수 없습니다."),
 
     INSPECTION_NOT_FOUND(HttpStatus.NOT_FOUND, "INSPECTION-001", "검수 이력을 찾을 수 없습니다."),
     INSPECTION_TEMPLATE_NOT_FOUND(HttpStatus.NOT_FOUND, "INSPECTION-002", "검수 템플릿을 찾을 수 없습니다."),

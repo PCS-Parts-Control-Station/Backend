@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pcs.domain.member.type.MemberRole;
+import com.pcs.global.error.ApiErrorResponseWriter;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.jwt.JwtClaims;
@@ -44,7 +45,7 @@ class JwtAuthenticationFilterTest {
         filter = new JwtAuthenticationFilter(
                 jwtTokenProvider,
                 accessTokenSessionValidator,
-                new JwtAuthenticationEntryPoint(new ObjectMapper())
+                new JwtAuthenticationEntryPoint(new ApiErrorResponseWriter(new ObjectMapper()))
         );
     }
 
@@ -101,6 +102,7 @@ class JwtAuthenticationFilterTest {
 
         assertEquals(500, response.getStatus());
         assertTrue(response.getContentAsString().contains("COMMON-999"));
+        assertTrue(!response.getContentAsString().contains("database unavailable"));
         verify(filterChain, never()).doFilter(request, response);
     }
 

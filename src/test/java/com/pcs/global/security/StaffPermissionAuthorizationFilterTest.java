@@ -7,10 +7,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pcs.domain.auth.entity.AuthMember;
-import com.pcs.domain.auth.mapper.AuthMapper;
+import com.pcs.domain.member.service.StaffPermissionService;
 import com.pcs.domain.member.type.MemberRole;
-import com.pcs.domain.member.type.PasswordStatus;
+import com.pcs.domain.member.type.StaffPermission;
 import com.pcs.global.error.ApiErrorResponseWriter;
 import jakarta.servlet.FilterChain;
 import java.time.Instant;
@@ -26,21 +25,19 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @ExtendWith(MockitoExtension.class)
-class TemporaryPasswordAuthorizationFilterTest {
+class StaffPermissionAuthorizationFilterTest {
 
     @Mock
-    private AuthMapper authMapper;
-    @Mock
-    private AuthMember member;
+    private StaffPermissionService staffPermissionService;
     @Mock
     private FilterChain filterChain;
 
-    private TemporaryPasswordAuthorizationFilter filter;
+    private StaffPermissionAuthorizationFilter filter;
 
     @BeforeEach
     void setUp() {
-        filter = new TemporaryPasswordAuthorizationFilter(
-                authMapper,
+        filter = new StaffPermissionAuthorizationFilter(
+                staffPermissionService,
                 new ApiErrorResponseWriter(new ObjectMapper())
         );
         PcsPrincipal principal = new PcsPrincipal(
@@ -54,8 +51,6 @@ class TemporaryPasswordAuthorizationFilterTest {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(principal, null, principal.authorities())
         );
-        when(authMapper.findSessionMember(10L, 1L)).thenReturn(member);
-        when(member.getPasswordStatus()).thenReturn(PasswordStatus.TEMPORARY);
     }
 
     @AfterEach
@@ -64,29 +59,20 @@ class TemporaryPasswordAuthorizationFilterTest {
     }
 
     @Test
-    void blocksBusinessApiForTemporaryPassword() throws Exception {
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/workspaces/bupc/parts");
-        MockHttpServletResponse response = new MockHttpServletResponse();
-
-        filter.doFilter(request, response, filterChain);
-
-        assertEquals(403, response.getStatus());
-        assertTrue(response.getContentType().startsWith("application/json"));
-        assertTrue(response.getContentAsString().contains("\"success\":false"));
-        assertTrue(response.getContentAsString().contains("\"code\":\"MEMBER-005\""));
-        verify(filterChain, never()).doFilter(request, response);
-    }
-
-    @Test
-    void allowsPasswordChangeForTemporaryPassword() throws Exception {
+    void disabledPermission_returnsCommonForbiddenResponse() throws Exception {
+        when(staffPermissionService.isEnabled(10L, StaffPermission.STAFF_PARTNER_MANAGE)).thenReturn(false);
         MockHttpServletRequest request = new MockHttpServletRequest(
-                "PATCH",
-                "/api/workspaces/bupc/mypage/password"
+                "POST",
+                "/api/workspaces/bupc/partners"
         );
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         filter.doFilter(request, response, filterChain);
 
-        verify(filterChain).doFilter(request, response);
+        assertEquals(403, response.getStatus());
+        assertTrue(response.getContentAsString().contains("\"success\":false"));
+        assertTrue(response.getContentAsString().contains("\"code\":\"AUTH-008\""));
+        assertTrue(response.getContentAsString().contains("\"data\":null"));
+        verify(filterChain, never()).doFilter(request, response);
     }
 }

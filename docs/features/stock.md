@@ -37,6 +37,8 @@ Query:
 | `keyword` | 전표 번호, 거래처명, 품목명, 모델명, 품목코드 검색 |
 | `partnerId` | 거래처 필터 |
 | `documentStatus` | `COMPLETED`, `CANCELED` |
+| `dateFrom` | 조회 시작일. 해당 날짜 00:00 이상 |
+| `dateTo` | 조회 종료일. 다음 날 00:00 미만으로 처리 |
 | `page` | 0부터 시작 |
 | `size` | 기본 20, 최대 100 |
 | `limit` | 기존 단순 목록 호환용 size 별칭 |
@@ -44,6 +46,7 @@ Query:
 응답은 `PageResultDto<SearchStockDocumentResponse, SearchStockDocumentSummaryResponse>` 구조를 사용한다.
 
 목록 정렬은 `document_id DESC` 기준이다. 전표 번호는 긴 랜덤 식별자를 포함하므로 정렬 기준으로 쓰지 않는다.
+날짜 범위는 `created_at`에 함수를 적용하지 않는 반열린 구간으로 조회한다.
 
 요약 필드:
 

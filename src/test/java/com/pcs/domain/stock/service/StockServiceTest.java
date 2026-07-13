@@ -79,6 +79,12 @@ class StockServiceTest {
         lenient().when(stockMapper.insertMovementUnit(anyLong(), anyLong(), anyLong(), any())).thenReturn(1);
         lenient().when(stockMapper.insertMovementUnitStatusChange(anyLong(), anyLong(), anyLong(), any(), any()))
                 .thenReturn(1);
+        lenient().when(stockMapper.updateDocumentStatus(anyLong(), anyLong(), any())).thenReturn(1);
+        lenient().when(stockMapper.updateDocumentMovementStatus(anyLong(), anyLong(), any())).thenReturn(1);
+        lenient().when(stockMapper.updatePartStockQuantity(anyLong(), anyLong(), anyInt())).thenReturn(1);
+        lenient().when(stockMapper.updatePartUnitStatusForInboundCancel(anyLong(), anyLong())).thenReturn(1);
+        lenient().when(stockMapper.updatePartUnitStatusForOutbound(anyLong(), anyLong())).thenReturn(1);
+        lenient().when(stockMapper.updatePartUnitStatusForOutboundCancel(anyLong(), anyLong())).thenReturn(1);
     }
 
     @Test
@@ -178,14 +184,16 @@ class StockServiceTest {
         );
         LocalDate dateFrom = LocalDate.of(2026, 6, 1);
         LocalDate dateTo = LocalDate.of(2026, 6, 30);
+        LocalDateTime from = LocalDateTime.of(2026, 6, 1, 0, 0);
+        LocalDateTime to = LocalDateTime.of(2026, 7, 1, 0, 0);
         when(stockMapper.countDocuments(
                 companyId,
                 StockDocumentType.OUTBOUND,
                 "RAM",
                 200L,
                 StockDocumentStatus.COMPLETED,
-                dateFrom,
-                dateTo
+                from,
+                to
         )).thenReturn(1L);
         when(stockMapper.searchDocuments(
                 companyId,
@@ -193,8 +201,8 @@ class StockServiceTest {
                 "RAM",
                 200L,
                 StockDocumentStatus.COMPLETED,
-                dateFrom,
-                dateTo,
+                from,
+                to,
                 10,
                 0
         )).thenReturn(List.of(row));
@@ -204,8 +212,8 @@ class StockServiceTest {
                 "RAM",
                 200L,
                 StockDocumentStatus.COMPLETED,
-                dateFrom,
-                dateTo
+                from,
+                to
         )).thenReturn(summary);
 
         PageResultDto<SearchStockDocumentResponse, SearchStockDocumentSummaryResponse> response =
@@ -226,6 +234,28 @@ class StockServiceTest {
         assertEquals(row, response.content().get(0));
         assertEquals(summary, response.summary());
         assertEquals(10, response.size());
+    }
+
+    @Test
+    void searchDocuments_rejectsReversedDateRange() {
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> stockService.searchDocuments(
+                        1L,
+                        null,
+                        null,
+                        null,
+                        null,
+                        LocalDate.of(2026, 7, 2),
+                        LocalDate.of(2026, 7, 1),
+                        0,
+                        20,
+                        null
+                )
+        );
+
+        assertEquals(ErrorCode.INVALID_INPUT_VALUE, exception.getErrorCode());
+        verify(stockMapper, never()).countDocuments(any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -394,6 +424,59 @@ class StockServiceTest {
         verify(stockMapper).updatePartUnitStatusForInboundCancel(companyId, 10001L);
         verify(stockMapper).updateDocumentMovementStatus(companyId, documentId, MovementStatus.CANCELED);
         verify(stockMapper).updateDocumentStatus(companyId, documentId, StockDocumentStatus.CANCELED);
+    }
+
+    @Test
+    void cancelInboundDocument_fail_whenUnitStateUpdateDoesNotMatchExpectedStatus() {
+        Long companyId = 1L;
+        Long memberId = 10L;
+        Long documentId = 500L;
+        StockDocumentDetailRow document = new StockDocumentDetailRow(
+                documentId,
+                "IN-20260618-23456789ABCDEFGH",
+                StockDocumentType.INBOUND,
+                StockDocumentStatus.COMPLETED,
+                100L,
+                "Supplier",
+                "Inbound",
+                "Manager",
+                LocalDateTime.of(2026, 6, 18, 10, 0),
+                0,
+                0
+        );
+        StockDocumentLineRow movement = new StockDocumentLineRow(
+                900L,
+                1000L,
+                "RTX 4060",
+                "RTX 4060 8GB",
+                "GPU-4060",
+                MovementType.INBOUND,
+                MovementStatus.COMPLETED,
+                1,
+                0,
+                1,
+                "Reason"
+        );
+        when(stockMapper.findDocumentForUpdate(companyId, documentId)).thenReturn(document);
+        when(stockMapper.findOriginalInboundMovementsForUpdate(companyId, documentId)).thenReturn(List.of(movement));
+        when(stockMapper.countInvalidInboundCancelUnits(companyId, documentId)).thenReturn(0);
+        when(stockMapper.findPartStockQuantityForUpdate(companyId, 1000L)).thenReturn(5);
+        when(stockMapper.findMovementUnitIds(companyId, 900L)).thenReturn(List.of(10000L));
+        when(stockMapper.updatePartUnitStatusForInboundCancel(companyId, 10000L)).thenReturn(0);
+        doAnswer(invocation -> {
+            StockMovement cancelMovement = invocation.getArgument(0);
+            cancelMovement.setMovementId(901L);
+            return null;
+        }).when(stockMapper).insertMovement(any(StockMovement.class));
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> stockService.cancelInboundDocument(companyId, memberId, documentId)
+        );
+
+        assertEquals(ErrorCode.PART_INVALID_STATUS_CHANGE, exception.getErrorCode());
+        verify(stockMapper, never()).updateDocumentMovementStatus(anyLong(), anyLong(), any());
+        verify(stockMapper, never()).updateDocumentStatus(anyLong(), anyLong(), any());
     }
 
     @Test
@@ -746,6 +829,67 @@ class StockServiceTest {
         verify(stockMapper).insertMovementUnitStatusChange(companyId, 950L, 10001L, UnitStatus.IN_STOCK, UnitStatus.OUTBOUND);
         verify(stockMapper).updatePartUnitStatusForOutbound(companyId, 10000L);
         verify(stockMapper).updatePartUnitStatusForOutbound(companyId, 10001L);
+    }
+
+    @Test
+    void createOutboundDocument_fail_whenUnitStateUpdateDoesNotMatchExpectedStatus() {
+        Long companyId = 1L;
+        Long memberId = 10L;
+        Long partnerId = 200L;
+        Long partId = 1000L;
+
+        CreateOutboundDocumentRequest request = new CreateOutboundDocumentRequest(
+                partnerId,
+                "Outbound",
+                List.of(new CreateOutboundDocumentLineRequest(partId, List.of(10000L), "Reason"))
+        );
+        StockPartner partner = new StockPartner();
+        partner.setPartnerId(partnerId);
+        partner.setPartnerRole(PartnerRole.CUSTOMER);
+        partner.setActive(true);
+        StockPart part = new StockPart();
+        part.setPartId(partId);
+        part.setPartCode("RAM-DDR4-16G");
+        SearchOutboundCandidateResponse candidate = new SearchOutboundCandidateResponse(
+                10000L,
+                "PCS-RAM-20260713-0001",
+                null,
+                partId,
+                10L,
+                "RAM",
+                "RAM DDR4 16GB",
+                "PC4-25600",
+                "Samsung",
+                "RAM-DDR4-16G",
+                UnitStatus.IN_STOCK,
+                InspectionStatus.COMPLETED,
+                PartGrade.A,
+                SalesStatus.AVAILABLE
+        );
+        when(stockMapper.findPartner(companyId, partnerId)).thenReturn(partner);
+        when(stockMapper.existsDocumentNo(anyString())).thenReturn(false);
+        when(stockMapper.findPart(companyId, partId)).thenReturn(part);
+        when(stockMapper.findPartStockQuantityForUpdate(companyId, partId)).thenReturn(5);
+        when(stockMapper.findOutboundCandidateUnitsForUpdate(companyId, partId, List.of(10000L)))
+                .thenReturn(List.of(candidate));
+        when(stockMapper.updatePartUnitStatusForOutbound(companyId, 10000L)).thenReturn(0);
+        doAnswer(invocation -> {
+            StockDocument document = invocation.getArgument(0);
+            document.setDocumentId(600L);
+            return null;
+        }).when(stockMapper).insertDocument(any(StockDocument.class));
+        doAnswer(invocation -> {
+            StockMovement movement = invocation.getArgument(0);
+            movement.setMovementId(950L);
+            return null;
+        }).when(stockMapper).insertMovement(any(StockMovement.class));
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> stockService.createOutboundDocument(companyId, memberId, request)
+        );
+
+        assertEquals(ErrorCode.PART_INVALID_STATUS_CHANGE, exception.getErrorCode());
     }
 
     @Test

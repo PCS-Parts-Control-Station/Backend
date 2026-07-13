@@ -182,7 +182,7 @@ public class InspectionService {
                 request.memo(),
                 request.itemResults(),
                 inspectedAt,
-                true,
+                InspectionStatus.WAITING,
                 true,
                 true
         );
@@ -220,7 +220,7 @@ public class InspectionService {
                     request.memo(),
                     request.itemResults(),
                     inspectedAt,
-                    true,
+                    InspectionStatus.WAITING,
                     true,
                     true
             );
@@ -445,7 +445,7 @@ public class InspectionService {
                 request.memo(),
                 request.itemResults(),
                 inspectedAt,
-                false,
+                InspectionStatus.COMPLETED,
                 false,
                 false
         );
@@ -473,11 +473,11 @@ public class InspectionService {
             String memo,
             List<CreateInspectionItemResultRequest> itemResultRequests,
             LocalDateTime inspectedAt,
-            boolean requireWaitingUnit,
+            InspectionStatus requiredInspectionStatus,
             boolean activeTemplateOnly,
             boolean enforceRequiredItems
     ) {
-        InspectionPartUnitRow unit = validateAndFindUnit(companyId, unitId, requireWaitingUnit);
+        InspectionPartUnitRow unit = validateAndFindUnit(companyId, unitId, requiredInspectionStatus);
         TemplateSnapshot templateSnapshot = validateTemplateAndBuildSnapshot(
                 companyId,
                 unit.categoryId(),
@@ -509,9 +509,10 @@ public class InspectionService {
             inspectionMapper.insertItemResult(itemResult);
         }
 
-        inspectionMapper.updatePartUnitInspectionStatus(
+        updatePartUnitInspectionStatus(
                 companyId,
                 unitId,
+                unit.inspectionStatus(),
                 InspectionStatus.COMPLETED,
                 grade,
                 salesStatus
@@ -531,7 +532,11 @@ public class InspectionService {
         return inspection;
     }
 
-    private InspectionPartUnitRow validateAndFindUnit(Long companyId, Long unitId, boolean requireWaitingUnit) {
+    private InspectionPartUnitRow validateAndFindUnit(
+            Long companyId,
+            Long unitId,
+            InspectionStatus requiredInspectionStatus
+    ) {
         InspectionPartUnitRow unit = inspectionMapper.findPartUnitForUpdate(companyId, unitId);
         if (unit == null) {
             throw new BusinessException(ErrorCode.PART_UNIT_NOT_FOUND);
@@ -539,10 +544,35 @@ public class InspectionService {
         if (!unit.active() || unit.unitStatus() != UnitStatus.IN_STOCK) {
             throw new BusinessException(ErrorCode.PART_INVALID_STATUS_CHANGE, "검수 가능한 재고 상태가 아닙니다.");
         }
-        if (requireWaitingUnit && unit.inspectionStatus() == InspectionStatus.COMPLETED) {
+        if (requiredInspectionStatus == InspectionStatus.WAITING
+                && unit.inspectionStatus() == InspectionStatus.COMPLETED) {
             throw new BusinessException(ErrorCode.INSPECTION_ALREADY_COMPLETED);
         }
+        if (unit.inspectionStatus() != requiredInspectionStatus) {
+            throw new BusinessException(ErrorCode.PART_INVALID_STATUS_CHANGE);
+        }
         return unit;
+    }
+
+    private void updatePartUnitInspectionStatus(
+            Long companyId,
+            Long unitId,
+            InspectionStatus expectedInspectionStatus,
+            InspectionStatus inspectionStatus,
+            PartGrade grade,
+            SalesStatus salesStatus
+    ) {
+        int updated = inspectionMapper.updatePartUnitInspectionStatus(
+                companyId,
+                unitId,
+                expectedInspectionStatus,
+                inspectionStatus,
+                grade,
+                salesStatus
+        );
+        if (updated != 1) {
+            throw new BusinessException(ErrorCode.PART_INVALID_STATUS_CHANGE);
+        }
     }
 
     private TemplateSnapshot validateTemplateAndBuildSnapshot(

@@ -1,30 +1,20 @@
 package com.pcs.support;
 
-import org.junit.jupiter.api.TestInstance;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@Testcontainers(disabledWithoutDocker = true)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 public abstract class MariaDbIntegrationTest {
-
-    @Container
-    static final MariaDBContainer<?> MARIADB = new MariaDBContainer<>("mariadb:10.11")
-            .withDatabaseName("pcs_test")
-            .withUsername("pcs")
-            .withPassword("pcs");
 
     @DynamicPropertySource
     static void registerDataSourceProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", MARIADB::getJdbcUrl);
-        registry.add("spring.datasource.username", MARIADB::getUsername);
-        registry.add("spring.datasource.password", MARIADB::getPassword);
-        registry.add("spring.datasource.driver-class-name", MARIADB::getDriverClassName);
+        LocalMariaDbTestDatabase.initialize();
+        registry.add("spring.datasource.url", LocalMariaDbTestDatabase::jdbcUrl);
+        registry.add("spring.datasource.username", LocalMariaDbTestDatabase::username);
+        registry.add("spring.datasource.password", LocalMariaDbTestDatabase::password);
+        registry.add("spring.datasource.driver-class-name", () -> "org.mariadb.jdbc.Driver");
+        registry.add("spring.datasource.hikari.maximum-pool-size", () -> "2");
         registry.add("pcs.jwt.allow-default-secret", () -> "true");
     }
 }

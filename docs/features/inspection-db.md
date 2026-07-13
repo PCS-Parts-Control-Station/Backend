@@ -236,6 +236,9 @@ tb_inspection_item_result.idx_inspection_item_result_selected_option
 - 전표 단위 이력 목록은 집계 결과에 `LIMIT`, `OFFSET`을 적용해 서버 페이징한다.
 - 검수 이력 화면의 품목 묶음 구성을 위해 이력 목록 또는 전표 상세 조회 응답에는 품목명, 모델명, 품목 분류명 또는 카테고리명을 포함한다.
 - 전표 선택 후 품목 묶음과 관리번호 목록은 `documentId`로 조회한 관리번호 단위 이력 row를 클라이언트에서 묶어 표시한다.
+- 전체 검수 이력의 기간 정렬은 `idx_inspection_company_date (company_id, inspected_at DESC, inspection_id DESC)`를 기준으로 검증한다.
+- 관리번호별 최근 검수는 `idx_inspection_company_unit_date`를 사용한다.
+- 목록 SQL 변경 시 MariaDB `EXPLAIN` 또는 `EXPLAIN ANALYZE`로 사용 인덱스, 실제 조회 행, filesort와 temporary table 여부를 확인한다.
 
 ## 정합성 기준
 
@@ -294,3 +297,14 @@ tb_inspection_item_result.idx_inspection_item_result_selected_option
 - 템플릿 항목 생성 시 `grade_impact = LOW`, `fail_policy = NONE` 기본값을 검증한다.
 - 템플릿/항목/선택지 `active` 변경 시 소속 검증 후 변경 호출을 검증한다.
 - 선택지 수정 시 `option_value`가 없으면 `option_label`을 저장 코드로 사용하는지 검증한다.
+
+## DB Integration Test Coverage
+
+- Integration test: `src/integrationTest/java/com/pcs/domain/inspection/InspectionPersistenceIntegrationTest.java`
+- Schema fixture: `src/integrationTest/resources/pcs-category-part-test-schema.sql`
+- Required checks:
+  - 회사 A 범위에서 회사 B의 관리번호, 템플릿, 검수 이력을 조회하거나 변경할 수 없다.
+  - 최초 검수는 검수 row와 항목 snapshot을 저장하고 관리번호 상태와 상태 이력을 같은 트랜잭션에서 변경한다.
+  - 정정과 재검수는 기존 row를 수정하지 않고 새 row를 추가하며 최초 `original_inspection_id`를 유지한다.
+  - 검수 항목 저장 또는 상태 변경 중 실패하면 검수 row, 항목 결과, 관리번호 상태, 상태 이력이 전부 rollback된다.
+  - 검수 완료 후 `inspection_status`, `grade`, `sales_status`가 마지막 검수 이력과 일치한다.

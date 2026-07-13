@@ -420,6 +420,9 @@ class PartPersistenceIntegrationTest extends MariaDbIntegrationTest {
             String afterUnitStatus,
             String createdAt
     ) {
+        boolean decreasesStock = movementType.equals("OUTBOUND") || movementType.equals("INBOUND_CANCEL");
+        int beforeQuantity = decreasesStock ? 1 : 0;
+        int afterQuantity = decreasesStock ? 0 : 1;
         jdbcTemplate.update(
                 """
                 INSERT INTO tb_stock_document (
@@ -436,12 +439,14 @@ class PartPersistenceIntegrationTest extends MariaDbIntegrationTest {
                 INSERT INTO tb_stock_movement (
                     movement_id, company_id, document_id, part_id, movement_type, movement_status,
                     quantity, before_quantity, after_quantity, processed_by, created_at
-                ) VALUES (?, 1, ?, ?, ?, 'COMPLETED', 1, 0, 1, 7, ?)
+                ) VALUES (?, 1, ?, ?, ?, 'COMPLETED', 1, ?, ?, 7, ?)
                 """,
                 movementId,
                 documentId,
                 partId,
                 movementType,
+                beforeQuantity,
+                afterQuantity,
                 createdAt
         );
         jdbcTemplate.update(

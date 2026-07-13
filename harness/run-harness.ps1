@@ -2155,7 +2155,6 @@ function Test-PartUnitFeature {
         @("docs/features/part-unit.md", "PART_UNIT_FEATURE_DOC"),
         @("docs/features/part-unit-db.md", "PART_UNIT_DB_DOC"),
         @("docs/sql/pcs-schema-ddl.sql", "PART_UNIT_SCHEMA_DDL"),
-        @("docs/sql/pcs-part-unit-list-index-alter.sql", "PART_UNIT_LIST_INDEX_ALTER"),
         @("src/main/resources/static/part-units.html", "PART_UNIT_HTML"),
         @("src/main/resources/static/css/pages/part-units.css", "PART_UNIT_CSS"),
         @("src/main/resources/static/js/pcs-navigation-state.js", "PART_UNIT_NAVIGATION_STATE_JS"),
@@ -2258,16 +2257,6 @@ function Test-PartUnitFeature {
         }
     }
 
-    $indexAlter = Join-Path $ProjectRoot "docs/sql/pcs-part-unit-list-index-alter.sql"
-    if (Test-Path $indexAlter) {
-        $content = Get-Content -Raw -Encoding UTF8 -Path $indexAlter
-        foreach ($indexName in @("idx_pc_part_unit_list_default", "idx_pc_part_unit_list_inspection", "idx_pc_part_unit_list_unit_status")) {
-            if ($content -notmatch $indexName) {
-                Add-Result "FAIL" "PART_UNIT_INDEX_ALTER_PATTERN" "Part-unit index alter script is missing $indexName." "Keep existing DB migration notes aligned with docs/features/part-unit-db.md."
-            }
-        }
-    }
-
     $html = Join-Path $ProjectRoot "src/main/resources/static/part-units.html"
     if (Test-Path $html) {
         $content = Get-Content -Raw -Encoding UTF8 -Path $html
@@ -2335,7 +2324,9 @@ function Test-StockFeature {
         @("src/main/java/com/pcs/domain/stock/mapper/StockMapper.java", "STOCK_MAPPER"),
         @("src/main/resources/mapper/stock/StockMapper.xml", "STOCK_MAPPER_XML"),
         @("src/test/java/com/pcs/domain/stock/service/StockServiceTest.java", "STOCK_SERVICE_TEST"),
-        @("src/test/java/com/pcs/domain/stock/facade/StockFacadeTest.java", "STOCK_FACADE_TEST")
+        @("src/test/java/com/pcs/domain/stock/facade/StockFacadeTest.java", "STOCK_FACADE_TEST"),
+        @("src/integrationTest/java/com/pcs/domain/stock/StockPersistenceIntegrationTest.java", "STOCK_DB_INTEGRATION_TEST"),
+        @("src/integrationTest/java/com/pcs/global/workspace/CompanyDataIsolationIntegrationTest.java", "COMPANY_ISOLATION_DB_INTEGRATION_TEST")
     )) {
         Test-PathRequired $required[0] $required[1] "Keep the stock implementation aligned with docs/features/stock.md."
     }
@@ -2370,6 +2361,9 @@ function Test-StockFeature {
         }
     }
 
+    Invoke-GradleTestCheck "STOCK_UNIT_API_TESTS" "Stock unit and API tests" @("test", "--tests", "com.pcs.domain.stock.*")
+    Invoke-GradleTestCheck "STOCK_DB_INTEGRATION_TESTS" "Stock and company-isolation DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.stock.*", "--tests", "com.pcs.global.workspace.CompanyDataIsolationIntegrationTest")
+
     Add-Result "INFO" "STOCK_FEATURE" "Stock feature checks completed."
 }
 
@@ -2386,7 +2380,9 @@ function Test-InspectionFeature {
         @("src/main/java/com/pcs/domain/inspection/mapper/InspectionMapper.java", "INSPECTION_MAPPER"),
         @("src/main/resources/mapper/inspection/InspectionMapper.xml", "INSPECTION_MAPPER_XML"),
         @("src/test/java/com/pcs/domain/inspection/service/InspectionServiceTest.java", "INSPECTION_SERVICE_TEST"),
-        @("src/test/java/com/pcs/domain/inspection/service/InspectionTemplateServiceTest.java", "INSPECTION_TEMPLATE_SERVICE_TEST")
+        @("src/test/java/com/pcs/domain/inspection/service/InspectionTemplateServiceTest.java", "INSPECTION_TEMPLATE_SERVICE_TEST"),
+        @("src/integrationTest/java/com/pcs/domain/inspection/InspectionPersistenceIntegrationTest.java", "INSPECTION_DB_INTEGRATION_TEST"),
+        @("src/integrationTest/java/com/pcs/global/workspace/CompanyDataIsolationIntegrationTest.java", "COMPANY_ISOLATION_DB_INTEGRATION_TEST")
     )) {
         Test-PathRequired $required[0] $required[1] "Keep the inspection implementation aligned with its feature documents."
     }
@@ -2410,6 +2406,9 @@ function Test-InspectionFeature {
             }
         }
     }
+
+    Invoke-GradleTestCheck "INSPECTION_UNIT_API_TESTS" "Inspection unit and API tests" @("test", "--tests", "com.pcs.domain.inspection.*")
+    Invoke-GradleTestCheck "INSPECTION_DB_INTEGRATION_TESTS" "Inspection and company-isolation DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.inspection.*", "--tests", "com.pcs.global.workspace.CompanyDataIsolationIntegrationTest")
 
     Add-Result "INFO" "INSPECTION_FEATURE" "Inspection feature checks completed."
 }
