@@ -1,6 +1,7 @@
 package com.pcs.domain.dashboard.service;
 
 import com.pcs.domain.dashboard.dto.response.DashboardRecentActivityResponse;
+import com.pcs.domain.dashboard.dto.response.DashboardOverviewRow;
 import com.pcs.domain.dashboard.dto.response.DashboardResponse;
 import com.pcs.domain.dashboard.dto.response.DashboardStockStatusResponse;
 import com.pcs.domain.dashboard.dto.response.DashboardSummaryResponse;
@@ -33,16 +34,20 @@ public class DashboardService {
         LocalDateTime todayStart = today.atStartOfDay();
         LocalDateTime tomorrowStart = today.plusDays(1).atStartOfDay();
 
-        DashboardSummaryResponse summary = dashboardMapper.summarize(companyId, todayStart, tomorrowStart);
-        DashboardStockStatusResponse stockStatus = dashboardMapper.summarizeStockStatus(companyId);
+        DashboardOverviewRow overview = dashboardMapper.summarizeOverview(companyId, todayStart, tomorrowStart);
+        if (overview == null) {
+            overview = new DashboardOverviewRow(0, 0, 0, 0, 0, 0, 0, 0);
+        }
+        DashboardSummaryResponse summary = toSummary(overview);
+        DashboardStockStatusResponse stockStatus = toStockStatus(overview);
         List<DashboardTodoResponse> todos = dashboardMapper.findTodos(companyId, TODO_SIZE);
         List<DashboardRecentActivityResponse> recentActivities =
                 dashboardMapper.findRecentActivities(companyId, RECENT_ACTIVITY_SIZE);
 
         return new DashboardResponse(
-                requireSummary(summary),
+                summary,
                 List.copyOf(todos),
-                requireStockStatus(stockStatus),
+                stockStatus,
                 List.copyOf(recentActivities)
         );
     }
@@ -51,17 +56,30 @@ public class DashboardService {
         workspaceAccessValidator.validateCompanyActive(companyId);
     }
 
-    private DashboardSummaryResponse requireSummary(DashboardSummaryResponse summary) {
-        if (summary == null) {
-            return new DashboardSummaryResponse(0L, 0L, 0L, 0L, 0L, 0L, 0L);
-        }
-        return summary;
+    private DashboardSummaryResponse toSummary(DashboardOverviewRow overview) {
+        return new DashboardSummaryResponse(
+                overview.todayInboundQuantity(),
+                overview.todayOutboundQuantity(),
+                overview.waitingInspectionQuantity(),
+                overview.availableQuantity(),
+                overview.holdQuantity(),
+                overview.unavailableQuantity(),
+                overview.todayDefectiveInspectionCount()
+        );
     }
 
-    private DashboardStockStatusResponse requireStockStatus(DashboardStockStatusResponse stockStatus) {
-        if (stockStatus == null) {
-            return new DashboardStockStatusResponse(0L, 0L, 0L, 0, 0, 0);
-        }
-        return stockStatus;
+    private DashboardStockStatusResponse toStockStatus(DashboardOverviewRow overview) {
+        return new DashboardStockStatusResponse(
+                overview.availableQuantity(),
+                overview.holdQuantity(),
+                overview.unavailableQuantity(),
+                ratio(overview.availableQuantity(), overview.totalStockQuantity()),
+                ratio(overview.holdQuantity(), overview.totalStockQuantity()),
+                ratio(overview.unavailableQuantity(), overview.totalStockQuantity())
+        );
+    }
+
+    private int ratio(long quantity, long totalQuantity) {
+        return totalQuantity == 0 ? 0 : (int) (quantity * 100 / totalQuantity);
     }
 }

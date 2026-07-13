@@ -1,6 +1,7 @@
 (function () {
     const DOCUMENT_PAGE_SIZE = 10;
     const HISTORY_PAGE_SIZE = 10;
+    const MAX_BULK_INSPECTION_UNITS = 300;
 
     const filterForm = document.querySelector(".inspection-filter-form");
     const partnerFilter = filterForm?.elements.partnerId;
@@ -74,6 +75,7 @@
     const confirmElements = {
         unit: document.querySelector("[data-confirm-unit]"),
         result: document.querySelector("[data-confirm-result]"),
+        message: document.querySelector("[data-confirm-message]"),
         save: document.querySelector("[data-confirm-save]"),
         closeButtons: document.querySelectorAll("[data-close-confirm-modal]")
     };
@@ -127,6 +129,7 @@
     let historyRequestId = 0;
     let historyDetailRequestId = 0;
     let targetStepHighlightTimer = null;
+    let unitCheckAnchor = null;
     let initialPartIdFilter = null;
     let initialHasWaitingFilter = false;
     let initialPartNameFilter = "";
@@ -282,6 +285,14 @@
         formFields.message.classList.toggle("is-error", isError);
     };
 
+    const setConfirmMessage = (message) => {
+        if (!confirmElements.message) {
+            return;
+        }
+        confirmElements.message.textContent = message || "";
+        confirmElements.message.hidden = !message;
+    };
+
     const setWorkflowMessage = (message, isError = false) => {
         if (!workflowFields.message) {
             return;
@@ -385,6 +396,7 @@
         selectedUnits = [];
         selectedTemplateDetail = null;
         pendingSavePayload = null;
+        unitCheckAnchor = null;
         resetInspectionFormValues();
         setFormDisabled(true);
         formStep?.classList.remove("is-active");
@@ -764,6 +776,7 @@
         if (!documentFields.lines) {
             return;
         }
+        unitCheckAnchor = null;
         if (!lines?.length) {
             selectedMovementId = null;
             documentFields.lines.innerHTML = '<p class="detail-empty-text">검수 대상 부품이 없습니다.</p>';
@@ -1193,6 +1206,36 @@
             toggleButton.setAttribute("aria-pressed", String(allSelected));
             toggleButton.disabled = selectableCount === 0;
         }
+    };
+
+    const applyUnitCheckRangeSelection = (unitCheck, shiftKey) => {
+        const lineElement = unitCheck?.closest("[data-inspection-line]");
+        if (!lineElement || unitCheck.disabled) {
+            return;
+        }
+
+        const lineId = String(lineElement.dataset.inspectionLine || "");
+        const checks = Array.from(
+                lineElement.querySelectorAll("[data-inspection-unit-check]:not(:disabled)")
+        );
+        const currentIndex = checks.indexOf(unitCheck);
+        const anchorIndex = unitCheckAnchor?.lineId === lineId
+                ? checks.findIndex((input) => String(input.value) === unitCheckAnchor.unitId)
+                : -1;
+
+        if (shiftKey && anchorIndex >= 0 && currentIndex >= 0) {
+            const rangeStart = Math.min(anchorIndex, currentIndex);
+            const rangeEnd = Math.max(anchorIndex, currentIndex);
+            checks.slice(rangeStart, rangeEnd + 1).forEach((input) => {
+                input.checked = unitCheck.checked;
+            });
+        } else {
+            unitCheckAnchor = {
+                lineId,
+                unitId: String(unitCheck.value)
+            };
+        }
+        updateLineSelectionState(lineElement);
     };
 
     function syncSelectedUnitChecks() {
@@ -1840,6 +1883,12 @@
             return;
         }
 
+        const unitCheck = event.target.closest("[data-inspection-unit-check]");
+        if (unitCheck) {
+            applyUnitCheckRangeSelection(unitCheck, event.shiftKey);
+            return;
+        }
+
         const unitButton = event.target.closest("[data-inspection-unit-action]");
         if (unitButton) {
             renderInspectionForm(findLineByUnitId(unitButton.dataset.inspectionUnitAction));
@@ -1851,7 +1900,7 @@
             const unitCheck = unitRow.querySelector("[data-inspection-unit-check]");
             if (unitCheck && !unitCheck.disabled) {
                 unitCheck.checked = !unitCheck.checked;
-                updateLineSelectionState(unitRow.closest("[data-inspection-line]"));
+                applyUnitCheckRangeSelection(unitCheck, event.shiftKey);
             }
             return;
         }
@@ -1873,6 +1922,7 @@
             checks.forEach((input) => {
                 input.checked = shouldSelect;
             });
+            unitCheckAnchor = null;
             updateLineSelectionState(lineElement);
             return;
         }
@@ -2019,6 +2069,8 @@
     confirmElements.closeButtons.forEach((button) => {
         button.addEventListener("click", () => {
             pendingSavePayload = null;
+            setConfirmMessage("");
+            if (confirmElements.save) confirmElements.save.disabled = false;
             confirmModal?.close();
         });
     });
@@ -2029,6 +2081,19 @@
         event.preventDefault();
         if (!selectedUnits.length) {
             setFormMessage("검수할 관리번호를 먼저 선택해 주세요.", true);
+            return;
+        }
+        if (selectedUnits.length > MAX_BULK_INSPECTION_UNITS) {
+            pendingSavePayload = null;
+            if (confirmElements.unit) {
+                confirmElements.unit.textContent = `${numberText(selectedUnits.length)}개 관리번호`;
+            }
+            if (confirmElements.result) {
+                confirmElements.result.textContent = "저장할 수 없음";
+            }
+            setConfirmMessage(`한 번에 최대 ${numberText(MAX_BULK_INSPECTION_UNITS)}개까지 검수할 수 있습니다.`);
+            if (confirmElements.save) confirmElements.save.disabled = true;
+            confirmModal?.showModal();
             return;
         }
         syncInspectionFormRule();
@@ -2061,6 +2126,8 @@
             memo: inspectionForm.elements.memo.value.trim() || null,
             itemResults
         };
+        setConfirmMessage("");
+        if (confirmElements.save) confirmElements.save.disabled = false;
 
         if (confirmElements.unit) {
             confirmElements.unit.textContent = selectedUnits.length === 1

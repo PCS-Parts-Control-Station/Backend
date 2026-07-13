@@ -1,5 +1,6 @@
 package com.pcs.global.error;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -14,6 +15,8 @@ import jakarta.validation.constraints.NotBlank;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,6 +29,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 class GlobalExceptionHandlerTest {
 
     private MockMvc mockMvc;
+
+    private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
 
     @BeforeEach
     void setUp() {
@@ -102,6 +107,30 @@ class GlobalExceptionHandlerTest {
                 .andExpect(jsonPath("$.code").value("COMMON-999"))
                 .andExpect(jsonPath("$.message").value("서버 오류가 발생했습니다."))
                 .andExpect(jsonPath("$.data").value(nullValue()));
+    }
+
+    @Test
+    void duplicateTemplateItemName_mapsToConflict() {
+        DuplicateKeyException exception = duplicate("uk_inspection_template_item_name");
+
+        ResponseEntity<ApiResultDto<Void>> response = handler.handleDuplicateKey(exception);
+
+        assertEquals(409, response.getStatusCode().value());
+        assertEquals(ErrorCode.INSPECTION_TEMPLATE_ITEM_DUPLICATED.getCode(), response.getBody().code());
+    }
+
+    @Test
+    void duplicateStockDocumentNo_mapsToConflict() {
+        DuplicateKeyException exception = duplicate("uk_stock_document_company_document_no");
+
+        ResponseEntity<ApiResultDto<Void>> response = handler.handleDuplicateKey(exception);
+
+        assertEquals(409, response.getStatusCode().value());
+        assertEquals(ErrorCode.STOCK_DOCUMENT_NO_DUPLICATED.getCode(), response.getBody().code());
+    }
+
+    private DuplicateKeyException duplicate(String constraintName) {
+        return new DuplicateKeyException("duplicate", new RuntimeException(constraintName));
     }
 
     @RestController

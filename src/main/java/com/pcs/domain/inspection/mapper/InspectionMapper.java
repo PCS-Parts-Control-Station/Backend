@@ -43,17 +43,6 @@ public interface InspectionMapper {
             @Param("offset") int offset
     );
 
-    long countWaitingDocuments(
-            @Param("companyId") Long companyId,
-            @Param("keyword") String keyword,
-            @Param("partId") Long partId,
-            @Param("hasWaiting") Boolean hasWaiting,
-            @Param("partnerId") Long partnerId,
-            @Param("inspectionStatus") String inspectionStatus,
-            @Param("dateFrom") LocalDateTime dateFrom,
-            @Param("dateTo") LocalDateTime dateTo
-    );
-
     SearchWaitingInspectionDocumentSummaryResponse summarizeWaitingDocuments(
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,
@@ -109,31 +98,6 @@ public interface InspectionMapper {
             @Param("offset") int offset
     );
 
-    long countHistories(
-            @Param("companyId") Long companyId,
-            @Param("keyword") String keyword,
-            @Param("documentId") Long documentId,
-            @Param("unitId") Long unitId,
-            @Param("partId") Long partId,
-            @Param("inspectionType") InspectionType inspectionType,
-            @Param("result") InspectionResult result,
-            @Param("grade") PartGrade grade,
-            @Param("dateFrom") LocalDateTime dateFrom,
-            @Param("dateTo") LocalDateTime dateTo
-    );
-
-    long countHistoryDocuments(
-            @Param("companyId") Long companyId,
-            @Param("keyword") String keyword,
-            @Param("documentId") Long documentId,
-            @Param("partId") Long partId,
-            @Param("inspectionType") InspectionType inspectionType,
-            @Param("result") InspectionResult result,
-            @Param("grade") PartGrade grade,
-            @Param("dateFrom") LocalDateTime dateFrom,
-            @Param("dateTo") LocalDateTime dateTo
-    );
-
     SearchInspectionHistorySummaryResponse summarizeHistories(
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,
@@ -179,6 +143,11 @@ public interface InspectionMapper {
             @Param("unitId") Long unitId
     );
 
+    List<InspectionPartUnitRow> findPartUnitsForUpdate(
+            @Param("companyId") Long companyId,
+            @Param("unitIds") List<Long> unitIds
+    );
+
     InspectionTemplate findActiveTemplate(
             @Param("companyId") Long companyId,
             @Param("templateId") Long templateId
@@ -213,6 +182,8 @@ public interface InspectionMapper {
 
     void insertItemResult(InspectionItemResult itemResult);
 
+    void insertItemResults(@Param("itemResults") List<InspectionItemResult> itemResults);
+
     int updatePartUnitInspectionStatus(
             @Param("companyId") Long companyId,
             @Param("unitId") Long unitId,
@@ -222,5 +193,16 @@ public interface InspectionMapper {
             @Param("salesStatus") SalesStatus salesStatus
     );
 
+    int updatePartUnitInspectionStatuses(
+            @Param("companyId") Long companyId,
+            @Param("unitIds") List<Long> unitIds,
+            @Param("expectedInspectionStatus") InspectionStatus expectedInspectionStatus,
+            @Param("inspectionStatus") InspectionStatus inspectionStatus,
+            @Param("grade") PartGrade grade,
+            @Param("salesStatus") SalesStatus salesStatus
+    );
+
     void insertPartStatusHistory(PartStatusHistory history);
+
+    void insertPartStatusHistories(@Param("histories") List<PartStatusHistory> histories);
 }

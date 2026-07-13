@@ -1529,6 +1529,18 @@
     margin: 0;
 }
 
+.inspection-confirm-alert {
+    margin: 16px 20px 0;
+    padding: 12px 14px;
+    border: 1px solid rgba(220, 38, 38, 0.24);
+    border-radius: var(--radius);
+    background: rgba(254, 226, 226, 0.72);
+    color: var(--red);
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.45;
+}
+
 .inspection-history-detail {
     display: grid;
     gap: 14px;

@@ -1,7 +1,6 @@
 package com.pcs.domain.dashboard.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -10,9 +9,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.pcs.domain.dashboard.dto.response.DashboardRecentActivityResponse;
+import com.pcs.domain.dashboard.dto.response.DashboardOverviewRow;
 import com.pcs.domain.dashboard.dto.response.DashboardResponse;
-import com.pcs.domain.dashboard.dto.response.DashboardStockStatusResponse;
-import com.pcs.domain.dashboard.dto.response.DashboardSummaryResponse;
 import com.pcs.domain.dashboard.dto.response.DashboardTodoResponse;
 import com.pcs.domain.dashboard.mapper.DashboardMapper;
 import com.pcs.global.error.ErrorCode;
@@ -45,22 +43,15 @@ class DashboardServiceTest {
     @Test
     void getDashboard_success() {
         Long companyId = 1L;
-        DashboardSummaryResponse summary = new DashboardSummaryResponse(
+        DashboardOverviewRow overview = new DashboardOverviewRow(
                 12L,
                 3L,
                 7L,
                 50L,
                 8L,
                 2L,
+                60L,
                 1L
-        );
-        DashboardStockStatusResponse stockStatus = new DashboardStockStatusResponse(
-                50L,
-                8L,
-                2L,
-                83,
-                13,
-                3
         );
         DashboardTodoResponse todo = new DashboardTodoResponse(
                 "INSPECTION_WAITING",
@@ -82,18 +73,17 @@ class DashboardServiceTest {
                 "inbound"
         );
 
-        when(dashboardMapper.summarize(eq(companyId), any(), any())).thenReturn(summary);
-        when(dashboardMapper.summarizeStockStatus(companyId)).thenReturn(stockStatus);
+        when(dashboardMapper.summarizeOverview(eq(companyId), any(), any())).thenReturn(overview);
         when(dashboardMapper.findTodos(companyId, 20)).thenReturn(List.of(todo));
         when(dashboardMapper.findRecentActivities(companyId, 20)).thenReturn(List.of(activity));
 
         DashboardResponse response = dashboardService.getDashboard(companyId);
 
-        assertSame(summary, response.summary());
+        assertEquals(12L, response.summary().todayInboundQuantity());
         assertEquals(List.of(todo), response.todos());
-        assertSame(stockStatus, response.stockStatus());
+        assertEquals(83, response.stockStatus().availableRatio());
         assertEquals(List.of(activity), response.recentActivities());
-        verify(dashboardMapper).summarize(eq(companyId), any(), any());
+        verify(dashboardMapper).summarizeOverview(eq(companyId), any(), any());
     }
 
     @Test

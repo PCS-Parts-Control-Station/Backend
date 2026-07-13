@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -112,12 +113,59 @@ public class GlobalExceptionHandler {
                 .body(ApiResultDto.error(ErrorCode.RESOURCE_NOT_FOUND));
     }
 
+    @ExceptionHandler(DuplicateKeyException.class)
+    public ResponseEntity<ApiResultDto<Void>> handleDuplicateKey(DuplicateKeyException exception) {
+        ErrorCode errorCode = duplicateErrorCode(exception);
+        if (errorCode == ErrorCode.INTERNAL_SERVER_ERROR) {
+            log.error("Unclassified duplicate key exception occurred.", exception);
+        }
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(ApiResultDto.error(errorCode));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResultDto<Void>> handleException(Exception exception) {
         log.error("Unhandled exception occurred.", exception);
         return ResponseEntity
                 .status(ErrorCode.INTERNAL_SERVER_ERROR.getHttpStatus())
                 .body(ApiResultDto.error(ErrorCode.INTERNAL_SERVER_ERROR));
+    }
+
+    private ErrorCode duplicateErrorCode(DuplicateKeyException exception) {
+        String message = exception.getMostSpecificCause().getMessage();
+        if (containsAny(message, "uk_stock_document_document_no", "uk_stock_document_company_document_no")) {
+            return ErrorCode.STOCK_DOCUMENT_NO_DUPLICATED;
+        }
+        if (containsAny(message, "uk_pc_part_unit_internal_serial", "uk_pc_part_unit_manufacturer_serial")) {
+            return ErrorCode.PART_UNIT_SERIAL_DUPLICATED;
+        }
+        if (containsAny(message, "uk_inspection_template_version")) {
+            return ErrorCode.INSPECTION_TEMPLATE_DUPLICATED;
+        }
+        if (containsAny(message, "uk_inspection_template_item_name")) {
+            return ErrorCode.INSPECTION_TEMPLATE_ITEM_DUPLICATED;
+        }
+        if (containsAny(
+                message,
+                "uk_inspection_template_item_option_value",
+                "uk_inspection_template_item_option_label"
+        )) {
+            return ErrorCode.INSPECTION_TEMPLATE_OPTION_DUPLICATED;
+        }
+        return ErrorCode.INTERNAL_SERVER_ERROR;
+    }
+
+    private boolean containsAny(String message, String... constraintNames) {
+        if (message == null) {
+            return false;
+        }
+        for (String constraintName : constraintNames) {
+            if (message.contains(constraintName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public record ValidationError(

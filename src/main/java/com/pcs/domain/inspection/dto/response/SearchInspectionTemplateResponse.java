@@ -12,6 +12,7 @@ public record SearchInspectionTemplateResponse(
         long itemCount,
         long optionCount,
         String createdByName,
+        LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
 }

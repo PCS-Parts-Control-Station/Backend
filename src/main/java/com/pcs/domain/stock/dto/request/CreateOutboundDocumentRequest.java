@@ -14,6 +14,7 @@ public record CreateOutboundDocumentRequest(
         String reason,
 
         @NotEmpty(message = "출고 라인은 최소 1개 이상 필요합니다.")
+        @Size(max = 100, message = "출고 라인은 최대 100개까지 등록할 수 있습니다.")
         List<@Valid CreateOutboundDocumentLineRequest> lines
 ) {
 }

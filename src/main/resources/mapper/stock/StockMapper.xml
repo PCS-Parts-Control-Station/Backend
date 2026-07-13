@@ -150,12 +150,6 @@
         ORDER BY d.document_id DESC
     </select>
 
-    <select id="countDocuments" resultType="long">
-        SELECT COUNT(*)
-        FROM tb_stock_document d
-        <include refid="documentSearchWhere" />
-    </select>
-
     <select id="summarizeDocuments" resultType="com.pcs.domain.stock.dto.response.SearchStockDocumentSummaryResponse">
         SELECT
             COUNT(*) AS total_count,
