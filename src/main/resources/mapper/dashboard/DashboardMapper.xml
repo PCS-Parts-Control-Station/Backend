@@ -47,17 +47,13 @@
                 SELECT COUNT(*)
                 FROM tb_pc_part_unit u
                 WHERE u.company_id = #{companyId}
-                  AND u.active = TRUE
-                  AND u.unit_status = 'IN_STOCK'
-                  AND u.sales_status = 'HOLD'
+                  AND <include refid="com.pcs.global.mapper.PartUnitConditionSql.salesHold" />
             ), 0) AS hold_quantity,
             COALESCE((
                 SELECT COUNT(*)
                 FROM tb_pc_part_unit u
                 WHERE u.company_id = #{companyId}
-                  AND u.active = TRUE
-                  AND u.unit_status = 'IN_STOCK'
-                  AND u.sales_status = 'UNAVAILABLE'
+                  AND <include refid="com.pcs.global.mapper.PartUnitConditionSql.salesUnavailable" />
             ), 0) AS unavailable_quantity,
             COALESCE((
                 SELECT COUNT(*)
@@ -97,8 +93,7 @@
                 COUNT(*) AS total_quantity
             FROM tb_pc_part_unit u
             WHERE u.company_id = #{companyId}
-              AND u.active = TRUE
-              AND u.unit_status = 'IN_STOCK'
+              AND <include refid="com.pcs.global.mapper.PartUnitConditionSql.activeInStock" />
         ) status
     </select>
 
@@ -110,7 +105,8 @@
             todo.count,
             todo.part_id,
             todo.category_name,
-            todo.route
+            todo.route,
+            todo.part_state
         FROM (
             SELECT
                 1 AS sort_order,
@@ -124,7 +120,8 @@
                     ELSE ''
                 END) AS title,
                 COUNT(*) AS count,
-                'inspection' AS route
+                'inspection' AS route,
+                NULL AS part_state
             FROM tb_pc_part_unit u
             INNER JOIN tb_pc_part p
                 ON p.company_id = u.company_id
@@ -143,7 +140,7 @@
             SELECT
                 2 AS sort_order,
                 'STOCK_HOLD' AS type,
-                '출고 보류' AS label,
+                '판매 보류' AS label,
                 p.part_id,
                 c.category_name,
                 CONCAT(p.part_name, CASE
@@ -152,7 +149,8 @@
                     ELSE ''
                 END) AS title,
                 COUNT(*) AS count,
-                'outbound' AS route
+                'part-units' AS route,
+                'STOCK_HOLD' AS part_state
             FROM tb_pc_part_unit u
             INNER JOIN tb_pc_part p
                 ON p.company_id = u.company_id
@@ -161,9 +159,7 @@
                 ON c.company_id = p.company_id
                AND c.category_id = p.category_id
             WHERE u.company_id = #{companyId}
-              AND u.active = TRUE
-              AND u.unit_status = 'IN_STOCK'
-              AND u.sales_status = 'HOLD'
+              AND <include refid="com.pcs.global.mapper.PartUnitConditionSql.salesHold" />
             GROUP BY p.part_id, c.category_name, p.part_name, p.model_name
 
             UNION ALL
@@ -171,7 +167,7 @@
             SELECT
                 3 AS sort_order,
                 'STOCK_UNAVAILABLE' AS type,
-                '출고 불가' AS label,
+                '판매 불가' AS label,
                 p.part_id,
                 c.category_name,
                 CONCAT(p.part_name, CASE
@@ -180,7 +176,8 @@
                     ELSE ''
                 END) AS title,
                 COUNT(*) AS count,
-                'outbound' AS route
+                'part-units' AS route,
+                'STOCK_UNAVAILABLE' AS part_state
             FROM tb_pc_part_unit u
             INNER JOIN tb_pc_part p
                 ON p.company_id = u.company_id
@@ -189,9 +186,7 @@
                 ON c.company_id = p.company_id
                AND c.category_id = p.category_id
             WHERE u.company_id = #{companyId}
-              AND u.active = TRUE
-              AND u.unit_status = 'IN_STOCK'
-              AND u.sales_status = 'UNAVAILABLE'
+              AND <include refid="com.pcs.global.mapper.PartUnitConditionSql.salesUnavailable" />
             GROUP BY p.part_id, c.category_name, p.part_name, p.model_name
         ) todo
         WHERE todo.count &gt; 0

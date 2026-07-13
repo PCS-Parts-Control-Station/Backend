@@ -54,6 +54,8 @@ public class PartService {
             "SALES_AVAILABLE",
             "SALES_UNAVAILABLE",
             "SALES_HOLD",
+            "STOCK_UNAVAILABLE",
+            "STOCK_HOLD",
             "A",
             "B",
             "C",
