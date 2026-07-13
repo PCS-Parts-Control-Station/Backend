@@ -8,7 +8,7 @@ This document defines how backend tests are written and how they are connected t
 |---|---|---|---|
 | Unit test | JUnit + AssertJ + Mockito | `src/test/java` | Pure Java business rules without DB IO |
 | API test | MockMvc | `src/test/java` | REST request/response, validation, exception mapping |
-| DB integration test | Isolated local MariaDB | `src/integrationTest/java` | MyBatis SQL, table columns, constraints, transaction behavior |
+| DB integration test | Testcontainers MariaDB or isolated local MariaDB | `src/integrationTest/java` | MyBatis SQL, table columns, constraints, transaction behavior |
 
 ## Writing Rules
 
@@ -96,6 +96,13 @@ Current connected commands:
   - category, part
 
 Keep fixture schemas small and feature-focused. Do not copy the whole production DDL unless the test needs it.
+
+## MariaDB Test Runtime
+
+- The default `auto` mode uses Testcontainers when Docker is available and falls back to local MariaDB otherwise.
+- `-Dpcs.test.db.mode=container` forces the Testcontainers runtime.
+- `-Dpcs.test.db.mode=local` forces the isolated local MariaDB runtime.
+- Testcontainers dependencies belong to `integrationTestImplementation`, not the unit test classpath.
 
 ## Local MariaDB Safety
 
