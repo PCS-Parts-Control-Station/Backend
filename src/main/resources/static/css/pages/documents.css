@@ -866,4 +866,24 @@
         min-width: 0;
     }
 }
+
+.documents-row.empty-data-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 140px;
+    margin: 0;
+    padding: 24px;
+}
+
+.documents-row.empty-data-row > [role="cell"] {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+.documents-row.empty-data-row > [role="cell"]::before {
+    content: none;
+}
 }
