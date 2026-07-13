@@ -567,17 +567,21 @@
         return `outbound/new?${params.toString()}`;
     };
 
-    const stockHistoryRoute = (detail, options = {}) => {
-        const unit = detail?.unit;
+    const stockDocumentRoute = (detail, options = {}) => {
         const params = new URLSearchParams();
-        const keyword = unit?.internalSerialNo || unit?.manufacturerSerialNo || "";
-        if (keyword) {
-            params.set("keyword", keyword);
+        const histories = [...(detail?.stockHistories || [])]
+                .sort((a, b) => dateValue(b.createdAt) - dateValue(a.createdAt));
+        const target = options.inboundOnly
+                ? histories.find((history) => String(history.movementType || "").startsWith("INBOUND"))
+                : histories[0];
+        if (target?.documentNo) {
+            params.set("documentNo", target.documentNo);
+            params.set("keyword", target.documentNo);
         }
-        if (options.inboundOnly) {
-            params.set("documentType", "INBOUND");
+        if (target?.movementType) {
+            params.set("documentType", String(target.movementType).startsWith("INBOUND") ? "INBOUND" : "OUTBOUND");
         }
-        return workspaceRoute("history/stock", params);
+        return workspaceRoute("documents", params);
     };
 
     const latestInspectionId = (detail) => {
@@ -743,8 +747,8 @@
 
     const resetDetailActions = () => {
         if (stockHistoryAction) {
-            stockHistoryAction.textContent = "입고 이력";
-            stockHistoryAction.href = workspaceRoute("history/stock");
+            stockHistoryAction.textContent = "전표 조회";
+            stockHistoryAction.href = workspaceRoute("documents");
         }
         if (inspectionHistoryAction) {
             inspectionHistoryAction.hidden = true;
@@ -754,8 +758,8 @@
     const updateDetailActions = (detail) => {
         if (stockHistoryAction) {
             const inboundOnly = !hasOutboundHistory(detail);
-            stockHistoryAction.textContent = inboundOnly ? "입고 이력" : "입출고 이력";
-            stockHistoryAction.href = stockHistoryRoute(detail, { inboundOnly });
+            stockHistoryAction.textContent = "전표 조회";
+            stockHistoryAction.href = stockDocumentRoute(detail, { inboundOnly });
         }
         if (inspectionHistoryAction) {
             const hasInspection = hasCompletedInspection(detail);
