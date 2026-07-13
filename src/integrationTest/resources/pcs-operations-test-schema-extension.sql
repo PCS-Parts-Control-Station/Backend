@@ -54,6 +54,7 @@ CREATE TABLE tb_inspection_template_item (
     active BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (item_id),
     CONSTRAINT uk_inspection_template_item_id UNIQUE (template_id, item_id),
+    CONSTRAINT uk_inspection_template_item_name UNIQUE (template_id, item_name),
     CONSTRAINT chk_inspection_template_item_sort_order CHECK (sort_order >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -66,6 +67,7 @@ CREATE TABLE tb_inspection_template_item_option (
     active BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (option_id),
     CONSTRAINT uk_inspection_template_item_option_value UNIQUE (item_id, option_value),
+    CONSTRAINT uk_inspection_template_item_option_label UNIQUE (item_id, option_label),
     CONSTRAINT chk_inspection_template_item_option_sort_order CHECK (sort_order >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -106,3 +108,8 @@ INSERT INTO tb_trade_partner (
     (101, 1, 'ACME Supplier', 'COMPANY', 'SUPPLIER', TRUE, 7),
     (102, 1, 'ACME Customer', 'COMPANY', 'CUSTOMER', TRUE, 7),
     (201, 2, 'Other Supplier', 'COMPANY', 'SUPPLIER', TRUE, 8);
+CREATE INDEX idx_stock_document_company_created
+    ON tb_stock_document (company_id, created_at DESC, document_id DESC);
+
+CREATE INDEX idx_inspection_company_date
+    ON tb_inspection (company_id, inspected_at DESC, inspection_id DESC);

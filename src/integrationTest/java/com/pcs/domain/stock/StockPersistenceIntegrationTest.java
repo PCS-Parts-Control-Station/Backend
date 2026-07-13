@@ -10,6 +10,7 @@ import com.pcs.domain.stock.dto.request.CreateInboundDocumentRequest;
 import com.pcs.domain.stock.dto.request.CreateOutboundDocumentLineRequest;
 import com.pcs.domain.stock.dto.request.CreateOutboundDocumentRequest;
 import com.pcs.domain.stock.facade.StockFacade;
+import com.pcs.domain.stock.type.StockDocumentType;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.security.PcsPrincipal;
@@ -75,6 +76,25 @@ class StockPersistenceIntegrationTest extends MariaDbIntegrationTest {
                 "SELECT inspection_status FROM tb_pc_part_unit ORDER BY unit_id",
                 String.class
         )).containsOnly("WAITING");
+    }
+
+    @Test
+    void searchDocuments_usesSummaryCountForPageTotal() {
+        stockFacade.createInboundDocument(
+                principal(),
+                "acme",
+                new CreateInboundDocumentRequest(
+                        101L, null, List.of(new CreateInboundDocumentLineRequest(partId, 1, null))
+                )
+        );
+
+        var result = stockFacade.searchDocuments(
+                principal(), "acme", StockDocumentType.INBOUND, null, null, null,
+                null, null, 0, 20, null
+        );
+
+        assertThat(result.content()).hasSize(1);
+        assertThat(result.totalElements()).isEqualTo(result.summary().totalCount());
     }
 
     @Test

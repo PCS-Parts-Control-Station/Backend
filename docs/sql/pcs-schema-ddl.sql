@@ -126,6 +126,7 @@ CREATE TABLE `tb_inspection`
     KEY                      `idx_inspection_company_original` (`company_id`,`original_inspection_id`),
     KEY                      `idx_inspection_type_date` (`company_id`,`inspection_type`,`inspected_at`),
     KEY                      `idx_inspection_result_date` (`company_id`,`result`,`inspected_at`),
+    KEY                      `idx_inspection_company_date` (`company_id`,`inspected_at` DESC,`inspection_id` DESC),
     CONSTRAINT `chk_inspection_original` CHECK (`inspection_type` = 'INITIAL' and `original_inspection_id` is null or
                                                 `inspection_type` in ('CORRECTION', 'REINSPECTION') and
                                                 `original_inspection_id` is not null)
@@ -188,6 +189,7 @@ CREATE TABLE `tb_inspection_template_item`
     `active`       tinyint(1) NOT NULL DEFAULT 1,
     PRIMARY KEY (`item_id`),
     UNIQUE KEY `uk_inspection_template_item_id` (`template_id`,`item_id`),
+    UNIQUE KEY `uk_inspection_template_item_name` (`template_id`,`item_name`),
     KEY            `idx_inspection_template_item_template_sort` (`template_id`,`active`,`sort_order`),
     CONSTRAINT `chk_inspection_template_item_sort_order` CHECK (`sort_order` >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -204,6 +206,7 @@ CREATE TABLE `tb_inspection_template_item_option`
     `active`       tinyint(1) NOT NULL DEFAULT 1,
     PRIMARY KEY (`option_id`),
     UNIQUE KEY `uk_inspection_template_item_option_value` (`item_id`,`option_value`),
+    UNIQUE KEY `uk_inspection_template_item_option_label` (`item_id`,`option_label`),
     KEY            `idx_inspection_template_item_option_item_sort` (`item_id`,`active`,`sort_order`),
     CONSTRAINT `chk_inspection_template_item_option_sort_order` CHECK (`sort_order` >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -440,7 +443,8 @@ CREATE TABLE `tb_stock_document`
     UNIQUE KEY `uk_stock_document_document_no` (`document_no`),
     KEY               `idx_stock_document_company_partner` (`company_id`,`partner_id`),
     KEY               `idx_stock_document_company_processed_by` (`company_id`,`processed_by`),
-    KEY               `idx_stock_document_type_status_created` (`company_id`,`document_type`,`document_status`,`created_at`)
+    KEY               `idx_stock_document_type_status_created` (`company_id`,`document_type`,`document_status`,`created_at`),
+    KEY               `idx_stock_document_company_created` (`company_id`,`created_at` DESC,`document_id` DESC)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
