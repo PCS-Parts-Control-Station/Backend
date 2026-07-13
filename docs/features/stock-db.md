@@ -59,3 +59,14 @@ chk_part_stock_quantity
 ## 하네스 기준
 
 `-RunDb`에서 `stock`이 선택되면 공통 `checkdb`와 이 문서의 테이블·컬럼·제약 조건을 함께 검사한다.
+
+## DB Integration Test Coverage
+
+- Integration test: `src/integrationTest/java/com/pcs/domain/stock/StockPersistenceIntegrationTest.java`
+- Schema fixtures: `pcs-category-part-test-schema.sql`, `pcs-operations-test-schema-extension.sql`
+- Required checks:
+  - 입고 저장 시 전표, 재고 이동, 관리번호, 현재 재고가 함께 저장된다.
+  - 출고 저장 시 선택 관리번호 상태와 현재 재고를 함께 변경한다.
+  - 입고 취소 시 원본 상태와 반대 방향 재고 이동 이력을 보존한다.
+  - 여러 입고 라인 중 후속 라인이 실패하면 앞선 저장까지 롤백된다.
+  - 현재 재고 음수 제약을 실제 MariaDB에서 검증한다.

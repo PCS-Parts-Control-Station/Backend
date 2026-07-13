@@ -65,12 +65,7 @@
         return `${url.pathname}${url.search}`;
     };
 
-    const todoRoute = (todo) => {
-        if (todo?.type === "STOCK_HOLD" || todo?.type === "STOCK_UNAVAILABLE") {
-            return "part-units";
-        }
-        return todo?.route || "dashboard";
-    };
+    const todoRoute = (todo) => todo?.route || "dashboard";
 
     const todoParams = (todo) => {
         const params = {};
@@ -81,12 +76,9 @@
             params.categoryName = todo?.categoryName || "";
             return params;
         }
-        params.keyword = todo?.title || "";
-        if (todo?.type === "STOCK_HOLD") {
-            params.partState = "SALES_HOLD";
-        }
-        if (todo?.type === "STOCK_UNAVAILABLE") {
-            params.partState = "SALES_UNAVAILABLE";
+        params.partId = todo?.partId || "";
+        if (todo?.partState) {
+            params.partState = todo.partState;
         }
         return params;
     };

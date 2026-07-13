@@ -40,6 +40,7 @@ tb_member
 - `documentId`는 `tb_stock_movement_unit -> tb_stock_movement`에 연결된 전표 기준으로 필터한다.
 - `categoryId`는 `tb_pc_part.category_id` 기준으로 필터한다.
 - `partState` 조건은 `docs/features/part-unit.md`의 목록 검색 표를 따른다.
+- 운영 현황과 부품 관리가 함께 사용하는 활성 재고의 판매 보류·불가 조건은 `mapper/global/PartUnitConditionSql.xml`을 기준으로 한다.
 - 목록 정렬은 `tb_pc_part_unit.updated_at DESC, tb_pc_part_unit.unit_id DESC`이다.
 - 목록 전체 건수는 `partState`까지 포함한 where 조건으로 계산하고, 해당 `total_count`를 `PageResultDto.totalElements`의 원천으로 사용한다.
 - 화면 통계 카드는 `partState`를 제외한 검색어, 전표, 분류 조건으로 계산한다. 통계 카드 자체가 상태 필터이므로 현재 선택된 상태가 다른 통계 숫자를 0으로 만들면 안 된다.
@@ -95,10 +96,12 @@ idx_pc_part_unit_work_status
 - Required checks:
   - 관리번호 목록 검색은 `tb_pc_part_unit` 기준으로 페이징된다.
   - keyword와 categoryId 조건으로 다른 관리번호가 제외된다.
+  - partId 조건으로 다른 품목의 관리번호가 제외되고 목록과 summary에 동일하게 적용된다.
   - documentId 조건으로 해당 전표에 포함되지 않은 관리번호가 제외된다.
   - `partState=WAITING`은 검수 대기 관리번호만 반환한다.
   - `partState=HELD`, `SALES_AVAILABLE`, `SALES_UNAVAILABLE`, `SALES_HOLD`는 각각 업무상 보유, 판매 가능, 판매 불가, 판매 보류 기준으로 반환한다.
-  - `partState=CANCELED`는 입고 취소로 `unit_status = CANCELED`가 된 관리번호만 반환한다.
+  - 운영 현황 딥링크용 `STOCK_HOLD`, `STOCK_UNAVAILABLE`은 검수 상태와 관계없이 운영 현황과 같은 판매 상태 기준으로 반환한다.
+  - `partState=CANCELED`는 입고 취소로 `unit_status = CANCELED`, `active = false`가 된 관리번호만 반환한다.
   - `partState=A`는 검수 완료 A 등급 관리번호만 반환한다.
   - `partState=OUTBOUND`은 출고 상태 관리번호만 반환한다.
   - 판매 상태는 검색 조건에 없고, 응답 필드로만 내려온다.

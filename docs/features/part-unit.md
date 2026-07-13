@@ -32,6 +32,7 @@ Query:
 | 이름 | 설명 |
 |---|---|
 | `keyword` | 관리번호, 제조사 시리얼, 품목명, 제조사 모델명, 제조사, 품목코드 검색 |
+| `partId` | 특정 품목 필터. 운영 현황 처리 필요 TOP 딥링크에서 사용 |
 | `documentId` | 입출고 전표 필터. 해당 전표에 포함된 관리번호만 조회 |
 | `categoryId` | 품목 분류 필터 |
 | `partState` | 통계 카드 클릭으로 적용되는 상태 필터. `CANCELED`는 취소 입고 전표 딥링크 조회용으로 사용 |
@@ -40,6 +41,8 @@ Query:
 | `limit` | 기존 단순 목록 호환용 size 별칭 |
 
 검색 조건에는 화면 select 형태의 `부품 상태` 필터와 `salesStatus`를 두지 않는다. 부품 상태는 상단 통계 카드를 클릭해 `partState`로 적용한다. 판매 상태와 최근 처리 정보는 별도 검색 조건이나 별도 목록 컬럼으로 두지 않고, 화면의 `부품 상태` 표시값에 `/`로 합쳐 보여준다.
+
+운영 현황의 처리 필요 TOP에서 진입할 때는 품목명과 모델명을 합친 `keyword`가 아니라 `partId`를 전달한다.
 
 `partState` 의미:
 
@@ -50,6 +53,8 @@ Query:
 | `SALES_AVAILABLE` | `unit_status = IN_STOCK`, `inspection_status = COMPLETED`, `sales_status = AVAILABLE`, `grade != DEFECTIVE` |
 | `SALES_UNAVAILABLE` | `unit_status = IN_STOCK`, `inspection_status = COMPLETED`, `sales_status = UNAVAILABLE` |
 | `SALES_HOLD` | `unit_status = IN_STOCK`, `inspection_status = COMPLETED`, `sales_status = HOLD` |
+| `STOCK_UNAVAILABLE` | 운영 현황 판매 불가 딥링크. `unit_status = IN_STOCK`, `sales_status = UNAVAILABLE` |
+| `STOCK_HOLD` | 운영 현황 판매 보류 딥링크. `unit_status = IN_STOCK`, `sales_status = HOLD` |
 | `A`, `B`, `C` | `unit_status = IN_STOCK`, `inspection_status = COMPLETED`이고 `grade`가 같은 값 |
 | `DEFECTIVE` | `unit_status = IN_STOCK`, `inspection_status = COMPLETED`이고 `grade = DEFECTIVE` |
 | `OUTBOUND` | `unit_status = OUTBOUND` |
@@ -145,17 +150,17 @@ src/main/resources/static/js/part-units.js
 - 목록 컬럼은 고정 비율을 사용해 행마다 관리번호, 품목, 분류, 부품 상태 시작점이 달라지지 않게 한다.
 - 행 클릭 또는 Enter/Space로 오른쪽 상세 패널을 연다.
 - 검색어, 전표, 분류, 상태 필터, 현재 페이지, 클릭한 관리번호는 URL query로 동기화한다.
-- 입고 이력, 입출고 이력, 검수 이력, 검수 등록, 출고 등록 등 다른 화면으로 이동했다가 브라우저 뒤로가기로 돌아오면 같은 검색 조건, 같은 페이지, 같은 관리번호 상세 패널, 가능한 스크롤 위치를 복원한다.
+- 전표 통합 조회, 검수 이력, 검수 등록, 출고 등록 등 다른 화면으로 이동했다가 브라우저 뒤로가기로 돌아오면 같은 검색 조건, 같은 페이지, 같은 관리번호 상세 패널, 가능한 스크롤 위치를 복원한다.
 - 이 상태 복원은 페이지 전용 저장소를 직접 만들지 않고 공통 `pcs-navigation-state.js`의 `window.PcsNavigationState`를 사용한다.
 - 상세 패널은 배경 오버레이를 쓰지 않고, 닫기 버튼·Escape·패널 밖 클릭으로 닫는다.
-- 상세 패널은 상태 변경을 수행하지 않고 입출고 이력, 검수 이력, 출고 등록 화면으로 연결한다.
+- 상세 패널은 상태 변경을 수행하지 않고 전표 통합 조회, 검수 이력, 출고 등록 화면으로 연결한다.
 - 상세 패널 본문 기본 정보는 품목 상세와 같은 공통 `side-detail-card`, `detail-list` 구조를 사용한다.
 - 상세 패널 본문의 분류와 최근 처리 항목은 상단 요약·상태와 중복되므로 별도 기본 정보 항목으로 표시하지 않는다.
 - 상세 패널의 처리 흐름은 기존 타임라인형 `detail-section`, `process-flow-list` 구조로 표시한다.
 - 입고 이력만 있고 검수 이력이 없으면 처리 흐름 끝에 `검수` 단계를 추가하고 `검수하러 가기` 버튼을 그 단계 안에 표시한다. 버튼은 `/w/{companyCode}/inspection?documentId={입고전표ID}&movementId={입고묶음ID}&unitId={관리번호ID}`로 이동한다.
 - 검수 이력이 있고 아직 출고되지 않았으며 판매 가능이면 처리 흐름 끝에 `출고` 단계를 추가하고 `출고하러 가기` 버튼을 그 단계 안에 표시한다. 버튼은 `/w/{companyCode}/outbound/new?unitId={관리번호ID}&partId={품목ID}&categoryId={분류ID}&keyword={관리번호}`로 이동한다.
 - 검수 이력이 있지만 판매 불가 또는 판매 보류이면 출고 단계와 출고 버튼 대신 각각 `판매 불가 상태입니다.`, `판매 보류 상태입니다.`를 처리 흐름 안에 표시한다.
-- 상세 하단 이력 버튼은 기본 `입고 이력`으로 표시하고, 출고 이력이 있을 때만 `입출고 이력`으로 바꾼다. `검수 이력` 버튼은 검수 이력이 있을 때만 표시한다.
+- 상세 하단의 `전표 조회` 버튼은 최근 전표 번호를 전표 통합 조회 검색 조건으로 전달한다. `검수 이력` 버튼은 검수 이력이 있을 때만 표시한다.
 - `검수 이력` 버튼은 `/w/{companyCode}/history/inspection?documentId={입고전표ID}&partId={품목ID}&unitId={관리번호ID}&inspectionId={최근검수ID}`로 이동한다. 이동 후 검수 이력 화면은 해당 전표, 품목 묶음, 관리번호, 오른쪽 검수 상세 패널이 모두 선택된 상태로 표시되어야 한다.
 - 관리번호는 상세 패널 제목에만 표시하고 본문 기본 정보에는 중복 표시하지 않는다.
 
@@ -165,6 +170,7 @@ src/main/resources/static/js/part-units.js
 - 기본 목록은 `tb_pc_part_unit.active = true`인 관리번호만 조회한다.
 - 목록 전체 건수 요약은 목록 검색과 같은 조건으로 처리한다.
 - 목록 전체 건수는 현재 `partState`까지 포함한 summary의 `totalCount`와 같아야 한다.
+- 목록의 관리번호와 부품 상태는 품목명보다 작게 표시하고, 품목의 제조사·모델 보조 정보는 품목명 아래 줄에 배치한다.
 - 통계 카드 숫자는 `partState`를 제외한 검색어, 전표, 분류 조건 기준으로 계산한다. 그래야 상태 필터를 바꿀 때 기존 검색 조건을 유지한 채 다른 상태로 즉시 전환할 수 있다.
 - 목록 행은 `LIMIT/OFFSET`으로 확정된 관리번호에 대해서만 상세 컬럼과 최근 이력을 계산한다.
 - `salesStatus`는 검색 파라미터로 받지 않는다.

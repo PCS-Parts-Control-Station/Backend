@@ -114,11 +114,12 @@ class PartApiControllerTest {
     void searchPartUnits_returnsPagedUnitsWithSummaryAndIgnoresSalesStatusFilter() throws Exception {
         SearchPartUnitResponse unit = partUnitResponse(101L, "PCS-GPU-0001", PartGrade.A, SalesStatus.AVAILABLE);
         SearchPartUnitSummaryResponse summary = new SearchPartUnitSummaryResponse(1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
-        when(partFacade.searchPartUnits(principal, "acme", "RTX", 77L, 10L, "A", 0, 20, null))
+        when(partFacade.searchPartUnits(principal, "acme", "RTX", 55L, 77L, 10L, "A", 0, 20, null))
                 .thenReturn(PageResultDto.of(List.of(unit), 0, 20, 1, summary));
 
         mockMvc.perform(get("/api/workspaces/acme/part-units")
                         .param("keyword", "RTX")
+                        .param("partId", "55")
                         .param("documentId", "77")
                         .param("categoryId", "10")
                         .param("partState", "A")
@@ -136,7 +137,7 @@ class PartApiControllerTest {
                 .andExpect(jsonPath("$.data.summary.gradeACount").value(1))
                 .andExpect(jsonPath("$.data.summary.outboundAvailableCount").value(1));
 
-        verify(partFacade).searchPartUnits(principal, "acme", "RTX", 77L, 10L, "A", 0, 20, null);
+        verify(partFacade).searchPartUnits(principal, "acme", "RTX", 55L, 77L, 10L, "A", 0, 20, null);
     }
 
     @Test

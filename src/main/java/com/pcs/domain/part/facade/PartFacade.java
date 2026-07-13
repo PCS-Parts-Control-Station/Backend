@@ -52,6 +52,7 @@ public class PartFacade {
             PcsPrincipal principal,
             String pathCompanyCode,
             String keyword,
+            Long partId,
             Long documentId,
             Long categoryId,
             String partState,
@@ -63,6 +64,7 @@ public class PartFacade {
         return partService.searchPartUnits(
                 checkedPrincipal.companyId(),
                 keyword,
+                partId,
                 documentId,
                 categoryId,
                 partState,

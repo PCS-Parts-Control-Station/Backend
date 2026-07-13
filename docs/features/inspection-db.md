@@ -294,3 +294,12 @@ tb_inspection_item_result.idx_inspection_item_result_selected_option
 - 템플릿 항목 생성 시 `grade_impact = LOW`, `fail_policy = NONE` 기본값을 검증한다.
 - 템플릿/항목/선택지 `active` 변경 시 소속 검증 후 변경 호출을 검증한다.
 - 선택지 수정 시 `option_value`가 없으면 `option_label`을 저장 코드로 사용하는지 검증한다.
+
+## DB Integration Test Coverage
+
+- Integration tests: `InspectionPersistenceIntegrationTest`, `InspectionTemplatePersistenceIntegrationTest`
+- Schema fixtures: `pcs-category-part-test-schema.sql`, `pcs-operations-test-schema-extension.sql`
+- Required checks:
+  - 최초 검수 저장과 관리번호 상태 변경, 상태 변경 이력이 함께 반영된다.
+  - 일괄 검수 중 하나가 실패하면 모든 검수와 상태 변경을 롤백한다.
+  - 템플릿과 중첩 항목·선택지를 함께 저장하고 버전 제약을 검증한다.

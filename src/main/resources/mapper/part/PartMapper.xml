@@ -79,7 +79,17 @@
 
     <sql id="partUnitSearchWhere">
         WHERE u.company_id = #{companyId}
-          AND u.active = TRUE
+        <choose>
+          <when test="partState == 'CANCELED'">
+            AND u.active = FALSE
+          </when>
+          <otherwise>
+            AND u.active = TRUE
+          </otherwise>
+        </choose>
+        <if test="partId != null">
+          AND u.part_id = #{partId}
+        </if>
         <if test="categoryId != null">
           AND p.category_id = #{categoryId}
         </if>
@@ -145,6 +155,12 @@
               AND u.unit_status = 'IN_STOCK'
               AND u.inspection_status = 'COMPLETED'
               AND u.sales_status = 'HOLD'
+            </when>
+            <when test="partState == 'STOCK_UNAVAILABLE'">
+              AND <include refid="com.pcs.global.mapper.PartUnitConditionSql.salesUnavailable" />
+            </when>
+            <when test="partState == 'STOCK_HOLD'">
+              AND <include refid="com.pcs.global.mapper.PartUnitConditionSql.salesHold" />
             </when>
             <when test="partState == 'OUTBOUND'">
               AND u.unit_status = 'OUTBOUND'

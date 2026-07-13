@@ -167,7 +167,7 @@
 
 ### 이력 `history`
 
-현재 별도 `/history/*` API는 사용하지 않는다. 입출고 이력은 `stock` 도메인의 전표/재고 변화 조회 API를 사용하고, 검수 이력은 `inspection` 도메인의 이력 조회 API를 사용한다. 화면별 조합 기준은 `docs/features/history.md`를 따른다.
+현재 별도 `/history/*` API는 사용하지 않는다. 입출고 조회는 `stock` 도메인의 전표 통합 조회로 제공하고, 검수 이력은 `inspection` 도메인의 이력 조회 API를 사용한다. 화면별 조합 기준은 `docs/features/stock.md`와 `docs/features/history.md`를 따른다.
 
 ### 대시보드 `dashboard`
 

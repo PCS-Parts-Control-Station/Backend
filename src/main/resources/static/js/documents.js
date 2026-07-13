@@ -234,6 +234,15 @@
         return `/w/${companyCode}/${route}?documentNo=${keyword}&keyword=${keyword}`;
     };
 
+    const partStateForDocument = (stockDocument) => {
+        const isCanceledInbound = stockDocument?.documentStatus === "CANCELED" && stockDocument?.documentType === "INBOUND";
+        const isActiveOutbound = stockDocument?.documentType === "OUTBOUND" && stockDocument?.documentStatus !== "CANCELED";
+        if (isCanceledInbound) {
+            return "CANCELED";
+        }
+        return isActiveOutbound ? "OUTBOUND" : "HELD";
+    };
+
     const buildPartUnitsRouteUrl = (stockDocument) => {
         const companyCode = encodeURIComponent(getCompanyCode());
         const params = new URLSearchParams();
@@ -243,7 +252,7 @@
         if (stockDocument?.documentNo) {
             params.set("documentNo", stockDocument.documentNo);
         }
-        params.set("partState", stockDocument?.documentType === "OUTBOUND" ? "OUTBOUND" : "HELD");
+        params.set("partState", partStateForDocument(stockDocument));
         return `/w/${companyCode}/part-units?${params.toString()}`;
     };
 
@@ -251,7 +260,7 @@
         const documentNo = stockDocument?.documentNo || "";
         const className = options.className || "document-action-link";
         const links = [];
-        if (stockDocument?.documentType === "INBOUND") {
+        if (stockDocument?.documentType === "INBOUND" && stockDocument?.documentStatus !== "CANCELED") {
             links.push(`<a class="${className} document-action-link-primary" href="${buildRouteUrl("inspection", documentNo)}">검수</a>`);
         }
         if (stockDocument?.documentId) {

@@ -64,6 +64,26 @@ class StaffPermissionAuthorizationFilterTest {
     }
 
     @Test
+    void blocksOutboundCandidatesWithoutOutboundPermission() throws Exception {
+        when(staffPermissionService.isEnabled(1L, StaffPermission.STAFF_OUTBOUND)).thenReturn(false);
+
+        MockHttpServletResponse response = execute("GET", "/api/workspaces/acme/stock/outbound-candidates");
+
+        assertThat(response.getStatus()).isEqualTo(403);
+        verify(staffPermissionService).isEnabled(1L, StaffPermission.STAFF_OUTBOUND);
+    }
+
+    @Test
+    void allowsDocumentReadAndDefersCancelPermissionToFacade() throws Exception {
+        MockHttpServletResponse list = execute("GET", "/api/workspaces/acme/stock/documents");
+        MockHttpServletResponse cancel = execute("POST", "/api/workspaces/acme/stock/documents/10/cancel");
+
+        assertThat(list.getStatus()).isEqualTo(200);
+        assertThat(cancel.getStatus()).isEqualTo(200);
+        verify(staffPermissionService, never()).isEnabled(1L, StaffPermission.STAFF_INBOUND);
+    }
+
+    @Test
     void blocksInspectionAndTemplateApisWithoutInspectionPermission() throws Exception {
         when(staffPermissionService.isEnabled(1L, StaffPermission.STAFF_INSPECTION)).thenReturn(false);
 

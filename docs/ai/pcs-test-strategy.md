@@ -54,6 +54,9 @@ The following features are currently connected to real Gradle test execution fro
 - `category`
 - `part`
 - `part-unit`
+- `stock`
+- `inspection`
+- `dashboard`
 
 Current connected commands:
 
@@ -75,6 +78,15 @@ Current connected commands:
 
 .\gradlew.bat test --tests "com.pcs.domain.part.*"
 .\gradlew.bat integrationTest --tests "com.pcs.domain.part.*"
+
+.\gradlew.bat test --tests "com.pcs.domain.stock.*"
+.\gradlew.bat integrationTest --tests "com.pcs.domain.stock.*"
+
+.\gradlew.bat test --tests "com.pcs.domain.inspection.*"
+.\gradlew.bat integrationTest --tests "com.pcs.domain.inspection.*"
+
+.\gradlew.bat test --tests "com.pcs.domain.dashboard.*"
+.\gradlew.bat integrationTest --tests "com.pcs.domain.dashboard.*"
 ```
 
 `part-unit`은 별도 Java 최상위 패키지를 만들지 않고 `com.pcs.domain.part`를 공유하므로, 하네스는 같은 Gradle test filter로 실행하되 `Test-PartUnitFeature`에서 문서, SQL, 화면, 하네스 규칙을 별도로 검사한다.
@@ -94,5 +106,7 @@ Current connected commands:
   - company, member, auth, partner
 - `src/integrationTest/resources/pcs-category-part-test-schema.sql`
   - category, part
+- `src/integrationTest/resources/pcs-operations-test-schema-extension.sql`
+  - stock, inspection, dashboard에 필요한 거래처, 검수 템플릿, 검수 결과, 상태 이력
 
 Keep fixture schemas small and feature-focused. Do not copy the whole production DDL unless the test needs it.
