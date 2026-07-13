@@ -100,6 +100,7 @@ src/main/resources/static/js/inspection.js
 ## 테스트 기준
 
 서비스 단위 테스트는 `src/test/java/com/pcs/domain/inspection/service/InspectionServiceTest.java`에서 관리한다.
+순수 판정 규칙은 `src/test/java/com/pcs/domain/inspection/validation/InspectionDecisionValidatorTest.java`, REST 계약은 `src/test/java/com/pcs/domain/inspection/api/InspectionApiControllerTest.java`에서 검증한다.
 
 현재 JUnit 검증 범위:
 
@@ -108,3 +109,4 @@ src/main/resources/static/js/inspection.js
 - 선택형 항목은 해당 항목에 속한 선택지만 저장할 수 있다.
 - 정정 등록은 원본 검수 ID를 기준으로 신규 `CORRECTION` 이력을 생성한다.
 - 재검수 등록은 기준 이력이 정정/재검수여도 기존 `originalInspectionId`를 유지한다.
+- 작업자의 검수 권한 차단은 `StaffPermissionAuthorizationFilterTest`에서 검증한다.

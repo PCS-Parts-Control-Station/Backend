@@ -110,6 +110,7 @@ src/main/resources/static/js/inspection-templates.js
 ## 테스트 기준
 
 서비스 단위 테스트는 `src/test/java/com/pcs/domain/inspection/service/InspectionTemplateServiceTest.java`에서 관리한다.
+REST validation과 예외 응답은 `src/test/java/com/pcs/domain/inspection/api/InspectionTemplateApiControllerTest.java`에서 관리한다.
 
 현재 JUnit 검증 범위:
 

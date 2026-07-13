@@ -72,7 +72,7 @@ currentPage = window.PcsNavigationState.numberParam(restored.page, 0);
 
 ## 이미 적용된 예시
 
-- `src/main/resources/static/js/part-units.js`: `keyword`, `documentId`, `categoryId`, `partState`, `page`, `unitId`
+- `src/main/resources/static/js/part-units.js`: `keyword`, `partId`, `documentId`, `categoryId`, `partState`, `page`, `unitId`
 - `src/main/resources/static/js/parts.js`: `keyword`, `categoryId`, `page`, `partId`
 - `src/main/resources/static/js/categories.js`: `keyword`, `page`, `categoryId`
 

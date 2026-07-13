@@ -58,7 +58,7 @@ management-detail-drawer
 - 드로어 밖의 본문을 클릭하면 드로어를 닫고 선택 행 표시를 해제한다.
 - 다른 목록 행을 클릭하면 드로어를 닫지 않고 선택 표시와 상세 내용만 교체한다.
 - 드로어 표면은 `--surface`의 불투명 배경을 사용해 뒤의 목록 내용이 비치지 않게 한다.
-- 드로어의 위치, 폭, 그림자, 모바일 전환은 입출고 이력 드로어와 같은 `management-detail-drawer`를 사용한다.
+- 드로어의 위치, 폭, 그림자, 모바일 전환은 전표 통합 조회 드로어와 같은 `management-detail-drawer`를 사용한다.
 - 드로어 셸과 패널 기본 배치는 공통 CSS가 소유하고, 페이지 CSS는 목록 전체 너비와 도메인별 내부 배치만 소유한다.
 - `management-detail-drawer`와 `management-detail-drawer-panel` 자체에는 세로 스크롤을 만들지 않는다.
 - 드로어 안에서 내용이 길어지는 경우 제목/닫기 버튼 아래의 `drawer-scroll-body`만 세로 스크롤을 가진다.

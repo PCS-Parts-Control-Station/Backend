@@ -2325,8 +2325,11 @@ function Test-StockFeature {
         @("src/main/resources/mapper/stock/StockMapper.xml", "STOCK_MAPPER_XML"),
         @("src/test/java/com/pcs/domain/stock/service/StockServiceTest.java", "STOCK_SERVICE_TEST"),
         @("src/test/java/com/pcs/domain/stock/facade/StockFacadeTest.java", "STOCK_FACADE_TEST"),
-        @("src/integrationTest/java/com/pcs/domain/stock/StockPersistenceIntegrationTest.java", "STOCK_DB_INTEGRATION_TEST"),
-        @("src/integrationTest/java/com/pcs/global/workspace/CompanyDataIsolationIntegrationTest.java", "COMPANY_ISOLATION_DB_INTEGRATION_TEST")
+        @("src/test/java/com/pcs/domain/stock/api/StockApiControllerTest.java", "STOCK_API_TEST"),
+        @("src/integrationTest/java/com/pcs/domain/stock/StockPersistenceIntegrationTest.java", "STOCK_INTEGRATION_TEST"),
+        @("src/integrationTest/java/com/pcs/domain/stock/StockOperationsPersistenceIntegrationTest.java", "STOCK_OPERATIONS_INTEGRATION_TEST"),
+        @("src/integrationTest/java/com/pcs/global/workspace/CompanyDataIsolationIntegrationTest.java", "COMPANY_ISOLATION_DB_INTEGRATION_TEST"),
+        @("src/integrationTest/resources/pcs-operations-test-schema-extension.sql", "OPERATIONS_TEST_SCHEMA")
     )) {
         Test-PathRequired $required[0] $required[1] "Keep the stock implementation aligned with docs/features/stock.md."
     }
@@ -2361,8 +2364,8 @@ function Test-StockFeature {
         }
     }
 
-    Invoke-GradleTestCheck "STOCK_UNIT_API_TESTS" "Stock unit and API tests" @("test", "--tests", "com.pcs.domain.stock.*")
-    Invoke-GradleTestCheck "STOCK_DB_INTEGRATION_TESTS" "Stock and company-isolation DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.stock.*", "--tests", "com.pcs.global.workspace.CompanyDataIsolationIntegrationTest")
+    Invoke-GradleTestCheck "STOCK_FEATURE_UNIT_API_TESTS" "Stock unit, API, and permission tests" @("test", "--tests", "com.pcs.domain.stock.*", "--tests", "com.pcs.global.security.StaffPermissionAuthorizationFilterTest")
+    Invoke-GradleTestCheck "STOCK_FEATURE_DB_INTEGRATION_TESTS" "Stock and company-isolation DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.stock.*", "--tests", "com.pcs.global.workspace.CompanyDataIsolationIntegrationTest")
 
     Add-Result "INFO" "STOCK_FEATURE" "Stock feature checks completed."
 }
@@ -2381,8 +2384,14 @@ function Test-InspectionFeature {
         @("src/main/resources/mapper/inspection/InspectionMapper.xml", "INSPECTION_MAPPER_XML"),
         @("src/test/java/com/pcs/domain/inspection/service/InspectionServiceTest.java", "INSPECTION_SERVICE_TEST"),
         @("src/test/java/com/pcs/domain/inspection/service/InspectionTemplateServiceTest.java", "INSPECTION_TEMPLATE_SERVICE_TEST"),
-        @("src/integrationTest/java/com/pcs/domain/inspection/InspectionPersistenceIntegrationTest.java", "INSPECTION_DB_INTEGRATION_TEST"),
-        @("src/integrationTest/java/com/pcs/global/workspace/CompanyDataIsolationIntegrationTest.java", "COMPANY_ISOLATION_DB_INTEGRATION_TEST")
+        @("src/test/java/com/pcs/domain/inspection/api/InspectionApiControllerTest.java", "INSPECTION_API_TEST"),
+        @("src/test/java/com/pcs/domain/inspection/api/InspectionTemplateApiControllerTest.java", "INSPECTION_TEMPLATE_API_TEST"),
+        @("src/test/java/com/pcs/domain/inspection/validation/InspectionDecisionValidatorTest.java", "INSPECTION_VALIDATION_TEST"),
+        @("src/integrationTest/java/com/pcs/domain/inspection/InspectionPersistenceIntegrationTest.java", "INSPECTION_INTEGRATION_TEST"),
+        @("src/integrationTest/java/com/pcs/domain/inspection/InspectionOperationsPersistenceIntegrationTest.java", "INSPECTION_OPERATIONS_INTEGRATION_TEST"),
+        @("src/integrationTest/java/com/pcs/domain/inspection/InspectionTemplatePersistenceIntegrationTest.java", "INSPECTION_TEMPLATE_INTEGRATION_TEST"),
+        @("src/integrationTest/java/com/pcs/global/workspace/CompanyDataIsolationIntegrationTest.java", "COMPANY_ISOLATION_DB_INTEGRATION_TEST"),
+        @("src/integrationTest/resources/pcs-operations-test-schema-extension.sql", "OPERATIONS_TEST_SCHEMA")
     )) {
         Test-PathRequired $required[0] $required[1] "Keep the inspection implementation aligned with its feature documents."
     }
@@ -2407,8 +2416,8 @@ function Test-InspectionFeature {
         }
     }
 
-    Invoke-GradleTestCheck "INSPECTION_UNIT_API_TESTS" "Inspection unit and API tests" @("test", "--tests", "com.pcs.domain.inspection.*")
-    Invoke-GradleTestCheck "INSPECTION_DB_INTEGRATION_TESTS" "Inspection and company-isolation DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.inspection.*", "--tests", "com.pcs.global.workspace.CompanyDataIsolationIntegrationTest")
+    Invoke-GradleTestCheck "INSPECTION_FEATURE_UNIT_API_TESTS" "Inspection unit, API, and permission tests" @("test", "--tests", "com.pcs.domain.inspection.*", "--tests", "com.pcs.global.security.StaffPermissionAuthorizationFilterTest")
+    Invoke-GradleTestCheck "INSPECTION_FEATURE_DB_INTEGRATION_TESTS" "Inspection and company-isolation DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.inspection.*", "--tests", "com.pcs.global.workspace.CompanyDataIsolationIntegrationTest")
 
     Add-Result "INFO" "INSPECTION_FEATURE" "Inspection feature checks completed."
 }
@@ -2416,22 +2425,10 @@ function Test-InspectionFeature {
 function Test-HistoryFeature {
     foreach ($required in @(
         @("docs/features/history.md", "HISTORY_FEATURE_DOC"),
-        @("src/main/resources/static/history-stock.html", "HISTORY_STOCK_HTML"),
-        @("src/main/resources/static/js/history-stock.js", "HISTORY_STOCK_JS"),
         @("src/main/resources/static/history-inspection.html", "HISTORY_INSPECTION_HTML"),
         @("src/main/resources/static/js/history-inspection.js", "HISTORY_INSPECTION_JS")
     )) {
         Test-PathRequired $required[0] $required[1] "Keep history pages connected to stock and inspection APIs."
-    }
-
-    $stockJs = Join-Path $ProjectRoot "src/main/resources/static/js/history-stock.js"
-    if (Test-Path $stockJs) {
-        $content = Get-Content -Raw -Encoding UTF8 -Path $stockJs
-        foreach ($pattern in @("window.PcsApi", "window.PcsPagination", "/stock/documents", "buildParams")) {
-            if ($content -notmatch [regex]::Escape($pattern)) {
-                Add-Result "FAIL" "HISTORY_STOCK_CLIENT_PATTERN" "history-stock.js is missing required pattern: $pattern" "Use the authenticated stock document API with server-side filters."
-            }
-        }
     }
 
     $inspectionJs = Join-Path $ProjectRoot "src/main/resources/static/js/history-inspection.js"
@@ -2449,6 +2446,11 @@ function Test-HistoryFeature {
 
 function Test-DashboardFeature {
     Test-PathRequired "docs/features/dashboard.md" "DASHBOARD_FEATURE_DOC" "Keep dashboard behavior documented."
+    Test-PathRequired "src/main/java/com/pcs/domain/dashboard/api/DashboardApiController.java" "DASHBOARD_API" "Keep the dashboard API endpoint."
+    Test-PathRequired "src/main/java/com/pcs/domain/dashboard/service/DashboardService.java" "DASHBOARD_SERVICE" "Keep dashboard aggregation in the service and mapper."
+    Test-PathRequired "src/test/java/com/pcs/domain/dashboard/api/DashboardApiControllerTest.java" "DASHBOARD_API_TEST" "Keep the dashboard REST contract tested."
+    Test-PathRequired "src/test/java/com/pcs/domain/dashboard/service/DashboardServiceTest.java" "DASHBOARD_SERVICE_TEST" "Keep dashboard Java behavior tested."
+    Test-PathRequired "src/integrationTest/java/com/pcs/domain/dashboard/DashboardPersistenceIntegrationTest.java" "DASHBOARD_INTEGRATION_TEST" "Keep dashboard MariaDB aggregation tested."
     Test-PathRequired "src/main/resources/static/dashboard.html" "DASHBOARD_HTML" "Keep the workspace dashboard page."
     Test-PathRequired "src/main/resources/static/js/dashboard.js" "DASHBOARD_JS" "Keep dashboard client behavior in dashboard.js."
 
@@ -2461,6 +2463,9 @@ function Test-DashboardFeature {
             }
         }
     }
+
+    Invoke-GradleTestCheck "DASHBOARD_FEATURE_UNIT_API_TESTS" "Dashboard unit and API tests" @("test", "--tests", "com.pcs.domain.dashboard.*")
+    Invoke-GradleTestCheck "DASHBOARD_FEATURE_DB_INTEGRATION_TESTS" "Dashboard DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.dashboard.*")
 
     Add-Result "INFO" "DASHBOARD_FEATURE" "Dashboard feature checks completed."
 }

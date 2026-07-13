@@ -63,11 +63,6 @@ public class PageController {
         return "forward:/mypage.html";
     }
 
-    @GetMapping("/w/{companyCode}/history/stock")
-    public String historyStock() {
-        return "forward:/history-stock.html";
-    }
-
     @GetMapping("/w/{companyCode}/history/inspection")
     public String historyInspection() {
         return "forward:/history-inspection.html";

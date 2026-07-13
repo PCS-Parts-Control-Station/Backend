@@ -83,6 +83,7 @@ src/main/resources/static/js/history-inspection.js
 ## 테스트 기준
 
 서비스 단위 테스트는 `src/test/java/com/pcs/domain/inspection/service/InspectionServiceTest.java`에서 관리한다.
+검수 이력 API의 필터 전달과 예외 응답은 `src/test/java/com/pcs/domain/inspection/api/InspectionApiControllerTest.java`에서 관리한다.
 
 현재 JUnit 검증 범위:
 

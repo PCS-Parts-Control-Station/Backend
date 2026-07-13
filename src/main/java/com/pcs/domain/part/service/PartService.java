@@ -54,6 +54,8 @@ public class PartService {
             "SALES_AVAILABLE",
             "SALES_UNAVAILABLE",
             "SALES_HOLD",
+            "STOCK_UNAVAILABLE",
+            "STOCK_HOLD",
             "A",
             "B",
             "C",
@@ -115,6 +117,7 @@ public class PartService {
     public PageResultDto<SearchPartUnitResponse, SearchPartUnitSummaryResponse> searchPartUnits(
             Long companyId,
             String keyword,
+            Long partId,
             Long documentId,
             Long categoryId,
             String partState,
@@ -131,6 +134,7 @@ public class PartService {
         SearchPartUnitSummaryResponse summary = partMapper.summarizePartUnits(
                 companyId,
                 normalizedKeyword,
+                partId,
                 documentId,
                 categoryId,
                 normalizedPartState
@@ -145,6 +149,7 @@ public class PartService {
             SearchPartUnitSummaryResponse withoutStateSummary = partMapper.summarizePartUnits(
                     companyId,
                     normalizedKeyword,
+                    partId,
                     documentId,
                     categoryId,
                     null
@@ -159,6 +164,7 @@ public class PartService {
                 : partMapper.searchPartUnits(
                         companyId,
                         normalizedKeyword,
+                        partId,
                         documentId,
                         categoryId,
                         normalizedPartState,

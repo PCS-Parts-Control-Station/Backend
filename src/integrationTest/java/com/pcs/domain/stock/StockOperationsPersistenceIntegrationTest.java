@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.pcs.domain.member.type.MemberRole;
+import com.pcs.domain.part.service.PartService;
 import com.pcs.domain.stock.dto.request.CreateInboundDocumentLineRequest;
 import com.pcs.domain.stock.dto.request.CreateInboundDocumentRequest;
 import com.pcs.domain.stock.dto.request.CreateOutboundDocumentLineRequest;
@@ -27,6 +28,8 @@ class StockOperationsPersistenceIntegrationTest extends MariaDbIntegrationTest {
 
     @Autowired
     private StockFacade stockFacade;
+    @Autowired
+    private PartService partService;
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
@@ -176,6 +179,13 @@ class StockOperationsPersistenceIntegrationTest extends MariaDbIntegrationTest {
                 Integer.class,
                 partId
         )).isZero();
+
+        var canceledUnits = partService.searchPartUnits(
+                1L, null, partId, inbound.documentId(), null, "CANCELED", 0, 20, null
+        );
+        assertThat(canceledUnits.content()).hasSize(1);
+        assertThat(canceledUnits.content().get(0).unitStatus().name()).isEqualTo("CANCELED");
+        assertThat(canceledUnits.summary().totalCount()).isEqualTo(1);
     }
 
     @Test

@@ -88,7 +88,7 @@ class CompanyDataIsolationIntegrationTest extends MariaDbIntegrationTest {
         assertThat(partnerService.searchPartners(1L, null, null, null, null, 0, 20, null).content()).isEmpty();
         assertThat(categoryService.searchCategories(1L, null, 0, 20, null).content()).isEmpty();
         assertThat(partService.searchParts(1L, null, null, null, 0, 20, null).content()).isEmpty();
-        assertThat(partService.searchPartUnits(1L, null, null, null, null, 0, 20, null).content()).isEmpty();
+        assertThat(partService.searchPartUnits(1L, null, null, null, null, null, 0, 20, null).content()).isEmpty();
         assertThat(stockService.searchDocuments(1L, null, null, null, null, null, null, 0, 20, null).content())
                 .isEmpty();
         assertThat(inspectionService.searchHistories(

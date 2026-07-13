@@ -241,7 +241,7 @@ domain/category/type/PartSpecInputTypes.java
 ## SQL 중심 기능
 
 - 품목 검색/필터
-- 입출고 이력 조회
+- 입출고 전표 조회
 - 검수 이력 조회
 - 상태 변경 이력 조회
 - 품목 분류별 재고 수량

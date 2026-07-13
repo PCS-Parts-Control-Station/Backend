@@ -73,11 +73,14 @@ chk_part_stock_quantity
 ## DB Integration Test Coverage
 
 - Integration test: `src/integrationTest/java/com/pcs/domain/stock/StockPersistenceIntegrationTest.java`
-- Schema fixture: `src/integrationTest/resources/pcs-category-part-test-schema.sql`
+- Additional integration test: `src/integrationTest/java/com/pcs/domain/stock/StockOperationsPersistenceIntegrationTest.java`
+- Schema fixtures: `pcs-category-part-test-schema.sql`, `pcs-operations-test-schema-extension.sql`
 - Required checks:
   - 회사 A 범위에서 회사 B의 거래처, 품목, 관리번호, 전표를 조회하거나 변경할 수 없다.
   - 입고는 전표, movement, 현재 재고, 개별 관리번호를 한 트랜잭션에 저장한다.
   - 검수 완료된 판매 가능 관리번호만 출고할 수 있고, 출고 후 재고와 `unit_status`가 함께 변경된다.
   - 출고 취소는 원본 movement를 `CANCELED`로 바꾸고 반대 movement를 추가한 뒤 관리번호와 재고를 복구한다.
+  - 입고 취소된 관리번호는 부품 관리 조회에서 `CANCELED` 상태로 조회된다.
   - 처리 중 오류가 발생하면 앞서 저장한 전표, movement, 재고, 관리번호가 전부 rollback된다.
   - 각 완료 시점의 `tb_part_stock.quantity`와 활성 `IN_STOCK` 관리번호 수가 일치한다.
+  - 현재 재고 음수 제약을 실제 MariaDB에서 검증한다.

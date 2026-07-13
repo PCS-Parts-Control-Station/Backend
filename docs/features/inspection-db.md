@@ -300,11 +300,13 @@ tb_inspection_item_result.idx_inspection_item_result_selected_option
 
 ## DB Integration Test Coverage
 
-- Integration test: `src/integrationTest/java/com/pcs/domain/inspection/InspectionPersistenceIntegrationTest.java`
-- Schema fixture: `src/integrationTest/resources/pcs-category-part-test-schema.sql`
+- Integration tests: `InspectionPersistenceIntegrationTest`, `InspectionOperationsPersistenceIntegrationTest`, `InspectionTemplatePersistenceIntegrationTest`
+- Schema fixtures: `pcs-category-part-test-schema.sql`, `pcs-operations-test-schema-extension.sql`
 - Required checks:
   - 회사 A 범위에서 회사 B의 관리번호, 템플릿, 검수 이력을 조회하거나 변경할 수 없다.
   - 최초 검수는 검수 row와 항목 snapshot을 저장하고 관리번호 상태와 상태 이력을 같은 트랜잭션에서 변경한다.
+  - 일괄 검수 중 하나가 실패하면 모든 검수와 상태 변경을 롤백한다.
   - 정정과 재검수는 기존 row를 수정하지 않고 새 row를 추가하며 최초 `original_inspection_id`를 유지한다.
   - 검수 항목 저장 또는 상태 변경 중 실패하면 검수 row, 항목 결과, 관리번호 상태, 상태 이력이 전부 rollback된다.
   - 검수 완료 후 `inspection_status`, `grade`, `sales_status`가 마지막 검수 이력과 일치한다.
+  - 템플릿과 중첩 항목·선택지를 함께 저장하고 버전 제약을 검증한다.

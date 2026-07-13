@@ -69,7 +69,8 @@ class DashboardServiceTest {
                 7L,
                 10L,
                 "메모리",
-                "inspection"
+                "inspection",
+                null
         );
         DashboardRecentActivityResponse activity = new DashboardRecentActivityResponse(
                 "INBOUND",

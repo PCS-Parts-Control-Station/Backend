@@ -3,15 +3,15 @@ package com.pcs.support;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.DockerClientFactory;
+import org.testcontainers.mariadb.MariaDBContainer;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 public abstract class MariaDbIntegrationTest {
 
     private static final String MODE_PROPERTY = "pcs.test.db.mode";
     private static final String MODE_ENVIRONMENT_VARIABLE = "PCS_TEST_DB_MODE";
-    private static final MariaDBContainer<?> MARIADB = new MariaDBContainer<>("mariadb:10.11")
+    private static final MariaDBContainer MARIADB = new MariaDBContainer("mariadb:10.11")
             .withDatabaseName("pcs_test")
             .withUsername("pcs")
             .withPassword("pcs");
