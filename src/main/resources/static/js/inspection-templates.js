@@ -488,35 +488,6 @@
         }
     };
 
-    const mergeTemplateDetailIntoList = (detail) => {
-        const index = templates.findIndex((template) => template.id === detail.id);
-        if (index < 0) {
-            return;
-        }
-        templates[index] = {
-            ...templates[index],
-            templateName: detail.templateName,
-            categoryId: detail.categoryId,
-            categoryName: detail.categoryName,
-            version: detail.version,
-            active: detail.active,
-            itemCount: detail.basicItemCount + detail.detailItemCount,
-            optionCount: detail.optionCount,
-            createdBy: detail.createdBy,
-            updatedAt: detail.updatedAt
-        };
-    };
-
-    const applyTemplateDetail = (detailData) => {
-        selectedTemplate = normalizeTemplateDetail(detailData);
-        selectedTemplateId = selectedTemplate.id;
-        mergeTemplateDetailIntoList(selectedTemplate);
-        renderRows();
-        renderDetail(selectedTemplate);
-        renderBuilder();
-        updateSelectedRow();
-    };
-
     const getSelectedTemplate = () => selectedTemplate;
 
     const getSelectedItem = (template = selectedTemplate) => {
@@ -930,16 +901,6 @@
         if (filterForm.elements.active) {
             filterForm.elements.active.value = "";
         }
-    };
-
-    const reloadSelectedTemplate = async () => {
-        if (!selectedTemplateId) {
-            return;
-        }
-        selectedTemplate = await loadTemplateDetail(selectedTemplateId);
-        renderDetail(selectedTemplate);
-        renderBuilder();
-        updateSelectedRow();
     };
 
     const addOptionToItem = async (template, item, form) => {
