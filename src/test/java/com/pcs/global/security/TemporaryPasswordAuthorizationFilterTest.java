@@ -1,6 +1,7 @@
 package com.pcs.global.security;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -10,6 +11,7 @@ import com.pcs.domain.auth.entity.AuthMember;
 import com.pcs.domain.auth.mapper.AuthMapper;
 import com.pcs.domain.member.type.MemberRole;
 import com.pcs.domain.member.type.PasswordStatus;
+import com.pcs.global.error.ApiErrorResponseWriter;
 import jakarta.servlet.FilterChain;
 import java.time.Instant;
 import org.junit.jupiter.api.AfterEach;
@@ -37,7 +39,10 @@ class TemporaryPasswordAuthorizationFilterTest {
 
     @BeforeEach
     void setUp() {
-        filter = new TemporaryPasswordAuthorizationFilter(authMapper, new ObjectMapper());
+        filter = new TemporaryPasswordAuthorizationFilter(
+                authMapper,
+                new ApiErrorResponseWriter(new ObjectMapper())
+        );
         PcsPrincipal principal = new PcsPrincipal(
                 1L,
                 10L,
@@ -66,6 +71,9 @@ class TemporaryPasswordAuthorizationFilterTest {
         filter.doFilter(request, response, filterChain);
 
         assertEquals(403, response.getStatus());
+        assertTrue(response.getContentType().startsWith("application/json"));
+        assertTrue(response.getContentAsString().contains("\"success\":false"));
+        assertTrue(response.getContentAsString().contains("\"code\":\"MEMBER-005\""));
         verify(filterChain, never()).doFilter(request, response);
     }
 

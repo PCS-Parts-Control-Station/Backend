@@ -1,10 +1,9 @@
 package com.pcs.global.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pcs.domain.member.service.StaffPermissionService;
 import com.pcs.domain.member.type.MemberRole;
 import com.pcs.domain.member.type.StaffPermission;
-import com.pcs.global.dto.ApiResultDto;
+import com.pcs.global.error.ApiErrorResponseWriter;
 import com.pcs.global.error.ErrorCode;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -14,7 +13,6 @@ import java.io.IOException;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -26,14 +24,14 @@ public class StaffPermissionAuthorizationFilter extends OncePerRequestFilter {
     private static final Pattern WORKSPACE_API_PATTERN = Pattern.compile("^/api/workspaces/[^/]+/(.+)$");
 
     private final StaffPermissionService staffPermissionService;
-    private final ObjectMapper objectMapper;
+    private final ApiErrorResponseWriter errorResponseWriter;
 
     public StaffPermissionAuthorizationFilter(
             StaffPermissionService staffPermissionService,
-            ObjectMapper objectMapper
+            ApiErrorResponseWriter errorResponseWriter
     ) {
         this.staffPermissionService = staffPermissionService;
-        this.objectMapper = objectMapper;
+        this.errorResponseWriter = errorResponseWriter;
     }
 
     @Override
@@ -60,10 +58,7 @@ public class StaffPermissionAuthorizationFilter extends OncePerRequestFilter {
             return;
         }
 
-        response.setStatus(ErrorCode.AUTH_STAFF_PERMISSION_DENIED.getHttpStatus().value());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setCharacterEncoding("UTF-8");
-        objectMapper.writeValue(response.getWriter(), ApiResultDto.error(ErrorCode.AUTH_STAFF_PERMISSION_DENIED));
+        errorResponseWriter.write(response, ErrorCode.AUTH_STAFF_PERMISSION_DENIED);
     }
 
     private StaffPermission findRequiredPermission(HttpServletRequest request) {

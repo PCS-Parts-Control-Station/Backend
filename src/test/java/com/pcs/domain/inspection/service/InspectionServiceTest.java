@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -67,6 +69,14 @@ class InspectionServiceTest {
     @BeforeEach
     void setUp() {
         inspectionService = new InspectionService(inspectionMapper, workspaceAccessValidator);
+        lenient().when(inspectionMapper.updatePartUnitInspectionStatus(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any()
+        )).thenReturn(1);
     }
 
     @Test
@@ -114,6 +124,7 @@ class InspectionServiceTest {
         verify(inspectionMapper).updatePartUnitInspectionStatus(
                 companyId,
                 unitId,
+                InspectionStatus.WAITING,
                 InspectionStatus.COMPLETED,
                 PartGrade.A,
                 SalesStatus.AVAILABLE
@@ -149,6 +160,14 @@ class InspectionServiceTest {
             inspection.setInspectionId(sequence.getAndIncrement());
             return null;
         }).when(inspectionMapper).insertInspection(any(Inspection.class));
+        when(inspectionMapper.updatePartUnitInspectionStatuses(
+                companyId,
+                unitIds,
+                InspectionStatus.WAITING,
+                InspectionStatus.COMPLETED,
+                PartGrade.A,
+                SalesStatus.AVAILABLE
+        )).thenReturn(2);
 
         var response = inspectionService.createBulkInitialInspection(companyId, memberId, request);
 
@@ -158,11 +177,50 @@ class InspectionServiceTest {
         verify(inspectionMapper).updatePartUnitInspectionStatuses(
                 companyId,
                 unitIds,
+                InspectionStatus.WAITING,
                 InspectionStatus.COMPLETED,
                 PartGrade.A,
                 SalesStatus.AVAILABLE
         );
         verify(inspectionMapper).insertPartStatusHistories(any());
+    }
+
+    @Test
+    void createInitialInspection_failsWhenUnitStatusUpdateDoesNotMatchExpectedStatus() {
+        Long companyId = 1L;
+        Long memberId = 10L;
+        Long unitId = 100L;
+        CreateInspectionRequest request = new CreateInspectionRequest(
+                unitId,
+                null,
+                InspectionResult.PASS,
+                PartGrade.A,
+                SalesStatus.AVAILABLE,
+                null,
+                List.of()
+        );
+        when(inspectionMapper.findPartUnitForUpdate(companyId, unitId)).thenReturn(waitingUnit(companyId, unitId));
+        when(inspectionMapper.updatePartUnitInspectionStatus(
+                companyId,
+                unitId,
+                InspectionStatus.WAITING,
+                InspectionStatus.COMPLETED,
+                PartGrade.A,
+                SalesStatus.AVAILABLE
+        )).thenReturn(0);
+        doAnswer(invocation -> {
+            Inspection inspection = invocation.getArgument(0);
+            inspection.setInspectionId(500L);
+            return null;
+        }).when(inspectionMapper).insertInspection(any(Inspection.class));
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> inspectionService.createInitialInspection(companyId, memberId, request)
+        );
+
+        assertEquals(ErrorCode.PART_INVALID_STATUS_CHANGE, exception.getErrorCode());
+        verify(inspectionMapper, never()).insertPartStatusHistory(any());
     }
 
     @Test
@@ -284,6 +342,40 @@ class InspectionServiceTest {
         assertEquals(templateId, savedInspection.getTemplateId());
         assertEquals("정정 사유", savedInspection.getMemo());
         assertEquals("CORRECTION", historyCaptor.getValue().getReason());
+    }
+
+    @Test
+    void createCorrection_failsWhenCurrentUnitIsNotCompleted() {
+        Long companyId = 1L;
+        Long memberId = 10L;
+        Long baseInspectionId = 500L;
+        Long unitId = 100L;
+        Inspection baseInspection = inspection(
+                baseInspectionId,
+                companyId,
+                unitId,
+                null,
+                InspectionType.INITIAL,
+                null
+        );
+        CreateInspectionRevisionRequest request = new CreateInspectionRevisionRequest(
+                null,
+                InspectionResult.PASS,
+                PartGrade.A,
+                SalesStatus.AVAILABLE,
+                null,
+                List.of()
+        );
+        when(inspectionMapper.findInspection(companyId, baseInspectionId)).thenReturn(baseInspection);
+        when(inspectionMapper.findPartUnitForUpdate(companyId, unitId)).thenReturn(waitingUnit(companyId, unitId));
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> inspectionService.createCorrection(companyId, memberId, baseInspectionId, request)
+        );
+
+        assertEquals(ErrorCode.PART_INVALID_STATUS_CHANGE, exception.getErrorCode());
+        verify(inspectionMapper, never()).insertInspection(any(Inspection.class));
     }
 
     @Test

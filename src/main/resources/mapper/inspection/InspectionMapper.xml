@@ -863,6 +863,9 @@
             sales_status = #{salesStatus}
         WHERE company_id = #{companyId}
           AND unit_id = #{unitId}
+          AND active = TRUE
+          AND unit_status = 'IN_STOCK'
+          AND inspection_status = #{expectedInspectionStatus}
     </update>
 
     <update id="updatePartUnitInspectionStatuses">
@@ -871,6 +874,9 @@
             grade = #{grade},
             sales_status = #{salesStatus}
         WHERE company_id = #{companyId}
+          AND active = TRUE
+          AND unit_status = 'IN_STOCK'
+          AND inspection_status = #{expectedInspectionStatus}
           AND unit_id IN
           <foreach collection="unitIds" item="unitId" open="(" separator="," close=")">
               #{unitId}

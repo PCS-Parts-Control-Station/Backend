@@ -16,7 +16,7 @@ import com.pcs.domain.stock.entity.StockPartner;
 import com.pcs.domain.stock.type.MovementStatus;
 import com.pcs.domain.stock.type.StockDocumentStatus;
 import com.pcs.domain.stock.type.StockDocumentType;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -42,8 +42,8 @@ public interface StockMapper {
             @Param("keyword") String keyword,
             @Param("partnerId") Long partnerId,
             @Param("documentStatus") StockDocumentStatus documentStatus,
-            @Param("dateFrom") LocalDate dateFrom,
-            @Param("dateTo") LocalDate dateTo,
+            @Param("dateFrom") LocalDateTime dateFrom,
+            @Param("dateTo") LocalDateTime dateTo,
             @Param("size") int size,
             @Param("offset") int offset
     );
@@ -54,8 +54,8 @@ public interface StockMapper {
             @Param("keyword") String keyword,
             @Param("partnerId") Long partnerId,
             @Param("documentStatus") StockDocumentStatus documentStatus,
-            @Param("dateFrom") LocalDate dateFrom,
-            @Param("dateTo") LocalDate dateTo
+            @Param("dateFrom") LocalDateTime dateFrom,
+            @Param("dateTo") LocalDateTime dateTo
     );
 
     List<SearchOutboundCandidateResponse> searchOutboundCandidates(
@@ -127,13 +127,13 @@ public interface StockMapper {
             @Param("documentId") Long documentId
     );
 
-    void updateDocumentStatus(
+    int updateDocumentStatus(
             @Param("companyId") Long companyId,
             @Param("documentId") Long documentId,
             @Param("documentStatus") StockDocumentStatus documentStatus
     );
 
-    void updateDocumentMovementStatus(
+    int updateDocumentMovementStatus(
             @Param("companyId") Long companyId,
             @Param("documentId") Long documentId,
             @Param("movementStatus") MovementStatus movementStatus
@@ -152,7 +152,7 @@ public interface StockMapper {
             @Param("quantity") Integer quantity
     );
 
-    void updatePartStockQuantity(
+    int updatePartStockQuantity(
             @Param("companyId") Long companyId,
             @Param("partId") Long partId,
             @Param("quantity") Integer quantity
@@ -183,17 +183,17 @@ public interface StockMapper {
             @Param("afterUnitStatus") UnitStatus afterUnitStatus
     );
 
-    void updatePartUnitStatusForInboundCancel(
+    int updatePartUnitStatusForInboundCancel(
             @Param("companyId") Long companyId,
             @Param("unitId") Long unitId
     );
 
-    void updatePartUnitStatusForOutbound(
+    int updatePartUnitStatusForOutbound(
             @Param("companyId") Long companyId,
             @Param("unitId") Long unitId
     );
 
-    void updatePartUnitStatusForOutboundCancel(
+    int updatePartUnitStatusForOutboundCancel(
             @Param("companyId") Long companyId,
             @Param("unitId") Long unitId
     );

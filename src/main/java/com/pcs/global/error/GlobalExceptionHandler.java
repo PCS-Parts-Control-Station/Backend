@@ -16,6 +16,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
@@ -68,7 +69,7 @@ public class GlobalExceptionHandler {
     ) {
         return ResponseEntity
                 .status(ErrorCode.MISSING_REQUEST_PARAMETER.getHttpStatus())
-                .body(ApiResultDto.error(ErrorCode.MISSING_REQUEST_PARAMETER, exception.getMessage()));
+                .body(ApiResultDto.error(ErrorCode.MISSING_REQUEST_PARAMETER));
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -77,7 +78,16 @@ public class GlobalExceptionHandler {
     ) {
         return ResponseEntity
                 .status(ErrorCode.INVALID_INPUT_VALUE.getHttpStatus())
-                .body(ApiResultDto.error(ErrorCode.INVALID_INPUT_VALUE, exception.getMessage()));
+                .body(ApiResultDto.error(ErrorCode.INVALID_INPUT_VALUE));
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ApiResultDto<Void>> handleHandlerMethodValidation(
+            HandlerMethodValidationException exception
+    ) {
+        return ResponseEntity
+                .status(ErrorCode.INVALID_INPUT_VALUE.getHttpStatus())
+                .body(ApiResultDto.error(ErrorCode.INVALID_INPUT_VALUE));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)

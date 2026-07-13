@@ -43,6 +43,8 @@ CREATE TABLE tb_member (
     PRIMARY KEY (member_id),
     CONSTRAINT uk_member_company_login UNIQUE (company_id, login_id),
     CONSTRAINT uk_member_company_owner UNIQUE (company_id, owner_slot),
+    INDEX idx_member_company_list (company_id, updated_at DESC, member_id DESC),
+    INDEX idx_member_company_created (company_id, created_at, member_id),
     CONSTRAINT chk_member_owner_slot CHECK (
         (role = 'OWNER' AND owner_slot = 1)
         OR (role <> 'OWNER' AND owner_slot IS NULL)
@@ -118,7 +120,8 @@ CREATE TABLE tb_trade_partner (
     INDEX idx_trade_partner_company_role (company_id, partner_role, active),
     INDEX idx_trade_partner_company_type (company_id, partner_type, active),
     INDEX idx_trade_partner_company_created_by (company_id, created_by),
-    INDEX idx_trade_partner_company_last_transaction (company_id, last_transaction_at)
+    INDEX idx_trade_partner_company_last_transaction (company_id, last_transaction_at),
+    INDEX idx_trade_partner_company_list (company_id, updated_at DESC, partner_id DESC)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO tb_company (

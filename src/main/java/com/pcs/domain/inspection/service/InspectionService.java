@@ -183,7 +183,7 @@ public class InspectionService {
                 request.memo(),
                 request.itemResults(),
                 inspectedAt,
-                true,
+                InspectionStatus.WAITING,
                 true,
                 true
         );
@@ -214,7 +214,7 @@ public class InspectionService {
         }
 
         for (InspectionPartUnitRow unit : units) {
-            validateUnit(unit, true);
+            validateUnit(unit, InspectionStatus.WAITING);
         }
         if (request.templateId() != null) {
             Long categoryId = units.get(0).categoryId();
@@ -256,13 +256,17 @@ public class InspectionService {
         if (!itemResults.isEmpty()) {
             inspectionMapper.insertItemResults(itemResults);
         }
-        inspectionMapper.updatePartUnitInspectionStatuses(
+        int updated = inspectionMapper.updatePartUnitInspectionStatuses(
                 companyId,
                 request.unitIds(),
+                InspectionStatus.WAITING,
                 InspectionStatus.COMPLETED,
                 request.grade(),
                 request.salesStatus()
         );
+        if (updated != request.unitIds().size()) {
+            throw new BusinessException(ErrorCode.PART_INVALID_STATUS_CHANGE);
+        }
         inspectionMapper.insertPartStatusHistories(histories);
         return new CreateInspectionResponse(
                 inspectionIds,
@@ -464,7 +468,7 @@ public class InspectionService {
                 request.memo(),
                 request.itemResults(),
                 inspectedAt,
-                false,
+                InspectionStatus.COMPLETED,
                 false,
                 false
         );
@@ -492,11 +496,11 @@ public class InspectionService {
             String memo,
             List<CreateInspectionItemResultRequest> itemResultRequests,
             LocalDateTime inspectedAt,
-            boolean requireWaitingUnit,
+            InspectionStatus requiredInspectionStatus,
             boolean activeTemplateOnly,
             boolean enforceRequiredItems
     ) {
-        InspectionPartUnitRow unit = validateAndFindUnit(companyId, unitId, requireWaitingUnit);
+        InspectionPartUnitRow unit = validateAndFindUnit(companyId, unitId, requiredInspectionStatus);
         TemplateSnapshot templateSnapshot = validateTemplateAndBuildSnapshot(
                 companyId,
                 unit.categoryId(),
@@ -527,9 +531,10 @@ public class InspectionService {
             inspectionMapper.insertItemResult(itemResult);
         }
 
-        inspectionMapper.updatePartUnitInspectionStatus(
+        updatePartUnitInspectionStatus(
                 companyId,
                 unitId,
+                unit.inspectionStatus(),
                 InspectionStatus.COMPLETED,
                 grade,
                 salesStatus
@@ -597,21 +602,50 @@ public class InspectionService {
         );
     }
 
-    private InspectionPartUnitRow validateAndFindUnit(Long companyId, Long unitId, boolean requireWaitingUnit) {
+    private InspectionPartUnitRow validateAndFindUnit(
+            Long companyId,
+            Long unitId,
+            InspectionStatus requiredInspectionStatus
+    ) {
         InspectionPartUnitRow unit = inspectionMapper.findPartUnitForUpdate(companyId, unitId);
         if (unit == null) {
             throw new BusinessException(ErrorCode.PART_UNIT_NOT_FOUND);
         }
-        validateUnit(unit, requireWaitingUnit);
+        validateUnit(unit, requiredInspectionStatus);
         return unit;
     }
 
-    private void validateUnit(InspectionPartUnitRow unit, boolean requireWaitingUnit) {
+    private void validateUnit(InspectionPartUnitRow unit, InspectionStatus requiredInspectionStatus) {
         if (!unit.active() || unit.unitStatus() != UnitStatus.IN_STOCK) {
             throw new BusinessException(ErrorCode.PART_INVALID_STATUS_CHANGE, "검수 가능한 재고 상태가 아닙니다.");
         }
-        if (requireWaitingUnit && unit.inspectionStatus() == InspectionStatus.COMPLETED) {
+        if (requiredInspectionStatus == InspectionStatus.WAITING
+                && unit.inspectionStatus() == InspectionStatus.COMPLETED) {
             throw new BusinessException(ErrorCode.INSPECTION_ALREADY_COMPLETED);
+        }
+        if (unit.inspectionStatus() != requiredInspectionStatus) {
+            throw new BusinessException(ErrorCode.PART_INVALID_STATUS_CHANGE);
+        }
+    }
+
+    private void updatePartUnitInspectionStatus(
+            Long companyId,
+            Long unitId,
+            InspectionStatus expectedInspectionStatus,
+            InspectionStatus inspectionStatus,
+            PartGrade grade,
+            SalesStatus salesStatus
+    ) {
+        int updated = inspectionMapper.updatePartUnitInspectionStatus(
+                companyId,
+                unitId,
+                expectedInspectionStatus,
+                inspectionStatus,
+                grade,
+                salesStatus
+        );
+        if (updated != 1) {
+            throw new BusinessException(ErrorCode.PART_INVALID_STATUS_CHANGE);
         }
     }
 

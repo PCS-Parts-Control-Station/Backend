@@ -39,6 +39,7 @@ import com.pcs.global.validation.DateRangeValidator;
 import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.security.SecureRandom;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
@@ -86,14 +87,16 @@ public class StockService {
 
         String normalizedKeyword = TextNormalizer.optional(keyword);
         PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
+        LocalDateTime from = DateRangeValidator.toStartOfDay(dateFrom);
+        LocalDateTime to = DateRangeValidator.toExclusiveEnd(dateTo);
         SearchStockDocumentSummaryResponse summary = stockMapper.summarizeDocuments(
                 companyId,
                 documentType,
                 normalizedKeyword,
                 partnerId,
                 documentStatus,
-                dateFrom,
-                dateTo
+                from,
+                to
         );
         long totalElements = summary.totalCount();
         List<SearchStockDocumentResponse> items = totalElements == 0
@@ -104,8 +107,8 @@ public class StockService {
                         normalizedKeyword,
                         partnerId,
                         documentStatus,
-                        dateFrom,
-                        dateTo,
+                        from,
+                        to,
                         pageQuery.size(),
                         pageQuery.offset()
                 );
@@ -224,7 +227,7 @@ public class StockService {
                     memberId
             );
             stockMapper.insertMovement(cancelMovement);
-            stockMapper.updatePartStockQuantity(companyId, movement.partId(), afterQuantity);
+            updatePartStockQuantity(companyId, movement.partId(), afterQuantity, ErrorCode.STOCK_INVALID_CANCEL_REQUEST);
 
             List<Long> unitIds = stockMapper.findMovementUnitIds(companyId, movement.movementId());
             for (Long unitId : unitIds) {
@@ -235,13 +238,13 @@ public class StockService {
                         UnitStatus.IN_STOCK,
                         UnitStatus.CANCELED
                 );
-                stockMapper.updatePartUnitStatusForInboundCancel(companyId, unitId);
+                updatePartUnitStatusForInboundCancel(companyId, unitId);
                 canceledUnitCount++;
             }
         }
 
-        stockMapper.updateDocumentMovementStatus(companyId, document.documentId(), MovementStatus.CANCELED);
-        stockMapper.updateDocumentStatus(companyId, document.documentId(), StockDocumentStatus.CANCELED);
+        updateDocumentMovementStatus(companyId, document.documentId(), MovementStatus.CANCELED, movements.size());
+        updateDocumentStatus(companyId, document.documentId(), StockDocumentStatus.CANCELED);
 
         return new CancelStockDocumentResponse(
                 document.documentId(),
@@ -294,7 +297,7 @@ public class StockService {
             if (currentQuantity == null) {
                 stockMapper.insertPartStock(companyId, movement.partId(), afterQuantity);
             } else {
-                stockMapper.updatePartStockQuantity(companyId, movement.partId(), afterQuantity);
+                updatePartStockQuantity(companyId, movement.partId(), afterQuantity, ErrorCode.STOCK_INVALID_CANCEL_REQUEST);
             }
 
             List<Long> unitIds = stockMapper.findMovementUnitIds(companyId, movement.movementId());
@@ -306,13 +309,13 @@ public class StockService {
                         UnitStatus.OUTBOUND,
                         UnitStatus.IN_STOCK
                 );
-                stockMapper.updatePartUnitStatusForOutboundCancel(companyId, unitId);
+                updatePartUnitStatusForOutboundCancel(companyId, unitId);
                 canceledUnitCount++;
             }
         }
 
-        stockMapper.updateDocumentMovementStatus(companyId, document.documentId(), MovementStatus.CANCELED);
-        stockMapper.updateDocumentStatus(companyId, document.documentId(), StockDocumentStatus.CANCELED);
+        updateDocumentMovementStatus(companyId, document.documentId(), MovementStatus.CANCELED, movements.size());
+        updateDocumentStatus(companyId, document.documentId(), StockDocumentStatus.CANCELED);
 
         return new CancelStockDocumentResponse(
                 document.documentId(),
@@ -372,10 +375,10 @@ public class StockService {
                     }
                     beforeQuantity = currentQuantity;
                     afterQuantity = beforeQuantity + quantity;
-                    stockMapper.updatePartStockQuantity(companyId, line.partId(), afterQuantity);
+                    updatePartStockQuantity(companyId, line.partId(), afterQuantity, ErrorCode.STOCK_STATE_CONFLICT);
                 }
             } else {
-                stockMapper.updatePartStockQuantity(companyId, line.partId(), afterQuantity);
+                updatePartStockQuantity(companyId, line.partId(), afterQuantity, ErrorCode.STOCK_STATE_CONFLICT);
             }
 
             StockMovement movement = new StockMovement(
@@ -486,7 +489,7 @@ public class StockService {
                     memberId
             );
             stockMapper.insertMovement(movement);
-            stockMapper.updatePartStockQuantity(companyId, line.partId(), afterQuantity);
+            updatePartStockQuantity(companyId, line.partId(), afterQuantity, ErrorCode.STOCK_STATE_CONFLICT);
 
             for (SearchOutboundCandidateResponse candidate : candidates) {
                 insertMovementUnitStatusChange(
@@ -496,7 +499,7 @@ public class StockService {
                         UnitStatus.IN_STOCK,
                         UnitStatus.OUTBOUND
                 );
-                stockMapper.updatePartUnitStatusForOutbound(companyId, candidate.unitId());
+                updatePartUnitStatusForOutbound(companyId, candidate.unitId());
                 outboundUnitCount++;
             }
 
@@ -632,6 +635,62 @@ public class StockService {
         );
         if (inserted != 1) {
             throw new BusinessException(ErrorCode.PART_UNIT_NOT_FOUND);
+        }
+    }
+
+    private void updatePartStockQuantity(
+            Long companyId,
+            Long partId,
+            Integer quantity,
+            ErrorCode errorCode
+    ) {
+        int updated = stockMapper.updatePartStockQuantity(companyId, partId, quantity);
+        if (updated != 1) {
+            throw new BusinessException(errorCode);
+        }
+    }
+
+    private void updatePartUnitStatusForInboundCancel(Long companyId, Long unitId) {
+        int updated = stockMapper.updatePartUnitStatusForInboundCancel(companyId, unitId);
+        if (updated != 1) {
+            throw new BusinessException(ErrorCode.PART_INVALID_STATUS_CHANGE);
+        }
+    }
+
+    private void updatePartUnitStatusForOutbound(Long companyId, Long unitId) {
+        int updated = stockMapper.updatePartUnitStatusForOutbound(companyId, unitId);
+        if (updated != 1) {
+            throw new BusinessException(ErrorCode.PART_INVALID_STATUS_CHANGE);
+        }
+    }
+
+    private void updatePartUnitStatusForOutboundCancel(Long companyId, Long unitId) {
+        int updated = stockMapper.updatePartUnitStatusForOutboundCancel(companyId, unitId);
+        if (updated != 1) {
+            throw new BusinessException(ErrorCode.PART_INVALID_STATUS_CHANGE);
+        }
+    }
+
+    private void updateDocumentMovementStatus(
+            Long companyId,
+            Long documentId,
+            MovementStatus movementStatus,
+            int expectedCount
+    ) {
+        int updated = stockMapper.updateDocumentMovementStatus(companyId, documentId, movementStatus);
+        if (updated != expectedCount) {
+            throw new BusinessException(ErrorCode.STOCK_INVALID_CANCEL_REQUEST);
+        }
+    }
+
+    private void updateDocumentStatus(
+            Long companyId,
+            Long documentId,
+            StockDocumentStatus documentStatus
+    ) {
+        int updated = stockMapper.updateDocumentStatus(companyId, documentId, documentStatus);
+        if (updated != 1) {
+            throw new BusinessException(ErrorCode.STOCK_INVALID_CANCEL_REQUEST);
         }
     }
 

@@ -187,6 +187,7 @@ public interface InspectionMapper {
     int updatePartUnitInspectionStatus(
             @Param("companyId") Long companyId,
             @Param("unitId") Long unitId,
+            @Param("expectedInspectionStatus") InspectionStatus expectedInspectionStatus,
             @Param("inspectionStatus") InspectionStatus inspectionStatus,
             @Param("grade") PartGrade grade,
             @Param("salesStatus") SalesStatus salesStatus
@@ -195,6 +196,7 @@ public interface InspectionMapper {
     int updatePartUnitInspectionStatuses(
             @Param("companyId") Long companyId,
             @Param("unitIds") List<Long> unitIds,
+            @Param("expectedInspectionStatus") InspectionStatus expectedInspectionStatus,
             @Param("inspectionStatus") InspectionStatus inspectionStatus,
             @Param("grade") PartGrade grade,
             @Param("salesStatus") SalesStatus salesStatus

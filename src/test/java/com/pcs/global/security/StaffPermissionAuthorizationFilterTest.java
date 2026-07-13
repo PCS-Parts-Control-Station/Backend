@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pcs.domain.member.service.StaffPermissionService;
 import com.pcs.domain.member.type.MemberRole;
 import com.pcs.domain.member.type.StaffPermission;
+import com.pcs.global.error.ApiErrorResponseWriter;
 import java.time.Instant;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,18 +30,42 @@ class StaffPermissionAuthorizationFilterTest {
     private StaffPermissionService staffPermissionService;
 
     private StaffPermissionAuthorizationFilter filter;
-    private PcsPrincipal staff;
 
     @BeforeEach
     void setUp() {
-        filter = new StaffPermissionAuthorizationFilter(staffPermissionService, new ObjectMapper());
-        staff = new PcsPrincipal(7L, 1L, "acme", "staff", MemberRole.STAFF, Instant.now().plusSeconds(600));
-        SecurityContextHolder.getContext().setAuthentication(new TestingAuthenticationToken(staff, null));
+        filter = new StaffPermissionAuthorizationFilter(
+                staffPermissionService,
+                new ApiErrorResponseWriter(new ObjectMapper())
+        );
+        PcsPrincipal staff = new PcsPrincipal(
+                7L,
+                1L,
+                "acme",
+                "staff",
+                MemberRole.STAFF,
+                Instant.now().plusSeconds(600)
+        );
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(staff, null, staff.authorities())
+        );
     }
 
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    void disabledPermission_returnsCommonForbiddenResponse() throws Exception {
+        when(staffPermissionService.isEnabled(1L, StaffPermission.STAFF_PARTNER_MANAGE)).thenReturn(false);
+
+        MockHttpServletResponse response = execute("POST", "/api/workspaces/acme/partners");
+
+        assertThat(response.getStatus()).isEqualTo(403);
+        assertThat(response.getContentAsString())
+                .contains("\"success\":false")
+                .contains("\"code\":\"AUTH-008\"")
+                .contains("\"data\":null");
     }
 
     @Test

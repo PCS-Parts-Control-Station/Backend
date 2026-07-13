@@ -63,7 +63,7 @@ public ApiResultDto<?> partners(
         @PathVariable String companyCode,
         @AuthenticationPrincipal PcsPrincipal principal
 ) {
-    return ApiResultDto.success(partnerFacade.search(companyCode, principal));
+    return ApiResultDto.ok(partnerFacade.search(companyCode, principal));
 }
 ```
 

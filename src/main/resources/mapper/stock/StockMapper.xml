@@ -49,15 +49,33 @@
           AND d.created_at <![CDATA[>=]]> #{dateFrom}
         </if>
         <if test="dateTo != null">
-          AND d.created_at <![CDATA[<]]> DATE_ADD(#{dateTo}, INTERVAL 1 DAY)
+          AND d.created_at <![CDATA[<]]> #{dateTo}
         </if>
         <if test="keyword != null and keyword != ''">
           AND (
               d.document_no LIKE CONCAT('%', #{keyword}, '%')
-              OR tp.partner_name LIKE CONCAT('%', #{keyword}, '%')
-              OR p.part_name LIKE CONCAT('%', #{keyword}, '%')
-              OR p.model_name LIKE CONCAT('%', #{keyword}, '%')
-              OR p.part_code LIKE CONCAT('%', #{keyword}, '%')
+              OR EXISTS (
+                  SELECT 1
+                  FROM tb_trade_partner ktp
+                  WHERE ktp.company_id = d.company_id
+                    AND ktp.partner_id = d.partner_id
+                    AND ktp.partner_name LIKE CONCAT('%', #{keyword}, '%')
+              )
+              OR EXISTS (
+                  SELECT 1
+                  FROM tb_stock_movement kpm
+                  JOIN tb_pc_part kp
+                    ON kp.company_id = kpm.company_id
+                   AND kp.part_id = kpm.part_id
+                  WHERE kpm.company_id = d.company_id
+                    AND kpm.document_id = d.document_id
+                    AND kpm.canceled_movement_id IS NULL
+                    AND (
+                        kp.part_name LIKE CONCAT('%', #{keyword}, '%')
+                        OR kp.model_name LIKE CONCAT('%', #{keyword}, '%')
+                        OR kp.part_code LIKE CONCAT('%', #{keyword}, '%')
+                    )
+              )
               OR EXISTS (
                   SELECT 1
                   FROM tb_stock_movement km
@@ -94,7 +112,19 @@
             COALESCE(SUM(m.quantity), 0) AS total_quantity,
             COALESCE(pm.name, '-') AS processed_by_name,
             d.created_at
-        FROM tb_stock_document d
+        FROM (
+            SELECT
+                d.company_id,
+                d.document_id
+            FROM tb_stock_document d
+            <include refid="documentSearchWhere" />
+            ORDER BY d.document_id DESC
+            LIMIT #{size}
+            OFFSET #{offset}
+        ) page_documents
+        JOIN tb_stock_document d
+            ON d.company_id = page_documents.company_id
+           AND d.document_id = page_documents.document_id
         LEFT JOIN tb_trade_partner tp
             ON tp.company_id = d.company_id
            AND tp.partner_id = d.partner_id
@@ -108,7 +138,6 @@
         LEFT JOIN tb_member pm
             ON pm.company_id = d.company_id
            AND pm.member_id = d.processed_by
-        <include refid="documentSearchWhere" />
         GROUP BY
             d.document_id,
             d.document_no,
@@ -119,56 +148,48 @@
             pm.name,
             d.created_at
         ORDER BY d.document_id DESC
-        LIMIT #{size}
-        OFFSET #{offset}
     </select>
 
     <select id="summarizeDocuments" resultType="com.pcs.domain.stock.dto.response.SearchStockDocumentSummaryResponse">
         SELECT
-            COUNT(DISTINCT filtered.document_id) AS total_count,
-            COALESCE(SUM(filtered.total_quantity), 0) AS total_quantity,
-            COALESCE(SUM(filtered.waiting_quantity), 0) AS waiting_quantity,
-            COALESCE(SUM(CASE WHEN filtered.document_status = 'CANCELED' THEN 1 ELSE 0 END), 0) AS canceled_count
-        FROM (
+            COUNT(*) AS total_count,
+            COALESCE(SUM(movement_summary.total_quantity), 0) AS total_quantity,
+            COALESCE(SUM(waiting_summary.waiting_quantity), 0) AS waiting_quantity,
+            COALESCE(SUM(CASE WHEN d.document_status = 'CANCELED' THEN 1 ELSE 0 END), 0) AS canceled_count
+        FROM tb_stock_document d
+        LEFT JOIN (
             SELECT
-                d.document_id,
-                d.document_status,
-                COALESCE(SUM(m.quantity), 0) AS total_quantity,
-                COALESCE(waiting.waiting_quantity, 0) AS waiting_quantity
-            FROM tb_stock_document d
-            LEFT JOIN tb_trade_partner tp
-                ON tp.company_id = d.company_id
-               AND tp.partner_id = d.partner_id
-            LEFT JOIN tb_stock_movement m
-                ON m.company_id = d.company_id
-               AND m.document_id = d.document_id
-               AND m.canceled_movement_id IS NULL
-            LEFT JOIN tb_pc_part p
-                ON p.company_id = m.company_id
-               AND p.part_id = m.part_id
-            LEFT JOIN (
-                SELECT
-                    mw.company_id,
-                    mw.document_id,
-                    COUNT(*) AS waiting_quantity
-                FROM tb_stock_movement mw
-                INNER JOIN tb_stock_movement_unit mu
-                    ON mu.movement_id = mw.movement_id
-                INNER JOIN tb_pc_part_unit u
-                    ON u.company_id = mw.company_id
-                   AND u.unit_id = mu.unit_id
-                WHERE mw.company_id = #{companyId}
-                  AND mw.canceled_movement_id IS NULL
-                  AND u.inspection_status = 'WAITING'
-                  AND u.unit_status = 'IN_STOCK'
-                  AND u.active = TRUE
-                GROUP BY mw.company_id, mw.document_id
-            ) waiting
-                ON waiting.company_id = d.company_id
-               AND waiting.document_id = d.document_id
-            <include refid="documentSearchWhere" />
-            GROUP BY d.document_id, d.document_status, waiting.waiting_quantity
-        ) filtered
+                m.company_id,
+                m.document_id,
+                SUM(m.quantity) AS total_quantity
+            FROM tb_stock_movement m
+            WHERE m.company_id = #{companyId}
+              AND m.canceled_movement_id IS NULL
+            GROUP BY m.company_id, m.document_id
+        ) movement_summary
+            ON movement_summary.company_id = d.company_id
+           AND movement_summary.document_id = d.document_id
+        LEFT JOIN (
+            SELECT
+                mw.company_id,
+                mw.document_id,
+                COUNT(DISTINCT mu.unit_id) AS waiting_quantity
+            FROM tb_stock_movement mw
+            JOIN tb_stock_movement_unit mu
+                ON mu.movement_id = mw.movement_id
+            JOIN tb_pc_part_unit u
+                ON u.company_id = mw.company_id
+               AND u.unit_id = mu.unit_id
+            WHERE mw.company_id = #{companyId}
+              AND mw.canceled_movement_id IS NULL
+              AND u.inspection_status = 'WAITING'
+              AND u.unit_status = 'IN_STOCK'
+              AND u.active = TRUE
+            GROUP BY mw.company_id, mw.document_id
+        ) waiting_summary
+            ON waiting_summary.company_id = d.company_id
+           AND waiting_summary.document_id = d.document_id
+        <include refid="documentSearchWhere" />
     </select>
 
     <sql id="outboundCandidateWhere">
@@ -505,6 +526,7 @@
         WHERE company_id = #{companyId}
           AND document_id = #{documentId}
           AND canceled_movement_id IS NULL
+          AND movement_status = 'COMPLETED'
     </update>
 
     <insert id="insertDocument"
@@ -670,6 +692,10 @@
             active = FALSE
         WHERE company_id = #{companyId}
           AND unit_id = #{unitId}
+          AND active = TRUE
+          AND unit_status = 'IN_STOCK'
+          AND inspection_status = 'WAITING'
+          AND sales_status = 'HOLD'
     </update>
 
     <update id="updatePartUnitStatusForOutbound">
@@ -677,6 +703,11 @@
         SET unit_status = 'OUTBOUND'
         WHERE company_id = #{companyId}
           AND unit_id = #{unitId}
+          AND active = TRUE
+          AND unit_status = 'IN_STOCK'
+          AND inspection_status = 'COMPLETED'
+          AND sales_status = 'AVAILABLE'
+          AND grade != 'DEFECTIVE'
     </update>
 
     <update id="updatePartUnitStatusForOutboundCancel">
@@ -684,6 +715,8 @@
         SET unit_status = 'IN_STOCK'
         WHERE company_id = #{companyId}
           AND unit_id = #{unitId}
+          AND active = TRUE
+          AND unit_status = 'OUTBOUND'
     </update>
 
 </mapper>

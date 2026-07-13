@@ -63,7 +63,7 @@ com.pcs.domain.auth
 
 ## 파트1-1 배포 전환
 
-- 배포 전에 `docs/sql/pcs-auth-part1-1-alter.sql`을 실행한다.
+- 별도 alter 스크립트는 유지하지 않는다. 현재 인증 관련 DB 구조는 `docs/sql/pcs-schema-ddl.sql` 기준으로 확인한다.
 - 기존 활성 refresh token은 모두 `ADMIN_REVOKED`로 폐기하여 새 `sid` 세션으로 다시 로그인하게 한다.
 - 기존 형식 Access Token은 `iss`, `aud`, `jti`, `sid` 검증을 통과하지 못하므로 배포 후 즉시 사용할 수 없다.
 - 기존 `TEMPORARY` 계정은 임시 비밀번호를 만료 처리한다. 관리자가 사용자 관리에서 난수 임시 비밀번호를 다시 발급해야 한다.

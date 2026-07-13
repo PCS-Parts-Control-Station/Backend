@@ -61,6 +61,13 @@ tb_member.chk_member_owner_slot
 tb_company_staff_permission_disabled.uk_company_staff_permission_disabled
 ```
 
+## 목록 조회 기준
+
+- 모든 목록 조건은 `company_id` 범위를 포함한다.
+- 기본 정렬은 `updated_at DESC, member_id DESC`이며 `idx_member_company_list`를 기준으로 검증한다.
+- 가입일 범위는 `created_at` 반열린 구간으로 조회하고 `idx_member_company_created`를 기준으로 검증한다.
+- 이름과 로그인 ID의 `%keyword%` 부분 일치 검색은 일반 B-Tree 인덱스 사용을 전제로 하지 않는다.
+
 ## 역할별 저장 규칙
 
 OWNER:
