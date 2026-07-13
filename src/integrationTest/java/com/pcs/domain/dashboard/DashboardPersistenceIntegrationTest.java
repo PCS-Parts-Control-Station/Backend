@@ -48,6 +48,16 @@ class DashboardPersistenceIntegrationTest extends MariaDbIntegrationTest {
 
         assertThat(dashboard.todos()).extracting("partId").containsOnly(1001L);
         assertThat(dashboard.todos()).extracting("categoryName").containsOnly("Memory");
+        assertThat(dashboard.todos()).extracting("label")
+                .contains("검수 대기", "판매 보류", "판매 불가");
+        assertThat(dashboard.todos())
+                .filteredOn(todo -> "STOCK_HOLD".equals(todo.type()))
+                .extracting("route", "partState")
+                .containsExactly(org.assertj.core.groups.Tuple.tuple("part-units", "STOCK_HOLD"));
+        assertThat(dashboard.todos())
+                .filteredOn(todo -> "STOCK_UNAVAILABLE".equals(todo.type()))
+                .extracting("route", "partState")
+                .containsExactly(org.assertj.core.groups.Tuple.tuple("part-units", "STOCK_UNAVAILABLE"));
         assertThat(dashboard.recentActivities()).extracting("documentNo")
                 .contains("IN-TEST-001", "OUT-TEST-001")
                 .doesNotContain("IN-CANCELED-001", "IN-OTHER-001");

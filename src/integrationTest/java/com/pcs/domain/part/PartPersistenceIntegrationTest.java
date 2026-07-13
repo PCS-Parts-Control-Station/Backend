@@ -268,6 +268,11 @@ class PartPersistenceIntegrationTest extends MariaDbIntegrationTest {
         var salesHold = partService.searchPartUnits(1L, "PCS-GPU", null, null, category.categoryId(), "SALES_HOLD", 0, 20, null);
         assertThat(salesHold.content()).extracting("internalSerialNo").containsExactly("PCS-GPU-0005");
 
+        var stockHold = partService.searchPartUnits(1L, "PCS-GPU", part.partId(), null, category.categoryId(), "STOCK_HOLD", 0, 20, null);
+        assertThat(stockHold.content()).extracting("internalSerialNo")
+                .containsExactly("PCS-GPU-0001", "PCS-GPU-0005");
+        assertThat(stockHold.summary().totalCount()).isEqualTo(2);
+
         var outbound = partService.searchPartUnits(1L, "PCS-GPU", null, null, category.categoryId(), "OUTBOUND", 0, 20, null);
         assertThat(outbound.content()).extracting("internalSerialNo").containsExactly("PCS-GPU-0003");
         assertThat(outbound.content().get(0).unitStatus()).isEqualTo(UnitStatus.OUTBOUND);
