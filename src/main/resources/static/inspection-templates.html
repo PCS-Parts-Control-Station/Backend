@@ -16,10 +16,10 @@
     <link rel="stylesheet" href="/css/core/tokens.css?20260618_layers">
     <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
     <link rel="stylesheet" href="/css/layouts/workspace.css?20260703_quick_bar_no_overlap">
-    <link rel="stylesheet" href="/css/components/components.css?20260703_modal_scroll_lock">
+    <link rel="stylesheet" href="/css/components/components.css?20260714_drawer_header_alignment">
     <link rel="stylesheet" href="/css/components/management-page.css?20260619_management">
     <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
-    <link rel="stylesheet" href="/css/pages/inspection-templates.css?20260708_bundle_save_drawer">
+    <link rel="stylesheet" href="/css/pages/inspection-templates.css?20260714_responsive_audit">
 </head>
 <body class="has-collapsible-sidebar inspection-template-page page-inspection-templates workspace-page">
 <div class="workspace-layout">
@@ -71,18 +71,18 @@
 
         <section class="content-grid management-drawer-grid">
             <div class="content-main">
-                <section class="filter-card management-filter-card" aria-labelledby="template-filter-title">
+                <section class="filter-card management-filter-card template-filter-card" aria-labelledby="template-filter-title">
                     <div>
                         <h2 id="template-filter-title">템플릿 검색</h2>
                         <p>템플릿명, 분류, 사용 상태로 검수 양식을 찾습니다.</p>
                     </div>
                     <!-- API: GET /api/workspaces/{companyCode}/inspection-templates?keyword=&categoryId=&active=&page=&size= -->
-                    <form class="filter-form management-filter-form-compact" action="#" method="get" autocomplete="off" data-template-filter-form>
-                        <label>
+                    <form class="filter-form management-filter-form-compact template-filter-form" action="#" method="get" autocomplete="off" data-template-filter-form>
+                        <label class="template-filter-keyword">
                             <span>검색어</span>
                             <input type="search" name="keyword" placeholder="예: 메모리 검수" autocomplete="off">
                         </label>
-                        <label>
+                        <label class="template-filter-category">
                             <span>분류</span>
                             <input type="hidden" name="categoryId" data-template-category-filter>
                             <button class="category-picker-button" type="button" data-open-template-category-picker="filter">
@@ -90,7 +90,7 @@
                                 <small>분류 선택</small>
                             </button>
                         </label>
-                        <label>
+                        <label class="template-filter-active">
                             <span>사용 상태</span>
                             <select name="active">
                                 <option value="true" selected>사용 중</option>
@@ -98,11 +98,11 @@
                                 <option value="false">사용 안 함</option>
                             </select>
                         </label>
-                        <button class="btn btn-primary" type="submit">검색</button>
+                        <button class="btn btn-primary template-filter-submit" type="submit">검색</button>
                     </form>
                 </section>
 
-                <section class="table-card" aria-labelledby="template-list-title">
+                <section class="table-card template-list-card" aria-labelledby="template-list-title">
                     <div class="table-header inline-summary-header management-summary-header">
                         <div>
                             <h2 id="template-list-title">검수 템플릿 목록</h2>
@@ -130,7 +130,7 @@
                         </div>
                     </div>
 
-                    <div class="data-table" role="table" aria-label="검수 템플릿 목록" data-template-table>
+                    <div class="data-table inspection-template-table" role="table" aria-label="검수 템플릿 목록" data-template-table>
                         <div class="data-row management-data-row inspection-template-row table-head" role="row">
                             <span role="columnheader">템플릿</span>
                             <span role="columnheader">분류</span>
@@ -203,7 +203,10 @@
                                 <h2>템플릿 상세</h2>
                                 <p>선택한 템플릿의 기본 정보를 확인합니다.</p>
                             </div>
-                            <button class="panel-link-button management-compact-action" type="button" data-template-create-mode>새 템플릿</button>
+                            <div class="panel-title-actions">
+                                <button class="panel-link-button management-compact-action" type="button" data-template-create-mode>새 템플릿</button>
+                                <button class="panel-link-button" type="button" data-close-template-drawer>닫기</button>
+                            </div>
                         </div>
 
                         <div class="drawer-scroll-body">
@@ -252,7 +255,10 @@
                                 <h2>템플릿 수정</h2>
                                 <p>템플릿 기본 정보를 수정합니다.</p>
                             </div>
-                            <button class="panel-link-button management-compact-action" type="button" data-template-create-mode>새 템플릿</button>
+                            <div class="panel-title-actions">
+                                <button class="panel-link-button management-compact-action" type="button" data-template-create-mode>새 템플릿</button>
+                                <button class="panel-link-button" type="button" data-close-template-drawer>닫기</button>
+                            </div>
                         </div>
 
                         <div class="drawer-scroll-body">
