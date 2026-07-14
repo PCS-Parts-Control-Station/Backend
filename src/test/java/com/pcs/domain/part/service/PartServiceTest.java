@@ -75,7 +75,6 @@ class PartServiceTest {
     @Test
     void searchParts_usesDefaultActiveAndLimit() {
         SearchPartResponse part = partResponse(1L, "RTX 3060", "VGA-RTX3060-MSI-001", true, 2);
-        when(partMapper.countParts(COMPANY_ID, "RTX", null, true)).thenReturn(1L);
         when(partMapper.searchParts(COMPANY_ID, "RTX", null, true, 10, 0)).thenReturn(List.of(part));
         when(partMapper.summarizeParts(COMPANY_ID, "RTX", null, true))
                 .thenReturn(new SearchPartSummaryResponse(1, 2, 1));
@@ -93,7 +92,6 @@ class PartServiceTest {
 
     @Test
     void searchParts_capsLimitToMaxSize() {
-        when(partMapper.countParts(COMPANY_ID, null, CATEGORY_ID, false)).thenReturn(1L);
         when(partMapper.searchParts(COMPANY_ID, null, CATEGORY_ID, false, 100, 100))
                 .thenReturn(List.of(partResponse(1L, "RTX 3060", "CODE", false, 0)));
         when(partMapper.summarizeParts(COMPANY_ID, null, CATEGORY_ID, false))

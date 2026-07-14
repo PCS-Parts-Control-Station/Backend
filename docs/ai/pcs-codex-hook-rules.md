@@ -23,7 +23,7 @@ harness/run-harness.ps1           실제 검사 구현
 2. 변경이 없으면 성공 종료한다.
 3. `gate` 모드로 공통 검사와 관련 Feature 검사를 실행한다.
 4. 빌드는 항상 증분 실행한다.
-5. 도메인 Java, Mapper XML, SQL, `*-db.md` 변경이 있으면 DB 검사를 추가한다.
+5. 도메인 Java, workspace 공통 코드, Mapper XML, DB 통합 테스트/fixture, SQL, `*-db.md`, 테스트 레지스트리 변경이 있으면 DB 검사를 추가한다.
 6. FAIL이면 `harness/reports/agent-failures.md` 내용을 반환하고 작업 완료를 허용하지 않는다.
 7. 통과하면 Stop을 허용한다.
 
@@ -34,6 +34,7 @@ harness/run-harness.ps1           실제 검사 구현
 - `run-harness.ps1`, `run-feedback-loop.ps1`, Stop 훅에 Feature 목록을 각각 복제하지 않는다.
 - 한 파일이 여러 Feature에 영향을 주면 관련 Feature를 모두 선택한다.
 - Feature의 `dbChecks`는 다른 도메인의 DB 구조까지 필요한 경우 함께 지정한다.
+- 공통/Feature 테스트 선택자는 `commonTests`, `tests.unitApi`, `tests.dbIntegration`에 선언한다.
 - 실제 검사 함수는 `run-harness.ps1`에 둔다.
 
 ## 실패 처리

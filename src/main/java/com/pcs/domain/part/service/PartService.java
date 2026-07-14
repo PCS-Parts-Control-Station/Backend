@@ -23,17 +23,14 @@ import com.pcs.global.dto.PageResultDto;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.pagination.PageQuery;
+import com.pcs.global.util.Hashing;
 import com.pcs.global.util.TextNormalizer;
 import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -87,13 +84,19 @@ public class PartService {
             Integer size,
             Integer limit
     ) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
 
         String normalizedKeyword = TextNormalizer.optional(keyword);
         Boolean normalizedActive = active == null ? Boolean.TRUE : active;
         PageQuery pageQuery = PageQuery.of(page, size, limit);
 
-        long totalElements = partMapper.countParts(companyId, normalizedKeyword, categoryId, normalizedActive);
+        SearchPartSummaryResponse summary = partMapper.summarizeParts(
+                companyId,
+                normalizedKeyword,
+                categoryId,
+                normalizedActive
+        );
+        long totalElements = summary.totalCount();
         List<SearchPartResponse> items = totalElements == 0
                 ? List.of()
                 : partMapper.searchParts(
@@ -104,13 +107,6 @@ public class PartService {
                         pageQuery.size(),
                         pageQuery.offset()
                 );
-        SearchPartSummaryResponse summary = partMapper.summarizeParts(
-                companyId,
-                normalizedKeyword,
-                categoryId,
-                normalizedActive
-        );
-
         return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, summary);
     }
 
@@ -125,7 +121,7 @@ public class PartService {
             Integer size,
             Integer limit
     ) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
 
         String normalizedKeyword = TextNormalizer.optional(keyword);
         String normalizedPartState = normalizePartState(partState);
@@ -196,12 +192,12 @@ public class PartService {
     }
 
     public PartDetailResponse getPart(Long companyId, Long partId) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         return getPartDetail(companyId, partId);
     }
 
     public PartUnitDetailResponse getPartUnit(Long companyId, Long unitId) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         SearchPartUnitResponse unit = partMapper.findPartUnitById(companyId, unitId);
         if (unit == null) {
             throw new BusinessException(ErrorCode.PART_UNIT_NOT_FOUND);
@@ -221,7 +217,7 @@ public class PartService {
 
     @Transactional
     public PartDetailResponse createPart(Long companyId, CreatePartRequest request, Long memberId) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         String categoryName = validateCategory(companyId, request.categoryId());
         List<CategorySpecDefinitionRow> definitions = partSpecMapper.findDefinitionsByCategory(
                 companyId,
@@ -260,7 +256,7 @@ public class PartService {
 
     @Transactional
     public PartDetailResponse updatePart(Long companyId, Long partId, UpdatePartRequest request) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         PcPart part = partMapper.findById(companyId, partId);
         if (part == null) {
             throw new BusinessException(ErrorCode.PART_NOT_FOUND);
@@ -572,13 +568,7 @@ public class PartService {
     }
 
     private String hashSegment(String seed) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] bytes = digest.digest(seed.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(bytes).substring(0, 8).toUpperCase(Locale.ROOT);
-        } catch (NoSuchAlgorithmException exception) {
-            throw new IllegalStateException("SHA-256 algorithm is unavailable.", exception);
-        }
+        return Hashing.sha256Hex(seed).substring(0, 8).toUpperCase(Locale.ROOT);
     }
 
     private String trimCode(String baseCode, int sequence) {
@@ -586,10 +576,6 @@ public class PartService {
         int maxBaseLength = 80 - suffix.length();
         String base = baseCode.length() > maxBaseLength ? baseCode.substring(0, maxBaseLength) : baseCode;
         return base + suffix;
-    }
-
-    private void validateCompanyActive(Long companyId) {
-        workspaceAccessValidator.validateCompanyActive(companyId);
     }
 
     private int normalizeQuantity(Integer value) {

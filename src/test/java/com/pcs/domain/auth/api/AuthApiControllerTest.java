@@ -2,6 +2,8 @@ package com.pcs.domain.auth.api;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -104,6 +106,20 @@ class AuthApiControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.companyCode").value("acme"));
+    }
+
+    @Test
+    void loginWorkspace_rejectsInvalidRequestBeforeCallingFacade() throws Exception {
+        WorkspaceLoginRequest request = new WorkspaceLoginRequest("invalid code", "admin01", "");
+
+        mockMvc.perform(post("/api/workspaces/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("COMMON-001"));
+
+        verify(authFacade, never()).loginWorkspace(any(), any(), any(), any());
     }
 
     @Test

@@ -9,10 +9,25 @@
     "stock",
     "inspection"
   ],
+  "commonTests": {
+    "unitApi": [
+      "com.pcs.global.error.*",
+      "com.pcs.global.pagination.*",
+      "com.pcs.web.*"
+    ],
+    "dbIntegration": [
+      "com.pcs.global.workspace.CompanyDataIsolationIntegrationTest",
+      "com.pcs.support.*"
+    ]
+  },
   "features": [
     {
       "name": "company",
       "dbChecks": ["company", "member"],
+      "tests": {
+        "unitApi": ["com.pcs.domain.company.*"],
+        "dbIntegration": ["com.pcs.domain.company.*"]
+      },
       "pathPatterns": [
         "^src/main/java/com/pcs/domain/company/",
         "^src/main/resources/mapper/company/",
@@ -28,11 +43,21 @@
     {
       "name": "member",
       "dbChecks": ["member"],
+      "tests": {
+        "unitApi": [
+          "com.pcs.domain.member.*",
+          "com.pcs.global.security.StaffPermissionAuthorizationFilterTest"
+        ],
+        "dbIntegration": ["com.pcs.domain.member.*"]
+      },
       "pathPatterns": [
         "^src/main/java/com/pcs/domain/member/",
+        "^src/main/java/com/pcs/global/(pagination/PageQuery|util/TextNormalizer)\\.java$",
         "^src/main/resources/mapper/member/",
         "^src/test/java/com/pcs/domain/member/",
         "^src/integrationTest/java/com/pcs/domain/member/",
+        "^src/main/java/com/pcs/global/security/StaffPermissionAuthorizationFilter\\.java$",
+        "^src/test/java/com/pcs/global/security/StaffPermissionAuthorizationFilterTest\\.java$",
         "^src/integrationTest/resources/pcs-account-test-schema\\.sql$",
         "^docs/features/(member|mypage)(-db)?\\.md$",
         "^src/main/resources/static/(users|mypage)\\.html$",
@@ -43,6 +68,14 @@
     {
       "name": "auth",
       "dbChecks": ["auth", "member"],
+      "tests": {
+        "unitApi": [
+          "com.pcs.domain.auth.*",
+          "com.pcs.global.jwt.*",
+          "com.pcs.global.security.*"
+        ],
+        "dbIntegration": ["com.pcs.domain.auth.*"]
+      },
       "pathPatterns": [
         "^src/main/java/com/pcs/domain/auth/",
         "^src/main/java/com/pcs/global/(jwt|security|auth)/",
@@ -61,11 +94,21 @@
     {
       "name": "partner",
       "dbChecks": ["partner"],
+      "tests": {
+        "unitApi": [
+          "com.pcs.domain.partner.*",
+          "com.pcs.global.security.StaffPermissionAuthorizationFilterTest"
+        ],
+        "dbIntegration": ["com.pcs.domain.partner.*"]
+      },
       "pathPatterns": [
         "^src/main/java/com/pcs/domain/partner/",
+        "^src/main/java/com/pcs/global/(pagination/PageQuery|util/TextNormalizer)\\.java$",
         "^src/main/resources/mapper/partner/",
         "^src/test/java/com/pcs/domain/partner/",
         "^src/integrationTest/java/com/pcs/domain/partner/",
+        "^src/main/java/com/pcs/global/security/StaffPermissionAuthorizationFilter\\.java$",
+        "^src/test/java/com/pcs/global/security/StaffPermissionAuthorizationFilterTest\\.java$",
         "^src/integrationTest/resources/pcs-account-test-schema\\.sql$",
         "^docs/features/partner(-db)?\\.md$",
         "^src/main/resources/static/partners\\.html$",
@@ -76,11 +119,21 @@
     {
       "name": "category",
       "dbChecks": ["category"],
+      "tests": {
+        "unitApi": [
+          "com.pcs.domain.category.*",
+          "com.pcs.global.security.StaffPermissionAuthorizationFilterTest"
+        ],
+        "dbIntegration": ["com.pcs.domain.category.*"]
+      },
       "pathPatterns": [
         "^src/main/java/com/pcs/domain/category/",
+        "^src/main/java/com/pcs/global/(pagination/PageQuery|util/TextNormalizer)\\.java$",
         "^src/main/resources/mapper/category/",
         "^src/test/java/com/pcs/domain/category/",
         "^src/integrationTest/java/com/pcs/domain/category/",
+        "^src/main/java/com/pcs/global/security/StaffPermissionAuthorizationFilter\\.java$",
+        "^src/test/java/com/pcs/global/security/StaffPermissionAuthorizationFilterTest\\.java$",
         "^src/integrationTest/resources/pcs-category-part-test-schema\\.sql$",
         "^docs/features/category(-db)?\\.md$",
         "^src/main/resources/static/categories\\.html$",
@@ -92,11 +145,21 @@
     {
       "name": "part",
       "dbChecks": ["part", "category"],
+      "tests": {
+        "unitApi": [
+          "com.pcs.domain.part.*",
+          "com.pcs.global.security.StaffPermissionAuthorizationFilterTest"
+        ],
+        "dbIntegration": ["com.pcs.domain.part.*"]
+      },
       "pathPatterns": [
         "^src/main/java/com/pcs/domain/part/",
+        "^src/main/java/com/pcs/global/(pagination/PageQuery|util/TextNormalizer)\\.java$",
         "^src/main/resources/mapper/part/",
         "^src/test/java/com/pcs/domain/part/",
         "^src/integrationTest/java/com/pcs/domain/part/",
+        "^src/main/java/com/pcs/global/security/StaffPermissionAuthorizationFilter\\.java$",
+        "^src/test/java/com/pcs/global/security/StaffPermissionAuthorizationFilterTest\\.java$",
         "^src/integrationTest/resources/pcs-category-part-test-schema\\.sql$",
         "^docs/features/part(-db)?\\.md$",
         "^src/main/resources/static/parts\\.html$",
@@ -108,11 +171,21 @@
     {
       "name": "part-unit",
       "dbChecks": ["part", "category", "stock", "inspection"],
+      "tests": {
+        "unitApi": [
+          "com.pcs.domain.part.*",
+          "com.pcs.global.security.StaffPermissionAuthorizationFilterTest"
+        ],
+        "dbIntegration": ["com.pcs.domain.part.*"]
+      },
       "pathPatterns": [
         "^src/main/java/com/pcs/domain/part/",
+        "^src/main/java/com/pcs/global/(pagination/PageQuery|util/TextNormalizer)\\.java$",
         "^src/main/resources/mapper/part/",
         "^src/test/java/com/pcs/domain/part/",
         "^src/integrationTest/java/com/pcs/domain/part/",
+        "^src/main/java/com/pcs/global/security/StaffPermissionAuthorizationFilter\\.java$",
+        "^src/test/java/com/pcs/global/security/StaffPermissionAuthorizationFilterTest\\.java$",
         "^src/integrationTest/resources/pcs-category-part-test-schema\\.sql$",
         "^docs/features/part-unit(-db)?\\.md$",
         "^docs/ai/(pcs-frontend-js-rules|pcs-project-structure-reference)\\.md$",
@@ -126,11 +199,21 @@
     {
       "name": "stock",
       "dbChecks": ["stock", "part", "partner"],
+      "tests": {
+        "unitApi": [
+          "com.pcs.domain.stock.*",
+          "com.pcs.global.security.StaffPermissionAuthorizationFilterTest"
+        ],
+        "dbIntegration": ["com.pcs.domain.stock.*"]
+      },
       "pathPatterns": [
         "^src/main/java/com/pcs/domain/stock/",
+        "^src/main/java/com/pcs/global/(pagination/PageQuery|util/TextNormalizer)\\.java$",
         "^src/main/resources/mapper/stock/",
         "^src/test/java/com/pcs/domain/stock/",
         "^src/integrationTest/java/com/pcs/domain/stock/",
+        "^src/main/java/com/pcs/global/security/StaffPermissionAuthorizationFilter\\.java$",
+        "^src/test/java/com/pcs/global/security/StaffPermissionAuthorizationFilterTest\\.java$",
         "^src/integrationTest/java/com/pcs/global/workspace/CompanyDataIsolationIntegrationTest\\.java$",
         "^src/integrationTest/resources/pcs-category-part-test-schema\\.sql$",
         "^src/integrationTest/resources/pcs-operations-test-schema-extension\\.sql$",
@@ -143,11 +226,21 @@
     {
       "name": "inspection",
       "dbChecks": ["inspection", "part", "category"],
+      "tests": {
+        "unitApi": [
+          "com.pcs.domain.inspection.*",
+          "com.pcs.global.security.StaffPermissionAuthorizationFilterTest"
+        ],
+        "dbIntegration": ["com.pcs.domain.inspection.*"]
+      },
       "pathPatterns": [
         "^src/main/java/com/pcs/domain/inspection/",
+        "^src/main/java/com/pcs/global/(pagination/PageQuery|util/TextNormalizer)\\.java$",
         "^src/main/resources/mapper/inspection/",
         "^src/test/java/com/pcs/domain/inspection/",
         "^src/integrationTest/java/com/pcs/domain/inspection/",
+        "^src/main/java/com/pcs/global/security/StaffPermissionAuthorizationFilter\\.java$",
+        "^src/test/java/com/pcs/global/security/StaffPermissionAuthorizationFilterTest\\.java$",
         "^src/integrationTest/java/com/pcs/global/workspace/CompanyDataIsolationIntegrationTest\\.java$",
         "^src/integrationTest/resources/pcs-category-part-test-schema\\.sql$",
         "^src/integrationTest/resources/pcs-operations-test-schema-extension\\.sql$",
@@ -160,7 +253,13 @@
     {
       "name": "history",
       "dbChecks": ["inspection"],
+      "tests": {
+        "unitApi": ["com.pcs.domain.inspection.*"],
+        "dbIntegration": ["com.pcs.domain.inspection.*"]
+      },
       "pathPatterns": [
+        "^src/main/java/com/pcs/global/security/StaffPermissionAuthorizationFilter\\.java$",
+        "^src/test/java/com/pcs/global/security/StaffPermissionAuthorizationFilterTest\\.java$",
         "^docs/features/history\\.md$",
         "^src/main/resources/static/history-inspection\\.html$",
         "^src/main/resources/static/js/history-inspection\\.js$",
@@ -170,13 +269,17 @@
     {
       "name": "dashboard",
       "dbChecks": ["stock", "inspection", "part"],
+      "tests": {
+        "unitApi": ["com.pcs.domain.dashboard.*"],
+        "dbIntegration": ["com.pcs.domain.dashboard.*"]
+      },
       "pathPatterns": [
         "^src/main/java/com/pcs/domain/dashboard/",
         "^src/main/resources/mapper/dashboard/",
         "^src/test/java/com/pcs/domain/dashboard/",
         "^src/integrationTest/java/com/pcs/domain/dashboard/",
         "^src/integrationTest/resources/pcs-operations-test-schema-extension\\.sql$",
-        "^docs/features/dashboard\\.md$",
+        "^docs/features/dashboard(-db)?\\.md$",
         "^src/main/resources/static/dashboard\\.html$",
         "^src/main/resources/static/js/dashboard\\.js$",
         "^src/main/resources/static/css/pages/dashboard\\.css$"

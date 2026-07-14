@@ -1,18 +1,17 @@
 # PCS Frontend JS Rules
 
-정적 HTML 화면에서 JS를 작성할 때의 공통 기준이다.
+정적 HTML 화면의 JavaScript 공통 계약입니다. 인증 호출은 [Auth Client Rules](pcs-auth-client-rules.md), paging은 [Pagination Rules](pcs-pagination-rules.md), 목록 상태 복원은 [Navigation State Guide](pcs-navigation-state-guide.md)를 따릅니다.
 
 ## 기본 원칙
 
-- 화면은 서버 Model을 받지 않는다.
-- HTML은 정적 파일로 두고, JS가 REST API를 호출한다.
-- 인증이 필요한 API는 `docs/ai/pcs-auth-client-rules.md` 기준으로 `pcs-api.js`를 사용한다.
-- 페이징 목록은 `docs/ai/pcs-pagination-rules.md` 기준으로 `pcs-pagination.js`를 사용한다.
-- 화면별 JS는 해당 화면의 렌더링과 이벤트 연결만 담당한다.
+- HTML은 정적 파일이며 화면 JS가 REST API로 데이터를 가져옵니다.
+- 화면별 JS는 해당 화면의 API URL, 렌더링, 이벤트 연결만 담당합니다.
+- 인증·업체 코드·날짜·toast·paging·drawer 동작을 화면별로 다시 구현하지 않습니다.
+- 데이터 변경 성공 전에는 화면을 성공 상태로 먼저 바꾸지 않습니다.
 
-## 스크립트 로딩 순서
+## 로드 순서
 
-인증 API와 페이징을 모두 쓰는 화면:
+필요한 파일만 다음 순서로 로드합니다.
 
 ```html
 <script src="/js/pcs-api.js"></script>
@@ -20,158 +19,83 @@
 <script src="/js/pcs-ui.js"></script>
 <script src="/js/pcs-common.js"></script>
 <script src="/js/pcs-navigation-state.js"></script>
-<script src="/js/partners.js"></script>
+<script src="/js/{page}.js"></script>
 ```
 
-토스트 피드백을 쓰는 화면:
+- `pcs-api.js`는 인증 API 호출보다 먼저 둡니다.
+- `pcs-pagination.js`는 paging 화면에서만 포함합니다.
+- `pcs-ui.js`는 feedback을 쓰는 화면에서 `pcs-common.js`보다 먼저 둡니다.
+- `pcs-navigation-state.js`는 목록 상태 복원이 필요한 화면에서만 포함합니다.
+- 화면별 JS는 항상 마지막에 둡니다.
 
-```html
-<link rel="stylesheet" href="/css/components/feedback.css">
-<script src="/js/pcs-ui.js"></script>
-```
+## 공통 API
 
-순서 기준:
+| 목적 | API |
+|---|---|
+| 업체 코드·API 문맥·링크 | `PcsWorkspace.getCompanyCode()`, `createContext()`, `updateWorkspaceLinks()` |
+| 날짜·시간·숫자 표시 | `PcsFormat.date()`, `dateTime()`, `localDate()`, `number()` |
+| HTML escape | `PcsHtml.escape()` |
+| toast | `PcsFeedback.toast()` 또는 `PcsUi.toast()` |
+| 저장 중 잠금 | `PcsForm.setSaving()` |
+| table 상태·cell | `PcsTable.clearRows()`, `textCell()`, `emptyRow()` |
+| 라벨 | `PcsLabels`의 업무별 label 함수 |
+| drawer | `PcsDrawer.setOpen()`, `bindDismiss()` |
+| 분류·거래처 선택 | `PcsCategoryPicker.bind()`, `PcsPartnerPicker.bind()` |
+| URL 기반 목록 상태 | `PcsNavigationState.createUrlStateController()` |
 
-- `pcs-api.js`가 먼저 로드되어야 `window.PcsApi`를 사용할 수 있다.
-- `pcs-pagination.js`가 먼저 로드되어야 `window.PcsPagination`을 사용할 수 있다.
-- `pcs-ui.js`가 먼저 로드되어야 `window.PcsUi.toast()`를 사용할 수 있다.
-- `pcs-common.js`는 `pcs-ui.js` 뒤, 화면별 JS 앞에 둔다.
-- `pcs-navigation-state.js`는 URL 기반 목록 상태 복원이 필요한 화면에서 `pcs-common.js` 뒤, 화면별 JS 앞에 둔다.
-- 화면별 JS는 항상 공통 JS 뒤에 둔다.
+공통 함수로 처리할 수 없는 화면별 후처리만 얇은 wrapper로 추가합니다.
 
-## 공통 JS 사용
-
-화면별 JS에서 아래 기능을 다시 만들지 않는다.
-
-```js
-window.PcsWorkspace.getCompanyCode()
-window.PcsWorkspace.updateWorkspaceLinks(companyCode)
-window.PcsFormat.date(value)
-window.PcsFormat.number(value)
-window.PcsHtml.escape(value)
-window.PcsFeedback.toast(message, type)
-window.PcsForm.setSaving(form, isSaving)
-window.PcsTable.clearRows(table)
-window.PcsTable.textCell(label, text, tagName)
-window.PcsTable.emptyRow(table, options)
-window.PcsDrawer.bindDismiss(options)
-window.PcsDrawer.bindOutsideClose(options)
-window.PcsDrawer.bindEscapeClose(options)
-window.PcsNavigationState.createUrlStateController(options)
-```
-
-기준:
-
-- 업체 코드 추출 정규식은 화면별 JS에 반복 작성하지 않는다.
-- 날짜/숫자 포맷은 `PcsFormat`을 사용한다.
-- HTML 문자열이 불가피하면 escape 처리는 `PcsHtml.escape()`를 사용한다.
-- 저장 중 폼 비활성화는 `PcsForm.setSaving()`을 사용한다.
-- 빈 목록/로딩/오류 행은 `PcsTable.emptyRow()`를 우선 사용한다.
-- 오른쪽 사이드바/드로어의 외부 클릭과 `Escape` 닫기는 `PcsDrawer.bindDismiss()`를 사용한다.
-- 다른 목록 행, 드로어를 여는 버튼, 연결된 모달처럼 닫기에서 제외할 요소는 `keepOpenSelector`로 지정한다.
-- 목록 화면에서 검색 조건, 페이지, 선택된 상세 행, 스크롤 위치를 뒤로가기/새로고침 이후 복원해야 하면 `PcsNavigationState`로 URL query와 history state를 동기화한다. 적용 예시는 `docs/ai/pcs-navigation-state-guide.md`를 참고한다.
-- 화면별 JS는 도메인별 렌더링, 이벤트 연결, API URL 조립에 집중한다.
-
-## 관리형 페이지 JS 기준
-
-품목 관리, 품목 분류, 거래처 관리, 사용자 관리처럼 검색/목록/등록/수정 패널을 함께 쓰는 화면은 같은 JS 흐름을 따른다.
-
-기준:
-
-- 업체 코드 추출은 `window.PcsWorkspace.getCompanyCode()`를 사용한다.
-- 날짜/숫자 포맷은 `window.PcsFormat`을 사용한다.
-- 토스트는 `window.PcsFeedback.toast()`를 사용한다.
-- 저장 중 폼 상태는 `window.PcsForm.setSaving()`을 사용한다.
-- 빈 목록, 로딩, 오류 행은 `window.PcsTable.emptyRow()`를 사용한다.
-- 텍스트 셀 생성은 `window.PcsTable.textCell()`을 우선 사용한다.
-- 관리형 작업 드로어의 외부 클릭과 `Escape` 닫기는 `window.PcsDrawer.bindDismiss()`를 사용한다.
-- 화면별 JS에는 해당 화면의 API URL, 폼 값 읽기, 행 렌더링, 이벤트 연결만 남긴다.
-
-금지:
-
-```js
-const getCompanyCode = () => { ... };
-const showToast = (message, type) => { window.PcsUi.toast(...); };
-const setFormSaving = (form, isSaving) => { form.querySelectorAll(...); };
-```
-
-허용:
-
-```js
-const getCompanyCode = window.PcsWorkspace.getCompanyCode;
-const showToast = window.PcsFeedback.toast;
-const setFormSaving = window.PcsForm.setSaving;
-const setEmptyMessage = (message) => window.PcsTable.emptyRow(table, { message });
-```
-
-공통 함수 사용 후 특정 화면만 후처리가 필요하면 얇은 래퍼만 둔다.
-
-```js
-const setFormSaving = (form, isSaving, text = "저장 중") => {
-    window.PcsForm.setSaving(form, isSaving, text);
-    if (!isSaving && form === editForm) {
-        renderEditSpecs();
-    }
-};
-```
+`PcsWorkspace.createContext()`가 반환하는 `companyCode`, `apiBase`, `apiUrl()`, `apiOptions()`를 함께 사용해 화면별 API 문맥 구현을 반복하지 않습니다. 분류·거래처 modal은 공통 picker에 DOM 요소와 `onChange`만 전달합니다. 거래처 검색은 서버 `keyword` 조건으로 `page=0`, `size<=100` 범위에서 조회합니다.
 
 ## API 호출
 
-인증이 필요한 API 호출의 상세 기준은 `docs/ai/pcs-auth-client-rules.md`를 따른다.
-
-사용:
+인증 API는 `PcsApi`를 사용합니다.
 
 ```js
-const data = await window.PcsApi.getData(url, {
-    authRedirect: true,
-    loginCompanyCode: companyCode
-});
+const workspace = window.PcsWorkspace.createContext();
+const data = await window.PcsApi.getData(
+    workspace.apiUrl("/partners"),
+    workspace.apiOptions()
+);
 ```
 
-금지:
+인증이 필요한 화면에서 직접 `fetch()`로 토큰·재발급·오류 계약을 재구현하지 않습니다. 공개 로그인·가입처럼 인증 공통 처리가 불필요한 요청만 직접 호출할 수 있습니다.
 
-```js
-const response = await fetch(url);
-const json = await response.json();
-```
+## 관리 화면 흐름
 
-단, 공개 페이지나 로그인 요청처럼 인증 공통 처리가 필요 없는 경우에는 화면 목적에 맞게 직접 호출할 수 있다.
+품목, 분류, 거래처, 사용자 같은 목록·등록·수정 화면은 다음 흐름을 공유합니다.
 
-## 페이징 목록
+1. `PcsWorkspace`로 업체 코드를 확인합니다.
+2. 목록은 loading/empty/error 상태를 명시합니다.
+3. 행 선택 시 상세 또는 편집 drawer를 엽니다.
+4. 저장 중에는 `PcsForm.setSaving()`으로 중복 제출을 막습니다.
+5. 성공 시 실제 응답으로 목록·선택·요약을 갱신하고 toast를 표시합니다.
+6. 실패 시 이전 화면 상태를 유지하고 오류 toast를 표시합니다.
 
-페이징 query, 응답 정규화, 이전/다음 버튼, 스크롤 보존 기준은 `docs/ai/pcs-pagination-rules.md`를 따른다.
+drawer의 외부 클릭, Escape, 행 전환 규칙은 [Side Drawer](design/side-drawer.md)가 소유합니다. 화면별 예외만 기능 또는 디자인 문서에 기록합니다.
 
-## DOM 렌더링
+## DOM과 보안
 
-- API 응답을 받은 뒤 필요한 행만 다시 그린다.
-- 문자열 조합으로 큰 HTML을 만들기보다 `document.createElement()`를 우선한다.
-- 사용자 입력값을 `innerHTML`에 직접 넣지 않는다.
-- API 응답 값을 문자열 템플릿으로 렌더링해야 하는 기존 코드에서는 화면 파일 안의 escape 함수보다 공통 escaping/DOM 생성 유틸을 우선한다.
-- access token은 메모리에만 있으므로 XSS가 발생해도 저장소에서 장기 토큰을 읽을 수 없어야 한다. 이를 깨는 `localStorage.setItem("pcsAccessToken", ...)` 사용은 금지한다.
-- 정적 HTML/JS는 서버의 `Content-Security-Policy` 기본값과 충돌하면 안 된다. 새 외부 스크립트, 이미지, 폰트 도메인이 필요하면 보안 헤더 정책과 문서를 함께 수정한다.
-- 빈 목록, 로딩, 오류 상태를 모두 고려한다.
+- 필요한 영역만 다시 렌더링합니다.
+- 데이터 기반 요소는 `document.createElement()`와 `textContent`를 우선합니다.
+- 사용자·API 문자열을 `innerHTML`에 직접 넣지 않습니다.
+- 문자열 템플릿이 꼭 필요하면 공통 escape를 적용합니다.
+- access token을 `localStorage`에 저장하지 않습니다.
+- inline script, 외부 이미지·폰트 추가는 CSP 정책과 함께 검토합니다.
+- `alert()` 대신 공통 toast를 사용합니다.
 
-## 폼 기준
+## 입력과 상태
 
-- 저장 API가 아직 없으면 화면에서 저장되는 것처럼 보이게 만들지 않는다.
-- 브라우저 자동완성이 업무 입력을 방해하면 해당 폼이나 입력에 `autocomplete="off"` 또는 목적에 맞는 값을 명시한다.
-- 필수 입력과 선택 입력은 화면에서 구분한다.
-- 등록/수정 API 호출 중에는 해당 폼의 입력과 버튼을 비활성화해 중복 제출을 막는다.
-- 성공/실패 피드백은 브라우저 `alert()`가 아니라 `window.PcsUi.toast()`를 사용한다.
-- 저장 성공 후에는 현재 화면의 목록, 선택값, 요약, 상세 패널을 실제 API 응답 기준으로 갱신한다.
-- 저장 실패 시에는 화면을 임의 성공 상태로 바꾸지 않고 오류 토스트를 보여준다.
+- required와 optional 입력을 화면에서 구분합니다.
+- 업무 입력을 방해하는 브라우저 자동완성은 적절한 `autocomplete` 값으로 제어합니다.
+- 저장 중 관련 입력과 버튼을 비활성화합니다.
+- 저장 성공 후에만 form, 목록, 선택 상태를 갱신합니다.
+- 목록 화면의 query, page, 선택 행, scroll 복원은 `PcsNavigationState`를 사용합니다.
 
-사용:
+## 완료 기준
 
-```js
-window.PcsUi.toast({
-    message: "저장했습니다.",
-    type: "success"
-});
-```
-
-금지:
-
-```js
-alert("저장되었습니다.");
-```
+- 공통 JS 로드 순서와 API를 재사용합니다.
+- 인증 API를 `PcsApi`로 호출합니다.
+- loading/empty/error/success 상태가 구분됩니다.
+- XSS 위험이 있는 HTML 조립과 로컬 토큰 저장이 없습니다.
+- 저장 중 중복 제출이 차단되고 실패 상태가 보존됩니다.

@@ -39,6 +39,7 @@ import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.pagination.PageQuery;
 import com.pcs.global.util.TextNormalizer;
 import com.pcs.global.validation.DateRangeValidator;
+import com.pcs.global.validation.DateRangeValidator.NormalizedDateRange;
 import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -78,13 +79,11 @@ public class InspectionService {
             Integer size,
             Integer limit
     ) {
-        validateCompanyActive(companyId);
-        DateRangeValidator.validate(dateFrom, dateTo);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         String normalizedKeyword = TextNormalizer.optional(keyword);
         String normalizedInspectionStatus = normalizeInspectionStatus(inspectionStatus);
         PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
-        LocalDateTime from = DateRangeValidator.toStartOfDay(dateFrom);
-        LocalDateTime to = DateRangeValidator.toExclusiveEnd(dateTo);
+        NormalizedDateRange dateRange = DateRangeValidator.normalize(dateFrom, dateTo);
 
         SearchWaitingInspectionDocumentSummaryResponse summary = inspectionMapper.summarizeWaitingDocuments(
                 companyId,
@@ -93,8 +92,8 @@ public class InspectionService {
                 hasWaiting,
                 partnerId,
                 normalizedInspectionStatus,
-                from,
-                to
+                dateRange.fromInclusive(),
+                dateRange.toExclusive()
         );
         long totalElements = summary.documentCount();
         List<SearchWaitingInspectionDocumentResponse> items = totalElements == 0
@@ -106,8 +105,8 @@ public class InspectionService {
                         hasWaiting,
                         partnerId,
                         normalizedInspectionStatus,
-                        from,
-                        to,
+                        dateRange.fromInclusive(),
+                        dateRange.toExclusive(),
                         pageQuery.size(),
                         pageQuery.offset()
                 );
@@ -115,7 +114,7 @@ public class InspectionService {
     }
 
     public InspectionWaitingDocumentDetailResponse getWaitingDocumentUnits(Long companyId, Long documentId) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         SearchWaitingInspectionDocumentResponse document = inspectionMapper.findWaitingDocument(companyId, documentId);
         if (document == null) {
             throw new BusinessException(ErrorCode.STOCK_DOCUMENT_NOT_FOUND);
@@ -168,7 +167,7 @@ public class InspectionService {
             Long memberId,
             CreateInspectionRequest request
     ) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         LocalDateTime inspectedAt = LocalDateTime.now();
         Inspection inspection = saveInspection(
                 companyId,
@@ -203,7 +202,7 @@ public class InspectionService {
             Long memberId,
             CreateBulkInspectionRequest request
     ) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         validateUniqueIds(request.unitIds());
         LocalDateTime inspectedAt = LocalDateTime.now();
         List<InspectionPartUnitRow> units = inspectionMapper.findPartUnitsForUpdate(companyId, request.unitIds());
@@ -312,12 +311,10 @@ public class InspectionService {
             Integer size,
             Integer limit
     ) {
-        validateCompanyActive(companyId);
-        DateRangeValidator.validate(dateFrom, dateTo);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         String normalizedKeyword = TextNormalizer.optional(keyword);
         PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
-        LocalDateTime from = DateRangeValidator.toStartOfDay(dateFrom);
-        LocalDateTime to = DateRangeValidator.toExclusiveEnd(dateTo);
+        NormalizedDateRange dateRange = DateRangeValidator.normalize(dateFrom, dateTo);
 
         SearchInspectionHistorySummaryResponse summary = inspectionMapper.summarizeHistories(
                 companyId,
@@ -328,8 +325,8 @@ public class InspectionService {
                 inspectionType,
                 result,
                 grade,
-                from,
-                to
+                dateRange.fromInclusive(),
+                dateRange.toExclusive()
         );
         long totalElements = summary.totalCount();
         List<SearchInspectionHistoryResponse> items = totalElements == 0
@@ -343,8 +340,8 @@ public class InspectionService {
                         inspectionType,
                         result,
                         grade,
-                        from,
-                        to,
+                        dateRange.fromInclusive(),
+                        dateRange.toExclusive(),
                         pageQuery.size(),
                         pageQuery.offset()
                 );
@@ -365,12 +362,10 @@ public class InspectionService {
             Integer size,
             Integer limit
     ) {
-        validateCompanyActive(companyId);
-        DateRangeValidator.validate(dateFrom, dateTo);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         String normalizedKeyword = TextNormalizer.optional(keyword);
         PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
-        LocalDateTime from = DateRangeValidator.toStartOfDay(dateFrom);
-        LocalDateTime to = DateRangeValidator.toExclusiveEnd(dateTo);
+        NormalizedDateRange dateRange = DateRangeValidator.normalize(dateFrom, dateTo);
 
         SearchInspectionHistoryDocumentSummaryResponse summary = inspectionMapper.summarizeHistoryDocuments(
                 companyId,
@@ -380,8 +375,8 @@ public class InspectionService {
                 inspectionType,
                 result,
                 grade,
-                from,
-                to
+                dateRange.fromInclusive(),
+                dateRange.toExclusive()
         );
         long totalElements = summary.documentCount();
         List<SearchInspectionHistoryDocumentResponse> items = totalElements == 0
@@ -394,8 +389,8 @@ public class InspectionService {
                         inspectionType,
                         result,
                         grade,
-                        from,
-                        to,
+                        dateRange.fromInclusive(),
+                        dateRange.toExclusive(),
                         pageQuery.size(),
                         pageQuery.offset()
                 );
@@ -403,7 +398,7 @@ public class InspectionService {
     }
 
     public InspectionHistoryDetailResponse getHistoryDetail(Long companyId, Long inspectionId) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         InspectionHistoryDetailRow row = inspectionMapper.findHistoryDetail(companyId, inspectionId);
         if (row == null) {
             throw new BusinessException(ErrorCode.INSPECTION_NOT_FOUND);
@@ -442,7 +437,7 @@ public class InspectionService {
             CreateInspectionRevisionRequest request,
             InspectionType inspectionType
     ) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         Inspection baseInspection = inspectionMapper.findInspection(companyId, baseInspectionId);
         if (baseInspection == null) {
             throw new BusinessException(ErrorCode.INSPECTION_NOT_FOUND);
@@ -686,10 +681,6 @@ public class InspectionService {
         return snapshot;
     }
 
-    private void validateCompanyActive(Long companyId) {
-        workspaceAccessValidator.validateCompanyActive(companyId);
-    }
-
     private void validateUniqueIds(List<Long> unitIds) {
         Set<Long> uniqueIds = new HashSet<>();
         for (Long unitId : unitIds) {
@@ -790,12 +781,12 @@ public class InspectionService {
                         item.getItemId(),
                         item.getItemName(),
                         request.result(),
-                        normalizeText(request.valueText()),
+                        TextNormalizer.optional(request.valueText()),
                         request.valueNumber(),
                         option == null ? null : option.optionId(),
                         option == null ? null : option.optionLabel(),
                         option == null ? null : option.optionValue(),
-                        normalizeText(request.memo())
+                        TextNormalizer.optional(request.memo())
                 ));
             }
             return results;
@@ -821,16 +812,10 @@ public class InspectionService {
             if (item.getInputType() == InspectionInputType.NUMBER && request.valueNumber() == null) {
                 throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "숫자 입력 항목은 숫자 값이 필요합니다.");
             }
-            if (item.getInputType() == InspectionInputType.TEXT && normalizeText(request.valueText()) == null) {
+            if (item.getInputType() == InspectionInputType.TEXT
+                    && TextNormalizer.optional(request.valueText()) == null) {
                 throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "텍스트 입력 항목은 텍스트 값이 필요합니다.");
             }
-        }
-
-        private static String normalizeText(String value) {
-            if (value == null || value.trim().isEmpty()) {
-                return null;
-            }
-            return value.trim();
         }
     }
 }

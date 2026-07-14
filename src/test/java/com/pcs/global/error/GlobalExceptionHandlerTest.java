@@ -13,8 +13,12 @@ import com.pcs.global.error.exception.BusinessException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import java.util.Map;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.MediaType;
@@ -109,24 +113,51 @@ class GlobalExceptionHandlerTest {
                 .andExpect(jsonPath("$.data").value(nullValue()));
     }
 
-    @Test
-    void duplicateTemplateItemName_mapsToConflict() {
-        DuplicateKeyException exception = duplicate("uk_inspection_template_item_name");
+    @ParameterizedTest
+    @MethodSource("duplicateKeyMappings")
+    void duplicateKey_mapsKnownConstraintToConflict(String constraintName, ErrorCode expectedErrorCode) {
+        DuplicateKeyException exception = duplicate(constraintName);
 
         ResponseEntity<ApiResultDto<Void>> response = handler.handleDuplicateKey(exception);
 
         assertEquals(409, response.getStatusCode().value());
-        assertEquals(ErrorCode.INSPECTION_TEMPLATE_ITEM_DUPLICATED.getCode(), response.getBody().code());
+        assertEquals(expectedErrorCode.getCode(), response.getBody().code());
     }
 
     @Test
-    void duplicateStockDocumentNo_mapsToConflict() {
-        DuplicateKeyException exception = duplicate("uk_stock_document_company_document_no");
+    void duplicateKey_mapsUnknownConstraintToInternalServerError() {
+        ResponseEntity<ApiResultDto<Void>> response = handler.handleDuplicateKey(duplicate("uk_unknown"));
 
-        ResponseEntity<ApiResultDto<Void>> response = handler.handleDuplicateKey(exception);
+        assertEquals(500, response.getStatusCode().value());
+        assertEquals(ErrorCode.INTERNAL_SERVER_ERROR.getCode(), response.getBody().code());
+    }
 
-        assertEquals(409, response.getStatusCode().value());
-        assertEquals(ErrorCode.STOCK_DOCUMENT_NO_DUPLICATED.getCode(), response.getBody().code());
+    private static Stream<Arguments> duplicateKeyMappings() {
+        return Stream.of(
+                Arguments.of("uk_company_code", ErrorCode.COMPANY_CODE_DUPLICATED),
+                Arguments.of(
+                        "uk_company_business_registration_no",
+                        ErrorCode.COMPANY_BUSINESS_REGISTRATION_NO_DUPLICATED
+                ),
+                Arguments.of("uk_member_company_login", ErrorCode.MEMBER_LOGIN_ID_DUPLICATED),
+                Arguments.of("uk_part_category_company_name", ErrorCode.CATEGORY_NAME_DUPLICATED),
+                Arguments.of("uk_pc_part_company_code", ErrorCode.PART_CODE_DUPLICATED),
+                Arguments.of("uk_trade_partner_company_name", ErrorCode.PARTNER_NAME_DUPLICATED),
+                Arguments.of("uk_stock_document_document_no", ErrorCode.STOCK_DOCUMENT_NO_DUPLICATED),
+                Arguments.of("uk_stock_document_company_document_no", ErrorCode.STOCK_DOCUMENT_NO_DUPLICATED),
+                Arguments.of("uk_pc_part_unit_internal_serial", ErrorCode.PART_UNIT_SERIAL_DUPLICATED),
+                Arguments.of("uk_pc_part_unit_manufacturer_serial", ErrorCode.PART_UNIT_SERIAL_DUPLICATED),
+                Arguments.of("uk_inspection_template_version", ErrorCode.INSPECTION_TEMPLATE_DUPLICATED),
+                Arguments.of("uk_inspection_template_item_name", ErrorCode.INSPECTION_TEMPLATE_ITEM_DUPLICATED),
+                Arguments.of(
+                        "uk_inspection_template_item_option_value",
+                        ErrorCode.INSPECTION_TEMPLATE_OPTION_DUPLICATED
+                ),
+                Arguments.of(
+                        "uk_inspection_template_item_option_label",
+                        ErrorCode.INSPECTION_TEMPLATE_OPTION_DUPLICATED
+                )
+        );
     }
 
     private DuplicateKeyException duplicate(String constraintName) {

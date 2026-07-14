@@ -92,9 +92,13 @@ function Test-DbSensitiveChange {
 
     foreach ($path in $Paths) {
         if ($path -match '^src/main/java/com/pcs/domain/' -or
+            $path -match '^src/main/java/com/pcs/global/workspace/' -or
             $path -match '^src/main/resources/mapper/' -or
+            $path -match '^src/integrationTest/(java|resources)/' -or
             $path -match '^docs/sql/' -or
-            $path -match '^docs/features/.+-db\.md$') {
+            $path -match '^docs/features/.+-db\.md$' -or
+            $path -eq 'build.gradle' -or
+            $path -eq 'harness/config/features.json') {
             return $true
         }
     }

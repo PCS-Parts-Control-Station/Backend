@@ -1,144 +1,82 @@
 # PCS Test Strategy
 
-This document defines how backend tests are written and how they are connected to the PCS harness.
+백엔드 테스트의 종류, 책임, 안전 기준 원본이다.
 
-## Test Types
+## 테스트 종류
 
-| Type | Tool | Location | Purpose |
+| 유형 | 도구 | 위치 | 검증 |
 |---|---|---|---|
-| Unit test | JUnit + AssertJ + Mockito | `src/test/java` | Pure Java business rules without DB IO |
-| API test | MockMvc | `src/test/java` | REST request/response, validation, exception mapping |
-| DB integration test | Testcontainers MariaDB or isolated local MariaDB | `src/integrationTest/java` | MyBatis SQL, table columns, constraints, transaction behavior |
+| 단위 | JUnit, AssertJ, Mockito | `src/test/java` | DB 없는 정책·계산 |
+| API | MockMvc | `src/test/java` | 요청·응답·validation·예외·권한 |
+| DB 통합 | MariaDB | `src/integrationTest/java` | MyBatis SQL·제약·트랜잭션 |
 
-## Writing Rules
+## 문서와 테스트 책임
 
-- Feature rules live in `docs/features/{feature}.md`.
-- DB rules live in `docs/features/{feature}-db.md`.
-- Unit/API tests must verify the required behavior described in the feature document.
-- DB integration tests must verify the required persistence behavior described in the DB document.
-- `run-harness.ps1` should not reimplement test logic; it should check required files and execute the matching Gradle test tasks.
-- If a feature uses DB tables, add both unit/API tests and DB integration tests unless there is a clear reason not to.
+- 기능 동작은 `docs/features/{feature}.md`가 원본이다.
+- DB 동작은 `{feature}-db.md`가 원본이다.
+- feature 문서는 고유한 테스트 수용 조건만 적는다.
+- 공통 테스트 종류·실행법·안전 규칙을 feature 문서에 복사하지 않는다.
+- 하네스는 테스트를 재구현하지 않고 Gradle selector를 실행한다.
 
-## Feature Document Test Sections
+## Feature 연결
 
-Each `docs/features/{feature}.md` should include:
+지원 feature, 변경 경로, 공통·기능별 selector의 원본은 `harness/config/features.json`이다.
 
-```text
-## Test Coverage
+- `run-harness.ps1`은 선택자를 합치고 중복 제거한 뒤 Gradle을 실행한다.
+- runner 또는 registry가 바뀌면 등록된 selector 전체를 검증한다.
+- 기능별 Gradle 명령을 문서나 Feature 함수에 하드코딩하지 않는다.
 
-- Unit/service tests: ...
-- API tests: ...
-- Required checks:
-  - ...
-```
-
-Each `docs/features/{feature}-db.md` should include:
-
-```text
-## DB Integration Test Coverage
-
-- Integration test: ...
-- Schema fixture: ...
-- Required checks:
-  - ...
-```
-
-## Harness-Connected Features
-
-The following features are currently connected to real Gradle test execution from `run-harness.ps1`.
-
-- `company`
-- `member`
-- `auth`
-- `partner`
-- `category`
-- `part`
-- `part-unit`
-- `stock`
-- `inspection`
-- `dashboard`
-
-Current connected commands:
+대표 실행:
 
 ```powershell
-.\gradlew.bat test --tests "com.pcs.domain.company.*"
-.\gradlew.bat integrationTest --tests "com.pcs.domain.company.*"
-
-.\gradlew.bat test --tests "com.pcs.domain.member.*"
-.\gradlew.bat integrationTest --tests "com.pcs.domain.member.*"
-
-.\gradlew.bat test --tests "com.pcs.domain.auth.*"
-.\gradlew.bat integrationTest --tests "com.pcs.domain.auth.*"
-
-.\gradlew.bat test --tests "com.pcs.domain.partner.*"
-.\gradlew.bat integrationTest --tests "com.pcs.domain.partner.*"
-
-.\gradlew.bat test --tests "com.pcs.domain.category.*"
-.\gradlew.bat integrationTest --tests "com.pcs.domain.category.*"
-
-.\gradlew.bat test --tests "com.pcs.domain.part.*"
-.\gradlew.bat integrationTest --tests "com.pcs.domain.part.*"
-
-.\gradlew.bat test --tests "com.pcs.domain.stock.*"
-.\gradlew.bat integrationTest --tests "com.pcs.domain.stock.*"
-
-.\gradlew.bat test --tests "com.pcs.domain.inspection.*"
-.\gradlew.bat integrationTest --tests "com.pcs.domain.inspection.*"
-
-.\gradlew.bat test --tests "com.pcs.domain.dashboard.*"
-.\gradlew.bat integrationTest --tests "com.pcs.domain.dashboard.*"
+./gradlew.bat test
+./gradlew.bat integrationTest
 ```
 
-`part-unit`은 별도 Java 최상위 패키지를 만들지 않고 `com.pcs.domain.part`를 공유하므로, 하네스는 같은 Gradle test filter로 실행하되 `Test-PartUnitFeature`에서 문서, SQL, 화면, 하네스 규칙을 별도로 검사한다.
+Harness 실행 명령과 옵션은 `pcs-harness-rules.md`를 따른다.
 
-## Adding A New Feature Test
+## 새 기능 테스트
 
-1. Update `docs/features/{feature}.md` and, if DB is used, `docs/features/{feature}-db.md`.
-2. Add unit/service tests under `src/test/java`.
-3. Add MockMvc API tests under `src/test/java` when the feature exposes REST APIs.
-4. Add MariaDB integration tests under `src/integrationTest/java` when MyBatis SQL or constraints matter.
-5. Add the test paths to `harness/config/features.json`.
-6. Add required test file checks and Gradle test execution to the matching `Test-{Feature}Feature` function in `harness/run-harness.ps1`.
+1. feature와 필요한 feature-db의 수용 조건을 작성한다.
+2. 순수 정책은 단위 테스트로 작성한다.
+3. REST API는 MockMvc로 작성한다.
+4. MyBatis·제약·트랜잭션은 DB 통합 테스트로 작성한다.
+5. `features.json`에 경로와 selector를 연결한다.
+6. 하네스 Feature 함수에는 구조·정적 검사만 둔다.
 
-## Current DB Test Fixtures
+## Fixture
 
-- `src/integrationTest/resources/pcs-account-test-schema.sql`
-  - company, member, auth, partner
-- `src/integrationTest/resources/pcs-category-part-test-schema.sql`
-  - category, part
-- `src/integrationTest/resources/pcs-operations-test-schema-extension.sql`
-  - stock, inspection, dashboard에 필요한 거래처, 검수 템플릿, 검수 결과, 상태 이력
+- fixture는 기능에 필요한 최소 스키마만 가진다.
+- 생산 DDL 전체를 복사하지 않는다.
+- 현재 fixture 위치와 사용 feature는 `src/integrationTest/resources`와 `features.json`을 원본으로 한다.
 
-Keep fixture schemas small and feature-focused. Do not copy the whole production DDL unless the test needs it.
+## MariaDB 실행
 
-## MariaDB Test Runtime
+- 기본 `auto`: Docker가 있으면 Testcontainers, 없으면 로컬 격리 DB
+- `container`: Testcontainers 강제
+- `local`: 로컬 격리 MariaDB 강제
+- Testcontainers 의존성은 `integrationTestImplementation`에 둔다.
 
-- The default `auto` mode uses Testcontainers when Docker is available and falls back to local MariaDB otherwise.
-- `-Dpcs.test.db.mode=container` forces the Testcontainers runtime.
-- `-Dpcs.test.db.mode=local` forces the isolated local MariaDB runtime.
-- Testcontainers dependencies belong to `integrationTestImplementation`, not the unit test classpath.
+## 로컬 DB 안전
 
-## Local MariaDB Safety
+- 테스트 DB는 로컬 `test_pcs_integration`만 허용한다.
+- `pcs_db`, 다른 DB명, 원격 호스트는 Spring context와 fixture 실행 전에 실패해야 한다.
+- fixture의 DROP/CREATE는 테스트 DB 안에서만 허용한다.
+- 연결값은 `pcs.test.db.*` 시스템 속성으로만 재정의한다.
 
-- DB integration tests use only the local `test_pcs_integration` database.
-- The test base creates `test_pcs_integration` when it does not exist.
-- Fixture SQL may drop and recreate tables only inside this dedicated database.
-- A JDBC URL targeting `pcs_db`, another database name, or a remote host must fail before the Spring context and fixture SQL run.
-- The default account follows the local application account, while `pcs.test.db.*` system properties can override test connection values.
+## 업체 격리
 
-## Cross-Company Isolation Tests
+workspace API 통합 테스트는 활성 회사 2개 이상을 사용한다.
 
-- DB integration fixtures for workspace APIs must contain at least two active companies.
-- The authenticated principal company and URL `companyCode` mismatch must fail before a domain query or mutation runs.
-- ID-based detail and mutation tests must request company B resources with company A scope and verify a not-found or workspace error.
-- The same test must verify that company B rows remain unchanged after the rejected mutation.
-- List tests must seed matching rows in both companies and verify that only the authenticated company rows are returned.
-- Company isolation checks apply to partner, category, part, part unit, stock document and movement, inspection and history, and member data.
+- URL companyCode와 principal 회사 불일치를 도메인 쿼리 전에 차단한다.
+- 회사 A가 회사 B의 ID를 조회·변경할 수 없어야 한다.
+- 거절된 변경 후 회사 B row가 그대로인지 확인한다.
+- 목록에는 인증 회사 row만 반환한다.
 
-## Transactional State Transition Tests
+## 상태 전이와 롤백
 
-- Stock and inspection integration tests must call the transactional Facade, not only the Mapper or a mocked Service.
-- Inbound, inspection, outbound, and cancellation tests must verify document, movement, stock quantity, part-unit status, inspection status, grade, sales status, and status history together.
-- Correction and reinspection must append inspection rows and preserve the original inspection chain without updating old rows.
-- A forced failure after an earlier write must leave no partial document, movement, stock, unit, inspection, item-result, or status-history change.
-- `tb_part_stock.quantity` must match the count of active `IN_STOCK` part units after every completed stock transition.
+- stock·inspection 통합 테스트는 Mapper만이 아니라 트랜잭션 Facade를 호출한다.
+- 전표, movement, 재고, unit 상태, 검수, 항목 결과, 상태 이력을 함께 검증한다.
+- 정정·재검수는 원본을 수정하지 않고 이력을 추가한다.
+- 중간 강제 실패에서 모든 앞선 변경이 롤백되어야 한다.
+- 완료 시 `tb_part_stock.quantity`와 활성 `IN_STOCK` unit 수가 일치해야 한다.

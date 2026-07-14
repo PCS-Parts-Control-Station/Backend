@@ -25,13 +25,6 @@ public interface PartMapper {
             @Param("offset") int offset
     );
 
-    long countParts(
-            @Param("companyId") Long companyId,
-            @Param("keyword") String keyword,
-            @Param("categoryId") Long categoryId,
-            @Param("active") Boolean active
-    );
-
     SearchPartSummaryResponse summarizeParts(
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,

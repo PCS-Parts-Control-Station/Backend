@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.pcs.domain.auth.entity.AuthMember;
+import com.pcs.domain.auth.facade.AuthFacade;
 import com.pcs.domain.auth.service.AuthService;
 import com.pcs.domain.auth.service.RefreshTokenIssueResult;
 import com.pcs.domain.member.type.MemberRole;
@@ -11,6 +12,8 @@ import com.pcs.domain.member.type.PasswordStatus;
 import com.pcs.domain.member.type.StaffPermission;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
+import com.pcs.global.jwt.JwtClaims;
+import com.pcs.global.security.AccessTokenSessionValidator;
 import com.pcs.global.security.PcsPrincipal;
 import com.pcs.support.MariaDbIntegrationTest;
 import java.nio.charset.StandardCharsets;
@@ -28,6 +31,10 @@ class AuthPersistenceIntegrationTest extends MariaDbIntegrationTest {
 
     @Autowired
     private AuthService authService;
+    @Autowired
+    private AuthFacade authFacade;
+    @Autowired
+    private AccessTokenSessionValidator accessTokenSessionValidator;
     @Autowired
     private PasswordEncoder passwordEncoder;
     @Autowired
@@ -125,6 +132,73 @@ class AuthPersistenceIntegrationTest extends MariaDbIntegrationTest {
                 hash("expired-token")
         );
         assertThat(revokedReason).isEqualTo("EXPIRED");
+    }
+
+    @Test
+    void refreshRotationAndReuseDetectionRevokeTheWholeSessionFamily() {
+        long memberId = insertMember(1L, "admin01", "Admin User", MemberRole.ADMIN, PasswordStatus.ACTIVE, null);
+        RefreshTokenIssueResult original = authService.issueRefreshToken(
+                1L,
+                memberId,
+                null,
+                "127.0.0.1",
+                "test-agent"
+        );
+
+        AuthFacade.RefreshIssueResult rotated = authFacade.refresh(
+                original.rawToken(),
+                "127.0.0.1",
+                "test-agent"
+        );
+
+        var originalRow = jdbcTemplate.queryForMap(
+                "SELECT revoked_reason, replaced_by_token_id FROM tb_auth_refresh_token WHERE token_id = ?",
+                original.tokenId()
+        );
+        Long replacementTokenId = ((Number) originalRow.get("replaced_by_token_id")).longValue();
+        String replacementFamilyId = jdbcTemplate.queryForObject(
+                "SELECT token_family_id FROM tb_auth_refresh_token WHERE token_id = ?",
+                String.class,
+                replacementTokenId
+        );
+        assertThat(originalRow.get("revoked_reason")).isEqualTo("ROTATED");
+        assertThat(replacementFamilyId).isEqualTo(original.tokenFamilyId());
+
+        assertThatThrownBy(() -> authService.validateRefreshToken(original.rawToken()))
+                .isInstanceOfSatisfying(BusinessException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.AUTH_TOKEN_INVALID)
+                );
+
+        String replacementRevokedReason = jdbcTemplate.queryForObject(
+                "SELECT revoked_reason FROM tb_auth_refresh_token WHERE refresh_token_hash = ?",
+                String.class,
+                hash(rotated.refreshToken())
+        );
+        Integer activeFamilyCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM tb_auth_refresh_token WHERE token_family_id = ? AND revoked_at IS NULL",
+                Integer.class,
+                original.tokenFamilyId()
+        );
+        assertThat(replacementRevokedReason).isEqualTo("REUSE_DETECTED");
+        assertThat(activeFamilyCount).isZero();
+
+        Instant now = Instant.now();
+        JwtClaims claims = new JwtClaims(
+                memberId,
+                1L,
+                "acme",
+                "admin01",
+                MemberRole.ADMIN,
+                "ACCESS",
+                "jti-reused-family",
+                original.tokenFamilyId(),
+                now,
+                now.plusSeconds(600)
+        );
+        assertThatThrownBy(() -> accessTokenSessionValidator.validate(claims))
+                .isInstanceOfSatisfying(BusinessException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.AUTH_TOKEN_INVALID)
+                );
     }
 
     @Test

@@ -50,7 +50,7 @@ MariaDB
 - `Facade`: 인증 작업공간 검증, 유스케이스 흐름, 트랜잭션 경계
 - `Service`: 비즈니스 검증과 DB 조회·변경 조합
 - `Mapper`: MyBatis Interface와 XML SQL 실행
-- `PageController`: 정적 HTML forward
+- `PageController`: 정적 HTML forward 또는 redirect
 
 ### 백엔드 기술
 

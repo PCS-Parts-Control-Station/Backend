@@ -36,6 +36,7 @@ import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.pagination.PageQuery;
 import com.pcs.global.util.TextNormalizer;
 import com.pcs.global.validation.DateRangeValidator;
+import com.pcs.global.validation.DateRangeValidator.NormalizedDateRange;
 import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.security.SecureRandom;
 import java.time.LocalDate;
@@ -82,21 +83,18 @@ public class StockService {
             Integer size,
             Integer limit
     ) {
-        validateCompanyActive(companyId);
-        DateRangeValidator.validate(dateFrom, dateTo);
-
+        workspaceAccessValidator.validateCompanyActive(companyId);
         String normalizedKeyword = TextNormalizer.optional(keyword);
         PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
-        LocalDateTime from = DateRangeValidator.toStartOfDay(dateFrom);
-        LocalDateTime to = DateRangeValidator.toExclusiveEnd(dateTo);
+        NormalizedDateRange dateRange = DateRangeValidator.normalize(dateFrom, dateTo);
         SearchStockDocumentSummaryResponse summary = stockMapper.summarizeDocuments(
                 companyId,
                 documentType,
                 normalizedKeyword,
                 partnerId,
                 documentStatus,
-                from,
-                to
+                dateRange.fromInclusive(),
+                dateRange.toExclusive()
         );
         long totalElements = summary.totalCount();
         List<SearchStockDocumentResponse> items = totalElements == 0
@@ -107,8 +105,8 @@ public class StockService {
                         normalizedKeyword,
                         partnerId,
                         documentStatus,
-                        from,
-                        to,
+                        dateRange.fromInclusive(),
+                        dateRange.toExclusive(),
                         pageQuery.size(),
                         pageQuery.offset()
                 );
@@ -125,7 +123,7 @@ public class StockService {
             Integer size,
             Integer limit
     ) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
 
         String normalizedKeyword = TextNormalizer.optional(keyword);
         PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
@@ -152,7 +150,7 @@ public class StockService {
     }
 
     public StockDocumentDetailResponse getDocument(Long companyId, Long documentId) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
 
         StockDocumentDetailRow document = stockMapper.findDocumentDetail(companyId, documentId);
         if (document == null) {
@@ -160,6 +158,15 @@ public class StockService {
         }
 
         return buildDocumentDetail(companyId, document);
+    }
+
+    public StockDocumentType getDocumentType(Long companyId, Long documentId) {
+        workspaceAccessValidator.validateCompanyActive(companyId);
+        StockDocumentType documentType = stockMapper.findDocumentType(companyId, documentId);
+        if (documentType == null) {
+            throw new BusinessException(ErrorCode.STOCK_DOCUMENT_NOT_FOUND);
+        }
+        return documentType;
     }
 
     public CancelStockDocumentResponse cancelDocument(Long companyId, Long memberId, Long documentId) {
@@ -174,7 +181,7 @@ public class StockService {
     }
 
     private StockDocumentDetailRow findCancelableDocument(Long companyId, Long documentId) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
 
         StockDocumentDetailRow document = stockMapper.findDocumentForUpdate(companyId, documentId);
         if (document == null) {
@@ -331,7 +338,7 @@ public class StockService {
             Long memberId,
             CreateInboundDocumentRequest request
     ) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         validateInboundLines(request.lines());
         validateInboundPartner(companyId, request.partnerId());
 
@@ -428,7 +435,7 @@ public class StockService {
             Long memberId,
             CreateOutboundDocumentRequest request
     ) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         validateOutboundPartner(companyId, request.partnerId());
         validateOutboundLines(request.lines());
 
@@ -601,10 +608,6 @@ public class StockService {
         if (partner.getPartnerRole() != requiredRole && partner.getPartnerRole() != PartnerRole.BOTH) {
             throw new BusinessException(ErrorCode.PARTNER_INACTIVE, invalidRoleMessage);
         }
-    }
-
-    private void validateCompanyActive(Long companyId) {
-        workspaceAccessValidator.validateCompanyActive(companyId);
     }
 
     private void insertMovementUnit(

@@ -46,12 +46,6 @@
         OFFSET #{offset}
     </select>
 
-    <select id="countPartners" resultType="long">
-        SELECT COUNT(*)
-        FROM tb_trade_partner
-        <include refid="partnerSearchWhere" />
-    </select>
-
     <select id="summarizePartners" resultType="com.pcs.domain.partner.dto.response.SearchPartnerSummaryResponse">
         SELECT
             COUNT(*) AS total_count,

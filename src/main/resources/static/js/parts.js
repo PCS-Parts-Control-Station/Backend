@@ -163,6 +163,20 @@
         }
     };
 
+    const categoryPickerValue = document.createElement("input");
+    categoryPickerValue.type = "hidden";
+    const categoryPicker = window.PcsCategoryPicker.bind({
+        input: categoryPickerValue,
+        modal: categoryPickerModal,
+        search: categoryPickerSearch,
+        list: categoryPickerList,
+        message: categoryPickerMessage,
+        closeButtons: document.querySelectorAll("[data-close-category-picker]"),
+        clearButtons: clearCategoryPickerButton,
+        loadFailureMessage: "분류 목록을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.",
+        onChange: (categoryId) => setCategoryValue(activeCategoryPickerMode, categoryId)
+    });
+
     const currentFilterState = () => ({
         ...window.PcsNavigationState?.captureFormState?.(filterForm, {
             fields: ["keyword", "categoryId"]
@@ -209,57 +223,6 @@
         };
     };
 
-    const matchesCategoryKeyword = (category, keyword) => {
-        if (!keyword) {
-            return true;
-        }
-
-        const target = `${category.categoryName || ""} ${category.description || ""}`.toLowerCase();
-        return target.includes(keyword.toLowerCase());
-    };
-
-    const createCategoryPickerOption = (category, selectedCategoryId) => {
-        return window.PcsCategoryPicker.createOption(category, {
-            selectedCategoryId,
-            onSelect: (selectedCategory) => {
-                setCategoryValue(activeCategoryPickerMode, selectedCategory.categoryId);
-                closeCategoryPicker();
-            }
-        });
-    };
-
-    const renderCategoryPickerList = () => {
-        if (!categoryPickerList) {
-            return;
-        }
-
-        if (categoryLoadFailed) {
-            categoryPickerList.innerHTML = "";
-            const failed = document.createElement("p");
-            failed.className = "spec-builder-empty";
-            failed.textContent = "분류 목록을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.";
-            categoryPickerList.append(failed);
-            return;
-        }
-
-        const keyword = categoryPickerSearch?.value.trim() || "";
-        const selectedCategoryId = categoryPickerInputs[activeCategoryPickerMode]?.value || "";
-        const categories = categoryOptions.filter((category) => matchesCategoryKeyword(category, keyword));
-        categoryPickerList.innerHTML = "";
-
-        if (categories.length === 0) {
-            const empty = document.createElement("p");
-            empty.className = "spec-builder-empty";
-            empty.textContent = keyword ? "검색된 분류가 없습니다." : "등록된 분류가 없습니다.";
-            categoryPickerList.append(empty);
-            return;
-        }
-
-        categories.forEach((category) => {
-            categoryPickerList.append(createCategoryPickerOption(category, selectedCategoryId));
-        });
-    };
-
     const openCategoryPicker = (mode) => {
         if (!categoryPickerModal) {
             return;
@@ -271,25 +234,11 @@
         }
 
         activeCategoryPickerMode = mode;
-        if (categoryPickerSearch) {
-            categoryPickerSearch.value = "";
-        }
-        if (categoryPickerMessage) {
-            categoryPickerMessage.textContent = "";
-        }
         if (clearCategoryPickerButton) {
             clearCategoryPickerButton.hidden = mode !== "filter";
         }
-        renderCategoryPickerList();
-        categoryPickerModal.showModal();
-        window.setTimeout(() => categoryPickerSearch?.focus(), 0);
-    };
-
-    const closeCategoryPicker = () => {
-        if (categoryPickerMessage) {
-            categoryPickerMessage.textContent = "";
-        }
-        categoryPickerModal?.close();
+        categoryPicker.setValue(categoryPickerInputs[mode]?.value || "");
+        categoryPicker.open();
     };
 
     const validateCategorySelection = (mode) => {
@@ -357,24 +306,18 @@
         return cell;
     };
 
-    const setDrawerOpen = (isOpen) => {
-        detailDrawer?.classList.toggle("is-open", isOpen);
-        detailDrawer?.setAttribute("aria-hidden", String(!isOpen));
-        createDrawerButtons.forEach((button) => {
-            button.setAttribute("aria-expanded", String(isOpen));
-        });
-    };
-
     const openDrawer = (trigger = null) => {
         if (trigger instanceof HTMLElement) {
             lastDrawerTrigger = detailDrawer?.contains(trigger) ? createDrawerButton : trigger;
         }
-        setDrawerOpen(true);
+        window.PcsDrawer.setOpen(detailDrawer, true);
+        createDrawerButtons.forEach((button) => button.setAttribute("aria-expanded", "true"));
     };
 
     const closeDrawer = (options = {}) => {
         selectedPartId = null;
-        setDrawerOpen(false);
+        window.PcsDrawer.setOpen(detailDrawer, false);
+        createDrawerButtons.forEach((button) => button.setAttribute("aria-expanded", "false"));
         updateSelectedRow();
         if (options.sync !== false) {
             syncNavigationState({
@@ -931,24 +874,20 @@
         };
     };
 
-    const loadCategoryOptions = async (companyCode) => {
+    const loadCategoryOptions = async () => {
         try {
             categoryLoadFailed = false;
             setCategoryPickerDisabled(false);
-            categoryOptions = await window.PcsCategory.loadAll(companyCode, {
-                apiOptions: {
-                    authRedirect: true,
-                    loginCompanyCode: companyCode
-                }
-            });
+            categoryOptions = await categoryPicker.load();
+            if (categoryPickerMessage?.textContent) {
+                throw new Error(categoryPickerMessage.textContent);
+            }
             syncAllCategoryLabels();
-            renderCategoryPickerList();
-        } catch (error) {
+        } catch {
             categoryLoadFailed = true;
             categoryOptions = [];
             syncAllCategoryLabels();
             setCategoryPickerDisabled(true, "분류 목록을 불러오지 못했습니다.");
-            renderCategoryPickerList();
             showToast("분류 목록을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.", "error");
         }
     };
@@ -1063,7 +1002,7 @@
                 }
             }
             const restored = applyNavigationStateToFilters();
-            await loadCategoryOptions(companyCode);
+            await loadCategoryOptions();
             await loadParts(restored.page, {
                 updateNavigation: false,
                 restorePartId: restored.partId,
@@ -1083,23 +1022,6 @@
 
     document.querySelectorAll("[data-open-category-picker]").forEach((button) => {
         button.addEventListener("click", () => openCategoryPicker(button.dataset.openCategoryPicker));
-    });
-
-    document.querySelectorAll("[data-close-category-picker]").forEach((button) => {
-        button.addEventListener("click", closeCategoryPicker);
-    });
-
-    categoryPickerModal?.addEventListener("click", (event) => {
-        if (event.target === categoryPickerModal) {
-            closeCategoryPicker();
-        }
-    });
-
-    categoryPickerSearch?.addEventListener("input", renderCategoryPickerList);
-
-    clearCategoryPickerButton?.addEventListener("click", () => {
-        setCategoryValue("filter", "");
-        closeCategoryPicker();
     });
 
     createDrawerButtons.forEach((button) => button.addEventListener("click", (event) => {

@@ -342,6 +342,13 @@
         <include refid="documentDetailSelect" />
     </select>
 
+    <select id="findDocumentType" resultType="com.pcs.domain.stock.type.StockDocumentType">
+        SELECT document_type
+        FROM tb_stock_document
+        WHERE company_id = #{companyId}
+          AND document_id = #{documentId}
+    </select>
+
     <select id="findDocumentForUpdate" resultType="com.pcs.domain.stock.dto.response.StockDocumentDetailRow">
         SELECT
             d.document_id,

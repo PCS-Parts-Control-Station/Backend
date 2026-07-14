@@ -13,8 +13,7 @@ import com.pcs.domain.member.type.PasswordStatus;
 import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.security.PcsPrincipal;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
+import com.pcs.global.util.Hashing;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -332,17 +331,7 @@ public class AuthService {
     }
 
     private String hashRefreshToken(String rawToken) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
-            StringBuilder builder = new StringBuilder(hash.length * 2);
-            for (byte value : hash) {
-                builder.append(String.format("%02x", value));
-            }
-            return builder.toString();
-        } catch (Exception exception) {
-            throw new IllegalStateException("Failed to hash refresh token.", exception);
-        }
+        return Hashing.sha256Hex(rawToken);
     }
 
     private String normalizeRequired(String value) {

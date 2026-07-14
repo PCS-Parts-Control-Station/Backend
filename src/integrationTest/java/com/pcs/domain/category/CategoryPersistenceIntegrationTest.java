@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.pcs.domain.category.dto.request.CategorySpecDefinitionRequest;
 import com.pcs.domain.category.dto.request.CategorySpecOptionRequest;
 import com.pcs.domain.category.dto.request.CreateCategoryRequest;
+import com.pcs.domain.category.dto.request.UpdateCategoryRequest;
 import com.pcs.domain.category.entity.PartCategory;
 import com.pcs.domain.category.entity.PartSpecDefinition;
 import com.pcs.domain.category.entity.PartSpecOption;
@@ -98,6 +99,63 @@ class CategoryPersistenceIntegrationTest extends MariaDbIntegrationTest {
         assertThat(page.content()).hasSize(1);
         assertThat(page.content().get(0).categoryName()).isEqualTo("GPU");
         assertThat(page.content().get(0).partCount()).isEqualTo(1L);
+    }
+
+    @Test
+    void updateCategory_replacesPersistedSpecDefinitionsAndOptions() {
+        var created = categoryService.createCategory(
+                1L,
+                new CreateCategoryRequest(
+                        "Memory",
+                        "Old description",
+                        List.of(new CategorySpecDefinitionRequest(
+                                "memory_type",
+                                "Memory Type",
+                                "SELECT",
+                                null,
+                                true,
+                                true,
+                                0,
+                                List.of(new CategorySpecOptionRequest("DDR4", "DDR4", 0))
+                        ))
+                ),
+                7L
+        );
+        Long oldDefinitionId = created.specDefinitions().get(0).specDefinitionId();
+        Long oldOptionId = created.specDefinitions().get(0).options().get(0).optionId();
+
+        var updated = categoryService.updateCategory(
+                1L,
+                created.categoryId(),
+                new UpdateCategoryRequest(
+                        "Memory Module",
+                        "New description",
+                        List.of(new CategorySpecDefinitionRequest(
+                                "capacity_gb",
+                                "Capacity",
+                                "NUMBER",
+                                "GB",
+                                true,
+                                true,
+                                0,
+                                List.of()
+                        ))
+                ),
+                7L
+        );
+
+        assertThat(updated.categoryName()).isEqualTo("Memory Module");
+        assertThat(updated.specDefinitions()).extracting("specKey").containsExactly("capacity_gb");
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM tb_part_spec_definition WHERE spec_definition_id = ?",
+                Integer.class,
+                oldDefinitionId
+        )).isZero();
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM tb_part_spec_option WHERE option_id = ?",
+                Integer.class,
+                oldOptionId
+        )).isZero();
     }
 
     @Test

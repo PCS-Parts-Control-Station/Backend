@@ -63,6 +63,7 @@ class StockPersistenceIntegrationTest extends MariaDbIntegrationTest {
         );
 
         assertThat(inbound.totalQuantity()).isEqualTo(2);
+        assertThat(stockService.getDocumentType(1L, inbound.documentId())).isEqualTo(StockDocumentType.INBOUND);
         assertThat(unitIds).hasSize(2);
         assertStockConsistency(1L, 1001L, 2);
         assertThat(jdbcTemplate.queryForObject(

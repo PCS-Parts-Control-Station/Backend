@@ -412,7 +412,7 @@ CREATE TABLE IF NOT EXISTS `tb_stock_document` (
   KEY `idx_stock_document_company_partner` (`company_id`,`partner_id`),
   KEY `idx_stock_document_company_processed_by` (`company_id`,`processed_by`),
   KEY `idx_stock_document_type_status_created` (`company_id`,`document_type`,`document_status`,`created_at`),
-  KEY `idx_stock_document_company_created` (`company_id`,`created_at`,`document_id`)
+  KEY `idx_stock_document_company_created` (`company_id`,`created_at` DESC,`document_id` DESC)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- pcs_db.tb_stock_movement definition

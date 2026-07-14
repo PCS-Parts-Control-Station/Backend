@@ -120,8 +120,6 @@ public class JwtTokenProvider {
                     jwt.getIssuedAt(),
                     jwt.getExpiresAt()
             );
-        } catch (BusinessException exception) {
-            throw exception;
         } catch (JwtValidationException exception) {
             if (exception.getErrors().stream()
                     .map(error -> error.getDescription().toLowerCase())

@@ -66,7 +66,7 @@ public class InspectionTemplateService {
             Integer size,
             Integer limit
     ) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         String normalizedKeyword = TextNormalizer.optional(keyword);
         PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
 
@@ -91,7 +91,7 @@ public class InspectionTemplateService {
     }
 
     public InspectionTemplateDetailResponse getTemplate(Long companyId, Long templateId) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         SearchInspectionTemplateResponse template = findTemplateSummaryOrThrow(companyId, templateId);
         return buildDetail(companyId, template);
     }
@@ -101,7 +101,7 @@ public class InspectionTemplateService {
             Long memberId,
             CreateInspectionTemplateRequest request
     ) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         validateCategory(companyId, request.categoryId());
         String templateName = TextNormalizer.required(request.templateName());
         int version = normalizeVersion(request.version());
@@ -561,12 +561,12 @@ public class InspectionTemplateService {
     }
 
     private InspectionTemplate validateActiveCompanyAndFindTemplate(Long companyId, Long templateId) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         return findTemplateOrThrow(companyId, templateId);
     }
 
     private InspectionTemplateItem validateActiveCompanyAndFindItem(Long companyId, Long templateId, Long itemId) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         return findItemOrThrow(companyId, templateId, itemId);
     }
 
@@ -574,10 +574,6 @@ public class InspectionTemplateService {
         InspectionTemplateItem item = validateActiveCompanyAndFindItem(companyId, templateId, itemId);
         validateSelectItem(item);
         return item;
-    }
-
-    private void validateCompanyActive(Long companyId) {
-        workspaceAccessValidator.validateCompanyActive(companyId);
     }
 
     private void validateCategory(Long companyId, Long categoryId) {
@@ -685,8 +681,7 @@ public class InspectionTemplateService {
     }
 
     private String normalizeOptionValue(String optionValue, String optionLabel) {
-        String normalized = TextNormalizer.optional(optionValue);
-        return normalized == null ? optionLabel : normalized;
+        return TextNormalizer.requiredOrDefault(optionValue, optionLabel);
     }
 
     private int normalizeVersion(Integer version) {

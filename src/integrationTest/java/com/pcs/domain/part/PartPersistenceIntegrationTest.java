@@ -23,6 +23,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.jdbc.Sql;
 
@@ -194,6 +195,33 @@ class PartPersistenceIntegrationTest extends MariaDbIntegrationTest {
     }
 
     @Test
+    void partCodeUniqueConstraintAppliesPerCompanyOnly() {
+        CategoryDetailResponse companyOneCategory = createGpuCategory();
+        jdbcTemplate.update(
+                "INSERT INTO tb_part_category (company_id, category_name, created_by) VALUES (2, 'GPU', 8)"
+        );
+        Long companyTwoCategoryId = jdbcTemplate.queryForObject(
+                "SELECT category_id FROM tb_part_category WHERE company_id = 2 AND category_name = 'GPU'",
+                Long.class
+        );
+        String insertSql = "INSERT INTO tb_pc_part "
+                + "(company_id, category_id, created_by, part_name, model_name, manufacturer, part_code, safe_quantity, active) "
+                + "VALUES (?, ?, 7, ?, 'Model', 'Maker', 'SHARED-PART-CODE', 0, TRUE)";
+
+        jdbcTemplate.update(insertSql, 1L, companyOneCategory.categoryId(), "Company One Part");
+
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                insertSql,
+                1L,
+                companyOneCategory.categoryId(),
+                "Company One Duplicate"
+        )).isInstanceOf(DuplicateKeyException.class);
+
+        int inserted = jdbcTemplate.update(insertSql, 2L, companyTwoCategoryId, "Company Two Part");
+        assertThat(inserted).isEqualTo(1);
+    }
+
+    @Test
     void searchPartUnits_filtersByPartStateAndUsesSameSummaryWhere() {
         CategoryDetailResponse category = createGpuCategory();
         Long chipSpecId = specId(category, "gpu_chip");
@@ -301,6 +329,75 @@ class PartPersistenceIntegrationTest extends MariaDbIntegrationTest {
         var partFiltered = partService.searchPartUnits(1L, null, part.partId(), null, null, null, 0, 20, null);
         assertThat(partFiltered.content()).extracting("partId").containsOnly(part.partId());
         assertThat(partFiltered.summary().totalCount()).isEqualTo(4);
+    }
+
+    @Test
+    void searchPartUnits_handlesUnavailableAndCanceledStates() {
+        CategoryDetailResponse category = createGpuCategory();
+        Long chipSpecId = specId(category, "gpu_chip");
+        Long memorySpecId = specId(category, "memory_gb");
+        Long optionId = optionId(category, "gpu_chip", "RTX_3060");
+        var part = partService.createPart(
+                1L,
+                new CreatePartRequest(
+                        category.categoryId(),
+                        "RTX 3060 State Test",
+                        "MSI",
+                        "RTX 3060 State Test",
+                        0,
+                        List.of(
+                                new PartSpecValueRequest(chipSpecId, null, null, null, optionId),
+                                new PartSpecValueRequest(memorySpecId, null, new BigDecimal("12"), null, null)
+                        )
+                ),
+                7L
+        );
+        insertPartUnit(
+                201L,
+                1L,
+                part.partId(),
+                "PCS-STATE-0001",
+                null,
+                "IN_STOCK",
+                "COMPLETED",
+                "B",
+                "UNAVAILABLE",
+                true,
+                "2026-01-02 09:00:00.000000"
+        );
+        insertPartUnit(
+                202L,
+                1L,
+                part.partId(),
+                "PCS-STATE-0002",
+                null,
+                "CANCELED",
+                "WAITING",
+                "NONE",
+                "HOLD",
+                false,
+                "2026-01-01 09:00:00.000000"
+        );
+
+        var salesUnavailable = partService.searchPartUnits(
+                1L, null, part.partId(), null, null, "SALES_UNAVAILABLE", 0, 20, null
+        );
+        var stockUnavailable = partService.searchPartUnits(
+                1L, null, part.partId(), null, null, "STOCK_UNAVAILABLE", 0, 20, null
+        );
+        var canceled = partService.searchPartUnits(
+                1L, null, part.partId(), null, null, "CANCELED", 0, 20, null
+        );
+
+        assertThat(salesUnavailable.content()).extracting("internalSerialNo")
+                .containsExactly("PCS-STATE-0001");
+        assertThat(salesUnavailable.summary().totalCount()).isEqualTo(1);
+        assertThat(stockUnavailable.content()).extracting("internalSerialNo")
+                .containsExactly("PCS-STATE-0001");
+        assertThat(stockUnavailable.summary().totalCount()).isEqualTo(1);
+        assertThat(canceled.content()).extracting("internalSerialNo")
+                .containsExactly("PCS-STATE-0002");
+        assertThat(canceled.summary().totalCount()).isEqualTo(1);
     }
 
     @Test

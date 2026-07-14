@@ -10,7 +10,6 @@
     const partnerModal = document.querySelector("[data-partner-modal]");
     const closePartnerModalButtons = document.querySelectorAll("[data-close-partner-modal]");
     const partnerSearchInput = document.querySelector("[data-partner-search]");
-    const partnerSearchButton = document.querySelector("[data-partner-search-button]");
     const partnerList = document.querySelector("[data-partner-list]");
     const selectedPartnerName = document.querySelector("[data-selected-partner-name]");
     const selectedPartnerMeta = document.querySelector("[data-selected-partner-meta]");
@@ -43,13 +42,6 @@
     const newPartNameInput = document.querySelector("[data-new-part-name]");
     const newPartModelInput = document.querySelector("[data-new-part-model]");
     const newPartSafeQuantityInput = document.querySelector("[data-new-part-safe-quantity]");
-    const confirmModal = document.querySelector("[data-inbound-confirm-modal]");
-    const closeConfirmModalButtons = document.querySelectorAll("[data-close-confirm-modal]");
-    const confirmSaveButton = document.querySelector("[data-confirm-save]");
-    const confirmPartner = document.querySelector("[data-confirm-partner]");
-    const confirmReason = document.querySelector("[data-confirm-reason]");
-    const confirmLineCount = document.querySelector("[data-confirm-line-count]");
-    const confirmTotalQuantity = document.querySelector("[data-confirm-total-quantity]");
     const registerStepSections = document.querySelectorAll("[data-inbound-register-step]");
     const sideStepItems = document.querySelectorAll("[data-inbound-register-side-step]");
     const categoryLabels = {
@@ -60,33 +52,21 @@
     };
     const CREATED_INBOUND_KEY = "pcsCreatedInboundDocument";
     let selectedPart = null;
-    let partners = [];
-    let selectedPartner = null;
-    let pendingInbound = null;
-    let categoryOptions = [];
-    let currentRegisterStep = "1";
     let partSearchStarted = false;
+    let submitting = false;
+    let categoryPicker = null;
+    let partnerPicker = null;
+    let partSearchRequestId = 0;
 
     if (!inboundForm || !lineList || !lineCount || !partResults || !addButton) {
         return;
     }
 
-    const getCompanyCode = () => {
-        const segments = window.location.pathname.split("/").filter(Boolean);
-        return segments[0] === "w" && segments[1] ? decodeURIComponent(segments[1]) : "";
-    };
-
-    const escapeHtml = (value) => value.replace(/[&<>"']/g, (letter) => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        "\"": "&quot;",
-        "'": "&#039;",
-    }[letter]));
+    const workspace = window.PcsWorkspace.createContext();
+    const escapeHtml = window.PcsHtml.escape;
 
     const setCurrentRegisterStep = (step) => {
         const nextStep = String(step || "1");
-        currentRegisterStep = nextStep;
 
         registerStepSections.forEach((section) => {
             const isCurrent = section.dataset.inboundRegisterStep === nextStep;
@@ -107,7 +87,7 @@
     const hasInboundLines = () => Boolean(lineList.querySelector("[data-line-entry]"));
 
     const resolveCurrentRegisterStep = () => {
-        if (confirmModal?.open || pendingInbound) {
+        if (submitting) {
             return "4";
         }
         if (hasInboundLines()) {
@@ -146,85 +126,10 @@
         partnerMessage.classList.toggle("is-error", type === "error");
     };
 
-    const partnerRoleLabel = (role) => {
-        const normalizedRole = String(role || "").trim().toUpperCase();
-        const labels = {
-            SUPPLIER: "공급 거래처",
-            CUSTOMER: "출고 거래처",
-            CLIENT: "출고 거래처",
-            BUYER: "출고 거래처",
-            BOTH: "공급/출고 거래처",
-        };
-        return labels[normalizedRole] || "";
-    };
-
     const partnerMeta = (partner) => {
         const code = partner.partnerCode || partner.code || "";
-        const role = partnerRoleLabel(partner.partnerRole);
+        const role = window.PcsLabels.partnerRoleLong(partner.partnerRole, "");
         return [code, role].filter(Boolean).join(" · ") || "공급 거래처";
-    };
-
-    const partnerSearchText = (partner) => [
-        partner.partnerName,
-        partner.partnerCode,
-        partner.code,
-        partner.representativeName,
-        partner.phoneNumber,
-        partner.tel,
-    ].filter(Boolean).join(" ").toLowerCase();
-
-    const updateSelectedPartnerView = () => {
-        const hasPartner = Boolean(selectedPartner);
-        if (partnerIdInput) {
-            partnerIdInput.value = hasPartner ? String(selectedPartner.partnerId) : "";
-        }
-        if (selectedPartnerName) {
-            selectedPartnerName.textContent = hasPartner ? selectedPartner.partnerName : "거래처 선택";
-        }
-        if (selectedPartnerMeta) {
-            selectedPartnerMeta.textContent = hasPartner ? partnerMeta(selectedPartner) : "거래처를 검색해 선택해 주세요.";
-        }
-        openPartnerModalButton?.classList.toggle("is-selected", hasPartner);
-    };
-
-    const renderPartnerList = () => {
-        if (!partnerList) {
-            return;
-        }
-
-        const keyword = partnerSearchInput?.value.trim().toLowerCase() || "";
-        const filteredPartners = keyword
-                ? partners.filter((partner) => partnerSearchText(partner).includes(keyword))
-                : partners;
-
-        if (!filteredPartners.length) {
-            partnerList.innerHTML = `
-                <p class="partner-modal-empty">
-                    ${partners.length ? "검색 결과가 없습니다." : "선택 가능한 공급 거래처가 없습니다."}
-                </p>
-            `;
-            return;
-        }
-
-        partnerList.innerHTML = filteredPartners.map((partner) => {
-            const selected = String(selectedPartner?.partnerId || "") === String(partner.partnerId);
-            return `
-                <button class="partner-modal-row${selected ? " is-selected" : ""}" type="button" data-partner-option="${escapeHtml(String(partner.partnerId))}">
-                    <span>
-                        <strong>${escapeHtml(partner.partnerName || "-")}</strong>
-                        <small>${escapeHtml(partnerMeta(partner))}</small>
-                    </span>
-                </button>
-            `;
-        }).join("");
-    };
-
-    const selectPartner = (partner) => {
-        selectedPartner = partner;
-        updateSelectedPartnerView();
-        setPartnerMessage("");
-        updateCurrentRegisterStep("1");
-        partnerModal?.close();
     };
 
     const validatePartnerSelection = () => {
@@ -254,99 +159,6 @@
             return data;
         }
         return Array.isArray(data?.content) ? data.content : [];
-    };
-
-    const syncCategoryLabel = () => {
-        if (!categoryLabel) {
-            return;
-        }
-
-        const selected = categoryOptions.find((category) => String(category.categoryId) === String(categorySelect?.value || ""));
-        categoryLabel.textContent = selected?.categoryName || "전체 분류";
-    };
-
-    const matchesCategoryKeyword = (category, keyword) => {
-        if (!keyword) {
-            return true;
-        }
-
-        const target = `${category.categoryName || ""} ${category.description || ""}`.toLowerCase();
-        return target.includes(keyword.toLowerCase());
-    };
-
-    const renderCategoryPickerList = () => {
-        if (!categoryPickerList) {
-            return;
-        }
-
-        const keyword = categoryPickerSearch?.value.trim() || "";
-        const selectedCategoryId = categorySelect?.value || "";
-        const categories = categoryOptions.filter((category) => matchesCategoryKeyword(category, keyword));
-
-        categoryPickerList.innerHTML = "";
-        if (!categories.length) {
-            const empty = document.createElement("p");
-            empty.className = "spec-builder-empty";
-            empty.textContent = keyword ? "검색된 분류가 없습니다." : "등록된 분류가 없습니다.";
-            categoryPickerList.append(empty);
-            return;
-        }
-
-        categories.forEach((category) => {
-            const button = document.createElement("button");
-            button.type = "button";
-            button.className = "category-picker-option";
-            if (String(category.categoryId) === String(selectedCategoryId)) {
-                button.classList.add("is-selected");
-            }
-
-            const name = document.createElement("strong");
-            name.textContent = category.categoryName || "이름 없음";
-
-            const description = document.createElement("small");
-            description.textContent = category.description || "설명 없음";
-
-            button.append(name, description);
-            button.addEventListener("click", () => {
-                if (categorySelect) {
-                    categorySelect.value = String(category.categoryId);
-                }
-                syncCategoryLabel();
-                categoryPickerModal?.close();
-                partSearchStarted = true;
-                updateCurrentRegisterStep("2");
-                filterParts();
-            });
-
-            categoryPickerList.append(button);
-        });
-    };
-
-    const openCategoryPicker = () => {
-        if (!categoryPickerModal) {
-            return;
-        }
-
-        if (categoryPickerSearch) {
-            categoryPickerSearch.value = "";
-        }
-        if (categoryPickerMessage) {
-            categoryPickerMessage.textContent = "";
-        }
-        renderCategoryPickerList();
-        categoryPickerModal.showModal();
-        window.setTimeout(() => categoryPickerSearch?.focus(), 0);
-    };
-
-    const clearCategoryFilter = () => {
-        if (categorySelect) {
-            categorySelect.value = "";
-        }
-        syncCategoryLabel();
-        partSearchStarted = true;
-        updateCurrentRegisterStep("2");
-        filterParts();
-        categoryPickerModal?.close();
     };
 
     const dateToken = () => {
@@ -556,6 +368,44 @@
         }
     };
 
+    categoryPicker = window.PcsCategoryPicker.bind({
+        input: categorySelect,
+        label: categoryLabel,
+        modal: categoryPickerModal,
+        search: categoryPickerSearch,
+        list: categoryPickerList,
+        message: categoryPickerMessage,
+        openButtons: openCategoryPickerButton,
+        closeButtons: closeCategoryPickerButtons,
+        clearButtons: clearCategoryPickerButton,
+        companyCode: workspace.companyCode,
+        defaultLabel: "전체 분류",
+        onChange: () => {
+            partSearchStarted = true;
+            updateCurrentRegisterStep("2");
+            filterParts();
+        }
+    });
+
+    partnerPicker = window.PcsPartnerPicker.bind({
+        input: partnerIdInput,
+        modal: partnerModal,
+        search: partnerSearchInput,
+        list: partnerList,
+        message: partnerMessage,
+        nameTarget: selectedPartnerName,
+        metaTarget: selectedPartnerMeta,
+        openButtons: openPartnerModalButton,
+        closeButtons: closePartnerModalButtons,
+        companyCode: workspace.companyCode,
+        partnerRole: "SUPPLIER",
+        size: 100,
+        emptyName: "거래처 선택",
+        unavailableMessage: "선택 가능한 공급 거래처가 없습니다.",
+        getMeta: partnerMeta,
+        onChange: () => updateCurrentRegisterStep("1")
+    });
+
     const renderPartOptions = (parts) => {
         partOptions.forEach((option) => option.remove());
         partOptions = normalizeListData(parts).map((part) => createPartOption({
@@ -583,8 +433,6 @@
     const searchParts = async () => {
         partSearchStarted = true;
         updateCurrentRegisterStep("2");
-        const companyCode = getCompanyCode();
-        const api = window.PcsApi;
         const params = new URLSearchParams({
             active: "true",
             limit: "100",
@@ -595,38 +443,38 @@
         if (keyword) params.set("keyword", keyword);
         if (/^\d+$/.test(categoryId)) params.set("categoryId", categoryId);
 
-        if (!companyCode) {
+        if (!workspace.companyCode) {
             setPartSearchMessage("업체 코드를 확인할 수 없습니다.", "error");
             return;
         }
 
-        if (!api) {
-            setPartSearchMessage("필요한 화면 기능을 불러오지 못했습니다. 새로고침 후 다시 시도하세요.", "error");
-            return;
-        }
-
+        const requestId = ++partSearchRequestId;
         searchButton.disabled = true;
         setPartSearchMessage("품목을 검색하는 중입니다.");
         try {
-            const parts = await api.getData(`/api/workspaces/${encodeURIComponent(companyCode)}/parts?${params.toString()}`, {
-                authRedirect: true,
-                loginCompanyCode: companyCode,
-            });
+            const parts = await window.PcsApi.getData(
+                workspace.apiUrl(`/parts?${params.toString()}`),
+                workspace.apiOptions()
+            );
+            if (requestId !== partSearchRequestId) {
+                return;
+            }
             renderPartOptions(parts);
         } catch (error) {
+            if (requestId !== partSearchRequestId) {
+                return;
+            }
             setPartSearchMessage(error.message || "품목 검색 요청을 처리할 수 없습니다.", "error");
         } finally {
-            searchButton.disabled = false;
+            if (requestId === partSearchRequestId) {
+                searchButton.disabled = false;
+            }
         }
     };
 
     const renderCategories = (categories) => {
         const normalizedCategories = normalizeListData(categories);
-        categoryOptions = normalizedCategories;
-        if (categorySelect) {
-            categorySelect.value = "";
-            syncCategoryLabel();
-        }
+        categoryPicker?.setValue("");
         if (openCategoryPickerButton) {
             openCategoryPickerButton.disabled = normalizedCategories.length === 0;
             openCategoryPickerButton.title = normalizedCategories.length === 0 ? "등록된 분류가 없습니다." : "";
@@ -649,8 +497,7 @@
             keywordInput.value = "";
         }
         if (categorySelect && part.categoryId) {
-            categorySelect.value = String(part.categoryId);
-            syncCategoryLabel();
+            categoryPicker?.setValue(String(part.categoryId));
         }
         const option = createPartOption({
             id: String(part.partId),
@@ -677,27 +524,16 @@
 
     const setPartModalDisabled = (disabled) => {
         partModalForm?.querySelectorAll("input, select, button").forEach((element) => {
-            if (element.matches("[data-close-part-modal]")) {
-                element.disabled = disabled;
-                return;
-            }
             element.disabled = disabled;
         });
     };
 
     const createQuickPart = async () => {
-        const companyCode = getCompanyCode();
-        const api = window.PcsApi;
-
         if (!partModalForm?.reportValidity()) {
             return;
         }
-        if (!companyCode) {
+        if (!workspace.companyCode) {
             setPartModalMessage("업체 코드를 확인할 수 없습니다.", true);
-            return;
-        }
-        if (!api) {
-            setPartModalMessage("공통 API 스크립트를 확인할 수 없습니다.", true);
             return;
         }
 
@@ -713,12 +549,10 @@
         setPartModalDisabled(true);
         setPartModalMessage("품목을 등록하는 중입니다.");
         try {
-            const result = await api.request(`/api/workspaces/${encodeURIComponent(companyCode)}/parts`, {
-                method: "POST",
-                body,
-                authRedirect: true,
-                loginCompanyCode: companyCode,
-            });
+            const result = await window.PcsApi.request(
+                workspace.apiUrl("/parts"),
+                workspace.apiOptions({ method: "POST", body })
+            );
             const part = result?.data;
             if (!part?.partId) {
                 throw new Error("등록된 품목 정보를 확인할 수 없습니다.");
@@ -742,10 +576,7 @@
             return;
         }
 
-        const companyCode = getCompanyCode();
-        const api = window.PcsApi;
-
-        if (!companyCode || !api) {
+        if (!workspace.companyCode) {
             if (openCategoryPickerButton) {
                 openCategoryPickerButton.disabled = true;
                 openCategoryPickerButton.title = "분류 목록을 불러올 수 없습니다.";
@@ -774,18 +605,10 @@
             openPartModalButton.title = "분류 목록을 불러오는 중입니다.";
         }
 
-        try {
-            if (!window.PcsCategory?.loadAll) {
-                throw new Error("분류 전체 로딩 공통 함수를 찾을 수 없습니다.");
-            }
-            const categories = await window.PcsCategory.loadAll(companyCode, {
-                apiOptions: {
-                    authRedirect: true,
-                    loginCompanyCode: companyCode,
-                },
-            });
-            renderCategories(categories);
-        } catch (error) {
+        const categories = await categoryPicker.load();
+        const loadError = categoryPickerMessage?.textContent.trim() || "";
+        renderCategories(categories);
+        if (loadError) {
             if (openCategoryPickerButton) {
                 openCategoryPickerButton.disabled = true;
                 openCategoryPickerButton.title = "분류 목록을 불러올 수 없습니다.";
@@ -798,54 +621,7 @@
                 openPartModalButton.disabled = true;
                 openPartModalButton.title = "분류 목록을 불러올 수 없습니다.";
             }
-            setPartSearchMessage(error.message || "분류 목록을 불러오지 못했습니다.", "error");
-        }
-    };
-
-    const renderPartners = (nextPartners) => {
-        partners = nextPartners;
-        openPartnerModalButton.disabled = partners.length === 0;
-        renderPartnerList();
-        setPartnerMessage(partners.length ? "" : "선택 가능한 공급 거래처가 없습니다.");
-    };
-
-    const loadPartners = async () => {
-        if (!partnerIdInput || !openPartnerModalButton) {
-            return;
-        }
-
-        const companyCode = getCompanyCode();
-        const api = window.PcsApi;
-
-        if (!companyCode) {
-            openPartnerModalButton.disabled = true;
-            setPartnerMessage("업체 코드를 확인할 수 없습니다.", "error");
-            return;
-        }
-
-        if (!api) {
-            openPartnerModalButton.disabled = true;
-            setPartnerMessage("필요한 화면 기능을 불러오지 못했습니다. 새로고침 후 다시 시도하세요.", "error");
-            return;
-        }
-
-        openPartnerModalButton.disabled = true;
-        setPartnerMessage("거래처를 불러오는 중입니다.");
-
-        try {
-            const params = new URLSearchParams({
-                partnerRole: "SUPPLIER",
-                active: "true",
-                limit: "100",
-            });
-            const data = await api.getData(`/api/workspaces/${encodeURIComponent(companyCode)}/partners?${params.toString()}`, {
-                authRedirect: true,
-                loginCompanyCode: companyCode,
-            });
-            renderPartners(normalizeListData(data));
-        } catch (error) {
-            openPartnerModalButton.disabled = true;
-            setPartnerMessage(error.message || "거래처 조회 요청을 처리할 수 없습니다.", "error");
+            setPartSearchMessage(loadError, "error");
         }
     };
 
@@ -868,12 +644,6 @@
             searchParts();
         }
     });
-    categorySelect?.addEventListener("change", () => {
-        partSearchStarted = true;
-        updateCurrentRegisterStep("2");
-        syncCategoryLabel();
-        filterParts();
-    });
     addButton.addEventListener("click", addLine);
 
     lineList.addEventListener("click", (event) => {
@@ -894,54 +664,6 @@
         const line = quantity.closest("[data-line-entry]");
         line.querySelector(".serial-preview").innerHTML = serialPreview(line.dataset.partPrefix, quantity.value);
         updateCurrentRegisterStep("3");
-    });
-
-    openPartnerModalButton?.addEventListener("click", () => {
-        renderPartnerList();
-        partnerModal?.showModal();
-        requestAnimationFrame(() => partnerSearchInput?.focus());
-    });
-
-    closePartnerModalButtons.forEach((button) => {
-        button.addEventListener("click", () => partnerModal?.close());
-    });
-
-    partnerSearchButton?.addEventListener("click", renderPartnerList);
-    partnerSearchInput?.addEventListener("input", renderPartnerList);
-    partnerSearchInput?.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            renderPartnerList();
-        }
-    });
-
-    partnerList?.addEventListener("click", (event) => {
-        const option = event.target.closest("[data-partner-option]");
-        if (!option) {
-            return;
-        }
-        const partner = partners.find((candidate) => String(candidate.partnerId) === option.dataset.partnerOption);
-        if (partner) {
-            selectPartner(partner);
-        }
-    });
-
-    openCategoryPickerButton?.addEventListener("click", openCategoryPicker);
-    closeCategoryPickerButtons.forEach((button) => {
-        button.addEventListener("click", () => categoryPickerModal?.close());
-    });
-    clearCategoryPickerButton?.addEventListener("click", clearCategoryFilter);
-    categoryPickerSearch?.addEventListener("input", renderCategoryPickerList);
-    categoryPickerSearch?.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            renderCategoryPickerList();
-        }
-    });
-    categoryPickerModal?.addEventListener("click", (event) => {
-        if (event.target === categoryPickerModal) {
-            categoryPickerModal.close();
-        }
     });
 
     inboundForm.elements.reason?.addEventListener("input", () => updateCurrentRegisterStep());
@@ -980,49 +702,25 @@
     const inboundSummary = (payload) => {
         const totalQuantity = payload.lines.reduce((sum, line) => sum + line.quantity, 0);
         return {
-            partnerName: selectedPartner?.partnerName || "-",
-            reason: payload.reason || "-",
-            lineCount: payload.lines.length,
+            partnerName: partnerPicker.getSelected()?.partnerName || "-",
             totalQuantity,
         };
-    };
-
-    const renderConfirmSummary = (summary) => {
-        if (confirmPartner) confirmPartner.textContent = summary.partnerName;
-        if (confirmReason) confirmReason.textContent = summary.reason;
-        if (confirmLineCount) confirmLineCount.textContent = `${summary.lineCount}개 품목`;
-        if (confirmTotalQuantity) confirmTotalQuantity.textContent = `${summary.totalQuantity}개`;
-    };
-
-    const setConfirmDisabled = (disabled) => {
-        if (confirmSaveButton) {
-            confirmSaveButton.disabled = disabled;
-        }
-        closeConfirmModalButtons.forEach((button) => {
-            button.disabled = disabled;
-        });
     };
 
     const submitInbound = async ({ companyCode, payload }) => {
         let redirecting = false;
         const summary = inboundSummary(payload);
-        const api = window.PcsApi;
 
+        submitting = true;
         setSubmitDisabled(true);
-        setConfirmDisabled(true);
         setSubmitMessage("입고를 저장하는 중입니다.");
+        updateCurrentRegisterStep("4");
 
         try {
-            if (!api) {
-                throw new Error("필요한 화면 기능을 불러오지 못했습니다. 새로고침 후 다시 시도하세요.");
-            }
-
-            const result = await api.request(`/api/workspaces/${encodeURIComponent(companyCode)}/stock/documents/inbounds`, {
-                method: "POST",
-                body: payload,
-                authRedirect: true,
-                loginCompanyCode: companyCode,
-            });
+            const result = await window.PcsApi.request(
+                `/api/workspaces/${encodeURIComponent(companyCode)}/stock/documents/inbounds`,
+                workspace.apiOptions({ method: "POST", body: payload })
+            );
 
             const documentNo = result?.data?.documentNo;
             const successMessage = documentNo
@@ -1053,9 +751,10 @@
         } catch (error) {
             setSubmitMessage(error.message || "입고 저장 요청을 처리할 수 없습니다.", true);
         } finally {
+            submitting = false;
             if (!redirecting) {
                 setSubmitDisabled(false);
-                setConfirmDisabled(false);
+                updateCurrentRegisterStep();
             }
         }
     };
@@ -1072,7 +771,7 @@
             return;
         }
 
-        const companyCode = getCompanyCode();
+        const companyCode = workspace.companyCode;
         const payload = buildInboundPayload();
 
         if (!companyCode) {
@@ -1084,39 +783,8 @@
             return;
         }
 
-        pendingInbound = { companyCode, payload };
         updateCurrentRegisterStep("4");
-        renderConfirmSummary(inboundSummary(payload));
-        if (confirmModal) {
-            confirmModal.showModal();
-            return;
-        }
-        submitInbound(pendingInbound);
-    });
-
-    confirmSaveButton?.addEventListener("click", () => {
-        if (!pendingInbound) {
-            return;
-        }
-
-        confirmModal?.close();
-        submitInbound(pendingInbound);
-    });
-
-    closeConfirmModalButtons.forEach((button) => {
-        button.addEventListener("click", () => {
-            confirmModal?.close();
-            pendingInbound = null;
-            updateCurrentRegisterStep();
-        });
-    });
-
-    confirmModal?.addEventListener("click", (event) => {
-        if (event.target === confirmModal) {
-            confirmModal.close();
-            pendingInbound = null;
-            updateCurrentRegisterStep();
-        }
+        void submitInbound({ companyCode, payload });
     });
 
     openPartModalButton?.addEventListener("click", () => {
@@ -1138,11 +806,7 @@
 
     partModalForm?.addEventListener("submit", (event) => {
         event.preventDefault();
-        if (partModalMessage) {
-            partModalMessage.hidden = false;
-            partModalMessage.textContent = "품목 등록은 품목 관리 화면에서 진행해 주세요.";
-        }
-        createQuickPart();
+        void createQuickPart();
     });
 
     if (partOptions.length) {
@@ -1150,8 +814,8 @@
     } else {
         setPartSearchMessage("검색 버튼을 눌러 품목을 조회하세요.");
     }
-    loadCategories();
-    loadPartners();
+    void loadCategories();
+    void partnerPicker.load();
     refreshLineState();
     bindRegisterStepTracking();
 })();

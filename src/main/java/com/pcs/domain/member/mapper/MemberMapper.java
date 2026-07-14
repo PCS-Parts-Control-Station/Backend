@@ -28,16 +28,6 @@ public interface MemberMapper {
             @Param("offset") int offset
     );
 
-    long countMembers(
-            @Param("companyId") Long companyId,
-            @Param("keyword") String keyword,
-            @Param("role") MemberRole role,
-            @Param("passwordStatus") PasswordStatus passwordStatus,
-            @Param("manageableRoles") List<MemberRole> manageableRoles,
-            @Param("createdFrom") LocalDateTime createdFrom,
-            @Param("createdTo") LocalDateTime createdTo
-    );
-
     SearchMemberSummaryResponse summarizeMembers(
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,

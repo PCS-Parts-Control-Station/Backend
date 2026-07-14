@@ -48,15 +48,6 @@
         OFFSET #{offset}
     </select>
 
-    <select id="countParts" resultType="long">
-        SELECT COUNT(*)
-        FROM tb_pc_part p
-        JOIN tb_part_category c
-            ON c.company_id = p.company_id
-           AND c.category_id = p.category_id
-        <include refid="partSearchWhere" />
-    </select>
-
     <select id="summarizeParts" resultType="com.pcs.domain.part.dto.response.SearchPartSummaryResponse">
         SELECT
             COUNT(*) AS total_count,

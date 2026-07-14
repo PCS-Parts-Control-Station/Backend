@@ -2,6 +2,21 @@
     const DOCUMENT_PAGE_SIZE = 10;
     const HISTORY_PAGE_SIZE = 10;
     const MAX_BULK_INSPECTION_UNITS = 300;
+    const { companyCode, apiBase, apiOptions } = window.PcsWorkspace.createContext();
+    const numberText = window.PcsFormat.number;
+    const escapeHtml = window.PcsHtml.escape;
+    const formatDate = window.PcsFormat.date;
+    const formatLocalDate = window.PcsFormat.localDate;
+    const showToast = window.PcsFeedback.toast;
+    const {
+        inspectionStatus: inspectionStatusText,
+        inspectionResult: inspectionResultText,
+        inspectionType: inspectionTypeText,
+        inspectionItemGroup: inspectionItemGroupText,
+        inspectionInputType: inspectionInputTypeText,
+        grade: gradeText,
+        salesStatus: salesStatusText
+    } = window.PcsLabels;
 
     const filterForm = document.querySelector(".inspection-filter-form");
     const partnerFilter = filterForm?.elements.partnerId;
@@ -144,94 +159,6 @@
             return null;
         }
         return { documentId, movementId, unitId };
-    };
-
-    const LABELS = {
-        inspectionStatus: {
-            WAITING: "검수 전",
-            IN_PROGRESS: "진행 중",
-            COMPLETED: "완료"
-        },
-        result: {
-            PASS: "통과",
-            FAIL: "불합격",
-            WARN: "주의",
-            NA: "해당 없음"
-        },
-        grade: {
-            NONE: "미정",
-            A: "A",
-            B: "B",
-            C: "C",
-            DEFECTIVE: "불량"
-        },
-        salesStatus: {
-            AVAILABLE: "판매 가능",
-            HOLD: "판매 보류",
-            UNAVAILABLE: "판매 불가"
-        },
-        inspectionType: {
-            INITIAL: "최초",
-            CORRECTION: "정정",
-            REINSPECTION: "재검수"
-        },
-        itemGroup: {
-            BASIC: "주요 검수 항목",
-            DETAIL: "추가 검수 항목"
-        },
-        inputType: {
-            CHECK: "통과/불합격",
-            NUMBER: "숫자",
-            TEXT: "텍스트",
-            SELECT: "선택"
-        }
-    };
-
-    const getCompanyCode = () => {
-        const match = window.location.pathname.match(/^\/w\/([^/]+)/);
-        return match ? decodeURIComponent(match[1]) : "";
-    };
-
-    const apiBase = () => `/api/workspaces/${encodeURIComponent(getCompanyCode())}`;
-
-    const apiOptions = (options = {}) => ({
-        authRedirect: true,
-        loginCompanyCode: getCompanyCode(),
-        ...options
-    });
-
-    const showToast = (message, type = "info") => {
-        window.PcsUi?.toast({ message, type });
-    };
-
-    const numberText = (value) => Number(value || 0).toLocaleString("ko-KR");
-
-    const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (letter) => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        "\"": "&quot;",
-        "'": "&#039;"
-    }[letter]));
-
-    const formatDate = (value) => {
-        if (!value) {
-            return "-";
-        }
-        if (Array.isArray(value)) {
-            const [year, month, day] = value;
-            if (year && month && day) {
-                return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-            }
-        }
-        return String(value).slice(0, 10);
-    };
-
-    const formatLocalDate = (date) => {
-        const year = String(date.getFullYear());
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const day = String(date.getDate()).padStart(2, "0");
-        return `${year}-${month}-${day}`;
     };
 
     const statusBadgeClass = (status) => {
@@ -689,7 +616,7 @@
     };
 
     const loadWaitingDocuments = async (page = currentDocumentPage, options = {}) => {
-        if (!window.PcsApi || !getCompanyCode()) {
+        if (!window.PcsApi || !companyCode) {
             setTableMessage(waitingTable, "검수 대상 전표를 불러올 수 없습니다.");
             return;
         }
@@ -712,7 +639,7 @@
         buildPeriodParams(params);
 
         try {
-            const data = await window.PcsApi.getData(`${apiBase()}/inspections/waiting-documents?${params.toString()}`, apiOptions());
+            const data = await window.PcsApi.getData(`${apiBase}/inspections/waiting-documents?${params.toString()}`, apiOptions());
             const pageData = window.PcsPagination
                     ? window.PcsPagination.normalizePageData(data, DOCUMENT_PAGE_SIZE)
                     : {
@@ -732,7 +659,7 @@
             updateDocumentPagination(pageData);
         } catch (error) {
             if (keepCurrentList) {
-                window.PcsUi?.showToast?.(error.message || "검수 대상 전표를 불러오지 못했습니다.", "error");
+                showToast(error.message || "검수 대상 전표를 불러오지 못했습니다.", "error");
             } else {
                 setTableMessage(waitingTable, error.message || "검수 대상 전표를 불러오지 못했습니다.");
                 if (documentPagination) {
@@ -748,7 +675,7 @@
     };
 
     const loadPartners = async () => {
-        if (!partnerFilter || !window.PcsApi || !getCompanyCode()) {
+        if (!partnerFilter || !window.PcsApi || !companyCode) {
             return;
         }
         partnerFilter.disabled = true;
@@ -760,7 +687,7 @@
                 page: "0",
                 size: "100"
             });
-            const data = await window.PcsApi.getData(`${apiBase()}/partners?${params.toString()}`, apiOptions());
+            const data = await window.PcsApi.getData(`${apiBase}/partners?${params.toString()}`, apiOptions());
             const partners = Array.isArray(data?.content) ? data.content : [];
             partnerFilter.innerHTML = '<option value="">전체</option>';
             partners.forEach((partner) => {
@@ -793,7 +720,7 @@
         const unitsHtml = (selectedLine.units || []).map((unit) => {
             const completed = unit.inspectionStatus === "COMPLETED";
             const gradeBadge = unit.grade && unit.grade !== "NONE"
-                    ? `<em class="badge ${gradeBadgeClass(unit.grade)}">${escapeHtml(LABELS.grade[unit.grade] || unit.grade)}</em>`
+                    ? `<em class="badge ${gradeBadgeClass(unit.grade)}">${escapeHtml(gradeText(unit.grade, unit.grade))}</em>`
                     : "";
             return `
                 <li class="${completed ? "is-completed" : "is-waiting"}"${completed ? "" : ` data-inspection-unit-row="${escapeHtml(String(unit.unitId))}"`}>
@@ -801,7 +728,7 @@
                     <span class="inspection-unit-main">
                         <code>${escapeHtml(unit.internalSerialNo)}</code>
                         <span class="inspection-unit-badges">
-                            <em class="badge ${statusBadgeClass(unit.inspectionStatus)}">${escapeHtml(LABELS.inspectionStatus[unit.inspectionStatus] || unit.inspectionStatus)}</em>
+                            <em class="badge ${statusBadgeClass(unit.inspectionStatus)}">${escapeHtml(inspectionStatusText(unit.inspectionStatus, unit.inspectionStatus))}</em>
                             ${gradeBadge}
                         </span>
                     </span>
@@ -877,7 +804,7 @@
         }
 
         try {
-            const detail = await window.PcsApi.getData(`${apiBase()}/inspections/waiting-documents/${documentId}/units`, apiOptions());
+            const detail = await window.PcsApi.getData(`${apiBase}/inspections/waiting-documents/${documentId}/units`, apiOptions());
             if (requestId !== documentDetailRequestId) {
                 return;
             }
@@ -890,7 +817,7 @@
             if (documentFields.documentNo) documentFields.documentNo.textContent = detail.documentNo || "-";
             setBadge(
                     documentFields.status,
-                    LABELS.inspectionStatus[detail.inspectionStatus] || detail.inspectionStatus,
+                    inspectionStatusText(detail.inspectionStatus, detail.inspectionStatus),
                     statusBadgeClass(detail.inspectionStatus)
             );
             if (documentFields.total) documentFields.total.textContent = `${numberText(detail.totalUnitCount)}개`;
@@ -982,7 +909,7 @@
             page: "0",
             size: "100"
         });
-        const data = await window.PcsApi.getData(`${apiBase()}/inspection-templates?${params.toString()}`, apiOptions());
+        const data = await window.PcsApi.getData(`${apiBase}/inspection-templates?${params.toString()}`, apiOptions());
         const templates = Array.isArray(data?.content) ? data.content : [];
         templatesByCategory.set(key, templates);
         return templates;
@@ -996,7 +923,7 @@
         if (templateDetailsById.has(key)) {
             return templateDetailsById.get(key);
         }
-        const detail = await window.PcsApi.getData(`${apiBase()}/inspection-templates/${encodeURIComponent(templateId)}`, apiOptions());
+        const detail = await window.PcsApi.getData(`${apiBase}/inspection-templates/${encodeURIComponent(templateId)}`, apiOptions());
         templateDetailsById.set(key, detail);
         return detail;
     };
@@ -1044,42 +971,55 @@
         }
     };
 
-    const renderTemplateItemControl = (item) => {
-        const baseName = `item_${item.itemId}`;
-        if (item.inputType === "NUMBER") {
-            return `
-                <div class="inspection-template-control-grid">
-                    <input type="number" name="${baseName}_valueNumber" data-inspection-template-value placeholder="값">
-                    <select name="${baseName}_result" data-inspection-template-result>
-                        <option value="PASS">통과</option>
-                        <option value="WARN">주의</option>
-                        <option value="FAIL">불합격</option>
-                        <option value="NA">해당 없음</option>
-                    </select>
-                </div>
-            `;
-        }
-        if (item.inputType === "TEXT") {
-            return `<textarea name="${baseName}_valueText" data-inspection-template-value rows="2" placeholder="확인 내용을 입력해 주세요"></textarea>`;
-        }
-        if (item.inputType === "SELECT") {
-            const options = (item.options || []).filter((option) => option.active !== false).map((option) => `
-                <option value="${option.optionId}">${escapeHtml(option.optionLabel)}</option>
+    const TEMPLATE_RESULTS = ["PASS", "WARN", "FAIL", "NA"];
+
+    const renderTemplateResultOptions = (selected = "PASS", includeWarn = true) => TEMPLATE_RESULTS
+            .filter((value) => includeWarn || value !== "WARN")
+            .map((value) => `
+                <option value="${value}"${value === selected ? " selected" : ""}>${inspectionResultText(value, value)}</option>
             `).join("");
-            return `
-                <select name="${baseName}_selectedOptionId" data-inspection-template-value>
+
+    const renderTemplateItemControl = (item, options = {}) => {
+        const workflow = options.workflow === true;
+        const previous = options.previous || null;
+        const baseName = `${workflow ? "workflow_item" : "item"}_${item.itemId}`;
+        const valueAttribute = workflow ? "data-inspection-workflow-template-value" : "data-inspection-template-value";
+        const resultAttribute = workflow ? "data-inspection-workflow-template-result" : "data-inspection-template-result";
+        const previousResult = previous?.result || "PASS";
+        const resultControl = (includeWarn = true) => `
+            <select name="${baseName}_result" ${resultAttribute}>
+                ${renderTemplateResultOptions(previousResult, includeWarn)}
+            </select>
+        `;
+
+        if (item.inputType === "CHECK") {
+            return resultControl(workflow);
+        }
+
+        let valueControl = "";
+        if (item.inputType === "NUMBER") {
+            valueControl = `<input type="number" name="${baseName}_valueNumber" ${valueAttribute} value="${escapeHtml(previous?.valueNumber ?? "")}" placeholder="값">`;
+        } else if (item.inputType === "TEXT") {
+            valueControl = `<textarea name="${baseName}_valueText" ${valueAttribute} rows="2" placeholder="확인 내용을 입력해 주세요">${escapeHtml(previous?.valueText || "")}</textarea>`;
+        } else if (item.inputType === "SELECT") {
+            const selectedOptionId = previous?.selectedOptionId ? String(previous.selectedOptionId) : "";
+            const optionList = (item.options || [])
+                    .filter((option) => option.active !== false || (workflow && String(option.optionId) === selectedOptionId))
+                    .map((option) => `
+                        <option value="${option.optionId}"${String(option.optionId) === selectedOptionId ? " selected" : ""}>${escapeHtml(option.optionLabel)}</option>
+                    `).join("");
+            valueControl = `
+                <select name="${baseName}_selectedOptionId" ${valueAttribute}>
                     <option value="">선택</option>
-                    ${options}
+                    ${optionList}
                 </select>
             `;
         }
-        return `
-            <select name="${baseName}_result" data-inspection-template-result>
-                <option value="PASS">통과</option>
-                <option value="FAIL">불합격</option>
-                <option value="NA">해당 없음</option>
-            </select>
-        `;
+
+        if (!workflow && item.inputType !== "NUMBER") {
+            return valueControl;
+        }
+        return `<div class="inspection-template-control-grid">${valueControl}${resultControl()}</div>`;
     };
 
     const renderTemplateItems = (template) => {
@@ -1103,7 +1043,7 @@
         formFields.templateItems.innerHTML = groups.map((entry) => `
             <section class="inspection-template-group" data-inspection-template-group="${entry.group}">
                 <header>
-                    <strong>${LABELS.itemGroup[entry.group] || entry.group}</strong>
+                    <strong>${inspectionItemGroupText(entry.group, entry.group)}</strong>
                     <span>${numberText(entry.items.length)}개 항목</span>
                 </header>
                 <div class="inspection-template-items">
@@ -1111,7 +1051,7 @@
                         <label class="inspection-check-item inspection-template-item" data-template-item-id="${item.itemId}" data-template-input-type="${item.inputType}" data-template-required="${item.required}">
                             <span>
                                 <strong>${escapeHtml(item.itemName)}${item.required ? '<em class="inspection-required-mark">*필수</em>' : ""}</strong>
-                                <small>${LABELS.inputType[item.inputType] || item.inputType}</small>
+                                <small>${inspectionInputTypeText(item.inputType, item.inputType)}</small>
                             </span>
                             ${renderTemplateItemControl(item)}
                         </label>
@@ -1155,7 +1095,7 @@
         }
         if (formFields.badges) {
             const selectedCountBadge = `<em class="badge badge-blue inspection-selection-count">선택 ${numberText(validContexts.length)}개</em>`;
-            const statusText = LABELS.inspectionStatus[first.unit.inspectionStatus] || first.unit.inspectionStatus || "검수 전";
+            const statusText = inspectionStatusText(first.unit.inspectionStatus, "검수 전");
             const statusClass = statusBadgeClass(first.unit.inspectionStatus || "WAITING");
             if (validContexts.length === 1) {
                 formFields.badges.innerHTML = `
@@ -1329,21 +1269,18 @@
     const isInvalidDefectiveSalesStatus = (form) => form?.elements.grade?.value === "DEFECTIVE"
             && form?.elements.salesStatus?.value !== "UNAVAILABLE";
 
-    const collectInspectionItemResults = () => {
-        const items = (selectedTemplateDetail?.items || []).filter((item) => item.active !== false);
+    const collectTemplateItemResults = (items, container, selectors) => {
         const missingItems = [];
         const itemResults = [];
         items.forEach((item) => {
-            const element = formFields.templateItems?.querySelector(`[data-template-item-id="${item.itemId}"]`);
-            const resultField = element?.querySelector("[data-inspection-template-result]");
-            const valueField = element?.querySelector("[data-inspection-template-value]");
+            const element = container?.querySelector(`[${selectors.itemId}="${item.itemId}"]`);
+            const resultField = element?.querySelector(`[${selectors.result}]`);
+            const valueField = element?.querySelector(`[${selectors.value}]`);
             const value = valueField?.value?.trim() || "";
             const result = resultField?.value || "PASS";
 
-            if (item.required) {
-                if ((item.inputType === "SELECT" || item.inputType === "TEXT" || item.inputType === "NUMBER") && !value) {
-                    missingItems.push(item.itemName);
-                }
+            if (item.required && ["SELECT", "TEXT", "NUMBER"].includes(item.inputType) && !value) {
+                missingItems.push(item.itemName);
             }
 
             if (!item.required && item.inputType !== "CHECK" && !value && result !== "FAIL") {
@@ -1362,6 +1299,16 @@
         return { itemResults, missingItems };
     };
 
+    const collectInspectionItemResults = () => collectTemplateItemResults(
+            (selectedTemplateDetail?.items || []).filter((item) => item.active !== false),
+            formFields.templateItems,
+            {
+                itemId: "data-template-item-id",
+                result: "data-inspection-template-result",
+                value: "data-inspection-template-value"
+            }
+    );
+
     const saveInspection = async () => {
         if (!pendingSavePayload) {
             return;
@@ -1372,8 +1319,8 @@
 
         try {
             const endpoint = payload.unitIds.length > 1
-                    ? `${apiBase()}/inspections/bulk`
-                    : `${apiBase()}/inspections`;
+                    ? `${apiBase}/inspections/bulk`
+                    : `${apiBase}/inspections`;
             const body = payload.unitIds.length > 1
                     ? {
                         unitIds: payload.unitIds,
@@ -1401,8 +1348,7 @@
             showToast("검수 결과를 저장했습니다.", "success");
             await Promise.all([
                 loadWaitingDocuments(),
-                selectedDocumentId ? loadDocumentDetail(selectedDocumentId) : Promise.resolve(),
-                loadHistories()
+                selectedDocumentId ? loadDocumentDetail(selectedDocumentId) : loadHistories()
             ]);
             clearInspectionForm();
         } catch (error) {
@@ -1436,8 +1382,8 @@
                     <small>${escapeHtml(history.partName)} ${escapeHtml(history.modelName)}</small>
                 </span>
                 <span class="inspection-history-document" role="cell" data-label="전표 번호">${escapeHtml(history.documentNo || "-")}</span>
-                <span class="inspection-history-type" role="cell" data-label="유형"><em class="badge ${typeBadgeClass(history.inspectionType)}">${escapeHtml(LABELS.inspectionType[history.inspectionType] || history.inspectionType)}</em></span>
-                <span class="inspection-history-grade" role="cell" data-label="등급"><em class="badge ${gradeBadgeClass(history.grade)}">${escapeHtml(LABELS.grade[history.grade] || history.grade)}</em></span>
+                <span class="inspection-history-type" role="cell" data-label="유형"><em class="badge ${typeBadgeClass(history.inspectionType)}">${escapeHtml(inspectionTypeText(history.inspectionType, history.inspectionType))}</em></span>
+                <span class="inspection-history-grade" role="cell" data-label="등급"><em class="badge ${gradeBadgeClass(history.grade)}">${escapeHtml(gradeText(history.grade, history.grade))}</em></span>
                 <span class="inspection-history-operator" role="cell" data-label="처리자">${escapeHtml(history.inspectedByName || "-")}</span>
                 <span class="row-actions inspection-history-row-actions" role="cell" data-label="상세">
                     <button type="button" data-inspection-history-action="${history.inspectionId}">상세</button>
@@ -1462,7 +1408,7 @@
     };
 
     const loadHistories = async (page = currentHistoryPage, options = {}) => {
-        if (!window.PcsApi || !getCompanyCode()) {
+        if (!window.PcsApi || !companyCode) {
             setTableMessage(historyTable, "검수 이력을 불러올 수 없습니다.");
             return;
         }
@@ -1497,7 +1443,7 @@
                         size: String(HISTORY_PAGE_SIZE),
                         ...Object.fromEntries(Object.entries(scope.params).map(([key, value]) => [key, String(value)]))
                     });
-            const data = await window.PcsApi.getData(`${apiBase()}/inspections?${params.toString()}`, apiOptions());
+            const data = await window.PcsApi.getData(`${apiBase}/inspections?${params.toString()}`, apiOptions());
             if (requestId !== historyRequestId) {
                 return;
             }
@@ -1546,7 +1492,7 @@
             return;
         }
         historyFields.items.innerHTML = items.map((item) => {
-            const resultText = LABELS.result[item.result] || item.result || "-";
+            const resultText = inspectionResultText(item.result, "-");
             const valueText = item.selectedOptionLabelSnapshot || item.valueText || item.valueNumber || item.memo || "-";
             return `
                 <article class="inspection-result-item">
@@ -1558,62 +1504,6 @@
                 </article>
             `;
         }).join("");
-    };
-
-    const renderWorkflowResultOptions = (selected = "PASS") => {
-        return ["PASS", "WARN", "FAIL", "NA"].map((value) => `
-            <option value="${value}"${value === selected ? " selected" : ""}>${LABELS.result[value] || value}</option>
-        `).join("");
-    };
-
-    const renderWorkflowTemplateItemControl = (item, previous) => {
-        const baseName = `workflow_item_${item.itemId}`;
-        const previousResult = previous?.result || "PASS";
-        if (item.inputType === "NUMBER") {
-            const value = previous?.valueNumber ?? "";
-            return `
-                <div class="inspection-template-control-grid">
-                    <input type="number" name="${baseName}_valueNumber" data-inspection-workflow-template-value value="${escapeHtml(value)}" placeholder="값">
-                    <select name="${baseName}_result" data-inspection-workflow-template-result>
-                        ${renderWorkflowResultOptions(previousResult)}
-                    </select>
-                </div>
-            `;
-        }
-        if (item.inputType === "TEXT") {
-            return `
-                <div class="inspection-template-control-grid">
-                    <textarea name="${baseName}_valueText" data-inspection-workflow-template-value rows="2" placeholder="확인 내용을 입력해 주세요">${escapeHtml(previous?.valueText || "")}</textarea>
-                    <select name="${baseName}_result" data-inspection-workflow-template-result>
-                        ${renderWorkflowResultOptions(previousResult)}
-                    </select>
-                </div>
-            `;
-        }
-        if (item.inputType === "SELECT") {
-            const selectedOptionId = previous?.selectedOptionId ? String(previous.selectedOptionId) : "";
-            const options = (item.options || [])
-                    .filter((option) => option.active !== false || String(option.optionId) === selectedOptionId)
-                    .map((option) => `
-                        <option value="${option.optionId}"${String(option.optionId) === selectedOptionId ? " selected" : ""}>${escapeHtml(option.optionLabel)}</option>
-                    `).join("");
-            return `
-                <div class="inspection-template-control-grid">
-                    <select name="${baseName}_selectedOptionId" data-inspection-workflow-template-value>
-                        <option value="">선택</option>
-                        ${options}
-                    </select>
-                    <select name="${baseName}_result" data-inspection-workflow-template-result>
-                        ${renderWorkflowResultOptions(previousResult)}
-                    </select>
-                </div>
-            `;
-        }
-        return `
-            <select name="${baseName}_result" data-inspection-workflow-template-result>
-                ${renderWorkflowResultOptions(previousResult)}
-            </select>
-        `;
     };
 
     const renderWorkflowTemplateItems = (template, priorItems = []) => {
@@ -1638,7 +1528,7 @@
         workflowFields.items.innerHTML = groups.map((entry) => `
             <section class="inspection-template-group" data-inspection-workflow-template-group="${entry.group}">
                 <header>
-                    <strong>${LABELS.itemGroup[entry.group] || entry.group}</strong>
+                    <strong>${inspectionItemGroupText(entry.group, entry.group)}</strong>
                     <span>${numberText(entry.items.length)}개 항목</span>
                 </header>
                 <div class="inspection-template-items">
@@ -1648,9 +1538,9 @@
                             <label class="inspection-check-item inspection-template-item" data-workflow-template-item-id="${item.itemId}" data-workflow-template-input-type="${item.inputType}" data-workflow-template-required="${item.required}">
                                 <span>
                                     <strong>${escapeHtml(item.itemName)}${item.required ? '<em class="inspection-required-mark">*필수</em>' : ""}</strong>
-                                    <small>${LABELS.inputType[item.inputType] || item.inputType}</small>
+                                    <small>${inspectionInputTypeText(item.inputType, item.inputType)}</small>
                                 </span>
-                                ${renderWorkflowTemplateItemControl(item, previous)}
+                                ${renderTemplateItemControl(item, { workflow: true, previous })}
                             </label>
                         `;
                     }).join("")}
@@ -1660,36 +1550,15 @@
         if (workflowFields.itemCount) workflowFields.itemCount.textContent = `${numberText(items.length)}개 항목`;
     };
 
-    const collectWorkflowItemResults = () => {
-        const items = selectedWorkflowTemplateDetail?.items || [];
-        const missingItems = [];
-        const itemResults = [];
-        items.forEach((item) => {
-            const element = workflowFields.items?.querySelector(`[data-workflow-template-item-id="${item.itemId}"]`);
-            const resultField = element?.querySelector("[data-inspection-workflow-template-result]");
-            const valueField = element?.querySelector("[data-inspection-workflow-template-value]");
-            const value = valueField?.value?.trim() || "";
-            const result = resultField?.value || "PASS";
-
-            if (item.required && (item.inputType === "SELECT" || item.inputType === "TEXT" || item.inputType === "NUMBER") && !value) {
-                missingItems.push(item.itemName);
+    const collectWorkflowItemResults = () => collectTemplateItemResults(
+            selectedWorkflowTemplateDetail?.items || [],
+            workflowFields.items,
+            {
+                itemId: "data-workflow-template-item-id",
+                result: "data-inspection-workflow-template-result",
+                value: "data-inspection-workflow-template-value"
             }
-
-            if (!item.required && item.inputType !== "CHECK" && !value && result !== "FAIL") {
-                return;
-            }
-
-            itemResults.push({
-                itemId: item.itemId,
-                result,
-                valueText: item.inputType === "TEXT" ? value || null : null,
-                valueNumber: item.inputType === "NUMBER" && value ? Number(value) : null,
-                selectedOptionId: item.inputType === "SELECT" && value ? Number(value) : null,
-                memo: null
-            });
-        });
-        return { itemResults, missingItems };
-    };
+    );
 
     const closeHistoryWorkflow = () => {
         activeHistoryMode = null;
@@ -1713,7 +1582,7 @@
         const requestId = ++historyDetailRequestId;
         closeHistoryWorkflow();
         try {
-            const detail = await window.PcsApi.getData(`${apiBase()}/inspections/${inspectionId}`, apiOptions());
+            const detail = await window.PcsApi.getData(`${apiBase}/inspections/${inspectionId}`, apiOptions());
             if (requestId !== historyDetailRequestId) {
                 return;
             }
@@ -1727,14 +1596,14 @@
                 }
             }
             if (historyFields.unit) historyFields.unit.textContent = detail.internalSerialNo || "-";
-            setBadge(historyFields.type, LABELS.inspectionType[detail.inspectionType] || detail.inspectionType, typeBadgeClass(detail.inspectionType));
-            setBadge(historyFields.grade, LABELS.grade[detail.grade] || detail.grade, gradeBadgeClass(detail.grade));
-            setBadge(historyFields.result, LABELS.result[detail.result] || detail.result, resultBadgeClass(detail.result));
+            setBadge(historyFields.type, inspectionTypeText(detail.inspectionType, detail.inspectionType), typeBadgeClass(detail.inspectionType));
+            setBadge(historyFields.grade, gradeText(detail.grade, detail.grade), gradeBadgeClass(detail.grade));
+            setBadge(historyFields.result, inspectionResultText(detail.result, detail.result), resultBadgeClass(detail.result));
             if (historyFields.documentNo) historyFields.documentNo.textContent = detail.documentNo || "-";
             if (historyFields.part) historyFields.part.textContent = `${detail.partName || "-"} ${detail.modelName || ""}`.trim();
             if (historyFields.date) historyFields.date.textContent = formatDate(detail.inspectedAt);
             if (historyFields.worker) historyFields.worker.textContent = detail.inspectedByName || "-";
-            if (historyFields.sales) historyFields.sales.textContent = LABELS.salesStatus[detail.salesStatus] || detail.salesStatus || "-";
+            if (historyFields.sales) historyFields.sales.textContent = salesStatusText(detail.salesStatus, "-");
             if (historyFields.memo) historyFields.memo.textContent = detail.memo || "-";
             if (historyFields.relation) {
                 historyFields.relation.textContent = detail.originalInspectionId
@@ -1841,7 +1710,7 @@
             if (workflowFields.submit) {
                 workflowFields.submit.disabled = true;
             }
-            const result = await window.PcsApi.request(`${apiBase()}/inspections/${selectedHistoryDetail.inspectionId}/${path}`, apiOptions({
+            const result = await window.PcsApi.request(`${apiBase}/inspections/${selectedHistoryDetail.inspectionId}/${path}`, apiOptions({
                 method: "POST",
                 body: {
                     templateId: selectedHistoryDetail.templateId,

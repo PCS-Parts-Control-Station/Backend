@@ -18,7 +18,8 @@ com.pcs.domain.company
 | GET | `/api/workspaces/{companyCode}/public-info` | 업체 주소 존재/사용 가능 여부 확인 |
 | GET | `/api/owners/company` | Owner 회사 조회 |
 | PATCH | `/api/owners/company` | 회사 정보 수정 |
-| PATCH | `/api/owners/company/active` | 회사 활성 여부 변경 |
+
+회사 `active` 상태와 비활성 회사 접근 차단은 구현되어 있다. Owner가 상태를 직접 변경하는 API는 현재 제공하지 않으며, 운영 정책 확정 후 별도 구현한다.
 
 ## 주요 규칙
 

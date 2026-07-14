@@ -404,7 +404,7 @@
     border: 1px solid var(--line);
     border-radius: var(--radius);
     background: var(--surface);
-    color: var(--cyan);
+    color: var(--blue, #2563eb);
     box-shadow: var(--shadow-sm);
 }
 
@@ -423,7 +423,8 @@
     stroke: none;
 }
 
-.page-icon-solid path {
+.page-icon-solid svg > path,
+.page-icon-solid svg > g path {
     fill: currentColor;
     stroke: none;
 }

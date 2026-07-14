@@ -21,14 +21,6 @@ public interface PartnerMapper {
             @Param("offset") int offset
     );
 
-    long countPartners(
-            @Param("companyId") Long companyId,
-            @Param("keyword") String keyword,
-            @Param("partnerType") PartnerType partnerType,
-            @Param("partnerRole") PartnerRole partnerRole,
-            @Param("active") Boolean active
-    );
-
     SearchPartnerSummaryResponse summarizePartners(
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,
