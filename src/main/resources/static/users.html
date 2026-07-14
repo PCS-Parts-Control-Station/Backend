@@ -16,10 +16,10 @@
     <link rel="stylesheet" href="/css/core/tokens.css?20260618_layers">
     <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
     <link rel="stylesheet" href="/css/layouts/workspace.css?20260703_quick_bar_no_overlap">
-    <link rel="stylesheet" href="/css/components/components.css?20260703_modal_scroll_lock">
+    <link rel="stylesheet" href="/css/components/components.css?20260714_drawer_header_alignment">
     <link rel="stylesheet" href="/css/components/management-page.css?20260624_spec_item_compact">
     <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
-    <link rel="stylesheet" href="/css/pages/users.css?20260707_user_filter_status">
+    <link rel="stylesheet" href="/css/pages/users.css?20260714_responsive_audit">
 </head>
 <body class="has-collapsible-sidebar page-users workspace-page">
 <div class="workspace-layout">
@@ -70,11 +70,11 @@
                         <p>이름, 로그인 아이디, 계정 유형, 비밀번호 상태, 가입일로 목록을 좁혀 봅니다.</p>
                     </div>
                     <form class="filter-form management-filter-form user-filter-form" action="#" method="get" autocomplete="off" data-user-filter-form>
-                        <label>
+                        <label class="user-filter-keyword">
                             <span>검색어</span>
                             <input type="search" name="keyword" placeholder="이름 또는 아이디" autocomplete="off">
                         </label>
-                        <label>
+                        <label class="user-filter-role">
                             <span>계정 유형</span>
                             <select name="role">
                                 <option value="">전체</option>
@@ -82,7 +82,7 @@
                                 <option value="STAFF">작업자</option>
                             </select>
                         </label>
-                        <label>
+                        <label class="user-filter-password">
                             <span>비밀번호</span>
                             <select name="passwordStatus">
                                 <option value="">전체</option>
@@ -90,15 +90,15 @@
                                 <option value="ACTIVE">정상</option>
                             </select>
                         </label>
-                        <label>
+                        <label class="user-filter-created-from">
                             <span>가입일 시작</span>
                             <input type="date" name="createdFrom" aria-label="가입일 시작일">
                         </label>
-                        <label>
+                        <label class="user-filter-created-to">
                             <span>가입일 종료</span>
                             <input type="date" name="createdTo" aria-label="가입일 종료일">
                         </label>
-                        <button class="btn btn-primary" type="submit">검색</button>
+                        <button class="btn btn-primary user-filter-submit" type="submit">검색</button>
                     </form>
                 </section>
 
@@ -194,7 +194,10 @@
                                 <h2>사용자 상세</h2>
                                 <p>관리 가능한 작업과 계정 정보를 확인합니다.</p>
                             </div>
-                            <button class="panel-link-button" type="button" data-user-create-mode>새 사용자 등록</button>
+                            <div class="panel-title-actions">
+                                <button class="panel-link-button" type="button" data-user-create-mode>새 사용자 등록</button>
+                                <button class="panel-link-button" type="button" data-close-user-drawer>닫기</button>
+                            </div>
                         </div>
 
                         <div class="drawer-scroll-body">
@@ -235,7 +238,10 @@
                                 <h2>사용자 정보 수정</h2>
                                 <p>이름과 계정 유형을 변경합니다.</p>
                             </div>
-                            <button class="panel-link-button" type="button" data-user-create-mode>새 사용자 등록</button>
+                            <div class="panel-title-actions">
+                                <button class="panel-link-button" type="button" data-user-create-mode>새 사용자 등록</button>
+                                <button class="panel-link-button" type="button" data-close-user-drawer>닫기</button>
+                            </div>
                         </div>
 
                         <div class="drawer-scroll-body">

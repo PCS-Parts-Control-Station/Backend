@@ -16,10 +16,10 @@
     <link rel="stylesheet" href="/css/core/tokens.css?20260618_layers">
     <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
     <link rel="stylesheet" href="/css/layouts/workspace.css?20260703_quick_bar_no_overlap">
-    <link rel="stylesheet" href="/css/components/components.css?20260623_drawer_clip_fix">
+    <link rel="stylesheet" href="/css/components/components.css?20260714_drawer_header_alignment">
     <link rel="stylesheet" href="/css/components/management-page.css?20260624_spec_item_compact">
     <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
-    <link rel="stylesheet" href="/css/pages/partners.css?20260706_contact_columns_fit">
+    <link rel="stylesheet" href="/css/pages/partners.css?20260714_responsive_audit">
 </head>
 <body class="has-collapsible-sidebar page-partners workspace-page">
 <div class="workspace-layout">
@@ -62,18 +62,18 @@
 
         <section class="content-grid management-drawer-grid">
             <div class="content-main">
-                <section class="filter-card management-filter-card" aria-labelledby="filter-title">
+                <section class="filter-card management-filter-card partner-filter-card" aria-labelledby="filter-title">
                     <div>
                         <h2 id="filter-title">거래처 검색</h2>
                         <p>거래처명, 유형, 역할, 거래 상태로 목록을 좁혀 봅니다.</p>
                     </div>
                     <!-- API: GET /api/workspaces/{companyCode}/partners?keyword=&partnerType=&partnerRole=&active=&page=&size= -->
-                    <form class="filter-form management-filter-form" action="#" method="get" autocomplete="off">
-                        <label>
+                    <form class="filter-form management-filter-form partner-filter-form" action="#" method="get" autocomplete="off">
+                        <label class="partner-filter-keyword">
                             <span>검색어</span>
                             <input type="search" name="keyword" placeholder="예: 용산전자" autocomplete="off">
                         </label>
-                        <label>
+                        <label class="partner-filter-type">
                             <span>유형</span>
                             <select name="partnerType">
                                 <option value="">전체</option>
@@ -83,7 +83,7 @@
                                 <option value="ETC">기타</option>
                             </select>
                         </label>
-                        <label>
+                        <label class="partner-filter-role">
                             <span>역할</span>
                             <select name="partnerRole">
                                 <option value="">전체</option>
@@ -92,7 +92,7 @@
                                 <option value="BOTH">공급+고객</option>
                             </select>
                         </label>
-                        <label>
+                        <label class="partner-filter-active">
                             <span>거래 상태</span>
                             <select name="active">
                                 <option value="true" selected>거래 가능</option>
@@ -100,11 +100,11 @@
                                 <option value="false">거래 불가</option>
                             </select>
                         </label>
-                        <button class="btn btn-primary" type="submit">검색</button>
+                        <button class="btn btn-primary partner-filter-submit" type="submit">검색</button>
                     </form>
                 </section>
 
-                <section class="table-card" aria-labelledby="partner-list-title">
+                <section class="table-card partner-list-card" aria-labelledby="partner-list-title">
                     <div class="table-header inline-summary-header management-summary-header">
                         <div>
                             <h2 id="partner-list-title">거래처 목록</h2>
@@ -133,7 +133,7 @@
                     </div>
 
                     <div class="data-table management-data-table" role="table" aria-label="거래처 목록" data-partner-table>
-                        <div class="data-row management-data-row table-head" role="row">
+                        <div class="data-row management-data-row partner-management-data-row table-head" role="row">
                             <span role="columnheader">거래처명</span>
                             <span role="columnheader">유형</span>
                             <span role="columnheader">역할</span>
@@ -143,7 +143,7 @@
                             <span role="columnheader">주소</span>
                             <span role="columnheader">수정일</span>
                         </div>
-                        <div class="data-row management-data-row empty-data-row" role="row" data-partner-empty>
+                        <div class="data-row management-data-row partner-management-data-row empty-data-row" role="row" data-partner-empty>
                             <span role="cell" data-label="안내">거래처 목록을 불러오는 중입니다.</span>
                         </div>
                     </div>
@@ -238,7 +238,10 @@
                                 <h2>거래처 상세</h2>
                                 <p>선택한 거래처 정보를 확인합니다.</p>
                             </div>
-                            <button class="panel-link-button" type="button" data-partner-create-mode>새 거래처 등록</button>
+                            <div class="panel-title-actions">
+                                <button class="panel-link-button" type="button" data-partner-create-mode>새 거래처 등록</button>
+                                <button class="panel-link-button" type="button" data-close-partner-drawer>닫기</button>
+                            </div>
                         </div>
 
                         <div class="drawer-scroll-body">
@@ -285,7 +288,10 @@
                                 <h2>거래처 수정</h2>
                                 <p>선택한 거래처의 기본 정보를 수정합니다.</p>
                             </div>
-                            <button class="panel-link-button" type="button" data-partner-create-mode>새 거래처 등록</button>
+                            <div class="panel-title-actions">
+                                <button class="panel-link-button" type="button" data-partner-create-mode>새 거래처 등록</button>
+                                <button class="panel-link-button" type="button" data-close-partner-drawer>닫기</button>
+                            </div>
                         </div>
 
                         <div class="drawer-scroll-body">
@@ -371,6 +377,6 @@
 <script src="/js/workspace-layout.js?20260624_quick_bar"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
 <script src="/js/pcs-common.js?20260625_right_drawer_v2"></script>
-<script src="/js/partners.js?20260625_right_drawer_v2"></script>
+<script src="/js/partners.js?20260714_responsive_audit"></script>
 </body>
 </html>
