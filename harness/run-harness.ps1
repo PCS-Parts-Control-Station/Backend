@@ -4055,6 +4055,7 @@ function Invoke-SwaggerSmokeCheck {
 
 function Write-Report {
     $lines = New-Object System.Collections.Generic.List[string]
+    $generatedAt = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
     $lines.Add("# PCS Harness Report") | Out-Null
     $lines.Add("") | Out-Null
     $lines.Add("- Mode: $Mode") | Out-Null
@@ -4070,7 +4071,7 @@ function Write-Report {
     } else {
         $lines.Add("- SelectedFeatures: none") | Out-Null
     }
-    $lines.Add("- GeneratedAt: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')") | Out-Null
+    $lines.Add("- GeneratedAt: $generatedAt") | Out-Null
     $lines.Add("- FAIL: $($failures.Count)") | Out-Null
     $lines.Add("- WARN: $($warnings.Count)") | Out-Null
     $lines.Add("- INFO: $($infos.Count)") | Out-Null
@@ -4078,8 +4079,7 @@ function Write-Report {
 
     foreach ($section in @(
         @{ Title = "FAIL"; Items = $failures },
-        @{ Title = "WARN"; Items = $warnings },
-        @{ Title = "INFO"; Items = $infos }
+        @{ Title = "WARN"; Items = $warnings }
     )) {
         $lines.Add("## $($section.Title)") | Out-Null
         $lines.Add("") | Out-Null
@@ -4099,6 +4099,25 @@ function Write-Report {
         }
         $lines.Add("") | Out-Null
     }
+
+    $lines.Add("## INFO Summary") | Out-Null
+    $lines.Add("") | Out-Null
+    if ($infos.Count -eq 0) {
+        $lines.Add("- none") | Out-Null
+    } else {
+        $infoGroups = [ordered]@{}
+        foreach ($item in $infos) {
+            $group = if ($item.Rule -match '^([^_]+)_') { $Matches[1] } else { $item.Rule }
+            if (-not $infoGroups.Contains($group)) {
+                $infoGroups[$group] = 0
+            }
+            $infoGroups[$group]++
+        }
+        foreach ($group in $infoGroups.Keys) {
+            $lines.Add("- ${group}: $($infoGroups[$group])") | Out-Null
+        }
+    }
+    $lines.Add("") | Out-Null
 
     Set-Content -Path $ReportPath -Value $lines -Encoding UTF8
 }

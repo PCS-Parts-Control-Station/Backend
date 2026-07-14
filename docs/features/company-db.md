@@ -1,98 +1,44 @@
-# Company DB Feature
+# Company DB Rules
 
 ## 목적
 
-회사 등록 시 `tb_company`와 `tb_member`가 하나의 트랜잭션으로 저장되는지 검증한다.
+회사와 최초 OWNER가 한 트랜잭션으로 생성되는지 정의한다. 회원 row 자체 규칙은 `member-db.md`가 원본이다.
 
-화면은 회사 등록이지만 DB 기준으로는 아래 흐름이다.
+## 테이블과 저장
 
-```text
-회사 생성 -> OWNER 계정 생성 -> 업체 접속 주소 반환
-```
+| 테이블 | 저장 |
+|---|---|
+| `tb_company` | 이름, 코드, 선택 연락처·사업자번호, active, 시각 |
+| `tb_member` | 같은 companyId의 OWNER 계정 |
 
-## 사용 테이블
+업체 접속 주소는 저장값이 아니라 `/w/{companyCode}`로 계산한다.
 
-```text
-tb_company
-tb_member
-```
+## 제약
 
-## 저장 컬럼
+- companyCode는 전체 unique다.
+- businessRegistrationNo는 값이 있을 때 unique다.
+- OWNER의 loginId·ownerSlot 제약은 `member-db.md`를 따른다.
+- 물리 제약 이름과 컬럼은 DDL이 원본이다.
 
-`tb_company`:
-
-```text
-company_id
-company_name
-company_code
-representative_email
-representative_phone
-business_registration_no
-active
-created_at
-updated_at
-```
-
-`tb_member`:
+## 트랜잭션
 
 ```text
-member_id
-company_id
-login_id
-password_hash
-name
-role
-owner_slot
-password_status
-temp_password_expires_at
-password_changed_at
-active
-last_login_at
-login_failed_count
-locked_until_at
-last_login_ip
-last_login_user_agent
-created_by
-created_at
-updated_at
+company insert -> OWNER insert -> commit
 ```
 
-## 제약 조건
+- 어느 insert든 실패하면 둘 다 남지 않는다.
+- company만 또는 OWNER만 존재하는 부분 성공을 허용하지 않는다.
+- OWNER의 role, ownerSlot, 비밀번호 상태는 `member-db.md` 기준으로 저장한다.
 
-```text
-tb_company.uk_company_code
-tb_company.uk_company_business_registration_no
-tb_member.uk_member_company_login
-tb_member.uk_member_company_owner
-tb_member.chk_member_owner_slot
-```
+## 실패
 
-## 정상 시나리오
+- 중복 companyCode 또는 businessRegistrationNo
+- OWNER loginId/ownerSlot 제약 위반
+- company 저장 후 OWNER 저장 실패
 
-회사 등록 성공 시:
+## DB 통합 테스트 수용 기준
 
-- `tb_company`에 회사 정보가 저장된다.
-- `tb_member`에 같은 `company_id`를 가진 OWNER 계정이 저장된다.
-- OWNER 계정의 상세 저장 규칙은 `docs/features/member-db.md`를 따른다.
-- 응답용 업체 접속 주소는 `/w/{companyCode}` 기준이다.
-
-## 실패 시나리오
-
-- `company_code`가 중복되면 실패한다.
-- `business_registration_no`가 중복되면 실패한다.
-- 회사 저장 후 OWNER 저장이 실패하면 둘 다 남지 않아야 한다.
-- OWNER 저장 후 회사만 존재하는 부분 성공은 허용하지 않는다.
-
-## 하네스 기준
-
-실행 명령과 `-Feature`, `-DbFeature` 조합 기준은 `docs/ai/pcs-harness-rules.md`를 따른다.  
-회사 등록 검증 시에는 `company.md`, `company-db.md`, `member-db.md`, `checkdb.md` 기준을 함께 확인한다.
-
-## DB Integration Test Coverage
-
-- Integration test: `CompanyPersistenceIntegrationTest`
-- Schema fixture: `src/integrationTest/resources/pcs-account-test-schema.sql`
-- Required checks:
-  - `tb_company` and OWNER `tb_member` are persisted together
-  - unique company code and business registration constraints are enforced
-  - non-OWNER users cannot update owner company information
+- `CompanyPersistenceIntegrationTest`
+- company와 OWNER가 함께 저장·롤백된다.
+- 회사 코드와 사업자번호 unique가 적용된다.
+- 비OWNER가 OWNER 회사 정보를 변경할 수 없다.

@@ -29,13 +29,7 @@
 
 ## 로드 순서
 
-```html
-<script src="/js/pcs-common.js"></script>
-<script src="/js/pcs-navigation-state.js"></script>
-<script src="/js/{page}.js"></script>
-```
-
-`pcs-navigation-state.js`는 화면별 JS보다 먼저 로드해야 한다.
+스크립트 순서는 `pcs-frontend-js-rules.md`를 따른다. 이 기능을 쓰는 화면은 `pcs-navigation-state.js`를 화면별 JS보다 먼저 로드한다.
 
 ## 기본 흐름
 

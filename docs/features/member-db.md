@@ -1,133 +1,73 @@
-# Member DB Feature
+# Member DB Rules
 
 ## 목적
 
-`tb_member` 테이블과 사용자 관리에서 사용하는 STAFF 공통 권한 테이블의 DB 규칙을 검증한다.
+회원 계정과 업체 단위 STAFF 비활성 권한의 DB 원본 규칙이다. 다른 기능이 회원 구조만 사용할 때 이 문서를 참조한다.
 
-이 문서는 사용자 관리 기능 전체를 검사하지 않는다.  
-회사 등록처럼 다른 기능에서 `tb_member`를 함께 사용하는 경우, 회원 기능 전체가 아니라 회원 DB 구조만 확인하기 위해 사용한다.
+## 테이블 역할
 
-## 사용 테이블
+| 테이블 | 역할 |
+|---|---|
+| `tb_member` | 계정, 역할, 비밀번호, active, 로그인 보안 상태 |
+| `tb_company_staff_permission_disabled` | 업체에서 끈 STAFF 권한만 저장 |
 
-```text
-tb_member
-tb_company
-tb_company_staff_permission_disabled
-```
-
-`tb_company`는 테스트용 회사 row를 만들기 위한 선행 테이블이다.
-`tb_company_staff_permission_disabled`는 업체 단위 STAFF 권한 중 꺼진 항목만 저장한다.
-
-## 저장 컬럼
+## 핵심 제약
 
 ```text
-member_id
-company_id
-login_id
-password_hash
-name
-role
-owner_slot
-password_status
-temp_password_expires_at
-password_changed_at
-active
-last_login_at
-login_failed_count
-locked_until_at
-last_login_ip
-last_login_user_agent
-created_by
-created_at
-updated_at
+uk_member_company_login
+uk_member_company_owner
+chk_member_owner_slot
+uk_company_staff_permission_disabled
 ```
 
-`tb_company_staff_permission_disabled`:
+상세 컬럼과 정의는 DDL이 원본이다.
 
-```text
-disabled_permission_id
-company_id
-permission_code
-disabled_by
-disabled_at
-```
+## 역할 저장
 
-## 제약 조건
+| role | ownerSlot |
+|---|---|
+| OWNER | 1 |
+| ADMIN | null |
+| STAFF | null |
 
-```text
-tb_member.uk_member_company_login
-tb_member.uk_member_company_owner
-tb_member.chk_member_owner_slot
-tb_company_staff_permission_disabled.uk_company_staff_permission_disabled
-```
+- 회사당 OWNER는 한 명이다.
+- ADMIN/STAFF에 0 같은 ownerSlot 값을 저장하지 않는다.
+- 같은 회사 안에서 loginId는 unique다.
 
-## 목록 조회 기준
+## 목록
 
-- 모든 목록 조건은 `company_id` 범위를 포함한다.
-- 기본 정렬은 `updated_at DESC, member_id DESC`이며 `idx_member_company_list`를 기준으로 검증한다.
-- 가입일 범위는 `created_at` 반열린 구간으로 조회하고 `idx_member_company_created`를 기준으로 검증한다.
-- 이름과 로그인 ID의 `%keyword%` 부분 일치 검색은 일반 B-Tree 인덱스 사용을 전제로 하지 않는다.
+- 모든 조건은 companyId 범위를 포함한다.
+- 기본 정렬은 `updated_at DESC, member_id DESC`다.
+- 가입일은 반열린 createdAt 구간을 사용한다.
+- 이름·loginId `%keyword%`가 B-Tree 인덱스를 사용한다고 가정하지 않는다.
+- 역할별 노출 범위는 `pcs-permission-rules.md`를 따른다.
 
-## 역할별 저장 규칙
+## 비밀번호
 
-OWNER:
+- 원문을 저장·응답하지 않는다.
+- 임시 발급: status TEMPORARY, expiresAt 설정, changedAt null
+- 변경 성공: status ACTIVE, expiresAt null, changedAt 현재 시각
+- 임시 발급·변경과 refresh token 폐기는 같은 트랜잭션이다.
+- 로그인 실패·잠금·최근 로그인 필드는 `auth-db.md`가 동작을 정의한다.
 
-- `role = OWNER`
-- `owner_slot = 1`
-- 회사당 1명만 허용
+## STAFF 권한
 
-ADMIN:
+- 꺼진 permission code만 회사별로 저장한다.
+- 같은 회사·code 중복을 허용하지 않는다.
+- row가 없으면 전체 허용이다.
+- 개인별 예외 권한은 초기 범위가 아니다.
 
-- `role = ADMIN`
-- `owner_slot = NULL`
+## 실패
 
-STAFF:
+- 같은 회사 loginId 중복
+- OWNER 2명 또는 잘못된 ownerSlot
+- 같은 회사 permissionCode 중복
+- password 변경과 token 폐기의 부분 성공
 
-- `role = STAFF`
-- `owner_slot = NULL`
+## DB 통합 테스트 수용 기준
 
-`owner_slot`은 OWNER 단일 계정 보장을 위한 슬롯 컬럼이다.
-ADMIN/STAFF에는 `0` 같은 값을 넣지 않고 `NULL`을 유지한다.
-회사당 OWNER 1명 제한은 `UNIQUE(company_id, owner_slot)`과 `chk_member_owner_slot` 제약으로 검증한다.
-
-## 비밀번호 기준
-
-- DB에는 원문 비밀번호를 저장하지 않는다.
-- DB 컬럼은 `password_hash`이다.
-- 응답 DTO로 `password_hash`를 노출하지 않는다.
-- 비밀번호 변경 시각은 `password_changed_at`에 저장한다.
-- 임시 비밀번호 만료 시각은 `temp_password_expires_at`에 저장한다.
-- 임시 비밀번호 발급 시 `password_status = TEMPORARY`, `password_changed_at = NULL`로 갱신한다.
-- 임시 비밀번호 발급과 해당 회원 refresh token 폐기는 같은 트랜잭션으로 처리한다.
-- 비밀번호 변경 시 `password_status = ACTIVE`, `temp_password_expires_at = NULL`, `password_changed_at = NOW(6)`으로 갱신한다.
-
-## 로그인 보안 기준
-
-- 로그인 실패 횟수는 `login_failed_count`에 저장한다.
-- 로그인 잠금 해제 시각은 `locked_until_at`에 저장한다.
-- 로그인 성공 시 `last_login_at`, `last_login_ip`, `last_login_user_agent`를 갱신한다.
-- 계정 잠금 여부는 `locked_until_at`이 현재 시각보다 미래인지로 판단한다.
-
-## 실패 시나리오
-
-- 같은 회사 안에서 `login_id`가 중복되면 실패한다.
-- 같은 회사에 OWNER가 2명 저장되면 실패한다.
-- OWNER인데 `owner_slot`이 `NULL`이면 실패한다.
-- ADMIN/STAFF인데 `owner_slot = 1`이면 실패한다.
-- 같은 회사에 같은 `permission_code`가 중복 저장되면 실패한다.
-- 권한 설정 row가 없으면 STAFF 업무 권한은 전체 허용으로 판단한다.
-
-## 하네스 기준
-
-실행 명령과 `-DbFeature member` 사용 기준은 `docs/ai/pcs-harness-rules.md`를 따른다.  
-회사 등록처럼 `tb_member` 구조만 확인하면 `member.md`의 사용자 관리 기능 전체가 아니라 이 문서의 DB 규칙만 검사한다.
-
-## DB Integration Test Coverage
-
-- Integration test: `MemberPersistenceIntegrationTest`
-- Schema fixture: `src/integrationTest/resources/pcs-account-test-schema.sql`
-- Required checks:
-  - temporary-password users are persisted with hashed password
-  - member search scope follows OWNER/ADMIN role rules
-  - disabled STAFF permissions are persisted per company
-  - temporary password issue and password change revoke refresh tokens
+- `MemberPersistenceIntegrationTest`
+- 임시 비밀번호는 hash와 TEMPORARY 상태로 저장된다.
+- OWNER/ADMIN 목록 범위가 권한 규칙과 일치한다.
+- STAFF disabled 권한이 회사별로 저장된다.
+- 임시 발급·비밀번호 변경이 refresh token을 함께 폐기한다.
