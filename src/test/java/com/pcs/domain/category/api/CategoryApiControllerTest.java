@@ -3,6 +3,7 @@ package com.pcs.domain.category.api;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -130,6 +131,33 @@ class CategoryApiControllerTest {
                 .andExpect(jsonPath("$.data.categoryId").value(11))
                 .andExpect(jsonPath("$.data.specDefinitions[0].specKey").value("memory_type"))
                 .andExpect(jsonPath("$.data.specDefinitions[0].options[0].optionValue").value("DDR5"));
+    }
+
+    @Test
+    void createCategory_rejectsInvalidNestedSpecBeforeCallingFacade() throws Exception {
+        CreateCategoryRequest request = new CreateCategoryRequest(
+                "RAM",
+                "Memory",
+                List.of(new CategorySpecDefinitionRequest(
+                        "memory_type",
+                        "Memory Type",
+                        "INVALID",
+                        null,
+                        true,
+                        true,
+                        0,
+                        List.of()
+                ))
+        );
+
+        mockMvc.perform(post("/api/workspaces/acme/categories")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("COMMON-001"));
+
+        verify(categoryFacade, never()).createCategory(any(), any(), any());
     }
 
     @Test

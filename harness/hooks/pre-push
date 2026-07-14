@@ -6,6 +6,7 @@ cd "$ROOT"
 
 CHANGED_FILES_PATH="harness/reports/pre-push-changed-files.txt"
 TRACKED_FILES_PATH="harness/reports/pre-push-tracked-files.txt"
+NEW_COMMITS_PATH="harness/reports/pre-push-new-commits.txt"
 mkdir -p "harness/reports"
 : > "$CHANGED_FILES_PATH"
 git ls-files > "$TRACKED_FILES_PATH"
@@ -13,17 +14,25 @@ git ls-files > "$TRACKED_FILES_PATH"
 while read local_ref local_sha remote_ref remote_sha
 do
   zero_sha="0000000000000000000000000000000000000000"
+  local_sha="$(printf '%s' "$local_sha" | tr -d '\r')"
+  remote_sha="$(printf '%s' "$remote_sha" | tr -d '\r')"
 
   if [ -z "$local_sha" ] || [ "$local_sha" = "$zero_sha" ]; then
     continue
   fi
 
   if [ "$remote_sha" = "$zero_sha" ]; then
-    git diff-tree --no-commit-id --name-only -r "$local_sha" >> "$CHANGED_FILES_PATH" || true
+    git rev-list "$local_sha" --not --remotes > "$NEW_COMMITS_PATH"
+    while read commit_sha
+    do
+      git diff-tree --root --no-commit-id --name-only -r "$commit_sha"
+    done < "$NEW_COMMITS_PATH" >> "$CHANGED_FILES_PATH"
   else
-    git diff --name-only "$remote_sha..$local_sha" >> "$CHANGED_FILES_PATH" || true
+    git diff --name-only "$remote_sha..$local_sha" >> "$CHANGED_FILES_PATH"
   fi
 done
+
+rm -f "$NEW_COMMITS_PATH"
 
 sort -u "$CHANGED_FILES_PATH" -o "$CHANGED_FILES_PATH"
 

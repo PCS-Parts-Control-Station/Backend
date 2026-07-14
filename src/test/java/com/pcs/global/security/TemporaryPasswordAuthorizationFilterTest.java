@@ -14,10 +14,14 @@ import com.pcs.domain.member.type.PasswordStatus;
 import com.pcs.global.error.ApiErrorResponseWriter;
 import jakarta.servlet.FilterChain;
 import java.time.Instant;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -88,5 +92,36 @@ class TemporaryPasswordAuthorizationFilterTest {
         filter.doFilter(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
+    }
+
+    @ParameterizedTest
+    @MethodSource("allowedTemporaryPasswordRequests")
+    void allowsOnlyAccountRecoveryRequestsForTemporaryPassword(String method, String path) throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest(method, path);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, filterChain);
+
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    void blocksRefreshForTemporaryPassword() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/auth/refresh");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, filterChain);
+
+        assertEquals(403, response.getStatus());
+        assertTrue(response.getContentAsString().contains("\"code\":\"MEMBER-005\""));
+        verify(filterChain, never()).doFilter(request, response);
+    }
+
+    private static Stream<Arguments> allowedTemporaryPasswordRequests() {
+        return Stream.of(
+                Arguments.of("GET", "/api/workspaces/bupc/me"),
+                Arguments.of("GET", "/api/workspaces/bupc/mypage"),
+                Arguments.of("POST", "/api/auth/logout")
+        );
     }
 }

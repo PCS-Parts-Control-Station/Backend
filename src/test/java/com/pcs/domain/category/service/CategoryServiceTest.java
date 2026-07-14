@@ -32,6 +32,7 @@ import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -229,6 +230,94 @@ class CategoryServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.INVALID_INPUT_VALUE);
+    }
+
+    @Test
+    void createCategory_failsWhenSpecCountExceedsTwenty() {
+        stubCategoryInsert(10L);
+        when(categoryMapper.existsByName(COMPANY_ID, "GPU", null)).thenReturn(false);
+        List<CategorySpecDefinitionRequest> definitions = IntStream.rangeClosed(1, 21)
+                .mapToObj(index -> new CategorySpecDefinitionRequest(
+                        "spec_" + index,
+                        "Spec " + index,
+                        "TEXT",
+                        null,
+                        false,
+                        false,
+                        index,
+                        List.of()
+                ))
+                .toList();
+
+        assertThatThrownBy(() -> categoryService.createCategory(
+                COMPANY_ID,
+                new CreateCategoryRequest("GPU", null, definitions),
+                MEMBER_ID
+        ))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.INVALID_INPUT_VALUE);
+        verify(categoryMapper, never()).insertSpecDefinition(any(PartSpecDefinition.class));
+    }
+
+    @Test
+    void createCategory_failsWhenSelectOptionCountExceedsThirty() {
+        stubCategoryInsert(10L);
+        stubSpecDefinitionInsert();
+        when(categoryMapper.existsByName(COMPANY_ID, "GPU", null)).thenReturn(false);
+        List<CategorySpecOptionRequest> options = IntStream.rangeClosed(1, 31)
+                .mapToObj(index -> new CategorySpecOptionRequest("Option " + index, "OPTION_" + index, index))
+                .toList();
+        CreateCategoryRequest request = new CreateCategoryRequest(
+                "GPU",
+                null,
+                List.of(new CategorySpecDefinitionRequest(
+                        "chip",
+                        "Chip",
+                        "SELECT",
+                        null,
+                        true,
+                        true,
+                        0,
+                        options
+                ))
+        );
+
+        assertThatThrownBy(() -> categoryService.createCategory(COMPANY_ID, request, MEMBER_ID))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.INVALID_INPUT_VALUE);
+        verify(categoryMapper, never()).insertSpecOption(any(PartSpecOption.class));
+    }
+
+    @Test
+    void createCategory_failsWhenSelectOptionValueIsDuplicatedIgnoringCase() {
+        stubCategoryInsert(10L);
+        stubSpecDefinitionInsert();
+        when(categoryMapper.existsByName(COMPANY_ID, "GPU", null)).thenReturn(false);
+        CreateCategoryRequest request = new CreateCategoryRequest(
+                "GPU",
+                null,
+                List.of(new CategorySpecDefinitionRequest(
+                        "chip",
+                        "Chip",
+                        "SELECT",
+                        null,
+                        true,
+                        true,
+                        0,
+                        List.of(
+                                new CategorySpecOptionRequest("RTX 4060", "RTX_4060", 0),
+                                new CategorySpecOptionRequest("RTX 4060 Duplicate", "rtx_4060", 1)
+                        )
+                ))
+        );
+
+        assertThatThrownBy(() -> categoryService.createCategory(COMPANY_ID, request, MEMBER_ID))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.INVALID_INPUT_VALUE);
+        verify(categoryMapper, times(1)).insertSpecOption(any(PartSpecOption.class));
     }
 
     @Test

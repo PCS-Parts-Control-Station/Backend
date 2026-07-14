@@ -45,7 +45,7 @@ Each `docs/features/{feature}-db.md` should include:
 
 ## Harness-Connected Features
 
-The following features are currently connected to real Gradle test execution from `run-harness.ps1`.
+The following features are connected to real Gradle test execution through `harness/config/features.json`.
 
 - `company`
 - `member`
@@ -56,9 +56,14 @@ The following features are currently connected to real Gradle test execution fro
 - `part-unit`
 - `stock`
 - `inspection`
+- `history`
 - `dashboard`
 
-Current connected commands:
+`commonTests.unitApi` and `commonTests.dbIntegration` run for every requested test gate. Each feature adds its own `tests.unitApi` and `tests.dbIntegration` selectors. `run-harness.ps1` merges and de-duplicates those selectors before invoking Gradle, so shared contract and company-isolation tests are not lost or run repeatedly.
+
+Changing `harness/run-harness.ps1` or `harness/config/features.json` selects every registered feature. This validates all selectors whenever the runner or its routing registry changes.
+
+Representative connected commands:
 
 ```powershell
 .\gradlew.bat test --tests "com.pcs.domain.company.*"
@@ -97,8 +102,8 @@ Current connected commands:
 2. Add unit/service tests under `src/test/java`.
 3. Add MockMvc API tests under `src/test/java` when the feature exposes REST APIs.
 4. Add MariaDB integration tests under `src/integrationTest/java` when MyBatis SQL or constraints matter.
-5. Add the test paths to `harness/config/features.json`.
-6. Add required test file checks and Gradle test execution to the matching `Test-{Feature}Feature` function in `harness/run-harness.ps1`.
+5. Add changed-file `pathPatterns` and Gradle selectors under `tests.unitApi` and `tests.dbIntegration` in `harness/config/features.json`.
+6. Add only structural/static checks to the matching `Test-{Feature}Feature` function. Do not hardcode Gradle test commands there; the generic configured test runner executes the registry selectors.
 
 ## Current DB Test Fixtures
 

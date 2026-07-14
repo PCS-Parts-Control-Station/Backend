@@ -24,10 +24,12 @@ import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.security.PcsPrincipal;
 import com.pcs.support.MariaDbIntegrationTest;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.jdbc.Sql;
@@ -88,6 +90,110 @@ class MemberPersistenceIntegrationTest extends MariaDbIntegrationTest {
                 .isInstanceOfSatisfying(BusinessException.class, exception ->
                         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.AUTH_FORBIDDEN)
                 );
+    }
+
+    @Test
+    void searchMembers_appliesPasswordStatusDateRangeAndCompanyScopeToListCountAndSummary() {
+        long includedId = insertMember(
+                1L,
+                "temp-in-range",
+                "Included Temporary",
+                MemberRole.STAFF,
+                PasswordStatus.TEMPORARY,
+                null,
+                1L
+        );
+        long activeId = insertMember(
+                1L,
+                "active-in-range",
+                "Active In Range",
+                MemberRole.STAFF,
+                PasswordStatus.ACTIVE,
+                null,
+                2L
+        );
+        long beforeRangeId = insertMember(
+                1L,
+                "temp-before-range",
+                "Temporary Before Range",
+                MemberRole.ADMIN,
+                PasswordStatus.TEMPORARY,
+                null,
+                3L
+        );
+        long otherCompanyId = insertMember(
+                2L,
+                "temp-other-company",
+                "Other Company Temporary",
+                MemberRole.STAFF,
+                PasswordStatus.TEMPORARY,
+                null,
+                4L
+        );
+        updateCreatedAt(includedId, LocalDateTime.of(2026, 5, 31, 23, 59, 59, 999_999_000));
+        updateCreatedAt(activeId, LocalDateTime.of(2026, 5, 15, 12, 0));
+        updateCreatedAt(beforeRangeId, LocalDateTime.of(2026, 4, 30, 23, 59, 59));
+        updateCreatedAt(otherCompanyId, LocalDateTime.of(2026, 5, 10, 12, 0));
+
+        PageResultDto<SearchMemberResponse, SearchMemberSummaryResponse> result = memberService.searchMembers(
+                1L,
+                MemberRole.OWNER,
+                null,
+                null,
+                PasswordStatus.TEMPORARY,
+                LocalDate.of(2026, 5, 1),
+                LocalDate.of(2026, 5, 31),
+                0,
+                20,
+                null
+        );
+
+        assertThat(result.content()).extracting(SearchMemberResponse::loginId)
+                .containsExactly("temp-in-range");
+        assertThat(result.totalElements()).isEqualTo(1);
+        assertThat(result.summary().totalCount()).isEqualTo(1);
+        assertThat(result.summary().adminCount()).isZero();
+        assertThat(result.summary().staffCount()).isEqualTo(1);
+    }
+
+    @Test
+    void memberConstraintsRejectDuplicateLoginInvalidOwnerSlotAndDuplicatePermission() {
+        insertMember(1L, "staff01", "Staff User", MemberRole.STAFF, PasswordStatus.ACTIVE, null, 1L);
+        insertMember(1L, "owner01", "Owner User", MemberRole.OWNER, PasswordStatus.ACTIVE, 1, 2L);
+
+        assertThatThrownBy(() -> insertMember(
+                1L,
+                "staff01",
+                "Duplicate Staff",
+                MemberRole.STAFF,
+                PasswordStatus.ACTIVE,
+                null,
+                3L
+        )).isInstanceOf(DataIntegrityViolationException.class);
+
+        assertThatThrownBy(() -> insertMember(
+                1L,
+                "owner02",
+                "Second Owner",
+                MemberRole.OWNER,
+                PasswordStatus.ACTIVE,
+                1,
+                4L
+        )).isInstanceOf(DataIntegrityViolationException.class);
+
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                "INSERT INTO tb_member (company_id, login_id, password_hash, name, role, owner_slot, active) "
+                        + "VALUES (1, 'invalid-owner', 'hash', 'Invalid Owner', 'OWNER', NULL, TRUE)"
+        )).isInstanceOf(DataIntegrityViolationException.class);
+
+        jdbcTemplate.update(
+                "INSERT INTO tb_company_staff_permission_disabled (company_id, permission_code) "
+                        + "VALUES (1, 'STAFF_INBOUND')"
+        );
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                "INSERT INTO tb_company_staff_permission_disabled (company_id, permission_code) "
+                        + "VALUES (1, 'STAFF_INBOUND')"
+        )).isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
@@ -229,6 +335,15 @@ class MemberPersistenceIntegrationTest extends MariaDbIntegrationTest {
                 memberId,
                 hash,
                 familyId
+        );
+    }
+
+    private void updateCreatedAt(long memberId, LocalDateTime createdAt) {
+        jdbcTemplate.update(
+                "UPDATE tb_member SET created_at = ?, updated_at = ? WHERE member_id = ?",
+                createdAt,
+                createdAt,
+                memberId
         );
     }
 

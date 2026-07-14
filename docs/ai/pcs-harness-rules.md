@@ -48,6 +48,7 @@ Git pre-push 훅은 `full`이 아니라 `gate`를 실행한다.
 - push 직전에는 공통 규칙, JS 문법, compileJava, DB 기본 정합성을 항상 확인한다.
 - 변경 파일이 지원 중인 feature에 매핑되면 해당 feature 검사와 feature DB 검사를 추가한다.
 - 변경 파일이 feature에 매핑되지 않으면 공통 검사만 실행한다.
+- `run-harness.ps1` 또는 `features.json` 자체를 변경하면 모든 Feature 테스트 선택자를 실행한다.
 - `TrackedFilesPath`는 pre-push 훅에서 `git ls-files` 결과를 넘기며, 이미 추적 중인 금지 파일을 잡기 위해 사용한다.
 - 아직 구현하지 않은 도메인을 이유로 push를 막지 않는다.
 - 전체 도메인 회귀 검사는 `full` 모드의 역할이며, 현재 개발 중 pre-push 기본값으로 사용하지 않는다.
@@ -74,6 +75,7 @@ auth
 partner
 category
 part
+part-unit
 stock
 inspection
 history
@@ -126,7 +128,7 @@ inspection
 
 새 기능을 하네스에서 직접 검사하려면 아래 순서를 따른다.
 
-1. `harness/config/features.json`에 기능명, 변경 경로 정규식, 연관 DB 검사를 추가한다.
+1. `harness/config/features.json`에 기능명, 변경 경로 정규식, 연관 DB 검사, `tests.unitApi`, `tests.dbIntegration` 선택자를 추가한다.
 2. `run-harness.ps1`에 기능 검사 함수를 만든다.
 
 ```powershell
@@ -149,7 +151,8 @@ if ($Feature -eq "inspection") {
 ```
 
 4. DB 검사가 필요하면 `docs/features/{feature}-db.md`와 DB checker를 추가하고 레지스트리의 `dbChecks`에 연결한다.
-5. `Test-FeatureRegistry`와 해당 Feature 명령을 실행한다.
+5. Gradle 명령은 Feature 함수에 하드코딩하지 않는다. 공통 실행기가 레지스트리의 테스트 선택자를 합치고 중복 제거하여 실행한다.
+6. `Test-FeatureRegistry`와 해당 Feature 명령을 실행한다.
 
 하네스 문서만 추가하면 검사가 생기는 것이 아니다.  
 문서는 기준이고, `run-harness.ps1`의 함수가 실제 검사 코드다.
