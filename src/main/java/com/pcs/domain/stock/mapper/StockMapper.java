@@ -87,6 +87,11 @@ public interface StockMapper {
             @Param("documentId") Long documentId
     );
 
+    StockDocumentType findDocumentType(
+            @Param("companyId") Long companyId,
+            @Param("documentId") Long documentId
+    );
+
     StockDocumentDetailRow findDocumentForUpdate(
             @Param("companyId") Long companyId,
             @Param("documentId") Long documentId

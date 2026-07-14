@@ -371,6 +371,30 @@ class StockServiceTest {
     }
 
     @Test
+    void getDocumentType_returnsLightweightAuthorizationData() {
+        when(stockMapper.findDocumentType(1L, 500L)).thenReturn(StockDocumentType.OUTBOUND);
+
+        StockDocumentType documentType = stockService.getDocumentType(1L, 500L);
+
+        assertEquals(StockDocumentType.OUTBOUND, documentType);
+        verify(stockMapper, never()).findDocumentDetail(1L, 500L);
+        verify(stockMapper, never()).findDocumentLines(1L, 500L);
+        verify(stockMapper, never()).findDocumentUnits(1L, 500L);
+    }
+
+    @Test
+    void getDocumentType_rejectsMissingDocument() {
+        when(stockMapper.findDocumentType(1L, 500L)).thenReturn(null);
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> stockService.getDocumentType(1L, 500L)
+        );
+
+        assertEquals(ErrorCode.STOCK_DOCUMENT_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
     void cancelInboundDocument_success() {
         Long companyId = 1L;
         Long memberId = 10L;

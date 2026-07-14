@@ -50,8 +50,6 @@ class PartnerServiceTest {
         SearchPartnerResponse partner = partnerResponse(10L, "Yongsan Parts", PartnerType.COMPANY, PartnerRole.SUPPLIER, true);
         SearchPartnerSummaryResponse summary = new SearchPartnerSummaryResponse(1, 1, 0, 1);
 
-        when(partnerMapper.countPartners(companyId, "Yongsan", PartnerType.COMPANY, PartnerRole.SUPPLIER, true))
-                .thenReturn(1L);
         when(partnerMapper.searchPartners(companyId, "Yongsan", PartnerType.COMPANY, PartnerRole.SUPPLIER, true, 10, 10))
                 .thenReturn(List.of(partner));
         when(partnerMapper.summarizePartners(companyId, "Yongsan", PartnerType.COMPANY, PartnerRole.SUPPLIER, true))
@@ -80,7 +78,6 @@ class PartnerServiceTest {
         Long companyId = 1L;
         SearchPartnerSummaryResponse summary = new SearchPartnerSummaryResponse(0, 0, 0, 0);
 
-        when(partnerMapper.countPartners(companyId, null, null, PartnerRole.SUPPLIER, true)).thenReturn(0L);
         when(partnerMapper.summarizePartners(companyId, null, null, PartnerRole.SUPPLIER, true)).thenReturn(summary);
 
         var response = partnerService.searchPartners(companyId, " ", null, PartnerRole.SUPPLIER, true, null, null, 500);

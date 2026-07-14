@@ -58,7 +58,7 @@ public class CategoryService {
             Integer size,
             Integer limit
     ) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
 
         String normalizedKeyword = TextNormalizer.optional(keyword);
         PageQuery pageQuery = PageQuery.of(page, size, limit);
@@ -73,7 +73,7 @@ public class CategoryService {
 
     @Transactional
     public CategoryDetailResponse createCategory(Long companyId, CreateCategoryRequest request, Long memberId) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         String categoryName = TextNormalizer.required(request.categoryName());
         if (categoryMapper.existsByName(companyId, categoryName, null)) {
             throw new BusinessException(ErrorCode.CATEGORY_NAME_DUPLICATED);
@@ -92,7 +92,7 @@ public class CategoryService {
     }
 
     public CategoryDetailResponse getCategory(Long companyId, Long categoryId) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         SearchCategoryResponse response = categoryMapper.findResponseById(companyId, categoryId);
         if (response == null) {
             throw new BusinessException(ErrorCode.CATEGORY_NOT_FOUND);
@@ -107,7 +107,7 @@ public class CategoryService {
             UpdateCategoryRequest request,
             Long memberId
     ) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         PartCategory category = categoryMapper.findById(companyId, categoryId);
         if (category == null) {
             throw new BusinessException(ErrorCode.CATEGORY_NOT_FOUND);
@@ -138,7 +138,7 @@ public class CategoryService {
 
     @Transactional
     public void deleteCategory(Long companyId, Long categoryId) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         PartCategory category = categoryMapper.findById(companyId, categoryId);
         if (category == null) {
             throw new BusinessException(ErrorCode.CATEGORY_NOT_FOUND);
@@ -229,10 +229,7 @@ public class CategoryService {
         for (int index = 0; index < optionRequests.size(); index++) {
             CategorySpecOptionRequest request = optionRequests.get(index);
             String optionLabel = TextNormalizer.required(request.optionLabel());
-            String optionValue = TextNormalizer.optional(request.optionValue());
-            if (optionValue == null) {
-                optionValue = optionLabel;
-            }
+            String optionValue = TextNormalizer.requiredOrDefault(request.optionValue(), optionLabel);
             String optionValueKey = optionValue.toLowerCase(Locale.ROOT);
             if (!optionValues.add(optionValueKey)) {
                 throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "중복된 사양 선택지가 있습니다.");
@@ -269,10 +266,6 @@ public class CategoryService {
             ));
         }
         return responses;
-    }
-
-    private void validateCompanyActive(Long companyId) {
-        workspaceAccessValidator.validateCompanyActive(companyId);
     }
 
     private String normalizeSpecKey(String value, int index) {

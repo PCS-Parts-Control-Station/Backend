@@ -61,16 +61,6 @@ class MemberServiceTest {
         LocalDate createdTo = LocalDate.of(2026, 5, 31);
         LocalDateTime createdFromAt = LocalDateTime.of(2026, 5, 1, 0, 0);
         LocalDateTime createdToBefore = LocalDateTime.of(2026, 6, 1, 0, 0);
-        when(memberMapper.countMembers(
-                eq(1L),
-                eq("adm"),
-                eq(MemberRole.ADMIN),
-                eq(PasswordStatus.TEMPORARY),
-                eq(List.of(MemberRole.ADMIN, MemberRole.STAFF)),
-                eq(createdFromAt),
-                eq(createdToBefore)
-        ))
-                .thenReturn(1L);
         when(memberMapper.searchMembers(
                 eq(1L),
                 eq("adm"),

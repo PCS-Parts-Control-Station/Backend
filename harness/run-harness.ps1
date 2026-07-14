@@ -1491,40 +1491,32 @@ function Test-BackendCommonRules {
 }
 
 function Test-FullModeStructure {
-    $requiredDomains = @(
-        "auth",
-        "company",
-        "member",
-        "partner",
-        "category",
-        "part",
-        "stock",
-        "inspection",
-        "history",
-        "dashboard"
-    )
-    $requiredDomainSubdirs = @(
-        "api",
-        "dto/request",
-        "dto/response",
-        "entity",
-        "facade",
-        "mapper",
-        "service",
-        "type",
-        "validation"
-    )
+    # Feature aliases such as history are implemented by their owning domain
+    # (inspection in this case), and not every domain needs every optional layer.
+    # Keep required layers explicit so the full check validates architecture
+    # without requiring empty directories that Git cannot preserve.
+    $requiredDomainStructure = [ordered]@{
+        auth = @("api", "dto/request", "dto/response", "entity", "facade", "mapper", "service", "type")
+        company = @("api", "dto/request", "dto/response", "entity", "facade", "mapper", "service", "type", "validation")
+        member = @("api", "dto/request", "dto/response", "entity", "facade", "mapper", "service", "type")
+        partner = @("api", "dto/request", "dto/response", "entity", "facade", "mapper", "service", "type")
+        category = @("api", "dto/request", "dto/response", "entity", "facade", "mapper", "service", "type", "validation")
+        part = @("api", "dto/request", "dto/response", "entity", "facade", "mapper", "service", "type")
+        stock = @("api", "dto/request", "dto/response", "entity", "facade", "mapper", "service", "type")
+        inspection = @("api", "dto/request", "dto/response", "entity", "facade", "mapper", "service", "type", "validation")
+        dashboard = @("api", "dto/response", "facade", "mapper", "service")
+    }
 
     Test-PathRequired "src/main/java/com/pcs/domain" "FULL_DOMAIN_ROOT" "Create domain root after feature structure is decided."
     Test-PathRequired "src/main/java/com/pcs/global" "FULL_GLOBAL_ROOT" "Create global root after API common structure is decided."
     Test-PathRequired "src/main/resources/mapper" "FULL_MAPPER_ROOT" "Create mapper XML root after MyBatis is introduced."
 
-    foreach ($domain in $requiredDomains) {
+    foreach ($domain in $requiredDomainStructure.Keys) {
         Test-PathRequired "src/main/java/com/pcs/domain/$domain" "FULL_DOMAIN_$($domain.ToUpper())" "Create $domain structure after feature spec is decided."
 
-        foreach ($subdir in $requiredDomainSubdirs) {
+        foreach ($subdir in $requiredDomainStructure[$domain]) {
             $ruleName = "FULL_DOMAIN_$($domain.ToUpper())_$($subdir.ToUpper().Replace('/', '_'))"
-            Test-PathRequired "src/main/java/com/pcs/domain/$domain/$subdir" $ruleName "Keep the standard domain structure: api, dto/request, dto/response, entity, facade, mapper, service, type, validation."
+            Test-PathRequired "src/main/java/com/pcs/domain/$domain/$subdir" $ruleName "Restore the required $subdir layer for the $domain domain."
         }
     }
 }
@@ -2020,7 +2012,7 @@ function Test-AuthFeature {
     $service = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/auth/service/AuthService.java"
     if (Test-Path $service) {
         $serviceContent = Get-Content -Raw $service
-        foreach ($pattern in @("PasswordEncoder", "matches", "insertLoginHistory", "recordLoginSuccess", "recordLoginFailure", "SHA-256", "hashRefreshToken", "AUTH_WORKSPACE_MISMATCH", "EXPIRED", "REUSE_DETECTED", "revokeRefreshTokenFamily")) {
+        foreach ($pattern in @("PasswordEncoder", "matches", "insertLoginHistory", "recordLoginSuccess", "recordLoginFailure", "Hashing.sha256Hex", "hashRefreshToken", "AUTH_WORKSPACE_MISMATCH", "EXPIRED", "REUSE_DETECTED", "revokeRefreshTokenFamily")) {
             if ($serviceContent -notmatch $pattern) {
                 Add-Result "FAIL" "AUTH_SERVICE_PATTERN" "AuthService is missing required pattern: $pattern" "Keep password verification, login history, and refresh token hash handling."
             }
@@ -2167,7 +2159,7 @@ function Test-PartnerFeature {
     $service = Join-Path $ProjectRoot "src/main/java/com/pcs/domain/partner/service/PartnerService.java"
     if (Test-Path $service) {
         $serviceContent = Get-Content -Raw $service
-        foreach ($pattern in @("DEFAULT_SIZE", "PageQuery.of", "countPartners", "searchPartners", "summarizePartners", "validateCompanyActive")) {
+        foreach ($pattern in @("DEFAULT_SIZE", "PageQuery.of", "searchPartners", "summarizePartners", "summary.totalCount", "validateCompanyActive")) {
             if ($serviceContent -notmatch $pattern) {
                 Add-Result "FAIL" "PARTNER_SERVICE_PATTERN" "PartnerService is missing required search/paging pattern: $pattern" "Keep partner list paging, summary, and inactive-company guard."
             }

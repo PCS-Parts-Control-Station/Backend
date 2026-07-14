@@ -28,7 +28,6 @@ feature 문서의 API 계약을 경로로 찾기 위한 파생 인덱스다. 설
 | GET | `/api/workspaces/{companyCode}/public-info` |
 | GET | `/api/owners/company` |
 | PATCH | `/api/owners/company` |
-| PATCH | `/api/owners/company/active` |
 
 ## Member / Mypage — `member.md`, `mypage.md`
 
@@ -75,10 +74,6 @@ feature 문서의 API 계약을 경로로 찾기 위한 파생 인덱스다. 설
 | POST | `/api/workspaces/{companyCode}/stock/documents/{documentId}/cancel` |
 | GET | `/api/workspaces/{companyCode}/stock/documents` |
 | GET | `/api/workspaces/{companyCode}/stock/documents/{documentId}` |
-| GET | `/api/workspaces/{companyCode}/stock/documents/{documentId}/movements` |
-| GET | `/api/workspaces/{companyCode}/stock/movements` |
-| GET | `/api/workspaces/{companyCode}/stock/movements/{movementId}` |
-| GET | `/api/workspaces/{companyCode}/stock/movements/{movementId}/units` |
 
 ## Inspection write — `inspection.md`
 

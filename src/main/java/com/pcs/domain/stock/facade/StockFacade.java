@@ -110,7 +110,7 @@ public class StockFacade {
             Long documentId
     ) {
         PcsPrincipal checkedPrincipal = workspaceAccessValidator.validateAuthenticatedWorkspace(principal, pathCompanyCode);
-        validateCancelPermission(checkedPrincipal, stockService.getDocument(checkedPrincipal.companyId(), documentId));
+        validateCancelPermission(checkedPrincipal, documentId);
         return stockService.cancelDocument(
                 checkedPrincipal.companyId(),
                 checkedPrincipal.memberId(),
@@ -118,11 +118,12 @@ public class StockFacade {
         );
     }
 
-    private void validateCancelPermission(PcsPrincipal principal, StockDocumentDetailResponse document) {
+    private void validateCancelPermission(PcsPrincipal principal, Long documentId) {
         if (principal.role() != MemberRole.STAFF) {
             return;
         }
-        StaffPermission required = document.documentType() == StockDocumentType.OUTBOUND
+        StockDocumentType documentType = stockService.getDocumentType(principal.companyId(), documentId);
+        StaffPermission required = documentType == StockDocumentType.OUTBOUND
                 ? StaffPermission.STAFF_OUTBOUND
                 : StaffPermission.STAFF_INBOUND;
         if (!staffPermissionService.isEnabled(principal.companyId(), required)) {

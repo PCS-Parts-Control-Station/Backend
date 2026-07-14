@@ -78,12 +78,6 @@
         OFFSET #{offset}
     </select>
 
-    <select id="countMembers" resultType="long">
-        SELECT COUNT(*)
-        FROM tb_member
-        <include refid="memberSearchWhere" />
-    </select>
-
     <select id="summarizeMembers" resultType="com.pcs.domain.member.dto.response.SearchMemberSummaryResponse">
         SELECT
             COUNT(*) AS total_count,
