@@ -179,6 +179,7 @@ CREATE TABLE IF NOT EXISTS `tb_inspection_template_item` (
   `active` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`item_id`),
   UNIQUE KEY `uk_inspection_template_item_id` (`template_id`,`item_id`),
+  UNIQUE KEY `uk_inspection_template_item_name` (`template_id`,`item_name`),
   KEY `idx_inspection_template_item_template_sort` (`template_id`,`active`,`sort_order`),
   CONSTRAINT `chk_inspection_template_item_sort_order` CHECK (`sort_order` >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -193,6 +194,7 @@ CREATE TABLE IF NOT EXISTS `tb_inspection_template_item_option` (
   `active` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`option_id`),
   UNIQUE KEY `uk_inspection_template_item_option_value` (`item_id`,`option_value`),
+  UNIQUE KEY `uk_inspection_template_item_option_label` (`item_id`,`option_label`),
   KEY `idx_inspection_template_item_option_item_sort` (`item_id`,`active`,`sort_order`),
   CONSTRAINT `chk_inspection_template_item_option_sort_order` CHECK (`sort_order` >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -478,4 +480,3 @@ CREATE TABLE IF NOT EXISTS `tb_trade_partner` (
   KEY `idx_trade_partner_company_last_transaction` (`company_id`,`last_transaction_at`),
   KEY `idx_trade_partner_company_list` (`company_id`,`updated_at` DESC,`partner_id` DESC)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-

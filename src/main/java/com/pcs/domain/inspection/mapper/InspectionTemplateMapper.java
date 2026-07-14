@@ -1,6 +1,7 @@
 package com.pcs.domain.inspection.mapper;
 
 import com.pcs.domain.inspection.dto.response.InspectionTemplateOptionResponse;
+import com.pcs.domain.inspection.dto.response.InspectionTemplateReorderValidationRow;
 import com.pcs.domain.inspection.dto.response.SearchInspectionTemplateResponse;
 import com.pcs.domain.inspection.dto.response.SearchInspectionTemplateSummaryResponse;
 import com.pcs.domain.inspection.entity.InspectionTemplate;
@@ -23,13 +24,6 @@ public interface InspectionTemplateMapper {
             @Param("active") Boolean active,
             @Param("size") int size,
             @Param("offset") int offset
-    );
-
-    long countTemplates(
-            @Param("companyId") Long companyId,
-            @Param("keyword") String keyword,
-            @Param("categoryId") Long categoryId,
-            @Param("active") Boolean active
     );
 
     SearchInspectionTemplateSummaryResponse summarizeTemplates(
@@ -87,18 +81,11 @@ public interface InspectionTemplateMapper {
             @Param("excludeItemId") Long excludeItemId
     );
 
-    boolean existsOptionLabel(
+    boolean existsOptionDuplicate(
             @Param("companyId") Long companyId,
             @Param("templateId") Long templateId,
             @Param("itemId") Long itemId,
             @Param("optionLabel") String optionLabel,
-            @Param("excludeOptionId") Long excludeOptionId
-    );
-
-    boolean existsOptionValue(
-            @Param("companyId") Long companyId,
-            @Param("templateId") Long templateId,
-            @Param("itemId") Long itemId,
             @Param("optionValue") String optionValue,
             @Param("excludeOptionId") Long excludeOptionId
     );
@@ -111,30 +98,18 @@ public interface InspectionTemplateMapper {
             @Param("itemId") Long itemId
     );
 
-    int countItemsByTemplateGroupAndIds(
+    InspectionTemplateReorderValidationRow validateItemReorderTargets(
             @Param("companyId") Long companyId,
             @Param("templateId") Long templateId,
             @Param("itemGroup") InspectionItemGroup itemGroup,
             @Param("itemIds") List<Long> itemIds
     );
 
-    int countItemsByTemplateGroup(
-            @Param("companyId") Long companyId,
-            @Param("templateId") Long templateId,
-            @Param("itemGroup") InspectionItemGroup itemGroup
-    );
-
-    int countOptionsByItemIdAndIds(
+    InspectionTemplateReorderValidationRow validateOptionReorderTargets(
             @Param("companyId") Long companyId,
             @Param("templateId") Long templateId,
             @Param("itemId") Long itemId,
             @Param("optionIds") List<Long> optionIds
-    );
-
-    int countOptionsByItemId(
-            @Param("companyId") Long companyId,
-            @Param("templateId") Long templateId,
-            @Param("itemId") Long itemId
     );
 
     void insertTemplate(InspectionTemplate template);

@@ -40,6 +40,7 @@
             COUNT(DISTINCT i.item_id) AS item_count,
             COUNT(o.option_id) AS option_count,
             m.name AS created_by_name,
+            t.created_at,
             t.updated_at
         FROM tb_inspection_template t
         INNER JOIN tb_part_category c
@@ -65,19 +66,11 @@
             t.version,
             t.active,
             m.name,
+            t.created_at,
             t.updated_at
         ORDER BY t.updated_at DESC, t.template_id DESC
         LIMIT #{size}
         OFFSET #{offset}
-    </select>
-
-    <select id="countTemplates" resultType="long">
-        SELECT COUNT(*)
-        FROM tb_inspection_template t
-        INNER JOIN tb_part_category c
-            ON c.company_id = t.company_id
-           AND c.category_id = t.category_id
-        <include refid="templateSearchWhere" />
     </select>
 
     <select id="summarizeTemplates" resultType="com.pcs.domain.inspection.dto.response.SearchInspectionTemplateSummaryResponse">
@@ -125,6 +118,7 @@
             t.version,
             t.active,
             m.name,
+            t.created_at,
             t.updated_at
     </select>
 
@@ -234,7 +228,7 @@
         )
     </select>
 
-    <select id="existsOptionLabel" resultType="boolean">
+    <select id="existsOptionDuplicate" resultType="boolean">
         SELECT EXISTS (
             SELECT 1
             FROM tb_inspection_template_item_option o
@@ -245,25 +239,7 @@
             WHERE t.company_id = #{companyId}
               AND i.template_id = #{templateId}
               AND o.item_id = #{itemId}
-              AND o.option_label = #{optionLabel}
-              <if test="excludeOptionId != null">
-                AND o.option_id &lt;&gt; #{excludeOptionId}
-              </if>
-        )
-    </select>
-
-    <select id="existsOptionValue" resultType="boolean">
-        SELECT EXISTS (
-            SELECT 1
-            FROM tb_inspection_template_item_option o
-            INNER JOIN tb_inspection_template_item i
-                ON i.item_id = o.item_id
-            INNER JOIN tb_inspection_template t
-                ON t.template_id = i.template_id
-            WHERE t.company_id = #{companyId}
-              AND i.template_id = #{templateId}
-              AND o.item_id = #{itemId}
-              AND o.option_value = #{optionValue}
+              AND (o.option_label = #{optionLabel} OR o.option_value = #{optionValue})
               <if test="excludeOptionId != null">
                 AND o.option_id &lt;&gt; #{excludeOptionId}
               </if>
@@ -291,22 +267,14 @@
           AND o.item_id = #{itemId}
     </select>
 
-    <select id="countItemsByTemplateGroupAndIds" resultType="int">
-        SELECT COUNT(*)
-        FROM tb_inspection_template_item i
-        INNER JOIN tb_inspection_template t
-            ON t.template_id = i.template_id
-        WHERE t.company_id = #{companyId}
-          AND i.template_id = #{templateId}
-          AND i.item_group = #{itemGroup}
-          AND i.item_id IN
-          <foreach collection="itemIds" item="itemId" open="(" separator="," close=")">
-            #{itemId}
-          </foreach>
-    </select>
-
-    <select id="countItemsByTemplateGroup" resultType="int">
-        SELECT COUNT(*)
+    <select id="validateItemReorderTargets" resultType="com.pcs.domain.inspection.dto.response.InspectionTemplateReorderValidationRow">
+        SELECT
+            COUNT(*) AS total_count,
+            COALESCE(SUM(CASE WHEN i.item_id IN
+                <foreach collection="itemIds" item="itemId" open="(" separator="," close=")">
+                    #{itemId}
+                </foreach>
+                THEN 1 ELSE 0 END), 0) AS matched_count
         FROM tb_inspection_template_item i
         INNER JOIN tb_inspection_template t
             ON t.template_id = i.template_id
@@ -315,24 +283,14 @@
           AND i.item_group = #{itemGroup}
     </select>
 
-    <select id="countOptionsByItemIdAndIds" resultType="int">
-        SELECT COUNT(*)
-        FROM tb_inspection_template_item_option o
-        INNER JOIN tb_inspection_template_item i
-            ON i.item_id = o.item_id
-        INNER JOIN tb_inspection_template t
-            ON t.template_id = i.template_id
-        WHERE t.company_id = #{companyId}
-          AND i.template_id = #{templateId}
-          AND o.item_id = #{itemId}
-          AND o.option_id IN
-          <foreach collection="optionIds" item="optionId" open="(" separator="," close=")">
-            #{optionId}
-          </foreach>
-    </select>
-
-    <select id="countOptionsByItemId" resultType="int">
-        SELECT COUNT(*)
+    <select id="validateOptionReorderTargets" resultType="com.pcs.domain.inspection.dto.response.InspectionTemplateReorderValidationRow">
+        SELECT
+            COUNT(*) AS total_count,
+            COALESCE(SUM(CASE WHEN o.option_id IN
+                <foreach collection="optionIds" item="optionId" open="(" separator="," close=")">
+                    #{optionId}
+                </foreach>
+                THEN 1 ELSE 0 END), 0) AS matched_count
         FROM tb_inspection_template_item_option o
         INNER JOIN tb_inspection_template_item i
             ON i.item_id = o.item_id

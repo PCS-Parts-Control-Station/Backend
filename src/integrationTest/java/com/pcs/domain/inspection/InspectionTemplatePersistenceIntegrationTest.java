@@ -78,6 +78,61 @@ class InspectionTemplatePersistenceIntegrationTest extends MariaDbIntegrationTes
         )).isInstanceOf(DataIntegrityViolationException.class);
     }
 
+    @Test
+    void templateItemNameConstraint_rejectsDuplicateNameInSameTemplate() {
+        Long templateId = insertTemplate();
+        insertItem(templateId, "외관 상태");
+
+        assertThatThrownBy(() -> insertItem(templateId, "외관 상태"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void templateOptionLabelConstraint_rejectsDuplicateLabelInSameItem() {
+        Long templateId = insertTemplate();
+        Long itemId = insertItem(templateId, "외관 상태");
+        jdbcTemplate.update(
+                "INSERT INTO tb_inspection_template_item_option "
+                        + "(item_id, option_label, option_value, sort_order, active) VALUES (?, '정상', 'PASS', 10, TRUE)",
+                itemId
+        );
+
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                "INSERT INTO tb_inspection_template_item_option "
+                        + "(item_id, option_label, option_value, sort_order, active) VALUES (?, '정상', 'WARN', 20, TRUE)",
+                itemId
+        )).isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    private Long insertTemplate() {
+        jdbcTemplate.update(
+                "INSERT INTO tb_inspection_template "
+                        + "(company_id, category_id, template_name, version, active, created_by) "
+                        + "VALUES (1, ?, '직접 입력 템플릿', 1, TRUE, 7)",
+                categoryId
+        );
+        return jdbcTemplate.queryForObject(
+                "SELECT template_id FROM tb_inspection_template WHERE company_id = 1",
+                Long.class
+        );
+    }
+
+    private Long insertItem(Long templateId, String itemName) {
+        jdbcTemplate.update(
+                "INSERT INTO tb_inspection_template_item "
+                        + "(template_id, item_group, item_name, input_type, required, sort_order, grade_impact, fail_policy, active) "
+                        + "VALUES (?, 'BASIC', ?, 'SELECT', TRUE, 10, 'LOW', 'NONE', TRUE)",
+                templateId,
+                itemName
+        );
+        return jdbcTemplate.queryForObject(
+                "SELECT item_id FROM tb_inspection_template_item WHERE template_id = ? AND item_name = ?",
+                Long.class,
+                templateId,
+                itemName
+        );
+    }
+
     private PcsPrincipal principal() {
         return new PcsPrincipal(7L, 1L, "acme", "admin", MemberRole.OWNER, Instant.now().plusSeconds(600));
     }

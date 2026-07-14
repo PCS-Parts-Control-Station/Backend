@@ -15,7 +15,7 @@ import java.util.List;
 @ValidInspectionDecision
 public record CreateBulkInspectionRequest(
         @NotEmpty(message = "unitIds는 1개 이상 필요합니다.")
-        @Size(max = 100, message = "한 번에 최대 100개까지 검수할 수 있습니다.")
+        @Size(max = 300, message = "한 번에 최대 300개까지 검수할 수 있습니다.")
         List<@NotNull Long> unitIds,
 
         Long templateId,
@@ -34,6 +34,7 @@ public record CreateBulkInspectionRequest(
         String memo,
 
         @Valid
+        @Size(max = 200, message = "검수 항목 결과는 최대 200개까지 등록할 수 있습니다.")
         List<CreateInspectionItemResultRequest> itemResults
 ) implements InspectionDecisionValidatable {
 }

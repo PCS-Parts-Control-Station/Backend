@@ -359,7 +359,7 @@ class StockFacadeTest {
     }
 
     @Test
-    void createInboundDocument_mapsDuplicateDocumentNoException() {
+    void createInboundDocument_propagatesDuplicateKeyForGlobalHandling() {
         CreateInboundDocumentRequest request = new CreateInboundDocumentRequest(
                 100L,
                 null,
@@ -369,16 +369,14 @@ class StockFacadeTest {
                 new DuplicateKeyException("duplicate", new RuntimeException("uk_stock_document_document_no"))
         );
 
-        BusinessException exception = assertThrows(
-                BusinessException.class,
+        assertThrows(
+                DuplicateKeyException.class,
                 () -> stockFacade.createInboundDocument(principal(1L, 10L, "acme"), "acme", request)
         );
-
-        assertEquals(ErrorCode.STOCK_DOCUMENT_NO_DUPLICATED, exception.getErrorCode());
     }
 
     @Test
-    void createOutboundDocument_mapsDuplicateDocumentNoException() {
+    void createOutboundDocument_propagatesDuplicateKeyForGlobalHandling() {
         CreateOutboundDocumentRequest request = new CreateOutboundDocumentRequest(
                 200L,
                 null,
@@ -388,12 +386,10 @@ class StockFacadeTest {
                 new DuplicateKeyException("duplicate", new RuntimeException("uk_stock_document_company_document_no"))
         );
 
-        BusinessException exception = assertThrows(
-                BusinessException.class,
+        assertThrows(
+                DuplicateKeyException.class,
                 () -> stockFacade.createOutboundDocument(principal(1L, 10L, "acme"), "acme", request)
         );
-
-        assertEquals(ErrorCode.STOCK_DOCUMENT_NO_DUPLICATED, exception.getErrorCode());
     }
 
     private PcsPrincipal principal(Long companyId, Long memberId, String companyCode) {

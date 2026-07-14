@@ -35,6 +35,7 @@ import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.pagination.PageQuery;
 import com.pcs.global.util.TextNormalizer;
+import com.pcs.global.validation.DateRangeValidator;
 import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.security.SecureRandom;
 import java.time.LocalDate;
@@ -58,6 +59,7 @@ public class StockService {
     private static final int DOCUMENT_RANDOM_LENGTH = 16;
     private static final int DOCUMENT_NO_CREATE_MAX_ATTEMPT = 20;
     private static final int DEFAULT_SIZE = 20;
+    private static final int MAX_DOCUMENT_UNIT_COUNT = 1000;
 
     private final StockMapper stockMapper;
     private final WorkspaceAccessValidator workspaceAccessValidator;
@@ -81,13 +83,13 @@ public class StockService {
             Integer limit
     ) {
         validateCompanyActive(companyId);
-        validateDateRange(dateFrom, dateTo);
+        DateRangeValidator.validate(dateFrom, dateTo);
 
         String normalizedKeyword = TextNormalizer.optional(keyword);
         PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
-        LocalDateTime from = dateFrom == null ? null : dateFrom.atStartOfDay();
-        LocalDateTime to = dateTo == null ? null : dateTo.plusDays(1).atStartOfDay();
-        long totalElements = stockMapper.countDocuments(
+        LocalDateTime from = DateRangeValidator.toStartOfDay(dateFrom);
+        LocalDateTime to = DateRangeValidator.toExclusiveEnd(dateTo);
+        SearchStockDocumentSummaryResponse summary = stockMapper.summarizeDocuments(
                 companyId,
                 documentType,
                 normalizedKeyword,
@@ -96,6 +98,7 @@ public class StockService {
                 from,
                 to
         );
+        long totalElements = summary.totalCount();
         List<SearchStockDocumentResponse> items = totalElements == 0
                 ? List.of()
                 : stockMapper.searchDocuments(
@@ -109,23 +112,7 @@ public class StockService {
                         pageQuery.size(),
                         pageQuery.offset()
                 );
-        SearchStockDocumentSummaryResponse summary = stockMapper.summarizeDocuments(
-                companyId,
-                documentType,
-                normalizedKeyword,
-                partnerId,
-                documentStatus,
-                from,
-                to
-        );
-
         return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, summary);
-    }
-
-    private void validateDateRange(LocalDate dateFrom, LocalDate dateTo) {
-        if (dateFrom != null && dateTo != null && dateFrom.isAfter(dateTo)) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "시작일은 종료일보다 늦을 수 없습니다.");
-        }
     }
 
     public PageResultDto<SearchOutboundCandidateResponse, Void> searchOutboundCandidates(
@@ -184,14 +171,6 @@ public class StockService {
             return cancelOutboundDocument(companyId, memberId, document);
         }
         throw new BusinessException(ErrorCode.STOCK_INVALID_CANCEL_REQUEST);
-    }
-
-    public CancelStockDocumentResponse cancelInboundDocument(Long companyId, Long memberId, Long documentId) {
-        StockDocumentDetailRow document = findCancelableDocument(companyId, documentId);
-        if (document.documentType() != StockDocumentType.INBOUND) {
-            throw new BusinessException(ErrorCode.STOCK_INVALID_CANCEL_REQUEST, "입고 전표만 입고 취소로 처리할 수 있습니다.");
-        }
-        return cancelInboundDocument(companyId, memberId, document);
     }
 
     private StockDocumentDetailRow findCancelableDocument(Long companyId, Long documentId) {
@@ -353,6 +332,7 @@ public class StockService {
             CreateInboundDocumentRequest request
     ) {
         validateCompanyActive(companyId);
+        validateInboundLines(request.lines());
         validateInboundPartner(companyId, request.partnerId());
 
         String dateToken = LocalDate.now().format(DATE_TOKEN_FORMATTER);
@@ -734,6 +714,33 @@ public class StockService {
                 if (!uniqueUnitIds.add(unitId)) {
                     throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "중복된 관리번호가 있습니다.");
                 }
+            }
+        }
+        if (uniqueUnitIds.size() > MAX_DOCUMENT_UNIT_COUNT) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "전표당 최대 1000개까지 출고할 수 있습니다.");
+        }
+    }
+
+    private void validateInboundLines(List<CreateInboundDocumentLineRequest> lines) {
+        if (lines == null || lines.isEmpty()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "부품 라인은 최소 1개 이상 필요합니다.");
+        }
+        if (lines.size() > 100) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "부품 라인은 최대 100개까지 등록할 수 있습니다.");
+        }
+
+        long totalQuantity = 0;
+        Set<Long> partIds = new HashSet<>();
+        for (CreateInboundDocumentLineRequest line : lines) {
+            if (line == null || line.partId() == null || line.quantity() == null || line.quantity() < 1) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "입고 라인의 부품과 수량 정보가 올바르지 않습니다.");
+            }
+            if (!partIds.add(line.partId())) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "중복된 부품 라인이 있습니다.");
+            }
+            totalQuantity += line.quantity();
+            if (totalQuantity > MAX_DOCUMENT_UNIT_COUNT) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "전표당 최대 1000개까지 입고할 수 있습니다.");
             }
         }
     }

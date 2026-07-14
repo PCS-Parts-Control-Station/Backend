@@ -137,6 +137,21 @@ class StockApiControllerTest {
     }
 
     @Test
+    void createInboundDocument_rejectsQuantityAboveLimit() throws Exception {
+        var request = new CreateInboundDocumentRequest(
+                20L,
+                null,
+                List.of(new CreateInboundDocumentLineRequest(30L, 1001, null))
+        );
+
+        mockMvc.perform(post("/api/workspaces/acme/stock/documents/inbounds")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("COMMON-001"));
+    }
+
+    @Test
     void createOutboundDocument_returnsCreatedResponse() throws Exception {
         var request = new CreateOutboundDocumentRequest(
                 21L, "출고", List.of(new CreateOutboundDocumentLineRequest(30L, List.of(100L), null))

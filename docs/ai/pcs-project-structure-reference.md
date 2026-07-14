@@ -138,21 +138,23 @@ pcs-navigation-state.js
 - 회사 코드 추출, workspace 링크 갱신, 날짜/숫자 포맷, 토스트 래핑, 폼 저장중 처리, 공통 테이블 빈 행 처리는 `pcs-common.js`를 우선 사용한다.
 - 목록 화면의 검색 조건, 페이지, 선택된 상세 행, 스크롤 위치 복원은 `pcs-navigation-state.js`를 우선 사용한다. 사용 예시는 `docs/ai/pcs-navigation-state-guide.md`를 참고한다.
 
-입고 화면 JS:
+입출고 화면 JS:
 
 ```text
-inbound.js
 inbound-register.js
+outbound-register.js
+documents.js
 ```
 
-- `inbound.js`는 입고 전표 목록, 검색, 페이지네이션, 우측 상세 패널, 전표 취소 모달을 담당한다.
 - `inbound-register.js`는 입고 전표 등록, 품목 검색, 품목 라인 편집, 저장 확인 모달을 담당한다.
-- 입고 목록은 `pcs-api.js`, `pcs-pagination.js`, `pcs-ui.js`를 함께 사용한다.
+- `outbound-register.js`는 출고 대상 관리번호 선택과 출고 전표 등록을 담당한다.
+- `documents.js`는 입출고 전표 통합 목록, 검색, 상세 패널과 취소를 담당한다.
+- `/inbound`, `/outbound` 목록 경로는 전표 유형 조건을 유지한 채 `/documents`로 리다이렉트한다.
 - 입고 등록은 `pcs-api.js`, `pcs-ui.js`를 함께 사용한다.
 
 ## PageController 기준
 
-PageController는 정적 HTML forward만 한다.
+PageController는 정적 HTML forward와 통합 화면 리다이렉트를 담당한다.
 
 ```java
 @GetMapping("/parts")
