@@ -32,26 +32,31 @@
 
 | 목적 | API |
 |---|---|
-| 업체 코드·링크 | `PcsWorkspace.getCompanyCode()`, `updateWorkspaceLinks()` |
-| 날짜·숫자 표시 | `PcsFormat.date()`, `PcsFormat.number()` |
+| 업체 코드·API 문맥·링크 | `PcsWorkspace.getCompanyCode()`, `createContext()`, `updateWorkspaceLinks()` |
+| 날짜·시간·숫자 표시 | `PcsFormat.date()`, `dateTime()`, `localDate()`, `number()` |
 | HTML escape | `PcsHtml.escape()` |
 | toast | `PcsFeedback.toast()` 또는 `PcsUi.toast()` |
 | 저장 중 잠금 | `PcsForm.setSaving()` |
 | table 상태·cell | `PcsTable.clearRows()`, `textCell()`, `emptyRow()` |
-| drawer 닫기 | `PcsDrawer.bindDismiss()` |
+| 라벨 | `PcsLabels`의 업무별 label 함수 |
+| drawer | `PcsDrawer.setOpen()`, `bindDismiss()` |
+| 분류·거래처 선택 | `PcsCategoryPicker.bind()`, `PcsPartnerPicker.bind()` |
 | URL 기반 목록 상태 | `PcsNavigationState.createUrlStateController()` |
 
 공통 함수로 처리할 수 없는 화면별 후처리만 얇은 wrapper로 추가합니다.
+
+`PcsWorkspace.createContext()`가 반환하는 `companyCode`, `apiBase`, `apiUrl()`, `apiOptions()`를 함께 사용해 화면별 API 문맥 구현을 반복하지 않습니다. 분류·거래처 modal은 공통 picker에 DOM 요소와 `onChange`만 전달합니다. 거래처 검색은 서버 `keyword` 조건으로 `page=0`, `size<=100` 범위에서 조회합니다.
 
 ## API 호출
 
 인증 API는 `PcsApi`를 사용합니다.
 
 ```js
-const data = await window.PcsApi.getData(url, {
-    authRedirect: true,
-    loginCompanyCode: companyCode
-});
+const workspace = window.PcsWorkspace.createContext();
+const data = await window.PcsApi.getData(
+    workspace.apiUrl("/partners"),
+    workspace.apiOptions()
+);
 ```
 
 인증이 필요한 화면에서 직접 `fetch()`로 토큰·재발급·오류 계약을 재구현하지 않습니다. 공개 로그인·가입처럼 인증 공통 처리가 불필요한 요청만 직접 호출할 수 있습니다.

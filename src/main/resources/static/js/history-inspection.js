@@ -3,6 +3,11 @@
     const UNIT_PAGE_SIZE = 10;
     const DETAIL_PAGE_SIZE = 100;
     const MAX_DETAIL_PAGES = 5;
+    const workspace = window.PcsWorkspace.createContext();
+    const escapeHtml = window.PcsHtml.escape;
+    const numberText = window.PcsFormat.number;
+    const formatDate = window.PcsFormat.dateTime;
+    const formatLocalDate = window.PcsFormat.localDate;
 
     const filterForm = document.querySelector("[data-history-filter-form]");
     const filterResetButton = document.querySelector("[data-history-filter-reset]");
@@ -46,38 +51,6 @@
     let detailPanelOpen = false;
     let lastDetailTrigger = null;
 
-    const LABELS = {
-        inspectionType: {
-            INITIAL: "최초 검수",
-            CORRECTION: "정정",
-            REINSPECTION: "재검수"
-        },
-        result: {
-            PASS: "통과",
-            FAIL: "불합격",
-            WARN: "주의",
-            NA: "해당 없음"
-        },
-        grade: {
-            NONE: "미정",
-            A: "A",
-            B: "B",
-            C: "C",
-            DEFECTIVE: "불량"
-        },
-        salesStatus: {
-            AVAILABLE: "판매 가능",
-            HOLD: "판매 보류",
-            UNAVAILABLE: "판매 불가"
-        },
-        unitStatus: {
-            IN_STOCK: "재고",
-            OUTBOUND: "출고 완료",
-            DISPOSED: "폐기됨",
-            CANCELED: "취소됨"
-        }
-    };
-
     const FILTER_LABELS = {
         ALL: "전체",
         INITIAL: "최초 검수",
@@ -86,12 +59,12 @@
         FAIL: "불합격"
     };
 
-    const getCompanyCode = () => {
-        const match = window.location.pathname.match(/^\/w\/([^/]+)/);
-        return match ? decodeURIComponent(match[1]) : "";
+    const UNIT_STATUS_LABELS = {
+        IN_STOCK: "재고",
+        OUTBOUND: "출고 완료",
+        DISPOSED: "폐기됨",
+        CANCELED: "취소됨"
     };
-
-    const apiBase = () => `/api/workspaces/${encodeURIComponent(getCompanyCode())}`;
 
     const readDeepLinkTarget = () => {
         const params = new URLSearchParams(window.location.search);
@@ -117,38 +90,9 @@
                 && String(left) === String(right);
     };
 
-    const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (letter) => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        "\"": "&quot;",
-        "'": "&#039;"
-    }[letter]));
-
-    const numberText = (value) => Number(value || 0).toLocaleString("ko-KR");
-
-    const formatDate = (value) => {
-        if (!value) {
-            return "-";
-        }
-        if (Array.isArray(value)) {
-            const [year, month, day, hour, minute] = value;
-            if (year && month && day) {
-                const datePart = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                if (hour != null && minute != null) {
-                    return `${datePart} ${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-                }
-                return datePart;
-            }
-        }
-        return String(value).slice(0, 16).replace("T", " ");
-    };
-
-    const formatLocalDate = (date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const day = String(date.getDate()).padStart(2, "0");
-        return `${year}-${month}-${day}`;
+    const inspectionTypeLabel = (value) => {
+        const label = window.PcsLabels.inspectionType(value, value || "-");
+        return value === "INITIAL" ? `${label} 검수` : label;
     };
 
     const isProblemInspection = (item) => item?.result === "FAIL" || item?.grade === "DEFECTIVE";
@@ -163,11 +107,11 @@
         if (!status || (options.hideInStock && status === "IN_STOCK")) {
             return "";
         }
-        return `<em class="badge ${unitStatusBadgeClass(status)} history-unit-status-badge">${escapeHtml(LABELS.unitStatus[status] || status)}</em>`;
+        return `<em class="badge ${unitStatusBadgeClass(status)} history-unit-status-badge">${escapeHtml(UNIT_STATUS_LABELS[status] || window.PcsLabels.unitStatus(status, status))}</em>`;
     };
 
     const resolveCurrentSalesStatus = (unitStatus, salesStatus) => window.PcsLabels?.currentSalesStatus(unitStatus, salesStatus)
-        || LABELS.salesStatus[salesStatus]
+        || window.PcsLabels.salesStatus(salesStatus, salesStatus)
         || salesStatus
         || "-";
 
@@ -568,7 +512,7 @@
         }
     };
 
-    const renderDocumentRows = (groups, sourcePageData) => {
+    const renderDocumentRows = (groups) => {
         clearRows(documentTable);
 
         if (!groups.length) {
@@ -644,9 +588,9 @@
                     <small>${escapeHtml(group.modelName || "")}</small>
                 </span>
                 <span class="history-result-cell" role="cell" data-label="최근 결과">
-                    <em class="badge ${resultBadgeClass(latest.result)}">${escapeHtml(LABELS.result[latest.result] || latest.result || "-")}</em>
+                    <em class="badge ${resultBadgeClass(latest.result)}">${escapeHtml(window.PcsLabels.inspectionResult(latest.result, latest.result || "-"))}</em>
                     <span class="history-result-separator" aria-hidden="true">/</span>
-                    <em class="badge ${gradeBadgeClass(latest.grade)}">${escapeHtml(LABELS.grade[latest.grade] || latest.grade || "-")}</em>
+                    <em class="badge ${gradeBadgeClass(latest.grade)}">${escapeHtml(window.PcsLabels.grade(latest.grade, latest.grade || "-"))}</em>
                 </span>
                 <span role="cell" data-label="이력 건수">${numberText(group.rows.length)}건</span>
                 <span role="cell" data-label="최근 처리일">${escapeHtml(formatDate(latest.inspectedAt))}</span>
@@ -666,9 +610,9 @@
 
         const sourceRows = rows.length ? rows : [detail];
         return sourceRows.map((item, index) => {
-            const typeText = LABELS.inspectionType[item.inspectionType] || item.inspectionType || "-";
-            const resultText = LABELS.result[item.result] || item.result || "-";
-            const gradeText = LABELS.grade[item.grade] || item.grade || "-";
+            const typeText = inspectionTypeLabel(item.inspectionType);
+            const resultText = window.PcsLabels.inspectionResult(item.result, item.result || "-");
+            const gradeText = window.PcsLabels.grade(item.grade, item.grade || "-");
             return `
             <article class="history-timeline-item ${isProblemInspection(item) ? "is-problem" : ""}">
                 <div class="history-timeline-marker" aria-hidden="true">
@@ -703,7 +647,7 @@
                 const value = item.selectedOptionLabelSnapshot
                     || item.valueText
                     || (item.valueNumber != null ? String(item.valueNumber) : "-");
-                const resultText = LABELS.result[item.result] || item.result || "-";
+                const resultText = window.PcsLabels.inspectionResult(item.result, item.result || "-");
                 return `
                         <article class="history-result-item ${isProblemInspection(item) ? "is-problem" : ""}">
                             <header>
@@ -728,11 +672,11 @@
                 <h3>최근 검수 정보</h3>
                 <div class="history-detail-summary">
                     <div class="history-detail-summary-title">
-                        <strong>${escapeHtml(LABELS.inspectionType[detail.inspectionType] || detail.inspectionType || "-")}</strong>
+                        <strong>${escapeHtml(inspectionTypeLabel(detail.inspectionType))}</strong>
                         <span class="history-result-cell">
-                            <em class="badge ${resultBadgeClass(detail.result)}">${escapeHtml(LABELS.result[detail.result] || detail.result || "-")}</em>
+                            <em class="badge ${resultBadgeClass(detail.result)}">${escapeHtml(window.PcsLabels.inspectionResult(detail.result, detail.result || "-"))}</em>
                             <span class="history-result-separator" aria-hidden="true">/</span>
-                            <em class="badge ${gradeBadgeClass(detail.grade)}">${escapeHtml(LABELS.grade[detail.grade] || detail.grade || "-")}</em>
+                            <em class="badge ${gradeBadgeClass(detail.grade)}">${escapeHtml(window.PcsLabels.grade(detail.grade, detail.grade || "-"))}</em>
                         </span>
                     </div>
                     <dl class="history-detail-meta">
@@ -801,24 +745,18 @@
 
     const fetchHistoryPage = async (page, size, extraParams = {}, options = {}) => {
         const params = buildParams(page, size, extraParams, options);
-        const data = await window.PcsApi.getData(`${apiBase()}/inspections?${params.toString()}`, {
-            authRedirect: true,
-            loginCompanyCode: getCompanyCode()
-        });
+        const data = await window.PcsApi.getData(workspace.apiUrl(`/inspections?${params.toString()}`), workspace.apiOptions());
         return window.PcsPagination.normalizePageData(data, size);
     };
 
     const fetchHistoryDocumentPage = async (page, size, extraParams = {}, options = {}) => {
         const params = buildParams(page, size, extraParams, options);
-        const data = await window.PcsApi.getData(`${apiBase()}/inspections/history-documents?${params.toString()}`, {
-            authRedirect: true,
-            loginCompanyCode: getCompanyCode()
-        });
+        const data = await window.PcsApi.getData(workspace.apiUrl(`/inspections/history-documents?${params.toString()}`), workspace.apiOptions());
         return window.PcsPagination.normalizePageData(data, size);
     };
 
     const loadDocumentGroups = async (page = 0, options = {}) => {
-        if (!getCompanyCode()) {
+        if (!workspace.companyCode) {
             setTableMessage(documentTable, "업체 주소가 올바르지 않습니다.");
             return;
         }
@@ -847,7 +785,7 @@
 
             const groups = normalizeDocumentGroups(pageData.content);
             currentDocumentGroups = groups;
-            renderDocumentRows(groups, pageData);
+            renderDocumentRows(groups);
             updatePagination(pageData);
 
             if (restoreDocumentId) {
@@ -994,10 +932,7 @@
         openDetailPanel(triggerElement);
 
         try {
-            const detail = await window.PcsApi.getData(`${apiBase()}/inspections/${encodeURIComponent(inspectionId)}`, {
-                authRedirect: true,
-                loginCompanyCode: getCompanyCode()
-            });
+            const detail = await window.PcsApi.getData(workspace.apiUrl(`/inspections/${encodeURIComponent(inspectionId)}`), workspace.apiOptions());
             renderHistoryDetail(detail);
         } catch (error) {
             resetDetailPanelContent(error?.message || "상세 이력을 불러오지 못했습니다.");
@@ -1109,7 +1044,7 @@
     }
 
     const initializePage = async () => {
-        const companyCode = getCompanyCode();
+        const companyCode = workspace.companyCode;
 
         try {
             if (window.PcsApi.validateWorkspacePublic) {

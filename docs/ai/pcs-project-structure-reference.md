@@ -129,7 +129,7 @@ HTML -> page.js -> PcsApi -> Controller -> Facade -> Service
 | 인증 요청과 token refresh | `static/js/pcs-api.js` |
 | 페이징 | `static/js/pcs-pagination.js` |
 | 토스트 | `static/js/pcs-ui.js` |
-| workspace·포맷·폼·테이블·드로어 | `static/js/pcs-common.js` |
+| workspace·포맷·라벨·폼·테이블·드로어·분류/거래처 선택기 | `static/js/pcs-common.js` |
 | 목록 상태 복원 | `static/js/pcs-navigation-state.js` |
 | 사용 규칙 | `docs/ai/pcs-frontend-js-rules.md` |
 

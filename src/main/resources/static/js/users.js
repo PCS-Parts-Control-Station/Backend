@@ -1,14 +1,5 @@
 (function () {
     const PAGE_SIZE = 10;
-    const ROLE_LABELS = {
-        ADMIN: "관리자",
-        STAFF: "작업자"
-    };
-    const ROLE_OPTION_LABELS = {
-        ADMIN: "관리자",
-        STAFF: "작업자"
-    };
-
     const filterForm = document.querySelector("[data-user-filter-form]");
     const table = document.querySelector("[data-user-table]");
     const pagination = document.querySelector("[data-user-pagination]");
@@ -94,7 +85,7 @@
         if (role === "OWNER") {
             return "소유자";
         }
-        return ROLE_LABELS[role] || "작업자";
+        return window.PcsLabels.userRole(role, "작업자");
     };
 
     const roleBadgeClass = (role) => {
@@ -140,7 +131,7 @@
         roles.forEach((role) => {
             const option = document.createElement("option");
             option.value = role;
-            option.textContent = ROLE_OPTION_LABELS[role] || role;
+            option.textContent = roleLabel(role);
             select.append(option);
         });
 
@@ -204,24 +195,18 @@
         });
     };
 
-    const setDrawerOpen = (isOpen) => {
-        detailDrawer?.classList.toggle("is-open", isOpen);
-        detailDrawer?.setAttribute("aria-hidden", String(!isOpen));
-        createDrawerButtons.forEach((button) => {
-            button.setAttribute("aria-expanded", String(isOpen));
-        });
-    };
-
     const openDrawer = (trigger = null) => {
         if (trigger instanceof HTMLElement) {
             lastDrawerTrigger = detailDrawer?.contains(trigger) ? createDrawerButton : trigger;
         }
-        setDrawerOpen(true);
+        window.PcsDrawer.setOpen(detailDrawer, true);
+        createDrawerButtons.forEach((button) => button.setAttribute("aria-expanded", "true"));
     };
 
     const closeDrawer = (options = {}) => {
         selectedUserId = null;
-        setDrawerOpen(false);
+        window.PcsDrawer.setOpen(detailDrawer, false);
+        createDrawerButtons.forEach((button) => button.setAttribute("aria-expanded", "false"));
         updateSelectedRow();
         if (options.restoreFocus !== false && lastDrawerTrigger?.isConnected) {
             lastDrawerTrigger.focus({ preventScroll: true });

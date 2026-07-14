@@ -159,24 +159,18 @@
         detailDrawer?.setAttribute("aria-labelledby", titleIds[mode] || titleIds.create);
     };
 
-    const setDrawerOpen = (isOpen) => {
-        detailDrawer?.classList.toggle("is-open", isOpen);
-        detailDrawer?.setAttribute("aria-hidden", String(!isOpen));
-        createDrawerButtons.forEach((button) => {
-            button.setAttribute("aria-expanded", String(isOpen));
-        });
-    };
-
     const openDrawer = (trigger = null) => {
         if (trigger instanceof HTMLElement) {
             lastDrawerTrigger = detailDrawer?.contains(trigger) ? createDrawerButton : trigger;
         }
-        setDrawerOpen(true);
+        window.PcsDrawer.setOpen(detailDrawer, true);
+        createDrawerButtons.forEach((button) => button.setAttribute("aria-expanded", "true"));
     };
 
     const closeDrawer = (options = {}) => {
         selectedCategoryId = null;
-        setDrawerOpen(false);
+        window.PcsDrawer.setOpen(detailDrawer, false);
+        createDrawerButtons.forEach((button) => button.setAttribute("aria-expanded", "false"));
         updateSelectedRow();
         if (options.sync !== false) {
             syncNavigationState({

@@ -1285,9 +1285,10 @@ function Test-WorkspaceNavigation {
     }
 
     foreach ($pattern in @(
-        'const setDrawerOpen',
         'const openDrawer',
         'const closeDrawer',
+        'window.PcsDrawer.setOpen(detailDrawer, true)',
+        'window.PcsDrawer.setOpen(detailDrawer, false)',
         'window.PcsDrawer?.bindDismiss({',
         'drawer: detailDrawer',
         'close: closeDrawer',
@@ -1337,14 +1338,39 @@ function Test-WorkspaceNavigation {
 
 function Test-FrontendCommonUtilityReuse {
     $jsRoot = Join-Path $ProjectRoot "src/main/resources/static/js"
+    $frontendPages = @(
+        "categories.js",
+        "company-register.js",
+        "dashboard.js",
+        "documents.js",
+        "history-inspection.js",
+        "inbound-register.js",
+        "inspection.js",
+        "inspection-templates.js",
+        "invalid-access.js",
+        "main.js",
+        "mypage.js",
+        "outbound-register.js",
+        "partners.js",
+        "parts.js",
+        "part-units.js",
+        "users.js",
+        "workspace-layout.js",
+        "workspace-login.js"
+    )
     $managementPages = @(
         "partners.js",
         "categories.js",
         "parts.js",
         "users.js"
     )
+    $partnerPickerPages = @(
+        "documents.js",
+        "inbound-register.js",
+        "outbound-register.js"
+    )
 
-    foreach ($fileName in $managementPages) {
+    foreach ($fileName in $frontendPages) {
         $filePath = Join-Path $jsRoot $fileName
         if (-not (Test-Path $filePath)) {
             continue
@@ -1356,20 +1382,31 @@ function Test-FrontendCommonUtilityReuse {
         if ($content -match 'const\s+getCompanyCode\s*=\s*\(\)\s*=>') {
             $duplicated.Add("companyCode extraction") | Out-Null
         }
-        if ($content -match 'const\s+formatDate\s*=\s*\([^)]*\)\s*=>') {
+        if ($content -match 'const\s+api(Base|Options)\s*=\s*\(\)\s*=>') {
+            $duplicated.Add("workspace API context") | Out-Null
+        }
+        if ($content -match 'const\s+(formatDate|formatLocalDate)\s*=\s*\([^)]*\)\s*=>') {
             $duplicated.Add("date formatting") | Out-Null
         }
         if ($content -match 'const\s+numberText\s*=\s*\([^)]*\)\s*=>') {
             $duplicated.Add("number formatting") | Out-Null
         }
+        if ($content -match 'const\s+escapeHtml\s*=\s*\([^)]*\)\s*=>') {
+            $duplicated.Add("HTML escaping") | Out-Null
+        }
         if ($content -match 'window\.PcsUi\??\.toast') {
             $duplicated.Add("toast feedback") | Out-Null
         }
-        if ($content -match 'querySelectorAll\("button, input') {
-            $duplicated.Add("form saving state") | Out-Null
+        if ($partnerPickerPages -contains $fileName -and $content -match 'data-partner-option') {
+            $duplicated.Add("partner picker rendering") | Out-Null
         }
-        if ($content -match 'const\s+setEmptyMessage\s*=\s*\([^)]*\)\s*=>\s*\{') {
-            $duplicated.Add("empty table row rendering") | Out-Null
+        if ($managementPages -contains $fileName) {
+            if ($content -match 'querySelectorAll\("button, input') {
+                $duplicated.Add("form saving state") | Out-Null
+            }
+            if ($content -match 'const\s+setEmptyMessage\s*=\s*\([^)]*\)\s*=>\s*\{') {
+                $duplicated.Add("empty table row rendering") | Out-Null
+            }
         }
 
         if ($duplicated.Count -gt 0) {

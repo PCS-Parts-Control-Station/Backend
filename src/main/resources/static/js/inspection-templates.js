@@ -1,6 +1,11 @@
 (function () {
     const PAGE_SIZE = 10;
     const SORT_STEP = 10;
+    const { companyCode, apiBase, apiOptions } = window.PcsWorkspace.createContext();
+    const numberText = window.PcsFormat.number;
+    const formatDate = window.PcsFormat.date;
+    const showToast = window.PcsFeedback.toast;
+    const setFormSaving = window.PcsForm.setSaving;
 
     const INPUT_TYPES = {
         CHECK: "통과/불합격",
@@ -136,87 +141,28 @@
     let activeCategoryPickerMode = "create";
     let draftSequence = 0;
 
-    const numberText = (value) => Number(value || 0).toLocaleString("ko-KR");
-
-    const normalizeTemplatePageData = (data) => {
-        if (window.PcsPagination) {
-            return window.PcsPagination.normalizePageData(data, PAGE_SIZE);
-        }
-
-        return {
-            content: Array.isArray(data?.content) ? data.content : [],
-            page: Math.max(0, Number(data?.page || 0)),
-            size: Math.max(1, Number(data?.size || PAGE_SIZE)),
-            totalElements: Math.max(0, Number(data?.totalElements || 0)),
-            totalPages: Math.max(0, Number(data?.totalPages || 0)),
-            hasPrevious: data?.hasPrevious === true,
-            hasNext: data?.hasNext === true,
-            summary: data?.summary || null
-        };
-    };
+    const normalizeTemplatePageData = (data) => window.PcsPagination.normalizePageData(data, PAGE_SIZE);
 
     const updateTemplatePagination = () => {
-        if (window.PcsPagination) {
-            window.PcsPagination.updateControls({
-                pageData: templatePageData,
-                container: pagination,
-                info: pageInfo,
-                prevButton,
-                nextButton,
-                onPageClick: async (page) => {
-                    try {
-                        const execute = () => loadTemplates({ page });
-                        if (window.PcsPagination?.withPreservedScroll) {
-                            await window.PcsPagination.withPreservedScroll(execute);
-                            return;
-                        }
-                        await execute();
-                    } catch (error) {
-                        handleApiError(error, "페이지 조회에 실패했습니다.");
-                    }
+        window.PcsPagination.updateControls({
+            pageData: templatePageData,
+            container: pagination,
+            info: pageInfo,
+            prevButton,
+            nextButton,
+            onPageClick: async (page) => {
+                try {
+                    await window.PcsPagination.withPreservedScroll(() => loadTemplates({ page }));
+                } catch (error) {
+                    handleApiError(error, "페이지 조회에 실패했습니다.");
                 }
-            });
-            return;
-        }
-
-        if (pagination) {
-            pagination.hidden = templatePageData.totalPages <= 1;
-        }
-        if (pageInfo) {
-            pageInfo.textContent = templatePageData.totalPages
-                ? `${templatePageData.page + 1} / ${templatePageData.totalPages} 페이지 · 총 ${numberText(templatePageData.totalElements)}건`
-                : "0건";
-        }
-        if (prevButton) {
-            prevButton.disabled = !templatePageData.hasPrevious;
-        }
-        if (nextButton) {
-            nextButton.disabled = !templatePageData.hasNext;
-        }
+            }
+        });
     };
-
-    const getCompanyCode = () => {
-        const match = window.location.pathname.match(/^\/w\/([^/]+)/);
-        return match ? decodeURIComponent(match[1]) : "";
-    };
-
-    const apiOptions = () => {
-        const companyCode = getCompanyCode();
-        return {
-            authRedirect: true,
-            loginCompanyCode: companyCode
-        };
-    };
-
-    const apiBase = () => `/api/workspaces/${encodeURIComponent(getCompanyCode())}`;
 
     const requestData = async (url, options = {}) => {
         const result = await window.PcsApi.request(url, options);
         return result?.data;
-    };
-
-    const showToast = (message, type = "info") => {
-        window.PcsUi?.toast({ message, type });
     };
 
     const normalizeString = (value) => (value === null || value === undefined ? "" : String(value));
@@ -338,19 +284,6 @@
             categoryPickerMessage.textContent = "";
         }
         categoryPickerModal?.close();
-    };
-
-    const formatDate = (value) => {
-        if (!value) {
-            return "-";
-        }
-        if (Array.isArray(value)) {
-            const [year, month, day] = value;
-            if (year && month && day) {
-                return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-            }
-        }
-        return String(value).slice(0, 10);
     };
 
     const normalizeTemplateSummary = (template) => ({
@@ -530,8 +463,7 @@
     };
 
     const setDrawerOpen = (isOpen) => {
-        detailDrawer?.classList.toggle("is-open", isOpen);
-        detailDrawer?.setAttribute("aria-hidden", String(!isOpen));
+        window.PcsDrawer.setOpen(detailDrawer, isOpen);
         createDrawerButtons.forEach((button) => {
             button.setAttribute("aria-expanded", String(isOpen));
         });
@@ -567,24 +499,6 @@
         row.setAttribute("role", "row");
         row.append(createCell("안내", message));
         table.append(row);
-    };
-
-    const setFormSaving = (targetForm, isSaving, savingText = "저장 중") => {
-        if (!targetForm) {
-            return;
-        }
-        targetForm.dataset.saving = String(isSaving);
-        targetForm.querySelectorAll("button, input, select, textarea").forEach((field) => {
-            field.disabled = isSaving;
-        });
-        const submitButton = targetForm.querySelector("button[type='submit']");
-        if (!submitButton) {
-            return;
-        }
-        if (!submitButton.dataset.defaultText) {
-            submitButton.dataset.defaultText = submitButton.textContent;
-        }
-        submitButton.textContent = isSaving ? savingText : submitButton.dataset.defaultText;
     };
 
     const handleApiError = (error, fallbackMessage) => {
@@ -770,7 +684,7 @@
     };
 
     const loadCategories = async () => {
-        categories = await window.PcsCategory.loadAll(getCompanyCode(), { apiOptions });
+        categories = await window.PcsCategory.loadAll(companyCode, { apiOptions: () => apiOptions() });
         populateCategorySelects();
     };
 
@@ -864,7 +778,7 @@
         if (active !== "") params.set("active", active);
 
         setEmptyMessage("검수 템플릿 목록을 불러오는 중입니다.");
-        const data = await window.PcsApi.getData(`${apiBase()}/inspection-templates?${params.toString()}`, apiOptions());
+        const data = await window.PcsApi.getData(`${apiBase}/inspection-templates?${params.toString()}`, apiOptions());
         templatePageData = normalizeTemplatePageData(data);
         templates = templatePageData.content.map(normalizeTemplateSummary);
         updateSummary(templatePageData.summary || null);
@@ -883,7 +797,7 @@
     };
 
     const loadTemplateDetail = async (templateId) => {
-        const data = await window.PcsApi.getData(`${apiBase()}/inspection-templates/${encodeURIComponent(templateId)}`, apiOptions());
+        const data = await window.PcsApi.getData(`${apiBase}/inspection-templates/${encodeURIComponent(templateId)}`, apiOptions());
         return normalizeTemplateDetail(data);
     };
 
@@ -903,7 +817,7 @@
         }
     };
 
-    const addOptionToItem = async (template, item, form) => {
+    const addOptionToItem = (template, item, form) => {
         const optionLabel = readOptionLabel(form);
         if (!optionLabel) {
             showToast("선택지명을 입력해 주세요.", "warning");
@@ -932,7 +846,7 @@
         renderSelectedItemDetail(template);
     };
 
-    const updateOptionLabel = async (template, item, optionId, form) => {
+    const updateOptionLabel = (template, item, optionId, form) => {
         const option = item.options.find((itemOption) => itemOption.id === String(optionId));
         const optionLabel = readOptionLabel(form);
         if (!option || !optionLabel) {
@@ -1089,7 +1003,8 @@
         editingItemId = item.id;
         editingOptionId = null;
         fillItemForm(item);
-        renderItems(template);
+        updateSelectedItemCards();
+        renderSelectedItemDetail(template);
         itemModal?.showModal();
         focusItemName();
     };
@@ -1460,6 +1375,14 @@
         selectedItemDetail.append(note);
     };
 
+    const updateSelectedItemCards = () => {
+        itemList?.querySelectorAll("[data-item-id]").forEach((card) => {
+            const isSelected = card.dataset.itemId === String(selectedItemId);
+            card.classList.toggle("is-selected", isSelected);
+            card.setAttribute("aria-pressed", String(isSelected));
+        });
+    };
+
     const renderItems = (template) => {
         itemList.innerHTML = "";
         if (!template.items.some((item) => item.id === String(selectedItemId))) {
@@ -1580,7 +1503,8 @@
         if (!template) {
             return;
         }
-        renderItems(template);
+        updateSelectedItemCards();
+        renderSelectedItemDetail(template);
     };
 
     const showCreatePanel = (trigger = null, options = {}) => {
@@ -1617,12 +1541,9 @@
             return;
         }
         try {
-            const execute = () => loadTemplates({ page: templatePageData.page - 1 });
-            if (window.PcsPagination?.withPreservedScroll) {
-                await window.PcsPagination.withPreservedScroll(execute);
-                return;
-            }
-            await execute();
+            await window.PcsPagination.withPreservedScroll(
+                    () => loadTemplates({ page: templatePageData.page - 1 })
+            );
         } catch (error) {
             handleApiError(error, "이전 페이지 조회에 실패했습니다.");
         }
@@ -1633,12 +1554,9 @@
             return;
         }
         try {
-            const execute = () => loadTemplates({ page: templatePageData.page + 1 });
-            if (window.PcsPagination?.withPreservedScroll) {
-                await window.PcsPagination.withPreservedScroll(execute);
-                return;
-            }
-            await execute();
+            await window.PcsPagination.withPreservedScroll(
+                    () => loadTemplates({ page: templatePageData.page + 1 })
+            );
         } catch (error) {
             handleApiError(error, "다음 페이지 조회에 실패했습니다.");
         }
@@ -1720,7 +1638,7 @@
         }
         try {
             await window.PcsApi.request(
-                `${apiBase()}/inspection-templates/${template.templateId}/active`,
+                `${apiBase}/inspection-templates/${template.templateId}/active`,
                 {
                     ...apiOptions(),
                     method: "PATCH",
@@ -1754,7 +1672,7 @@
         setFormSaving(createForm, true);
         try {
             const data = await requestData(
-                `${apiBase()}/inspection-templates`,
+                `${apiBase}/inspection-templates`,
                 {
                     ...apiOptions(),
                     method: "POST",
@@ -1796,7 +1714,7 @@
         setFormSaving(editForm, true);
         try {
             await requestData(
-                `${apiBase()}/inspection-templates/${template.templateId}`,
+                `${apiBase}/inspection-templates/${template.templateId}`,
                 {
                     ...apiOptions(),
                     method: "PATCH",
@@ -1894,7 +1812,6 @@
         if (!filterForm || !table) {
             return;
         }
-        const companyCode = getCompanyCode();
         if (!companyCode || !window.PcsApi) {
             setEmptyMessage("작업공간 정보가 없어 검수 템플릿을 불러올 수 없습니다.");
             return;
