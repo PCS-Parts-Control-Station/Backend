@@ -59,10 +59,29 @@
     let paginationStatusTimer = null;
     let partners = [];
     let selectedPartner = null;
+    let isRestoringNavigationState = false;
 
     if (!filterForm || !table || !window.PcsApi || !window.PcsPagination) {
         return;
     }
+
+    const navigationState = window.PcsNavigationState?.createUrlStateController({
+        namespace: "documents",
+        managedKeys: [
+            "keyword",
+            "partnerId",
+            "documentType",
+            "documentStatus",
+            "dateFrom",
+            "dateTo",
+            "page",
+            "documentId",
+            "documentNo",
+        ],
+        defaults: {
+            page: "0",
+        },
+    });
 
     const getCompanyCode = () => {
         if (window.PcsWorkspace?.getCompanyCode) {
@@ -156,6 +175,65 @@
         openPartnerModalButton?.classList.toggle("is-selected", hasPartner);
     };
 
+    const navigationFilterFields = [
+        "keyword",
+        "partnerId",
+        "documentType",
+        "documentStatus",
+        "dateFrom",
+        "dateTo",
+    ];
+
+    const currentFilterState = () => ({
+        ...window.PcsNavigationState?.captureFormState?.(filterForm, {
+            fields: navigationFilterFields,
+        }),
+    });
+
+    const syncNavigationState = (overrides = {}, options = {}) => {
+        if (!navigationState || isRestoringNavigationState) {
+            return;
+        }
+
+        navigationState.write({
+            ...currentFilterState(),
+            page: String(currentPage),
+            documentId: selectedDocumentId ? String(selectedDocumentId) : "",
+            documentNo: "",
+            ...overrides,
+        }, {
+            mode: options.mode || "replace",
+            captureScroll: options.captureScroll !== false,
+        });
+    };
+
+    const applyNavigationStateToFilters = () => {
+        const state = navigationState?.read() || {};
+        const restoredState = {
+            ...state,
+            keyword: state.keyword || state.documentNo || "",
+        };
+
+        isRestoringNavigationState = true;
+        try {
+            window.PcsNavigationState?.applyFormState?.(filterForm, restoredState, {
+                fields: navigationFilterFields,
+            });
+            selectedPartner = state.partnerId
+                ? partners.find((partner) => String(partner.partnerId) === String(state.partnerId)) || null
+                : null;
+            updateSelectedPartnerView();
+            renderPartnerList();
+        } finally {
+            isRestoringNavigationState = false;
+        }
+
+        return {
+            page: window.PcsNavigationState?.numberParam?.(state.page, 0) || 0,
+            documentId: state.documentId || "",
+        };
+    };
+
     const renderPartnerList = () => {
         if (!partnerList) {
             return;
@@ -200,9 +278,9 @@
             const data = await window.PcsApi.getData(`${base}/partners?active=true&limit=200`, apiOptions());
             partners = Array.isArray(data) ? data : data.content || [];
             const partnerId = partnerFilter?.value;
-            if (partnerId && !selectedPartner?.partnerId) {
-                selectedPartner = partners.find((partner) => String(partner.partnerId) === String(partnerId)) || null;
-            }
+            selectedPartner = partnerId
+                ? partners.find((partner) => String(partner.partnerId) === String(partnerId)) || null
+                : null;
         } catch (error) {
             partners = [];
         } finally {
@@ -216,7 +294,7 @@
         updateSelectedPartnerView();
         renderPartnerList();
         partnerModal?.close();
-        closeDetailDrawer({ restoreFocus: false });
+        closeDetailDrawer({ restoreFocus: false, sync: false });
         void loadDocuments(0);
     };
 
@@ -304,6 +382,12 @@
         selectedDocumentId = null;
         currentDetail = null;
         updateSelectedRows();
+        if (options.sync !== false) {
+            syncNavigationState({
+                page: String(currentPage),
+                documentId: "",
+            });
+        }
         if (options.restoreFocus !== false && lastDetailTrigger instanceof HTMLElement) {
             lastDetailTrigger.focus({ preventScroll: true });
         }
@@ -393,7 +477,7 @@
         updateSelectedRows();
     };
 
-    const loadDocumentDetail = async (documentId, trigger = null) => {
+    const loadDocumentDetail = async (documentId, trigger = null, options = {}) => {
         const base = apiBase();
         if (trigger instanceof HTMLElement) {
             lastDetailTrigger = trigger;
@@ -404,6 +488,12 @@
         }
 
         setDetailLoading("전표 상세를 불러오는 중입니다.", documentId);
+        if (options.sync !== false) {
+            syncNavigationState({
+                page: String(currentPage),
+                documentId: String(documentId || ""),
+            });
+        }
         try {
             const detail = await window.PcsApi.getData(`${base}/stock/documents/${encodeURIComponent(documentId)}`, apiOptions());
             renderDocumentDetail(detail);
@@ -550,7 +640,7 @@
             prevButton,
             nextButton,
             onPageClick: (page) => {
-                closeDetailDrawer({ restoreFocus: false });
+                closeDetailDrawer({ restoreFocus: false, sync: false });
                 const execute = () => loadDocuments(page, { keepRows: true });
                 if (window.PcsPagination?.withPreservedScroll) {
                     void window.PcsPagination.withPreservedScroll(execute);
@@ -629,11 +719,18 @@
     };
 
     const loadDocuments = async (page = currentPage, options = {}) => {
+        const requestedPage = Math.max(0, Number(page) || 0);
         const keepRows = options.keepRows === true;
         const base = apiBase();
         if (!base) {
             setEmptyMessage("업체 주소가 올바르지 않습니다.");
             return;
+        }
+
+        if (options.updateNavigation !== false) {
+            syncNavigationState({
+                page: String(requestedPage),
+            });
         }
 
         setLoading(true);
@@ -644,11 +741,26 @@
         }
 
         try {
-            const params = buildParams(page);
+            const params = buildParams(requestedPage);
             const data = await window.PcsApi.getData(`${base}/stock/documents?${params.toString()}`, apiOptions());
             const pageData = window.PcsPagination.normalizePageData(data, PAGE_SIZE);
             currentPage = pageData.page;
             renderDocuments(pageData);
+
+            if (options.restoreDocumentId) {
+                const restoredRow = Array.from(table.querySelectorAll("[data-document-id]"))
+                    .find((row) => String(row.dataset.documentId) === String(options.restoreDocumentId)) || null;
+                await loadDocumentDetail(options.restoreDocumentId, restoredRow, { sync: false });
+            }
+            if (options.updateNavigation !== false) {
+                syncNavigationState({
+                    page: String(currentPage),
+                    documentId: selectedDocumentId ? String(selectedDocumentId) : "",
+                });
+            }
+            if (options.restoreScroll === true) {
+                navigationState?.restoreScroll();
+            }
         } catch (error) {
             const message = error?.message || "전표 목록을 불러오지 못했습니다.";
             if (keepRows) {
@@ -686,23 +798,9 @@
         }
     };
 
-    const applyUrlParams = () => {
-        const params = new URLSearchParams(window.location.search);
-        ["keyword", "partnerId", "documentType", "documentStatus", "dateFrom", "dateTo"].forEach((name) => {
-            const value = params.get(name);
-            if (value !== null && filterForm.elements[name]) {
-                filterForm.elements[name].value = value;
-            }
-        });
-        const documentNo = params.get("documentNo");
-        if (documentNo && filterForm.elements.keyword && !filterForm.elements.keyword.value) {
-            filterForm.elements.keyword.value = documentNo;
-        }
-    };
-
     filterForm.addEventListener("submit", (event) => {
         event.preventDefault();
-        closeDetailDrawer({ restoreFocus: false });
+        closeDetailDrawer({ restoreFocus: false, sync: false });
         void loadDocuments(0);
     });
 
@@ -711,7 +809,7 @@
         selectedPartner = null;
         updateSelectedPartnerView();
         renderPartnerList();
-        closeDetailDrawer({ restoreFocus: false });
+        closeDetailDrawer({ restoreFocus: false, sync: false });
         void loadDocuments(0);
     });
 
@@ -764,7 +862,7 @@
         if (!currentPageData?.hasPrevious) {
             return;
         }
-        closeDetailDrawer({ restoreFocus: false });
+        closeDetailDrawer({ restoreFocus: false, sync: false });
         const execute = () => loadDocuments(Math.max(0, currentPage - 1), { keepRows: true });
         if (window.PcsPagination?.withPreservedScroll) {
             void window.PcsPagination.withPreservedScroll(execute);
@@ -777,7 +875,7 @@
         if (!currentPageData?.hasNext) {
             return;
         }
-        closeDetailDrawer({ restoreFocus: false });
+        closeDetailDrawer({ restoreFocus: false, sync: false });
         const execute = () => loadDocuments(currentPage + 1, { keepRows: true });
         if (window.PcsPagination?.withPreservedScroll) {
             void window.PcsPagination.withPreservedScroll(execute);
@@ -838,6 +936,18 @@
         shouldIgnoreEscape: () => Boolean(cancelModal?.open),
     });
 
+    window.addEventListener("popstate", () => {
+        closeDetailDrawer({ restoreFocus: false, sync: false });
+        const restored = applyNavigationStateToFilters();
+        void loadDocuments(restored.page, {
+            updateNavigation: false,
+            restoreDocumentId: restored.documentId,
+            restoreScroll: true,
+        });
+    });
+
+    navigationState?.bindScrollCapture();
+
     const initialize = async () => {
         const companyCode = getCompanyCode();
         if (!companyCode) {
@@ -852,9 +962,13 @@
                     return;
                 }
             }
-            applyUrlParams();
+            const restored = applyNavigationStateToFilters();
             await loadPartnerFilter();
-            await loadDocuments(0);
+            await loadDocuments(restored.page, {
+                updateNavigation: false,
+                restoreDocumentId: restored.documentId,
+                restoreScroll: true,
+            });
         } catch (error) {
             setEmptyMessage(error?.message || "화면을 초기화하지 못했습니다.");
         }
