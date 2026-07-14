@@ -114,6 +114,51 @@
     font-weight: 800;
 }
 
+.sub-process-list > li {
+    padding: 8px;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    opacity: 0.62;
+    transition: background-color 160ms ease, border-color 160ms ease, opacity 160ms ease;
+}
+
+.sub-process-list > li > span,
+.sub-process-list > li strong,
+.sub-process-list > li p {
+    color: var(--muted);
+}
+
+.sub-process-list > li.is-current {
+    opacity: 1;
+    border-color: rgba(37, 99, 235, 0.36);
+    background: rgba(239, 246, 255, 0.96);
+    box-shadow: inset 3px 0 0 var(--blue);
+}
+
+.sub-process-list > li.is-current > span {
+    background: var(--blue);
+    color: #ffffff;
+    animation: operationCurrentStepPulse 2.2s ease-out infinite;
+}
+
+.sub-process-list > li.is-current strong {
+    color: var(--blue);
+}
+
+.sub-process-list > li.is-current p {
+    color: var(--text);
+}
+
+.operation-step-card {
+    overflow: hidden;
+    transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.operation-step-card.is-active {
+    border-color: rgba(37, 99, 235, 0.28);
+    box-shadow: 0 14px 34px rgba(37, 99, 235, 0.1);
+}
+
 .sub-process-list strong {
     color: var(--ink);
     font-size: 13px;
@@ -139,8 +184,26 @@
     }
 }
 
+@keyframes operationCurrentStepPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.3);
+    }
+
+    70% {
+        box-shadow: 0 0 0 7px rgba(37, 99, 235, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
 .workflow-step.active .process-dot {
+        animation: none;
+    }
+
+    .sub-process-list > li.is-current > span {
         animation: none;
     }
 }
