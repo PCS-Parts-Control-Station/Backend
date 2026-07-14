@@ -12,10 +12,10 @@
     <link rel="stylesheet" href="/css/core/tokens.css?20260618_layers">
     <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
     <link rel="stylesheet" href="/css/layouts/workspace.css?20260703_quick_bar_no_overlap">
-    <link rel="stylesheet" href="/css/components/components.css?20260703_flow_state">
+    <link rel="stylesheet" href="/css/components/components.css?20260714_drawer_header_alignment">
     <link rel="stylesheet" href="/css/components/management-page.css?20260624_spec_item_compact">
     <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
-    <link rel="stylesheet" href="/css/pages/part-units.css?20260713_compact_list_text">
+    <link rel="stylesheet" href="/css/pages/part-units.css?20260714_responsive_audit">
 </head>
 <body class="has-collapsible-sidebar page-part-units workspace-page">
 <div class="workspace-layout">
@@ -82,12 +82,12 @@
                         <h2 id="part-unit-filter-title">부품 검색</h2>
                         <p>관리번호, 제조사 시리얼, 품목명, 모델명으로 개별 부품을 찾습니다.</p>
                     </div>
-                    <form class="filter-form management-filter-form management-filter-form-with-actions" action="#" method="get" autocomplete="off" data-part-unit-filter-form>
-                        <label>
+                    <form class="filter-form management-filter-form management-filter-form-with-actions part-unit-filter-form" action="#" method="get" autocomplete="off" data-part-unit-filter-form>
+                        <label class="part-unit-filter-keyword">
                             <span>검색어</span>
                             <input type="search" name="keyword" placeholder="관리번호, 품목명, 모델명 검색" autocomplete="off">
                         </label>
-                        <label>
+                        <label class="part-unit-filter-document">
                             <span>전표</span>
                             <button class="category-picker-button" type="button" data-open-part-unit-document-picker>
                                 <span data-part-unit-document-label>전체</span>
@@ -95,7 +95,7 @@
                             </button>
                             <input type="hidden" name="documentId" data-part-unit-document-filter>
                         </label>
-                        <label>
+                        <label class="part-unit-filter-category">
                             <span>분류</span>
                             <button class="category-picker-button" type="button" data-open-part-unit-category-picker>
                                 <span data-part-unit-category-label>전체</span>
@@ -201,7 +201,7 @@
                 </section>
             </div>
 
-            <aside class="right-side-drawer management-detail-drawer" data-part-unit-detail-drawer aria-labelledby="part-unit-detail-title" aria-hidden="true" tabindex="-1" hidden>
+            <aside class="right-side-drawer management-detail-drawer part-unit-detail-drawer" data-part-unit-detail-drawer aria-labelledby="part-unit-detail-title" aria-hidden="true" tabindex="-1" hidden>
                 <div class="panel-card right-side-drawer-panel management-detail-drawer-panel">
                     <div class="panel-title-bar">
                         <div>
@@ -323,6 +323,6 @@
 <script src="/js/pcs-ui.js?20260703_modal_scroll_lock"></script>
 <script src="/js/pcs-common.js?20260714_js_refactor"></script>
 <script src="/js/pcs-navigation-state.js?20260706_navigation_state"></script>
-<script src="/js/part-units.js?20260714_js_refactor"></script>
+<script src="/js/part-units.js?20260714_js_refactor_responsive"></script>
 </body>
 </html>

@@ -345,7 +345,7 @@
             const recentText = recentLabel(unit);
 
             const row = document.createElement("div");
-            row.className = "data-row management-data-row part-unit-data-row";
+            row.className = "data-row management-data-row part-unit-data-row is-selectable";
             row.setAttribute("role", "row");
             row.setAttribute("tabindex", "0");
             row.dataset.partUnitRow = "true";

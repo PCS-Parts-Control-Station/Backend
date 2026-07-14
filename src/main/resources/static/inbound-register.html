@@ -12,11 +12,10 @@
     <link rel="stylesheet" href="/css/core/tokens.css?20260618_layers">
     <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
     <link rel="stylesheet" href="/css/layouts/workspace.css?20260703_quick_bar_no_overlap">
-    <link rel="stylesheet" href="/css/components/components.css?20260703_modal_scroll_lock">
-    <link rel="stylesheet" href="/css/components/workflow.css?20260618_layers">
+    <link rel="stylesheet" href="/css/components/components.css?20260714_design_consistency">
+    <link rel="stylesheet" href="/css/components/workflow.css?20260714_operation_steps">
     <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
-    <link rel="stylesheet" href="/css/pages/inbound.css?20260701_right_assist_clear">
-    <link rel="stylesheet" href="/css/pages/inbound-register.css?20260622_merge">
+    <link rel="stylesheet" href="/css/pages/inbound-register.css?20260714_responsive_audit">
 </head>
 <body class="has-collapsible-sidebar inbound-register-page page-inbound-register workspace-page">
 <div class="workspace-layout">
@@ -115,11 +114,11 @@
                         <!-- API: GET /api/workspaces/{companyCode}/parts?keyword=&categoryId=&active=true -->
                         <div class="part-search-panel">
                             <div class="part-search-form" aria-label="품목 검색 조건">
-                                <label>
+                                <label class="part-search-keyword-field">
                                     <span>검색어</span>
                                     <input type="search" data-part-keyword placeholder="품목명, 제조사 모델명, 내부코드">
                                 </label>
-                                <label>
+                                <label class="part-search-category-field">
                                     <span>품목 분류</span>
                                     <button class="category-picker-button inbound-category-picker-button" type="button" data-open-category-picker>
                                         <span data-part-category-label>전체 분류</span>
@@ -127,7 +126,7 @@
                                     </button>
                                     <input type="hidden" data-part-category>
                                 </label>
-                                <button class="btn btn-primary" type="button" data-part-search>검색</button>
+                                <button class="btn btn-primary part-search-action" type="button" data-part-search>검색</button>
                             </div>
 
                             <div class="part-search-results" aria-label="품목 검색 결과">
@@ -141,20 +140,20 @@
                             </div>
 
                             <div class="selected-part-panel" aria-live="polite">
-                                <div>
+                                <div class="selected-part-summary">
                                     <span>선택한 품목</span>
                                     <strong data-selected-part-name>품목을 검색해 주세요</strong>
                                     <p data-selected-part-meta>검색 결과에서 품목을 선택하면 여기에 표시됩니다.</p>
                                 </div>
-                                <label>
+                                <label class="selected-part-quantity-field">
                                     <span>수량</span>
                                     <input type="number" min="1" value="1" data-add-quantity>
                                 </label>
-                                <label>
+                                <label class="selected-part-reason-field">
                                     <span>품목 사유</span>
                                     <input type="text" data-add-reason placeholder="품목 사유">
                                 </label>
-                                <button class="btn btn-primary" type="button" data-add-line>품목 추가</button>
+                                <button class="btn btn-primary selected-part-action" type="button" data-add-line>품목 추가</button>
                             </div>
                         </div>
                     </section>

@@ -31,6 +31,7 @@
 
 .history-filter-form {
     display: grid;
+    grid-template-areas: "keyword dates type actions";
     grid-template-columns: minmax(260px, 1.35fr) minmax(300px, 1fr) minmax(140px, 0.48fr) max-content;
     gap: 10px;
     align-items: end;
@@ -49,17 +50,20 @@
 
 .history-keyword-field {
     display: grid;
+    grid-area: keyword;
     gap: 6px;
 }
 
 .history-filter-select {
     display: grid;
+    grid-area: type;
     gap: 6px;
     max-width: none;
 }
 
 .history-date-range {
     display: grid;
+    grid-area: dates;
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     gap: 8px;
@@ -86,6 +90,7 @@
 
 .history-filter-actions {
     display: grid;
+    grid-area: actions;
     grid-template-columns: repeat(2, 92px);
     gap: 8px;
     align-items: end;
@@ -108,6 +113,13 @@
 .history-section-card[hidden],
 .history-detail-panel[hidden] {
     display: none;
+}
+
+.history-detail-panel {
+    left: auto;
+    right: 0;
+    width: min(520px, 100vw);
+    max-width: 100vw;
 }
 
 .history-document-row {
@@ -245,11 +257,19 @@
 }
 
 .history-unit-header > div {
+    flex: 1 1 auto;
     min-width: 0;
 }
 
 .history-unit-header h2 {
     font-size: 18px;
+    white-space: nowrap;
+    word-break: keep-all;
+}
+
+.history-unit-header p {
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .history-unit-header p:empty {
@@ -258,6 +278,8 @@
 
 .history-clear-document {
     flex: 0 0 auto;
+    width: auto;
+    max-width: 100%;
     min-height: 30px;
     padding: 0 10px;
     border: 1px solid var(--line-strong);
@@ -601,8 +623,8 @@
 .history-detail-panel-header h2 {
     margin: 0;
     color: var(--navy);
-    font-size: 24px;
-    font-weight: 900;
+    font-size: 20px;
+    font-weight: 800;
     line-height: 1.25;
     overflow-wrap: anywhere;
 }
@@ -612,24 +634,6 @@
     color: var(--muted);
     font-size: 13px;
     font-weight: 800;
-}
-
-.history-panel-close {
-    flex: 0 0 auto;
-    width: 40px;
-    height: 40px;
-    border: 1px solid var(--line-strong);
-    border-radius: 8px;
-    background: #ffffff;
-    color: var(--muted);
-    font-size: 28px;
-    line-height: 1;
-    cursor: pointer;
-}
-
-.history-panel-close:hover {
-    border-color: var(--blue);
-    color: #2563eb;
 }
 
 .history-detail-body {
@@ -844,6 +848,10 @@
 
     .history-filter-form {
         align-items: flex-end;
+        grid-template-areas:
+            "keyword keyword keyword"
+            "dates type actions";
+        grid-template-columns: minmax(300px, 1fr) minmax(180px, 0.7fr) max-content;
     }
 
     .history-filter-select {
@@ -891,6 +899,11 @@
 @media (max-width: 840px) {
     .history-filter-form {
         display: grid;
+        grid-template-areas:
+            "keyword"
+            "dates"
+            "type"
+            "actions";
         grid-template-columns: 1fr;
     }
 
@@ -958,20 +971,20 @@
         text-align: left;
     }
 
-    .history-unit-row > [data-label="최근 결과"] {
-        display: flex;
-        flex-wrap: wrap;
+    .history-unit-row:not(.table-head) > [data-label="최근 결과"] {
+        display: grid;
+        grid-template-columns: repeat(3, max-content);
         align-items: center;
         justify-content: flex-start;
         gap: 5px;
+        white-space: nowrap;
     }
 
-    .history-unit-row > [data-label="최근 결과"]::before {
-        flex: 0 0 100%;
+    .history-unit-row:not(.table-head) > [data-label="최근 결과"]::before {
+        grid-column: 1 / -1;
     }
 
-    .history-unit-row > [data-label="최근 결과"] .badge {
-        flex: 0 0 auto;
+    .history-unit-row:not(.table-head) > [data-label="최근 결과"] .badge {
         width: max-content;
         max-width: 100%;
     }
@@ -981,18 +994,76 @@
         white-space: normal;
     }
 
+    .history-unit-table {
+        gap: 10px;
+        min-width: 0;
+        padding: 12px;
+        background: var(--surface-soft);
+    }
+
+    .history-unit-row:not(.table-head) {
+        grid-template-columns: minmax(150px, 1.2fr) minmax(84px, 0.55fr) minmax(132px, 0.8fr);
+        gap: 10px 12px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+    }
+
+    .history-unit-row:not(.table-head).is-selected {
+        border-color: rgba(37, 99, 235, 0.42);
+        background: var(--blue-soft);
+        box-shadow: inset 3px 0 0 var(--blue);
+    }
+
     .history-unit-row:not(.table-head) > .history-unit-code-cell {
         display: grid;
-        align-items: flex-start;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-column: 1 / -1;
+        grid-row: 1;
+        align-items: center;
         gap: 4px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--line);
     }
 
     .history-unit-row:not(.table-head) > .history-unit-code-cell::before {
+        grid-column: 1 / -1;
         width: 100%;
     }
 
+    .history-unit-row:not(.table-head) > [data-label="품목"] {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .history-unit-row:not(.table-head) > [data-label="최근 결과"],
+    .history-unit-row:not(.table-head) > [data-label="이력 건수"],
+    .history-unit-row:not(.table-head) > [data-label="최근 처리일"] {
+        align-content: start;
+        padding-top: 10px;
+        border-top: 1px solid var(--line);
+    }
+
+    .history-unit-row:not(.table-head) > [data-label="최근 결과"] {
+        grid-column: 1;
+        grid-row: 3;
+    }
+
+    .history-unit-row:not(.table-head) > [data-label="이력 건수"] {
+        grid-column: 2;
+        grid-row: 3;
+    }
+
+    .history-unit-row:not(.table-head) > [data-label="최근 처리일"] {
+        grid-column: 3;
+        grid-row: 3;
+    }
+
     .history-unit-header {
-        align-items: flex-start;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
     }
 
     .history-document-detail-layout {
@@ -1008,7 +1079,15 @@
     }
 
     .history-clear-document {
-        width: 100%;
+        width: auto;
+        justify-self: end;
+    }
+
+    .history-detail-panel {
+        left: auto;
+        right: 0;
+        width: min(520px, 100vw);
+        max-width: 100vw;
     }
 
 }
@@ -1032,6 +1111,34 @@
 
     .history-detail-meta {
         grid-template-columns: 1fr;
+    }
+
+    .history-unit-header {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .history-clear-document {
+        width: 100%;
+        justify-self: stretch;
+    }
+
+    .history-unit-row:not(.table-head) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .history-unit-row:not(.table-head) > [data-label="최근 결과"] {
+        grid-column: 1;
+        grid-row: 3;
+    }
+
+    .history-unit-row:not(.table-head) > [data-label="이력 건수"] {
+        grid-column: 2;
+        grid-row: 3;
+    }
+
+    .history-unit-row:not(.table-head) > [data-label="최근 처리일"] {
+        grid-column: 1 / -1;
+        grid-row: 4;
     }
 }
 }

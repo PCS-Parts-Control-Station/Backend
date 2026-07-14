@@ -12,11 +12,10 @@
     <link rel="stylesheet" href="/css/core/tokens.css?20260618_layers">
     <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
     <link rel="stylesheet" href="/css/layouts/workspace.css?20260703_quick_bar_no_overlap">
-    <link rel="stylesheet" href="/css/components/components.css?20260703_modal_scroll_lock">
-    <link rel="stylesheet" href="/css/components/workflow.css?20260618_layers">
+    <link rel="stylesheet" href="/css/components/components.css?20260714_design_consistency">
+    <link rel="stylesheet" href="/css/components/workflow.css?20260714_operation_steps">
     <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
-    <link rel="stylesheet" href="/css/pages/outbound.css?20260629_partner_modal">
-    <link rel="stylesheet" href="/css/pages/outbound-register.css?20260703_candidate_compact">
+    <link rel="stylesheet" href="/css/pages/outbound-register.css?20260714_candidate_select_button">
 </head>
 <body class="has-collapsible-sidebar outbound-register-page page-outbound-register workspace-page">
 <div class="workspace-layout">
@@ -119,11 +118,11 @@
                         <!-- API: GET /api/workspaces/{companyCode}/stock/outbound-candidates?keyword=&categoryId=&grade=&page=&size= -->
                         <div class="outbound-search-panel">
                             <div class="outbound-search-form" aria-label="출고 부품 검색 조건">
-                                <label>
+                                <label class="outbound-search-keyword-field">
                                     <span>검색어</span>
                                     <input type="search" name="keyword" data-candidate-keyword placeholder="관리번호, 품목명, 모델명">
                                 </label>
-                                <label>
+                                <label class="outbound-search-category-field">
                                     <span>품목 분류</span>
                                     <button class="category-picker-button outbound-category-picker-button" type="button" data-open-category-picker>
                                         <span data-category-filter-label>전체 분류</span>
@@ -131,7 +130,7 @@
                                     </button>
                                     <input type="hidden" name="categoryId" data-category-filter>
                                 </label>
-                                <label>
+                                <label class="outbound-search-grade-field">
                                     <span>등급</span>
                                     <select name="grade" data-grade-filter>
                                         <option value="">전체 등급</option>
@@ -140,8 +139,8 @@
                                         <option value="C">C</option>
                                     </select>
                                 </label>
-                                <button class="btn btn-primary" type="button" data-candidate-search>검색</button>
-                                <button class="btn btn-secondary" type="button" data-candidate-reset>초기화</button>
+                                <button class="btn btn-primary outbound-search-submit" type="button" data-candidate-search>검색</button>
+                                <button class="btn btn-secondary outbound-search-reset" type="button" data-candidate-reset>초기화</button>
                             </div>
 
                             <div class="outbound-candidate-list-frame list-loading-frame" data-candidate-list-frame>

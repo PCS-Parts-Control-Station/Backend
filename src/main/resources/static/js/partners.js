@@ -43,7 +43,7 @@
     const numberText = window.PcsFormat.number;
     const clearRows = () => window.PcsTable.clearRows(table);
     const setEmptyMessage = (message) => window.PcsTable.emptyRow(table, {
-        rowClassName: "data-row management-data-row empty-data-row",
+        rowClassName: "data-row management-data-row partner-management-data-row empty-data-row",
         message
     });
     const createTextCell = window.PcsTable.textCell;
@@ -179,7 +179,7 @@
 
         items.forEach((partner) => {
             const row = document.createElement("div");
-            row.className = "data-row management-data-row is-selectable";
+            row.className = "data-row management-data-row partner-management-data-row is-selectable";
             row.setAttribute("role", "row");
             row.setAttribute("tabindex", "0");
             row.dataset.partnerId = String(partner.partnerId);

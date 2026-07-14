@@ -1376,16 +1376,16 @@
             row.setAttribute("tabindex", "0");
             row.dataset.inspectionHistoryId = String(history.inspectionId);
             row.innerHTML = `
-                <strong role="cell" data-label="검수일">${escapeHtml(formatDate(history.inspectedAt))}</strong>
-                <span class="inspection-stack-cell" role="cell" data-label="부품">
+                <strong class="inspection-history-date" role="cell" data-label="검수일">${escapeHtml(formatDate(history.inspectedAt))}</strong>
+                <span class="inspection-stack-cell inspection-history-part" role="cell" data-label="부품">
                     <strong>${escapeHtml(history.internalSerialNo)}</strong>
                     <small>${escapeHtml(history.partName)} ${escapeHtml(history.modelName)}</small>
                 </span>
-                <span role="cell" data-label="전표 번호">${escapeHtml(history.documentNo || "-")}</span>
-                <span role="cell" data-label="유형"><em class="badge ${typeBadgeClass(history.inspectionType)}">${escapeHtml(inspectionTypeText(history.inspectionType, history.inspectionType))}</em></span>
-                <span role="cell" data-label="등급"><em class="badge ${gradeBadgeClass(history.grade)}">${escapeHtml(gradeText(history.grade, history.grade))}</em></span>
-                <span role="cell" data-label="처리자">${escapeHtml(history.inspectedByName || "-")}</span>
-                <span class="row-actions" role="cell" data-label="상세">
+                <span class="inspection-history-document" role="cell" data-label="전표 번호">${escapeHtml(history.documentNo || "-")}</span>
+                <span class="inspection-history-type" role="cell" data-label="유형"><em class="badge ${typeBadgeClass(history.inspectionType)}">${escapeHtml(inspectionTypeText(history.inspectionType, history.inspectionType))}</em></span>
+                <span class="inspection-history-grade" role="cell" data-label="등급"><em class="badge ${gradeBadgeClass(history.grade)}">${escapeHtml(gradeText(history.grade, history.grade))}</em></span>
+                <span class="inspection-history-operator" role="cell" data-label="처리자">${escapeHtml(history.inspectedByName || "-")}</span>
+                <span class="row-actions inspection-history-row-actions" role="cell" data-label="상세">
                     <button type="button" data-inspection-history-action="${history.inspectionId}">상세</button>
                 </span>
             `;

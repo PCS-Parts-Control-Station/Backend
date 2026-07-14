@@ -2541,7 +2541,10 @@ function Test-StockFeature {
         @("src/integrationTest/java/com/pcs/domain/stock/StockPersistenceIntegrationTest.java", "STOCK_INTEGRATION_TEST"),
         @("src/integrationTest/java/com/pcs/domain/stock/StockOperationsPersistenceIntegrationTest.java", "STOCK_OPERATIONS_INTEGRATION_TEST"),
         @("src/integrationTest/java/com/pcs/global/workspace/CompanyDataIsolationIntegrationTest.java", "COMPANY_ISOLATION_DB_INTEGRATION_TEST"),
-        @("src/integrationTest/resources/pcs-operations-test-schema-extension.sql", "OPERATIONS_TEST_SCHEMA")
+        @("src/integrationTest/resources/pcs-operations-test-schema-extension.sql", "OPERATIONS_TEST_SCHEMA"),
+        @("src/main/resources/static/documents.html", "STOCK_DOCUMENTS_PAGE"),
+        @("src/main/resources/static/js/documents.js", "STOCK_DOCUMENTS_JS"),
+        @("src/main/resources/static/js/pcs-navigation-state.js", "STOCK_NAVIGATION_STATE_JS")
     )) {
         Test-PathRequired $required[0] $required[1] "Keep the stock implementation aligned with docs/features/stock.md."
     }
@@ -2576,6 +2579,26 @@ function Test-StockFeature {
         }
     }
 
+    $documentsPage = Join-Path $ProjectRoot "src/main/resources/static/documents.html"
+    if (Test-Path $documentsPage) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $documentsPage
+        if ($content -notmatch '<script src="/js/pcs-common\.js[^"]*"></script>\s*<script src="/js/pcs-navigation-state\.js[^"]*"></script>\s*<script src="/js/documents\.js[^"]*"></script>') {
+            Add-Result "FAIL" "STOCK_DOCUMENT_NAVIGATION_SCRIPT_ORDER" "documents.html must load pcs-navigation-state.js between pcs-common.js and documents.js." "Load the shared navigation-state helper before document page behavior."
+        }
+    }
+
+    $documentsJs = Join-Path $ProjectRoot "src/main/resources/static/js/documents.js"
+    if (Test-Path $documentsJs) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $documentsJs
+        foreach ($pattern in @("window.PcsNavigationState", "createUrlStateController", "captureFormState", "applyFormState", "keyword", "partnerId", "documentType", "documentStatus", "dateFrom", "dateTo", "page", "documentId", "popstate", "restoreScroll", "bindScrollCapture")) {
+            if ($content -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "STOCK_DOCUMENT_NAVIGATION_STATE_PATTERN" "documents.js is missing URL state restoration pattern: $pattern" "Restore document filters, page, selected drawer, and scroll through PcsNavigationState."
+            }
+        }
+    }
+
+    Invoke-GradleTestCheck "STOCK_FEATURE_UNIT_API_TESTS" "Stock unit, API, and permission tests" @("test", "--tests", "com.pcs.domain.stock.*", "--tests", "com.pcs.global.security.StaffPermissionAuthorizationFilterTest")
+    Invoke-GradleTestCheck "STOCK_FEATURE_DB_INTEGRATION_TESTS" "Stock and company-isolation DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.stock.*", "--tests", "com.pcs.global.workspace.CompanyDataIsolationIntegrationTest")
     Add-Result "INFO" "STOCK_FEATURE" "Stock feature checks completed."
 }
 

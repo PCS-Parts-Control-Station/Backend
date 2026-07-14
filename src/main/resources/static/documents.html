@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="PCS 전표 통합 조회 화면입니다. 입고와 출고 전표를 통합 조회하고 관련 업무 화면으로 이동합니다.">
-    <title>PCS | 전표 통합 조회</title>
+    <meta name="description" content="PCS 입출고 전표 조회 화면입니다. 입고와 출고 전표를 통합 조회하고 관련 업무 화면으로 이동합니다.">
+    <title>PCS | 입출고 전표 조회</title>
     <link rel="icon" href="/images/parts-control-station-icon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,11 +12,11 @@
     <link rel="stylesheet" href="/css/core/tokens.css?20260618_layers">
     <link rel="stylesheet" href="/css/core/base.css?20260618_layers">
     <link rel="stylesheet" href="/css/layouts/workspace.css?20260624_quick_bar">
-    <link rel="stylesheet" href="/css/components/components.css?20260623_drawer_clip_fix">
+    <link rel="stylesheet" href="/css/components/components.css?20260714_design_consistency">
     <link rel="stylesheet" href="/css/components/management-page.css?20260625_management_header">
     <link rel="stylesheet" href="/css/components/workflow.css?20260618_layers">
     <link rel="stylesheet" href="/css/components/feedback.css?20260619_md_alignment">
-    <link rel="stylesheet" href="/css/pages/documents.css?20260713_empty_state_center">
+    <link rel="stylesheet" href="/css/pages/documents.css?20260714_responsive_audit">
 </head>
 <body class="has-collapsible-sidebar page-documents workspace-page">
 <div class="workspace-layout">
@@ -30,8 +30,8 @@
                 <path d="M4 17h16"></path>
             </svg>
         </button>
-        <button class="workspace-quick-brand" type="button" data-scroll-top aria-label="전표 통합 조회 화면 맨 위로 이동">
-            <span>전표 통합 조회</span>
+        <button class="workspace-quick-brand" type="button" data-scroll-top aria-label="입출고 전표 조회 화면 맨 위로 이동">
+            <span>입출고 전표 조회</span>
         </button>
         <div class="workspace-quick-actions">
             <a class="btn btn-secondary" data-route="inbound/new" data-staff-permission="STAFF_INBOUND">입고 등록</a>
@@ -56,7 +56,7 @@
                 </span>
                 <div>
                     <p class="page-kicker">전표</p>
-                    <h1>전표 통합 조회</h1>
+                    <h1>입출고 전표 조회</h1>
                     <p class="page-description">입고와 출고 전표를 한 화면에서 조회하고 상세를 확인합니다.</p>
                 </div>
             </div>
@@ -88,7 +88,7 @@
                         </span>
                     </button>
                 </div>
-                <label>
+                <label class="documents-type-field">
                     <span>구분</span>
                     <select name="documentType">
                         <option value="">전체</option>
@@ -96,7 +96,7 @@
                         <option value="OUTBOUND">출고</option>
                     </select>
                 </label>
-                <label>
+                <label class="documents-status-field">
                     <span>상태</span>
                     <select name="documentStatus">
                         <option value="">전체</option>
@@ -142,7 +142,7 @@
             </div>
 
             <div class="documents-table-wrap list-loading-frame">
-                <div class="data-table documents-table" role="table" aria-label="전표 통합 조회 목록" data-documents-table data-list-loading-target>
+                <div class="data-table documents-table" role="table" aria-label="입출고 전표 조회 목록" data-documents-table data-list-loading-target>
                     <div class="data-row documents-row table-head" role="row">
                         <span role="columnheader">구분</span>
                         <span role="columnheader">전표번호</span>
@@ -303,6 +303,7 @@
 <script src="/js/workspace-layout.js?20260714_js_refactor"></script>
 <script src="/js/pcs-ui.js?20260527_1"></script>
 <script src="/js/pcs-common.js?20260714_js_refactor"></script>
-<script src="/js/documents.js?20260714_js_refactor"></script>
+<script src="/js/pcs-navigation-state.js?20260706_navigation_state"></script>
+<script src="/js/documents.js?20260714_js_refactor_navigation_state"></script>
 </body>
 </html>

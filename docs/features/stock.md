@@ -75,6 +75,15 @@ static/js/inbound-register.js
 - 새 unit은 재고 보유, 검수 대기, 판매 보류로 시작한다.
 - 빠른 품목 등록은 현재 전표 입력을 유지하는 최소 모달로 제공할 수 있다.
 
+화면 상태 복원:
+
+- 공통 `PcsNavigationState`를 사용해 `keyword`, `partnerId`, `documentType`, `documentStatus`, `dateFrom`, `dateTo`, `page`, 선택된 `documentId`를 URL query에 저장한다.
+- 전표 상세의 검수 또는 부품 관리 화면으로 이동했다가 브라우저 뒤로가기로 돌아오면 검색 조건, 페이지, 선택된 상세 슬라이드, 가능한 스크롤 위치를 복원한다.
+- 다른 화면에서 전달한 `documentNo` 딥링크는 최초 검색어로 적용하고, 사용자가 검색 조건을 변경하거나 초기화하면 URL에서 제거한다.
+- 스크롤 위치는 공통 유틸의 `history.state`에 저장하며 별도 `sessionStorage`, `localStorage`, 화면 전용 복원 저장소를 만들지 않는다.
+
+입고/출고 전표 상세는 품목별 상세 행을 길게 펼치기보다 품목별 수량 요약을 우선 보여준다. 관리번호 전체 목록은 상세 조회나 확장 영역에서 확인한다.
+
 ## 출고
 
 출고 등록은 고객 거래처를 선택하고 실제 관리번호를 고른다. 품목 수량만 입력하지 않는다.

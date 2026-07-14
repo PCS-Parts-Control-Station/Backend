@@ -1,6 +1,59 @@
 @layer page {
-.user-filter-form {
+.page-users .management-filter-card {
+    container-name: user-filter-card;
+    container-type: inline-size;
+}
+
+.page-users .user-filter-form {
+    grid-template-areas: "keyword role password created-from created-to submit";
     grid-template-columns: minmax(300px, 1fr) minmax(122px, 144px) minmax(136px, 156px) minmax(150px, 170px) minmax(150px, 170px) 76px;
+}
+
+.page-users .user-filter-form label.user-filter-keyword {
+    grid-area: keyword;
+}
+
+.page-users .user-filter-form .user-filter-role {
+    grid-area: role;
+}
+
+.page-users .user-filter-form .user-filter-password {
+    grid-area: password;
+}
+
+.page-users .user-filter-form .user-filter-created-from {
+    grid-area: created-from;
+}
+
+.page-users .user-filter-form .user-filter-created-to {
+    grid-area: created-to;
+}
+
+.page-users .user-filter-form .user-filter-submit {
+    grid-area: submit;
+    min-width: 0;
+    width: 100%;
+}
+
+.user-list-card {
+    container-name: user-list-card;
+    container-type: inline-size;
+}
+
+.page-users .user-list-card .management-summary-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+}
+
+.page-users .user-list-card .management-summary-header > div:first-child {
+    min-width: 0;
+}
+
+.page-users .user-list-card .management-summary-header .list-summary-box {
+    justify-self: end;
+    margin-left: 0;
+    width: auto;
 }
 
 .data-row.user-management-data-row {
@@ -70,37 +123,121 @@
     font-size: 16px;
 }
 
-@media (max-width: 1280px) {
-.has-collapsible-sidebar .user-filter-form {
-        grid-template-columns: minmax(260px, 1fr) minmax(122px, 144px) minmax(136px, 156px) minmax(150px, 170px) minmax(150px, 170px) 76px;
-    }
+.user-detail-drawer {
+    left: auto;
+    right: 0;
+}
 
-.has-collapsible-sidebar .user-filter-form label:first-child {
-        grid-column: auto;
+@container user-filter-card (max-width: 1120px) {
+    .page-users .user-filter-form {
+        grid-template-areas:
+            "keyword keyword keyword keyword keyword"
+            "role password created-from created-to submit";
+        grid-template-columns: minmax(122px, 144px) minmax(136px, 156px) minmax(150px, 1fr) minmax(150px, 1fr) 88px;
     }
 }
 
-@media (max-width: 1120px) {
-.has-collapsible-sidebar .user-filter-form {
-        grid-template-columns: minmax(122px, 144px) minmax(136px, 156px) minmax(150px, 170px) minmax(150px, 170px) 76px;
+@container user-filter-card (max-width: 760px) {
+    .page-users .user-filter-form {
+        grid-template-areas:
+            "keyword keyword"
+            "role password"
+            "created-from created-to"
+            "submit submit";
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@container user-filter-card (max-width: 480px) {
+    .page-users .user-filter-form {
+        grid-template-areas:
+            "keyword"
+            "role"
+            "password"
+            "created-from"
+            "created-to"
+            "submit";
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@container user-list-card (max-width: 760px) {
+    .page-users .user-list-card .management-summary-header {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
     }
 
-.has-collapsible-sidebar .user-filter-form label:first-child {
+    .page-users .user-list-card .management-summary-header .list-summary-box {
+        justify-self: stretch;
+        width: 100%;
+    }
+
+    .page-users .user-list-card .list-summary {
+        justify-content: flex-start;
+    }
+
+    .page-users .user-list-card .management-data-table {
+        gap: 10px;
+        padding: 12px;
+        background: var(--surface-soft);
+    }
+
+    .page-users .user-list-card .user-management-data-row.table-head {
+        display: none;
+    }
+
+    .data-row.user-management-data-row:not(.empty-data-row):not(.table-head) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0 12px;
+        min-height: 0;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+    }
+
+    .data-row.user-management-data-row:not(.empty-data-row):not(.table-head) > [role="cell"] {
+        overflow: visible;
+    }
+
+    .user-identity-cell {
         grid-column: 1 / -1;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .user-role-cell,
+    .user-password-status-cell,
+    .user-date-cell {
+        display: grid;
+        align-content: start;
+        gap: 6px;
+        padding-top: 12px;
+    }
+
+    .user-role-cell::before,
+    .user-password-status-cell::before,
+    .user-date-cell::before {
+        display: block;
+        color: var(--muted);
+        content: attr(data-label);
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .user-role-cell,
+    .user-password-status-cell {
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--line);
     }
 }
 
 @media (max-width: 840px) {
-.has-collapsible-sidebar .user-filter-form,
-    .data-row.user-management-data-row {
-        grid-template-columns: 1fr;
-    }
-
-.user-role-cell,
-    .user-password-status-cell,
-    .user-date-cell {
-        display: grid;
-        gap: 5px;
+    .user-detail-drawer {
+        left: auto;
+        right: 0;
+        width: min(520px, 100vw);
+        max-width: 100vw;
     }
 }
 }
