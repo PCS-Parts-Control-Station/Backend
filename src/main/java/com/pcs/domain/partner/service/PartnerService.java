@@ -41,17 +41,18 @@ public class PartnerService {
             Integer size,
             Integer limit
     ) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
 
         String normalizedKeyword = TextNormalizer.optional(keyword);
         PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
-        long totalElements = partnerMapper.countPartners(
+        SearchPartnerSummaryResponse summary = partnerMapper.summarizePartners(
                 companyId,
                 normalizedKeyword,
                 partnerType,
                 partnerRole,
                 active
         );
+        long totalElements = summary.totalCount();
         List<SearchPartnerResponse> items = totalElements == 0
                 ? List.of()
                 : partnerMapper.searchPartners(
@@ -63,19 +64,12 @@ public class PartnerService {
                         pageQuery.size(),
                         pageQuery.offset()
                 );
-        SearchPartnerSummaryResponse summary = partnerMapper.summarizePartners(
-                companyId,
-                normalizedKeyword,
-                partnerType,
-                partnerRole,
-                active
-        );
         return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, summary);
     }
 
     @Transactional
     public SearchPartnerResponse createPartner(Long companyId, CreatePartnerRequest request, Long memberId) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         String partnerName = TextNormalizer.required(request.partnerName());
         if (partnerMapper.existsByName(companyId, partnerName, null)) {
             throw new BusinessException(ErrorCode.PARTNER_NAME_DUPLICATED);
@@ -99,7 +93,7 @@ public class PartnerService {
     }
 
     public SearchPartnerResponse getPartner(Long companyId, Long partnerId) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         SearchPartnerResponse response = partnerMapper.findResponseById(companyId, partnerId);
         if (response == null) {
             throw new BusinessException(ErrorCode.PARTNER_NOT_FOUND);
@@ -109,7 +103,7 @@ public class PartnerService {
 
     @Transactional
     public SearchPartnerResponse updatePartner(Long companyId, Long partnerId, UpdatePartnerRequest request) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
 
         Partner partner = partnerMapper.findById(companyId, partnerId);
         if (partner == null) {
@@ -139,7 +133,7 @@ public class PartnerService {
 
     @Transactional
     public void updatePartnerActive(Long companyId, Long partnerId, boolean active) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
 
         Partner partner = partnerMapper.findById(companyId, partnerId);
         if (partner == null) {
@@ -149,7 +143,4 @@ public class PartnerService {
         partnerMapper.updateActive(companyId, partnerId, active);
     }
 
-    private void validateCompanyActive(Long companyId) {
-        workspaceAccessValidator.validateCompanyActive(companyId);
-    }
 }

@@ -28,7 +28,7 @@ public class DashboardService {
     }
 
     public DashboardResponse getDashboard(Long companyId) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
 
         LocalDate today = LocalDate.now();
         LocalDateTime todayStart = today.atStartOfDay();
@@ -50,10 +50,6 @@ public class DashboardService {
                 stockStatus,
                 List.copyOf(recentActivities)
         );
-    }
-
-    private void validateCompanyActive(Long companyId) {
-        workspaceAccessValidator.validateCompanyActive(companyId);
     }
 
     private DashboardSummaryResponse toSummary(DashboardOverviewRow overview) {

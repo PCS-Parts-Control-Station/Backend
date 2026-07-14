@@ -18,6 +18,8 @@ import com.pcs.global.error.ErrorCode;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.pagination.PageQuery;
 import com.pcs.global.util.TextNormalizer;
+import com.pcs.global.validation.DateRangeValidator;
+import com.pcs.global.validation.DateRangeValidator.NormalizedDateRange;
 import com.pcs.global.workspace.WorkspaceAccessValidator;
 import java.security.SecureRandom;
 import java.time.LocalDate;
@@ -80,23 +82,23 @@ public class MemberService {
             Integer size,
             Integer limit
     ) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         List<MemberRole> manageableRoles = manageableRoles(actorRole);
         validateRequestedRole(requestedRole, manageableRoles);
 
         String normalizedKeyword = TextNormalizer.optional(keyword);
-        LocalDateTime createdFromAt = toStartOfDay(createdFrom);
-        LocalDateTime createdToBefore = toExclusiveEnd(createdTo);
+        NormalizedDateRange createdRange = DateRangeValidator.normalize(createdFrom, createdTo);
         PageQuery pageQuery = PageQuery.of(page, size, limit, DEFAULT_SIZE);
-        long totalElements = memberMapper.countMembers(
+        SearchMemberSummaryResponse summary = memberMapper.summarizeMembers(
                 companyId,
                 normalizedKeyword,
                 requestedRole,
                 passwordStatus,
                 manageableRoles,
-                createdFromAt,
-                createdToBefore
+                createdRange.fromInclusive(),
+                createdRange.toExclusive()
         );
+        long totalElements = summary.totalCount();
         List<SearchMemberResponse> items = totalElements == 0
                 ? List.of()
                 : memberMapper.searchMembers(
@@ -105,20 +107,11 @@ public class MemberService {
                         requestedRole,
                         passwordStatus,
                         manageableRoles,
-                        createdFromAt,
-                        createdToBefore,
+                        createdRange.fromInclusive(),
+                        createdRange.toExclusive(),
                         pageQuery.size(),
                         pageQuery.offset()
                 );
-        SearchMemberSummaryResponse summary = memberMapper.summarizeMembers(
-                companyId,
-                normalizedKeyword,
-                requestedRole,
-                passwordStatus,
-                manageableRoles,
-                createdFromAt,
-                createdToBefore
-        );
         return PageResultDto.of(items, pageQuery.page(), pageQuery.size(), totalElements, summary);
     }
 
@@ -129,7 +122,7 @@ public class MemberService {
             MemberRole actorRole,
             CreateMemberRequest request
     ) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         List<MemberRole> manageableRoles = manageableRoles(actorRole);
         validateRequestedRole(request.role(), manageableRoles);
 
@@ -161,7 +154,7 @@ public class MemberService {
     }
 
     public SearchMemberResponse getMember(Long companyId, MemberRole actorRole, Long memberId) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         return findManagedMember(companyId, actorRole, memberId);
     }
 
@@ -172,7 +165,7 @@ public class MemberService {
             Long memberId,
             UpdateMemberRequest request
     ) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         SearchMemberResponse target = findManagedMember(companyId, actorRole, memberId);
         List<MemberRole> manageableRoles = manageableRoles(actorRole);
         validateRequestedRole(request.role(), manageableRoles);
@@ -184,7 +177,7 @@ public class MemberService {
 
     @Transactional
     public TemporaryPasswordResponse issueTemporaryPassword(Long companyId, MemberRole actorRole, Long memberId) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         SearchMemberResponse target = findManagedMember(companyId, actorRole, memberId);
         String temporaryPassword = generateTemporaryPassword();
         LocalDateTime expiresAt = LocalDateTime.now().plusDays(TEMP_PASSWORD_EXPIRE_DAYS);
@@ -201,7 +194,7 @@ public class MemberService {
     }
 
     public MemberAccount getMyAccount(Long companyId, Long memberId) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         MemberAccount account = memberMapper.findAccount(companyId, memberId);
         if (account == null) {
             throw new BusinessException(ErrorCode.MEMBER_NOT_FOUND);
@@ -214,7 +207,7 @@ public class MemberService {
 
     @Transactional
     public MemberAccount updateMyAccount(Long companyId, Long memberId, UpdateMypageRequest request) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         String name = TextNormalizer.required(request.name());
         int updatedCount = memberMapper.updateMypageName(companyId, memberId, name);
         if (updatedCount == 0) {
@@ -225,7 +218,7 @@ public class MemberService {
 
     @Transactional
     public MemberAccount changeMyPassword(Long companyId, Long memberId, ChangeMypagePasswordRequest request) {
-        validateCompanyActive(companyId);
+        workspaceAccessValidator.validateCompanyActive(companyId);
         MemberAccount account = getMyAccount(companyId, memberId);
         if (!passwordEncoder.matches(request.currentPassword(), account.getPasswordHash())) {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "현재 비밀번호가 올바르지 않습니다.");
@@ -267,18 +260,6 @@ public class MemberService {
             return List.of(MemberRole.STAFF);
         }
         throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
-    }
-
-    private void validateCompanyActive(Long companyId) {
-        workspaceAccessValidator.validateCompanyActive(companyId);
-    }
-
-    private LocalDateTime toStartOfDay(LocalDate date) {
-        return date == null ? null : date.atStartOfDay();
-    }
-
-    private LocalDateTime toExclusiveEnd(LocalDate date) {
-        return date == null ? null : date.plusDays(1).atStartOfDay();
     }
 
     private String generateTemporaryPassword() {

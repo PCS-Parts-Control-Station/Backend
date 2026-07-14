@@ -17,6 +17,11 @@ public final class DateRangeValidator {
         }
     }
 
+    public static NormalizedDateRange normalize(LocalDate dateFrom, LocalDate dateTo) {
+        validate(dateFrom, dateTo);
+        return new NormalizedDateRange(toStartOfDay(dateFrom), toExclusiveEnd(dateTo));
+    }
+
     public static LocalDateTime toStartOfDay(LocalDate date) {
         return date == null ? null : date.atStartOfDay();
     }
@@ -30,5 +35,11 @@ public final class DateRangeValidator {
         } catch (DateTimeException exception) {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "종료일 범위가 올바르지 않습니다.");
         }
+    }
+
+    public record NormalizedDateRange(
+            LocalDateTime fromInclusive,
+            LocalDateTime toExclusive
+    ) {
     }
 }

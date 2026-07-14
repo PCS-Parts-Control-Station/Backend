@@ -31,10 +31,6 @@ public final class PartSpecInputTypes {
         return inputType;
     }
 
-    public static boolean isText(String value) {
-        return TEXT.equals(value);
-    }
-
     public static boolean isNumber(String value) {
         return NUMBER.equals(value);
     }

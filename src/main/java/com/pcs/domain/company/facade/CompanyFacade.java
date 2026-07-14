@@ -11,8 +11,10 @@ import com.pcs.domain.member.service.MemberService;
 import com.pcs.domain.member.service.OwnerMemberCreationResult;
 import com.pcs.domain.member.type.MemberRole;
 import com.pcs.global.error.ErrorCode;
+import com.pcs.global.error.DuplicateKeyErrorResolver;
 import com.pcs.global.error.exception.BusinessException;
 import com.pcs.global.security.PcsPrincipal;
+import com.pcs.global.util.TextNormalizer;
 import com.pcs.global.workspace.WorkspaceAccessValidator;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Component;
@@ -120,14 +122,11 @@ public class CompanyFacade {
     }
 
     private BusinessException mapDuplicateKeyException(DuplicateKeyException exception) {
-        String message = exception.getMostSpecificCause().getMessage();
-        if (message != null && message.contains("uk_company_business_registration_no")) {
-            return new BusinessException(ErrorCode.COMPANY_BUSINESS_REGISTRATION_NO_DUPLICATED);
+        ErrorCode errorCode = DuplicateKeyErrorResolver.resolve(exception);
+        if (errorCode == ErrorCode.INTERNAL_SERVER_ERROR) {
+            throw exception;
         }
-        if (message != null && message.contains("uk_member_company_login")) {
-            return new BusinessException(ErrorCode.MEMBER_LOGIN_ID_DUPLICATED);
-        }
-        return new BusinessException(ErrorCode.COMPANY_CODE_DUPLICATED);
+        return new BusinessException(errorCode);
     }
 
     private void validateOwner(PcsPrincipal principal) {
@@ -145,10 +144,7 @@ public class CompanyFacade {
     }
 
     private String normalizeOptional(String value) {
-        if (value == null || value.trim().isEmpty()) {
-            return null;
-        }
-        return value.trim();
+        return TextNormalizer.optional(value);
     }
 
     private String normalizeBusinessRegistrationNo(String value) {

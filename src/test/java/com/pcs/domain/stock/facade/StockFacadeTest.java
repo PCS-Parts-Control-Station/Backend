@@ -240,12 +240,12 @@ class StockFacadeTest {
 
         assertSame(expected, response);
         verify(stockService).cancelDocument(1L, 10L, 500L);
+        verify(stockService, never()).getDocumentType(1L, 500L);
     }
 
     @Test
     void cancelDocument_blocksStaffWithoutPermissionForDocumentType() {
-        StockDocumentDetailResponse outbound = documentDetail(500L, StockDocumentType.OUTBOUND);
-        when(stockService.getDocument(1L, 500L)).thenReturn(outbound);
+        when(stockService.getDocumentType(1L, 500L)).thenReturn(StockDocumentType.OUTBOUND);
         when(staffPermissionService.isEnabled(1L, StaffPermission.STAFF_OUTBOUND)).thenReturn(false);
 
         BusinessException exception = assertThrows(
@@ -259,11 +259,10 @@ class StockFacadeTest {
 
     @Test
     void cancelDocument_usesInboundPermissionForInboundDocument() {
-        StockDocumentDetailResponse inbound = documentDetail(500L, StockDocumentType.INBOUND);
         CancelStockDocumentResponse expected = new CancelStockDocumentResponse(
                 500L, "IN-20260529-23456789ABCDEFGH", StockDocumentStatus.CANCELED, 1, 2
         );
-        when(stockService.getDocument(1L, 500L)).thenReturn(inbound);
+        when(stockService.getDocumentType(1L, 500L)).thenReturn(StockDocumentType.INBOUND);
         when(staffPermissionService.isEnabled(1L, StaffPermission.STAFF_INBOUND)).thenReturn(true);
         when(stockService.cancelDocument(1L, 10L, 500L)).thenReturn(expected);
 

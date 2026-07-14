@@ -20,10 +20,8 @@ com.pcs.domain.stock
 | POST | `/api/workspaces/{companyCode}/stock/documents/{documentId}/cancel` |
 | GET | `/api/workspaces/{companyCode}/stock/documents` |
 | GET | `/api/workspaces/{companyCode}/stock/documents/{documentId}` |
-| GET | `/api/workspaces/{companyCode}/stock/documents/{documentId}/movements` |
-| GET | `/api/workspaces/{companyCode}/stock/movements` |
-| GET | `/api/workspaces/{companyCode}/stock/movements/{movementId}` |
-| GET | `/api/workspaces/{companyCode}/stock/movements/{movementId}/units` |
+
+movement와 movement unit은 전표 처리·취소 및 전표 상세 응답을 위한 내부 저장 모델이다. 별도 movement 조회 API는 현재 제공하지 않는다.
 
 ## 전표 목록
 

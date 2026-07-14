@@ -17,7 +17,6 @@ public enum ErrorCode {
     AUTH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "AUTH-004", "인증 토큰이 만료되었습니다."),
     AUTH_FORBIDDEN(HttpStatus.FORBIDDEN, "AUTH-005", "접근 권한이 없습니다."),
     AUTH_WORKSPACE_MISMATCH(HttpStatus.FORBIDDEN, "AUTH-006", "업체 코드와 로그인 정보가 일치하지 않습니다."),
-    AUTH_ACCOUNT_LOCKED(HttpStatus.UNAUTHORIZED, "AUTH-007", "로그인 실패가 반복되어 계정이 잠시 잠겼습니다."),
     AUTH_STAFF_PERMISSION_DENIED(HttpStatus.FORBIDDEN, "AUTH-008", "해당 업무 권한이 없습니다."),
 
     COMPANY_NOT_FOUND(HttpStatus.NOT_FOUND, "COMPANY-001", "업체를 찾을 수 없습니다."),
@@ -51,7 +50,6 @@ public enum ErrorCode {
 
     STOCK_NOT_ENOUGH(HttpStatus.BAD_REQUEST, "STOCK-001", "출고 가능한 재고가 부족합니다."),
     STOCK_DOCUMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "STOCK-002", "입출고 전표를 찾을 수 없습니다."),
-    STOCK_MOVEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "STOCK-003", "재고 변화 이력을 찾을 수 없습니다."),
     STOCK_DOCUMENT_ALREADY_CANCELED(HttpStatus.CONFLICT, "STOCK-004", "이미 취소된 입출고 전표입니다."),
     STOCK_INVALID_CANCEL_REQUEST(HttpStatus.BAD_REQUEST, "STOCK-005", "취소할 수 없는 입출고 전표입니다."),
     STOCK_DOCUMENT_NO_DUPLICATED(HttpStatus.CONFLICT, "STOCK-006", "이미 사용 중인 입출고 전표 번호입니다."),

@@ -27,7 +27,7 @@ Backend의 공통 응답, 예외, Controller, 검증 계약 정본입니다. 계
 
 ```text
 COMMON_*  AUTH_*  COMPANY_*  MEMBER_*  PARTNER_*
-CATEGORY_*  PART_*  STOCK_*  INSPECTION_*  HISTORY_*
+CATEGORY_*  PART_*  STOCK_*  INSPECTION_*
 ```
 
 공통 의미:
@@ -44,6 +44,8 @@ CATEGORY_*  PART_*  STOCK_*  INSPECTION_*  HISTORY_*
 | 잘못된 상태 전이 | `{DOMAIN}_INVALID_STATUS` | 409 |
 
 `GlobalExceptionHandler`는 업무 예외, validation, JSON 파싱, 인증·인가, 마지막 500 fallback을 처리합니다. 알 수 없는 오류의 상세는 서버 로그에만 남기고 응답에는 공통 내부 오류 메시지만 사용합니다.
+
+DB 고유 제약 위반은 `DuplicateKeyErrorResolver`가 DDL의 제약조건명을 도메인 중복 오류로 변환합니다. 신규 고유 제약을 추가할 때 DDL, resolver 매핑, 매핑 테스트를 함께 갱신합니다. 알 수 없는 제약조건은 중복으로 추측하지 않고 공통 500으로 처리하며 원문 예외는 로그에 남깁니다.
 
 ## Controller 계약
 
@@ -72,6 +74,9 @@ Controller에서 하지 않는 일:
 | paging 계산 | `PageQuery.of(page, size, limit[, defaultSize])` |
 | 필수 문자열 trim | `TextNormalizer.required(value)` |
 | 선택 문자열 trim | `TextNormalizer.optional(value)` |
+| 선택 문자열 기본값 | `TextNormalizer.requiredOrDefault(value, fallback)` |
+| 날짜 검색 범위 | `DateRangeValidator.normalize(dateFrom, dateTo)` |
+| SHA-256 hex | `Hashing.sha256Hex(value)` |
 
 규칙:
 
@@ -79,6 +84,7 @@ Controller에서 하지 않는 일:
 - 모든 업무 SQL은 검증된 `companyId` 범위를 포함합니다.
 - 도메인 Mapper에 회사 활성 확인 SQL을 반복하지 않습니다.
 - Service마다 page/size/offset 계산이나 문자열 정규화 함수를 만들지 않습니다.
+- 날짜 검색은 시작일 00:00 이상, 종료일 다음 날 00:00 미만인 반열린 범위로 변환하며 역전 범위와 종료일 overflow를 400으로 거절합니다.
 - 여러 테이블이나 상태를 함께 바꾸는 작업은 Facade 트랜잭션 안에서 처리합니다.
 
 ## 완료 기준
