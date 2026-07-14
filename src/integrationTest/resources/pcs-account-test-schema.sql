@@ -46,7 +46,7 @@ CREATE TABLE tb_member (
     INDEX idx_member_company_list (company_id, updated_at DESC, member_id DESC),
     INDEX idx_member_company_created (company_id, created_at, member_id),
     CONSTRAINT chk_member_owner_slot CHECK (
-        (role = 'OWNER' AND owner_slot = 1)
+        (role = 'OWNER' AND owner_slot IS NOT NULL AND owner_slot = 1)
         OR (role <> 'OWNER' AND owner_slot IS NULL)
     )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

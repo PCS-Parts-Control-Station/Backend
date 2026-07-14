@@ -11,16 +11,6 @@
     min-width: 0;
 }
 
-.outbound-page-icon {
-    border-color: rgba(37, 99, 235, 0.16);
-    background: var(--cyan-soft);
-}
-
-.outbound-page-icon svg {
-    fill: currentColor;
-    stroke: none;
-}
-
 .outbound-document-filter-card {
     grid-template-columns: 1fr;
 }

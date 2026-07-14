@@ -3,6 +3,7 @@ package com.pcs.global.security;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,6 +16,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockFilterChain;
@@ -66,6 +69,39 @@ class StaffPermissionAuthorizationFilterTest {
                 .contains("\"success\":false")
                 .contains("\"code\":\"AUTH-008\"")
                 .contains("\"data\":null");
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "POST, /api/workspaces/acme/parts, STAFF_PART_CREATE",
+            "PATCH, /api/workspaces/acme/parts/10, STAFF_PART_CREATE",
+            "POST, /api/workspaces/acme/categories, STAFF_CATEGORY_MANAGE",
+            "DELETE, /api/workspaces/acme/categories/10, STAFF_CATEGORY_MANAGE"
+    })
+    void blocksPartAndCategoryWritesWithoutRequiredPermission(
+            String method,
+            String path,
+            StaffPermission permission
+    ) throws Exception {
+        when(staffPermissionService.isEnabled(1L, permission)).thenReturn(false);
+
+        MockHttpServletResponse response = execute(method, path);
+
+        assertThat(response.getStatus()).isEqualTo(403);
+        assertThat(response.getContentAsString()).contains("AUTH-008");
+        verify(staffPermissionService).isEnabled(1L, permission);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "GET, /api/workspaces/acme/parts",
+            "GET, /api/workspaces/acme/categories"
+    })
+    void allowsPartAndCategoryReadsWithoutManagementPermission(String method, String path) throws Exception {
+        MockHttpServletResponse response = execute(method, path);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        verifyNoInteractions(staffPermissionService);
     }
 
     @Test

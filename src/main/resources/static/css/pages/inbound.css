@@ -1,11 +1,6 @@
 ﻿/* Document list and operation flow screen styles. */
 
 @layer page {
-.page-icon-document {
-    border-color: rgba(37, 99, 235, 0.16);
-    background: var(--cyan-soft);
-}
-
 .document-filter-card {
     grid-template-columns: 1fr;
 }

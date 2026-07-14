@@ -882,6 +882,20 @@ function Test-CssArchitecture {
 function Test-FeatureRegistry {
     Test-PathRequired "harness/config/features.json" "FEATURE_REGISTRY_FILE" "Keep all feature path and DB dependency mappings in one registry."
 
+    $commonTests = $FeatureRegistry.commonTests
+    foreach ($testGroup in @("unitApi", "dbIntegration")) {
+        $commonTestProperty = if ($commonTests) { $commonTests.PSObject.Properties[$testGroup] } else { $null }
+        $commonSelectors = if ($commonTestProperty) { @($commonTestProperty.Value) } else { @() }
+        if ($commonSelectors.Count -eq 0) {
+            Add-Result "FAIL" "FEATURE_REGISTRY_COMMON_TESTS_MISSING" "commonTests.$testGroup must declare at least one common test selector." "Connect common regression tests in harness/config/features.json."
+        }
+        foreach ($selector in $commonSelectors) {
+            if ([string]::IsNullOrWhiteSpace([string] $selector)) {
+                Add-Result "FAIL" "FEATURE_REGISTRY_TEST_SELECTOR_INVALID" "commonTests.$testGroup contains an empty selector." "Remove the empty selector or connect a valid Gradle --tests selector."
+            }
+        }
+    }
+
     $names = @($FeatureDefinitions | ForEach-Object { [string] $_.name })
     $duplicateNames = @($names | Group-Object | Where-Object { $_.Count -gt 1 } | ForEach-Object { $_.Name })
     if ($duplicateNames.Count -gt 0) {
@@ -909,6 +923,21 @@ function Test-FeatureRegistry {
                 Add-Result "FAIL" "FEATURE_REGISTRY_DB_INVALID" "Feature $name references unsupported DB check: $dbCheck." "Add the DB checker or remove the reference."
             }
         }
+
+        $featureTests = $definition.tests
+        foreach ($testGroup in @("unitApi", "dbIntegration")) {
+            $testProperty = if ($featureTests) { $featureTests.PSObject.Properties[$testGroup] } else { $null }
+            $selectors = if ($testProperty) { @($testProperty.Value) } else { @() }
+            if ($selectors.Count -eq 0) {
+                Add-Result "FAIL" "FEATURE_REGISTRY_TESTS_MISSING" "Feature $name has no tests.$testGroup selectors." "Connect the feature tests in harness/config/features.json."
+                continue
+            }
+            foreach ($selector in $selectors) {
+                if ([string]::IsNullOrWhiteSpace([string] $selector)) {
+                    Add-Result "FAIL" "FEATURE_REGISTRY_TEST_SELECTOR_INVALID" "Feature $name tests.$testGroup contains an empty selector." "Remove the empty selector or connect a valid Gradle --tests selector."
+                }
+            }
+        }
     }
 
     Add-Result "INFO" "FEATURE_REGISTRY" "Feature registry checks completed for $($names.Count) features."
@@ -916,6 +945,17 @@ function Test-FeatureRegistry {
 
 function Test-PowerShellHarnessRules {
     Test-PathRequired "docs/ai/pcs-powershell-harness-rules.md" "POWERSHELL_HARNESS_RULES_DOC" "Keep cross-platform PowerShell harness rules available."
+    Test-PathRequired ".gitattributes" "POWERSHELL_HARNESS_GIT_ATTRIBUTES" "Keep shared scripts and POSIX hooks on deterministic line endings."
+
+    $gitAttributesPath = Join-Path $ProjectRoot ".gitattributes"
+    if (Test-Path $gitAttributesPath) {
+        $gitAttributesContent = Get-Content -Raw -Encoding UTF8 -Path $gitAttributesPath
+        foreach ($pattern in @("*.ps1 text eol=lf", "harness/hooks/* text eol=lf")) {
+            if ($gitAttributesContent -notmatch [regex]::Escape($pattern)) {
+                Add-Result "FAIL" "POWERSHELL_HARNESS_LINE_ENDINGS" ".gitattributes is missing: $pattern" "Keep PowerShell scripts and Git shell hooks LF-normalized on Windows and macOS."
+            }
+        }
+    }
 
     $aiIndexPath = Join-Path $ProjectRoot "docs/ai/AI_INDEX.md"
     if (Test-Path $aiIndexPath) {
@@ -983,6 +1023,7 @@ function Get-ChangedHarnessFilesForCrossPlatformCheck {
         '^harness/install-hooks\.ps1$',
         '^harness/hooks/[^/]+$',
         '^harness/config/features\.json$',
+        '^\.gitattributes$',
         '^\.codex/hooks\.json$',
         '^\.codex/hooks/[^/]+\.ps1$'
     )
@@ -1052,7 +1093,7 @@ function Test-ChangedHarnessFileCrossPlatform {
             }
         }
     } elseif ($RelativePath -eq ".codex/hooks/stop.ps1") {
-        foreach ($pattern in @("run-feedback-loop.ps1", "ChangedFilesPath", "TrackedFilesPath", "Mode = `"gate`"")) {
+        foreach ($pattern in @("run-feedback-loop.ps1", "ChangedFilesPath", "TrackedFilesPath", "Mode = `"gate`"", "src/integrationTest/(java|resources)", "harness/config/features.json")) {
             if ($content -notmatch [regex]::Escape($pattern)) {
                 Add-Result "FAIL" "POWERSHELL_HARNESS_STOP_HOOK_ADAPTER" "stop.ps1 is missing cross-platform Stop hook pattern: $pattern" "Keep Stop hook as a thin changed-file adapter into run-feedback-loop.ps1."
             }
@@ -1063,10 +1104,16 @@ function Test-ChangedHarnessFileCrossPlatform {
             }
         }
     } elseif ($RelativePath -match '^harness/hooks/') {
-        foreach ($pattern in @("pwsh -NoProfile -File", "powershell.exe -NoProfile -ExecutionPolicy Bypass -File", "macOS: brew install --cask powershell")) {
+        foreach ($pattern in @("git rev-list", "--not --remotes", "tr -d '\r'", "pre-push-new-commits.txt", "-Mode gate -RunBuild -RunDb", "ChangedFilesPath", "TrackedFilesPath", "pwsh -NoProfile -File", "powershell.exe -NoProfile -ExecutionPolicy Bypass -File", "macOS: brew install --cask powershell")) {
             if ($content -notmatch [regex]::Escape($pattern)) {
                 Add-Result "FAIL" "POWERSHELL_HARNESS_PRE_PUSH_ADAPTER" "$RelativePath is missing cross-platform pre-push pattern: $pattern" "Keep pre-push able to run through pwsh on macOS and powershell.exe on Windows."
             }
+        }
+        if ($content -match "`r`n") {
+            Add-Result "FAIL" "POWERSHELL_HARNESS_POSIX_LINE_ENDING" "$RelativePath contains CRLF line endings." "Keep POSIX hooks on LF via .gitattributes so Git for Windows and macOS execute the same script."
+        }
+        if ($content -match '\|\|\s*true') {
+            Add-Result "FAIL" "POWERSHELL_HARNESS_PRE_PUSH_FAIL_OPEN" "$RelativePath suppresses a changed-file collection failure with || true." "Fail the push when Git cannot determine the changed files."
         }
     } elseif ($RelativePath -eq ".codex/hooks.json") {
         foreach ($pattern in @('"command"', '"commandWindows"', "pwsh -NoProfile", "powershell.exe -NoProfile -ExecutionPolicy Bypass")) {
@@ -1113,7 +1160,7 @@ function Test-CodexHookConfiguration {
 
     if (Test-Path $stopHookPath) {
         $content = Get-Content -Raw -Encoding UTF8 -Path $stopHookPath
-        foreach ($pattern in @("run-feedback-loop.ps1", 'Mode = "gate"', "ChangedFilesPath", "TrackedFilesPath")) {
+        foreach ($pattern in @("run-feedback-loop.ps1", 'Mode = "gate"', "ChangedFilesPath", "TrackedFilesPath", "src/integrationTest/(java|resources)", "harness/config/features.json")) {
             if ($content -notmatch [regex]::Escape($pattern)) {
                 Add-Result "FAIL" "CODEX_STOP_HOOK_CONTRACT" "stop.ps1 is missing required pattern: $pattern" "Keep the Stop hook as a thin gate-mode adapter."
             }
@@ -1331,6 +1378,81 @@ function Test-FrontendCommonUtilityReuse {
     }
 }
 
+function Test-BackendCommonRules {
+    $requiredPaths = @(
+        "src/main/java/com/pcs/global/dto/ApiResultDto.java",
+        "src/main/java/com/pcs/global/dto/PageResultDto.java",
+        "src/main/java/com/pcs/global/error/ErrorCode.java",
+        "src/main/java/com/pcs/global/error/GlobalExceptionHandler.java",
+        "src/main/java/com/pcs/global/error/exception/BusinessException.java",
+        "src/main/java/com/pcs/global/pagination/PageQuery.java",
+        "src/main/java/com/pcs/global/util/TextNormalizer.java",
+        "src/main/java/com/pcs/global/workspace/WorkspaceAccessValidator.java"
+    )
+    foreach ($requiredPath in $requiredPaths) {
+        Test-PathRequired $requiredPath "BACKEND_COMMON_PATH" "Restore the backend common contract described in docs/ai/pcs-backend-common-rules.md."
+    }
+
+    $javaRoot = Join-Path $ProjectRoot "src/main/java"
+    $apiControllers = @(
+        Get-ChildItem -Path $javaRoot -Filter "*Controller.java" -File -Recurse -ErrorAction SilentlyContinue |
+            Where-Object {
+                (Get-Content -Raw -Encoding UTF8 -Path $_.FullName) -match '@RestController\b'
+            }
+    )
+    if ($apiControllers.Count -eq 0) {
+        Add-Result "FAIL" "BACKEND_COMMON_API_CONTROLLER_MISSING" "No @RestController API controller was found." "Keep API controllers under the standard domain api packages."
+    }
+
+    foreach ($controller in $apiControllers) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $controller.FullName
+        $relativePath = Normalize-HarnessPath ($controller.FullName.Substring($ProjectRoot.Path.Length).TrimStart('/', '\'))
+
+        if ($content -notmatch '\bApiResultDto\s*<') {
+            Add-Result "FAIL" "BACKEND_COMMON_API_RESULT" "$relativePath does not declare ApiResultDto in its API response contract." "Wrap every API response with ApiResultDto<T>."
+        }
+        if ($content -notmatch 'import\s+com\.pcs\.domain\.[^.]+\.facade\.') {
+            Add-Result "FAIL" "BACKEND_COMMON_CONTROLLER_FACADE" "$relativePath does not depend on a domain Facade." "Keep Controller dependencies at the Facade boundary."
+        }
+        if ($content -match 'import\s+com\.pcs\..*\.(service|mapper)\.') {
+            Add-Result "FAIL" "BACKEND_COMMON_CONTROLLER_LAYER" "$relativePath imports a Service or Mapper directly." "Route Controller calls through a Facade."
+        }
+        if ($content -match 'ResponseEntity\s*<\s*(Map|String)\b') {
+            Add-Result "FAIL" "BACKEND_COMMON_AD_HOC_RESPONSE" "$relativePath returns an ad-hoc Map or String response." "Return ResponseEntity<ApiResultDto<T>> instead."
+        }
+        if ($content -match '(?m)^\s*public\s+(Map\s*<|String\b)') {
+            Add-Result "FAIL" "BACKEND_COMMON_AD_HOC_RESPONSE" "$relativePath directly returns an ad-hoc Map or String response." "Return ResponseEntity<ApiResultDto<T>> instead."
+        }
+    }
+
+    $domainJavaFiles = @(Get-ChildItem -Path (Join-Path $javaRoot "com/pcs/domain") -Filter "*.java" -File -Recurse -ErrorAction SilentlyContinue)
+    foreach ($javaFile in $domainJavaFiles) {
+        $content = Get-Content -Raw -Encoding UTF8 -Path $javaFile.FullName
+        if ($content -match 'throw\s+new\s+RuntimeException\s*\(') {
+            $relativePath = Normalize-HarnessPath ($javaFile.FullName.Substring($ProjectRoot.Path.Length).TrimStart('/', '\'))
+            Add-Result "FAIL" "BACKEND_COMMON_RUNTIME_EXCEPTION" "$relativePath throws RuntimeException directly." "Use BusinessException and ErrorCode for expected business failures."
+        }
+    }
+
+    $handlerPath = Join-Path $ProjectRoot "src/main/java/com/pcs/global/error/GlobalExceptionHandler.java"
+    if (Test-Path $handlerPath) {
+        $handlerContent = Get-Content -Raw -Encoding UTF8 -Path $handlerPath
+        foreach ($exceptionType in @(
+            "BusinessException",
+            "MethodArgumentNotValidException",
+            "HttpMessageNotReadableException",
+            "Exception"
+        )) {
+            $handlerPattern = "@ExceptionHandler($exceptionType.class)"
+            if ($handlerContent -notmatch [regex]::Escape($handlerPattern)) {
+                Add-Result "FAIL" "BACKEND_COMMON_EXCEPTION_HANDLER" "GlobalExceptionHandler does not handle $exceptionType." "Keep business, validation, malformed-body, and fallback errors on the common response contract."
+            }
+        }
+    }
+
+    Add-Result "INFO" "BACKEND_COMMON_RULES" "Backend API response, layer boundary, and exception contract checks completed."
+}
+
 function Test-FullModeStructure {
     $requiredDomains = @(
         "auth",
@@ -1463,6 +1585,13 @@ function Resolve-GateFeatures {
 
     $changedFiles = Get-ChangedFilesForGate
     foreach ($changedFile in $changedFiles) {
+        $normalizedPath = Normalize-HarnessPath $changedFile
+        if ($normalizedPath -in @("harness/run-harness.ps1", "harness/config/features.json")) {
+            foreach ($supportedFeatureName in $SupportedFeatureNames) {
+                Add-FeatureIfSupported $features $supportedFeatureName
+            }
+            continue
+        }
         foreach ($resolvedFeature in @(Resolve-FeaturesFromChangedPath $changedFile)) {
             Add-FeatureIfSupported $features $resolvedFeature
         }
@@ -1506,6 +1635,81 @@ function Invoke-FeatureChecks {
         } elseif ($selectedFeature -eq "dashboard") {
             Test-DashboardFeature
         }
+    }
+}
+
+function Get-ConfiguredTestSelectors {
+    param(
+        [ValidateSet("unitApi", "dbIntegration")]
+        [string] $TestGroup,
+        [string[]] $Features
+    )
+
+    $selectors = New-Object System.Collections.Generic.List[string]
+    $commonTests = $FeatureRegistry.commonTests
+    if ($commonTests) {
+        $commonTestProperty = $commonTests.PSObject.Properties[$TestGroup]
+        if ($commonTestProperty) {
+            foreach ($selector in @($commonTestProperty.Value)) {
+                if (-not [string]::IsNullOrWhiteSpace([string] $selector)) {
+                    $selectors.Add([string] $selector) | Out-Null
+                }
+            }
+        }
+    }
+
+    foreach ($selectedFeature in $Features) {
+        $definition = Get-FeatureDefinition $selectedFeature
+        if (-not $definition -or -not $definition.tests) {
+            continue
+        }
+        $testProperty = $definition.tests.PSObject.Properties[$TestGroup]
+        if (-not $testProperty) {
+            continue
+        }
+        foreach ($selector in @($testProperty.Value)) {
+            if (-not [string]::IsNullOrWhiteSpace([string] $selector)) {
+                $selectors.Add([string] $selector) | Out-Null
+            }
+        }
+    }
+
+    return @($selectors | Select-Object -Unique)
+}
+
+function Invoke-ConfiguredFeatureTests {
+    param(
+        [string[]] $Features
+    )
+
+    if ($RunBuild) {
+        $unitApiSelectors = @(Get-ConfiguredTestSelectors "unitApi" $Features)
+        if ($unitApiSelectors.Count -gt 0) {
+            $arguments = New-Object System.Collections.Generic.List[string]
+            $arguments.Add("test") | Out-Null
+            foreach ($selector in $unitApiSelectors) {
+                $arguments.Add("--tests") | Out-Null
+                $arguments.Add($selector) | Out-Null
+            }
+            Invoke-GradleTestCheck "CONFIGURED_UNIT_API_TESTS" "Configured common and feature unit/API tests" $arguments.ToArray()
+        }
+    } else {
+        Add-Result "INFO" "CONFIGURED_UNIT_API_TESTS_SKIPPED" "Unit/API tests were not requested because RunBuild is disabled."
+    }
+
+    if ($RunDb) {
+        $dbIntegrationSelectors = @(Get-ConfiguredTestSelectors "dbIntegration" $Features)
+        if ($dbIntegrationSelectors.Count -gt 0) {
+            $arguments = New-Object System.Collections.Generic.List[string]
+            $arguments.Add("integrationTest") | Out-Null
+            foreach ($selector in $dbIntegrationSelectors) {
+                $arguments.Add("--tests") | Out-Null
+                $arguments.Add($selector) | Out-Null
+            }
+            Invoke-GradleTestCheck "CONFIGURED_DB_INTEGRATION_TESTS" "Configured common and feature DB integration tests" $arguments.ToArray()
+        }
+    } else {
+        Add-Result "INFO" "CONFIGURED_DB_INTEGRATION_TESTS_SKIPPED" "DB integration tests were not requested because RunDb is disabled."
     }
 }
 
@@ -1584,9 +1788,6 @@ function Test-CompanyFeature {
             }
         }
     }
-
-    Invoke-GradleTestCheck "COMPANY_UNIT_API_TESTS" "Company unit and API tests" @("test", "--tests", "com.pcs.domain.company.*")
-    Invoke-GradleTestCheck "COMPANY_DB_INTEGRATION_TESTS" "Company DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.company.*")
 
     Add-Result "INFO" "COMPANY_FEATURE" "Company feature checks completed."
 }
@@ -1721,9 +1922,6 @@ function Test-MemberFeature {
             }
         }
     }
-
-    Invoke-GradleTestCheck "MEMBER_UNIT_API_TESTS" "Member, mypage, and staff-permission unit/API tests" @("test", "--tests", "com.pcs.domain.member.*")
-    Invoke-GradleTestCheck "MEMBER_DB_INTEGRATION_TESTS" "Member, mypage, and staff-permission DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.member.*")
 
     Add-Result "INFO" "MEMBER_FEATURE" "Member feature checks completed."
 }
@@ -1875,9 +2073,6 @@ function Test-AuthFeature {
         }
     }
 
-    Invoke-GradleTestCheck "AUTH_UNIT_API_TESTS" "Auth unit and API tests" @("test", "--tests", "com.pcs.domain.auth.*")
-    Invoke-GradleTestCheck "AUTH_DB_INTEGRATION_TESTS" "Auth DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.auth.*")
-
     Add-Result "INFO" "AUTH_FEATURE" "Auth feature checks completed."
 }
 
@@ -1963,9 +2158,6 @@ function Test-PartnerFeature {
             }
         }
     }
-
-    Invoke-GradleTestCheck "PARTNER_UNIT_API_TESTS" "Partner unit and API tests" @("test", "--tests", "com.pcs.domain.partner.*")
-    Invoke-GradleTestCheck "PARTNER_DB_INTEGRATION_TESTS" "Partner DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.partner.*")
 
     Add-Result "INFO" "PARTNER_FEATURE" "Partner feature checks completed."
 }
@@ -2067,9 +2259,6 @@ function Test-CategoryFeature {
         }
     }
 
-    Invoke-GradleTestCheck "CATEGORY_UNIT_API_TESTS" "Category unit and API tests" @("test", "--tests", "com.pcs.domain.category.*")
-    Invoke-GradleTestCheck "CATEGORY_DB_INTEGRATION_TESTS" "Category DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.category.*")
-
     Add-Result "INFO" "CATEGORY_FEATURE" "Category feature checks completed."
 }
 
@@ -2143,9 +2332,6 @@ function Test-PartFeature {
             }
         }
     }
-
-    Invoke-GradleTestCheck "PART_UNIT_API_TESTS" "Part unit and API tests" @("test", "--tests", "com.pcs.domain.part.*")
-    Invoke-GradleTestCheck "PART_DB_INTEGRATION_TESTS" "Part DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.part.*")
 
     Add-Result "INFO" "PART_FEATURE" "Part feature checks completed."
 }
@@ -2308,9 +2494,6 @@ function Test-PartUnitFeature {
         }
     }
 
-    Invoke-GradleTestCheck "PART_UNIT_FEATURE_UNIT_API_TESTS" "Part-unit unit and API tests" @("test", "--tests", "com.pcs.domain.part.*")
-    Invoke-GradleTestCheck "PART_UNIT_FEATURE_DB_INTEGRATION_TESTS" "Part-unit DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.part.*")
-
     Add-Result "INFO" "PART_UNIT_FEATURE" "Part-unit feature checks completed."
 }
 
@@ -2364,9 +2547,6 @@ function Test-StockFeature {
         }
     }
 
-    Invoke-GradleTestCheck "STOCK_FEATURE_UNIT_API_TESTS" "Stock unit, API, and permission tests" @("test", "--tests", "com.pcs.domain.stock.*", "--tests", "com.pcs.global.security.StaffPermissionAuthorizationFilterTest")
-    Invoke-GradleTestCheck "STOCK_FEATURE_DB_INTEGRATION_TESTS" "Stock and company-isolation DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.stock.*", "--tests", "com.pcs.global.workspace.CompanyDataIsolationIntegrationTest")
-
     Add-Result "INFO" "STOCK_FEATURE" "Stock feature checks completed."
 }
 
@@ -2416,9 +2596,6 @@ function Test-InspectionFeature {
         }
     }
 
-    Invoke-GradleTestCheck "INSPECTION_FEATURE_UNIT_API_TESTS" "Inspection unit, API, and permission tests" @("test", "--tests", "com.pcs.domain.inspection.*", "--tests", "com.pcs.global.security.StaffPermissionAuthorizationFilterTest")
-    Invoke-GradleTestCheck "INSPECTION_FEATURE_DB_INTEGRATION_TESTS" "Inspection and company-isolation DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.inspection.*", "--tests", "com.pcs.global.workspace.CompanyDataIsolationIntegrationTest")
-
     Add-Result "INFO" "INSPECTION_FEATURE" "Inspection feature checks completed."
 }
 
@@ -2463,9 +2640,6 @@ function Test-DashboardFeature {
             }
         }
     }
-
-    Invoke-GradleTestCheck "DASHBOARD_FEATURE_UNIT_API_TESTS" "Dashboard unit and API tests" @("test", "--tests", "com.pcs.domain.dashboard.*")
-    Invoke-GradleTestCheck "DASHBOARD_FEATURE_DB_INTEGRATION_TESTS" "Dashboard DB integration tests" @("integrationTest", "--tests", "com.pcs.domain.dashboard.*")
 
     Add-Result "INFO" "DASHBOARD_FEATURE" "Dashboard feature checks completed."
 }
@@ -3943,6 +4117,7 @@ Test-PowerShellHarnessRules
 Test-CodexHookConfiguration
 Test-WorkspaceNavigation
 Test-FrontendCommonUtilityReuse
+Test-BackendCommonRules
 
 if ($CheckPort) {
     Test-PortAvailable
@@ -3961,6 +4136,7 @@ if ($Mode -eq "gate") {
 }
 
 Invoke-FeatureChecks $script:SelectedFeatures
+Invoke-ConfiguredFeatureTests $script:SelectedFeatures
 
 Invoke-DbChecks
 
