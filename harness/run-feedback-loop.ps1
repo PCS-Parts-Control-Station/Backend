@@ -168,12 +168,18 @@ function New-AgentFeedback {
     $reportLines = Get-Content -Path $LatestReportPath
     $failLines = Get-ReportSection -Lines $reportLines -SectionName "FAIL"
     $warnLines = Get-ReportSection -Lines $reportLines -SectionName "WARN"
+    $generatedAtLine = $reportLines | Where-Object { $_ -like "- GeneratedAt: *" } | Select-Object -First 1
+    $generatedAt = if ($generatedAtLine) {
+        $generatedAtLine.Substring("- GeneratedAt: ".Length)
+    } else {
+        Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+    }
 
     $feedback = New-Object System.Collections.Generic.List[string]
     $feedback.Add("# Agent Failures") | Out-Null
     $feedback.Add("") | Out-Null
     $feedback.Add("- Source: harness/reports/latest.md") | Out-Null
-    $feedback.Add("- GeneratedAt: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')") | Out-Null
+    $feedback.Add("- GeneratedAt: $generatedAt") | Out-Null
     $feedback.Add("- Mode: $Mode") | Out-Null
     $feedback.Add("- Feature: $Feature") | Out-Null
     $feedback.Add("- RunBuild: $RunBuild") | Out-Null

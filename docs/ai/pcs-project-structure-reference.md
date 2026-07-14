@@ -1,88 +1,36 @@
 # PCS 프로젝트 구조 기준
 
-기능 구현 시 따라야 할 구조 기준이다.  
-현재 PCS는 기본 프로젝트와 하네스 위에 회사 등록, 인증, 거래처, 품목 분류 등 일부 기능이 붙기 시작한 단계다.  
-새 기능을 추가할 때는 아래 구조를 기준으로 확장하고, 이미 구현된 기능도 같은 기준에서 벗어나면 정리한다.
+이 문서는 애플리케이션 구조와 계층 책임의 원본이다.
 
-## 기본 방향
+## 기술 기준
 
-- Spring Boot 4.0.3
-- Java 17
-- Gradle
-- JPA 금지
-- MyBatis 사용
-- 정적 HTML + JS + REST API
-- API 응답은 `docs/ai/pcs-backend-common-rules.md` 기준으로 통일
+- Java 17, Spring Boot 4.0.3, Gradle
+- Spring MVC, Spring Security, Jakarta Validation
+- MyBatis Mapper 인터페이스와 XML SQL
+- MariaDB
+- 정적 HTML + Vanilla JavaScript + REST API
+- JPA, `jakarta.persistence`, `JpaRepository`, `EntityManager`, JPQL, Hibernate Dirty Checking 전제 금지
 
-## 의존성 기준
-
-기능 구조가 확정되면 아래 계열을 사용한다.
-
-```gradle
-implementation 'org.springframework.boot:spring-boot-starter-web'
-implementation 'org.springframework.boot:spring-boot-starter-security'
-implementation 'org.springframework.boot:spring-boot-starter-validation'
-implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:4.0.1'
-implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3'
-implementation 'com.fasterxml.jackson.core:jackson-databind'
-runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
-```
-
-금지:
-
-```text
-spring-boot-starter-data-jpa
-jakarta.persistence
-JpaRepository
-EntityManager
-JPQL
-Hibernate Dirty Checking 전제
-```
+의존성 버전은 `build.gradle`을 실제 원본으로 보고, 문서에는 선택 이유와 금지 기준만 유지한다.
 
 ## 백엔드 구조
 
 ```text
 src/main/java/com/pcs
 ├─ PcsApiApplication.java
-├─ domain
-│   ├─ auth
-│   ├─ company
-│   ├─ member
-│   ├─ partner
-│   ├─ category
-│   ├─ part
-│   ├─ stock
-│   ├─ inspection
-│   ├─ history
-│   └─ dashboard
+├─ domain/{domain}
+│  ├─ api
+│  ├─ dto/request
+│  ├─ dto/response
+│  ├─ entity
+│  ├─ facade
+│  ├─ mapper
+│  ├─ service
+│  ├─ type
+│  └─ validation
 ├─ global
 └─ web/controller
 ```
-
-도메인별 기본 구조:
-
-```text
-domain/{domain}
-├─ api
-├─ dto/request
-├─ dto/response
-├─ entity
-├─ facade
-├─ mapper
-├─ service
-├─ type
-└─ validation
-```
-
-기준:
-
-- `api`에는 Controller만 둔다.
-- Request/Response DTO는 `api` 하위가 아니라 `dto/request`, `dto/response`에 둔다.
-- Entity는 DTO를 import하지 않는다.
-- DTO도 Entity를 직접 참조하지 않는 것을 기본으로 한다.
-- enum은 Entity가 아니라 도메인 타입으로 보고 `type` 패키지에 둔다.
-- DTO, Entity, Service는 필요한 enum을 `type` 패키지에서 참조한다.
-- validation은 해당 도메인의 입력 검증 어노테이션과 Validator를 둔다.
 
 Mapper XML:
 
@@ -92,164 +40,111 @@ src/main/resources/mapper/{domain}/{MapperName}.xml
 
 Mapper 인터페이스와 XML namespace는 1:1로 맞춘다.
 
+## 계층 책임
+
+Controller:
+
+- URL과 Method, `@Valid`, `@AuthenticationPrincipal`
+- Request DTO 수신, Facade 호출, Response DTO와 `ApiResultDto` 반환
+- Service·Mapper 직접 호출, JWT 직접 파싱, 업무 로직 금지
+
+Facade:
+
+- 하나의 유스케이스 흐름과 회사 범위 검증 조립
+- 여러 Service 호출과 유스케이스 단위 트랜잭션 경계
+- 부분 성공이 허용되지 않는 작업 통합
+
+Service:
+
+- DB 조회·변경, 비즈니스 검증, 상태 변경
+- Mapper 호출
+
+Mapper:
+
+- SQL 실행만 담당
+- 비즈니스 흐름 작성 금지
+
+PageController:
+
+- 정적 HTML forward와 통합 화면 redirect 같은 페이지 라우팅만 담당
+- Model 데이터 주입, Facade·Service·Mapper 호출, API 응답 생성 금지
+
+## DTO와 도메인 타입
+
+- DTO는 `record`를 기본으로 한다.
+- Request DTO는 입력과 validation, Response DTO는 응답 모양을 담당한다.
+- Entity는 DB row와 도메인 상태를 담당한다.
+- DTO와 Entity는 서로 import하지 않는다.
+- enum은 `type` 패키지에 둔다.
+- 변환은 유스케이스 경계에서 명시적으로 수행하고 `DTO.toEntity()`를 남발하지 않는다.
+
 ## 프론트 구조
 
 ```text
 src/main/resources/static
-├─ main.html
-├─ company-register.html
-├─ workspace-login.html
-├─ dashboard.html
-├─ categories.html
-├─ partners.html
-├─ inbound-register.html
-├─ documents.html
-├─ css
+├─ {page}.html
+├─ css/core
+├─ css/layouts
+├─ css/components
+├─ css/pages/{page}.css
 ├─ js
 └─ images
 ```
 
-페이지 파일 기준:
+- 화면은 서버 Model을 받지 않는다.
+- JS가 `/api/**`를 호출하고 JSON을 렌더링한다.
+- CSS 소유권은 `docs/ai/design/css-architecture.md`를 따른다.
+- 화면별 JS 규칙은 `docs/ai/pcs-frontend-js-rules.md`를 따른다.
+
+REST 흐름:
 
 ```text
-static/{page}.html
+HTML -> page.js -> PcsApi -> Controller -> Facade -> Service
+     -> Mapper -> XML SQL -> DB -> ApiResultDto -> JS 렌더링
 ```
 
-CSS와 JS 작성 기준은 화면 유형별 문서를 따른다.
+## 트랜잭션
 
-- 공개/진입 화면: `docs/ai/pcs-design-system.md`, `docs/ai/design/public-pages.md`
-- 로그인 후 업무 화면: `docs/ai/pcs-design-system.md`, `docs/ai/design/workspace-layout.md`
-- CSS 구조: `docs/ai/design/css-architecture.md`의 core/layout/components/pages 소유권과 layer 순서를 따른다.
-- 화면별 JS: 실제 API 연동이나 상호작용이 있을 때만 작성
-
-공통 JS:
-
-```text
-pcs-api.js
-pcs-pagination.js
-pcs-ui.js
-pcs-common.js
-pcs-navigation-state.js
-```
-
-- 공통 JS 사용 기준은 `docs/ai/pcs-frontend-js-rules.md`를 따른다.
-- 인증 API 호출 방식은 `docs/ai/pcs-auth-client-rules.md`를 따른다.
-- 페이징 목록 화면은 `docs/ai/pcs-pagination-rules.md`를 따른다.
-- 회사 코드 추출, workspace 링크 갱신, 날짜/숫자 포맷, 토스트 래핑, 폼 저장중 처리, 공통 테이블 빈 행 처리는 `pcs-common.js`를 우선 사용한다.
-- 목록 화면의 검색 조건, 페이지, 선택된 상세 행, 스크롤 위치 복원은 `pcs-navigation-state.js`를 우선 사용한다. 사용 예시는 `docs/ai/pcs-navigation-state-guide.md`를 참고한다.
-
-입출고 화면 JS:
-
-```text
-inbound-register.js
-outbound-register.js
-documents.js
-```
-
-- `inbound-register.js`는 입고 전표 등록, 품목 검색, 품목 라인 편집, 저장 확인 모달을 담당한다.
-- `outbound-register.js`는 출고 대상 관리번호 선택과 출고 전표 등록을 담당한다.
-- `documents.js`는 입출고 전표 통합 목록, 검색, 상세 패널과 취소를 담당한다.
-- `/inbound`, `/outbound` 목록 경로는 전표 유형 조건을 유지한 채 `/documents`로 리다이렉트한다.
-- 입고 등록은 `pcs-api.js`, `pcs-ui.js`를 함께 사용한다.
-
-## PageController 기준
-
-PageController는 정적 HTML forward와 통합 화면 리다이렉트를 담당한다.
-
-```java
-@GetMapping("/parts")
-public String parts() {
-    return "forward:/parts.html";
-}
-```
-
-금지:
-
-- `Model`
-- `model.addAttribute`
-- Facade/Service/Mapper 주입
-- DB 조회
-- API 응답 생성
-
-## REST API 흐름
-
-```text
-HTML
--> page.js
--> PcsApi.request('/api/**')
--> Controller
--> Facade
--> Service
--> Mapper
--> Mapper XML
--> DB
--> ApiResultDto JSON
--> JS 렌더링
-```
-
-## 트랜잭션 기준
-
-Write 유스케이스는 Facade public 메서드에 둔다.
-
-```java
-// 출고 등록: 부품 조회 -> 판매 가능 검증 -> 재고 차감 -> 출고 이력 저장
-@Transactional
-public StockOutboundResult outbound(...) {
-}
-```
-
-트랜잭션 기준은 Service 호출 개수가 아니라 하나의 유스케이스 작업 단위인지 여부다.
-
-## 주요 도메인
-
-- Company: 업체 작업 공간, 회사 코드, 회사 활성 상태
-- Member: Owner, Admin, Staff 작업자 계정
-- TradePartner: 입고/출고 거래처
-- PartCategory: 품목 분류
-- PcPart: 부품 종류/모델 마스터
-- PcPartUnit: 개별 중고 부품, 관리번호 단위
-- PartStock: 현재 재고 집계
-- StockDocument: 거래처와 연결되는 입출고 전표
-- StockMovement: 전표 안의 부품별 재고 변화 라인
-- StockMovementUnit: 재고 변화 라인에 포함된 개별 부품 매핑
-- Inspection: 검수, 정정, 재검수 이력
-- InspectionTemplate: 품목 분류별 검수 양식
-- InspectionTemplateItem: 검수 항목
-- InspectionTemplateItemOption: SELECT 항목 선택지
-- InspectionItemResult: 실제 검수 항목별 결과
-- PartStatusHistory: 개별 부품 상태 변경 이력
-- Dashboard: 운영 요약, 우선 처리 목록, 통계 조회
+- 쓰기 트랜잭션은 하나의 유스케이스를 기준으로 Facade public 메서드에 둔다.
+- Service 호출 개수로 트랜잭션을 나누지 않는다.
+- 재고·검수·이력처럼 부분 성공이 허용되지 않는 변경은 같은 트랜잭션에서 처리한다.
 
 ## 공통 구현 위치
 
-새 도메인 구현 전에 같은 기능을 이미 공통으로 제공하는지 먼저 확인한다.
+백엔드:
 
-```text
-global/workspace/WorkspaceAccessValidator.java
-global/workspace/WorkspaceMapper.java
-global/pagination/PageQuery.java
-global/util/TextNormalizer.java
-domain/category/type/PartSpecInputTypes.java
-```
+| 역할 | 공통 구현 |
+|---|---|
+| 업체 코드/JWT 회사 범위 | `global/workspace/WorkspaceAccessValidator.java` |
+| 회사 활성 조회 | `global/workspace/WorkspaceMapper.java` |
+| Security role 그룹 | `global/security/PcsRoleGroups.java` |
+| page/size/offset | `global/pagination/PageQuery.java` |
+| 문자열 required/optional 정규화 | `global/util/TextNormalizer.java` |
+| API 응답과 예외 | `docs/ai/pcs-backend-common-rules.md` |
 
-기준:
+프론트:
 
-- `/api/workspaces/{companyCode}/**` API의 업체 코드/JWT 회사 범위 검증은 `WorkspaceAccessValidator`를 사용한다.
-- 회사 활성 여부 확인 SQL은 도메인별 Mapper에 반복하지 않고 `WorkspaceMapper`를 사용한다.
-- 목록 API의 page/size/offset 계산은 `PageQuery`를 사용한다.
-- request 문자열의 required/optional trim 처리는 `TextNormalizer`를 사용한다.
-- 품목 분류 사양 입력 타입은 `PartSpecInputTypes` 기준을 사용한다.
+| 역할 | 공통 구현/기준 |
+|---|---|
+| 인증 요청과 token refresh | `static/js/pcs-api.js` |
+| 페이징 | `static/js/pcs-pagination.js` |
+| 토스트 | `static/js/pcs-ui.js` |
+| workspace·포맷·폼·테이블·드로어 | `static/js/pcs-common.js` |
+| 목록 상태 복원 | `static/js/pcs-navigation-state.js` |
+| 사용 규칙 | `docs/ai/pcs-frontend-js-rules.md` |
 
-## SQL 중심 기능
+새 기능은 같은 구현을 다시 만들지 않는다. 공통 구현으로 부족하면 공통 구현을 확장한다.
 
-- 품목 검색/필터
-- 입출고 전표 조회
-- 검수 이력 조회
-- 상태 변경 이력 조회
-- 품목 분류별 재고 수량
-- 제조사별 재고 수량
-- 등급별 재고 수량
-- 기간별 입고/출고 합계
-- 최근 많이 출고된 부품 TOP 5
-- 검수 불합격률
-- 판매 가능 재고 비율
+## 주요 도메인
+
+| 도메인 | 책임 |
+|---|---|
+| company/member/auth | 작업공간, 계정, 인증 |
+| partner | 입출고 거래처 |
+| category/part | 품목 분류, 품목 마스터, 사양 |
+| part-unit | 관리번호 단위 조회. Java 패키지는 `part` 공유 |
+| stock | 입고·출고·취소·재고 변화 |
+| inspection | 검수·정정·재검수·템플릿·검수 이력 |
+| dashboard | 운영 요약과 집계 조회 |
+
+기능별 계약은 `docs/features/{feature}.md`, DB 동작 계약은 `{feature}-db.md`, 물리 스키마는 `docs/sql/pcs-schema-ddl.sql`을 원본으로 한다.

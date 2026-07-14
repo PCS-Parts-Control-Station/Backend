@@ -60,14 +60,7 @@ SQL 성능 검증 기준:
 ## Frontend
 
 정적 업무 화면에서 페이징 API를 호출할 때는 `/js/pcs-pagination.js`를 사용한다.
-
-HTML:
-
-```html
-<script src="/js/pcs-api.js"></script>
-<script src="/js/pcs-pagination.js"></script>
-<script src="/js/{page}.js"></script>
-```
+스크립트 로드 순서는 `pcs-frontend-js-rules.md`를 따른다.
 
 JS:
 

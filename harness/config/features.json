@@ -279,7 +279,7 @@
         "^src/test/java/com/pcs/domain/dashboard/",
         "^src/integrationTest/java/com/pcs/domain/dashboard/",
         "^src/integrationTest/resources/pcs-operations-test-schema-extension\\.sql$",
-        "^docs/features/dashboard\\.md$",
+        "^docs/features/dashboard(-db)?\\.md$",
         "^src/main/resources/static/dashboard\\.html$",
         "^src/main/resources/static/js/dashboard\\.js$",
         "^src/main/resources/static/css/pages/dashboard\\.css$"
