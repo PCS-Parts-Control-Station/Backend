@@ -4,6 +4,24 @@
         return match ? decodeURIComponent(match[1]) : "";
     };
 
+    const createWorkspaceContext = (value = getCompanyCode()) => {
+        const companyCode = String(value || "").trim();
+        const apiBase = companyCode
+            ? `/api/workspaces/${encodeURIComponent(companyCode)}`
+            : "";
+
+        return {
+            companyCode,
+            apiBase,
+            apiUrl: (path = "") => `${apiBase}${String(path || "")}`,
+            apiOptions: (options = {}) => ({
+                authRedirect: true,
+                loginCompanyCode: companyCode,
+                ...options
+            })
+        };
+    };
+
     const updateWorkspaceLinks = (companyCode) => {
         if (!companyCode) {
             return;
@@ -35,7 +53,44 @@
         return String(value).slice(0, 10);
     };
 
-    const number = (value) => Number(value || 0).toLocaleString("ko-KR");
+    const localDate = (value = new Date()) => {
+        const target = value instanceof Date ? value : new Date(value);
+        if (Number.isNaN(target.getTime())) {
+            return "-";
+        }
+        const year = String(target.getFullYear());
+        const month = String(target.getMonth() + 1).padStart(2, "0");
+        const day = String(target.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    };
+
+    const dateTime = (value) => {
+        if (!value) {
+            return "-";
+        }
+        if (Array.isArray(value)) {
+            const [year, month, day, hour = 0, minute = 0] = value;
+            if (year && month && day) {
+                return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")} ${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+            }
+        }
+        const text = String(value);
+        if (/^\d{4}-\d{2}-\d{2}/.test(text)) {
+            return text.replace("T", " ").slice(0, 16);
+        }
+        const target = new Date(value);
+        if (Number.isNaN(target.getTime())) {
+            return text.replace("T", " ").slice(0, 16);
+        }
+        const hour = String(target.getHours()).padStart(2, "0");
+        const minute = String(target.getMinutes()).padStart(2, "0");
+        return `${localDate(target)} ${hour}:${minute}`;
+    };
+
+    const number = (value) => {
+        const numericValue = Number(value ?? 0);
+        return Number.isFinite(numericValue) ? numericValue.toLocaleString("ko-KR") : "0";
+    };
 
     const escapeHtml = (value) => String(value ?? "")
         .replaceAll("&", "&amp;")
@@ -124,6 +179,24 @@
             BUYER: "고객",
             BOTH: "공급처/고객"
         },
+        partnerRoleLong: {
+            SUPPLIER: "공급 거래처",
+            CUSTOMER: "출고 거래처",
+            CLIENT: "출고 거래처",
+            BUYER: "출고 거래처",
+            BOTH: "공급/출고 거래처"
+        },
+        partnerType: {
+            PC_CAFE: "피시방",
+            PERSON: "개인",
+            COMPANY: "기업",
+            ETC: "기타"
+        },
+        userRole: {
+            OWNER: "최고 관리자",
+            ADMIN: "관리자",
+            STAFF: "작업자"
+        },
         grade: {
             A: "A",
             B: "B",
@@ -144,7 +217,29 @@
         },
         inspectionResult: {
             PASS: "통과",
-            FAIL: "불합격"
+            FAIL: "불합격",
+            WARN: "주의",
+            NA: "해당 없음"
+        },
+        inspectionStatus: {
+            WAITING: "검수 전",
+            IN_PROGRESS: "진행 중",
+            COMPLETED: "완료"
+        },
+        inspectionType: {
+            INITIAL: "최초",
+            CORRECTION: "정정",
+            REINSPECTION: "재검수"
+        },
+        inspectionItemGroup: {
+            BASIC: "주요 검수 항목",
+            DETAIL: "추가 검수 항목"
+        },
+        inspectionInputType: {
+            CHECK: "통과/불합격",
+            NUMBER: "숫자",
+            TEXT: "텍스트",
+            SELECT: "선택"
         }
     };
 
@@ -673,7 +768,277 @@
             close,
             setValue,
             getValue: selectedValue,
-            getSelectedCategory: selectedCategory
+            getSelectedCategory: selectedCategory,
+            getCategories: () => categories.slice()
+        };
+    };
+
+    const partnerId = (partner) => partner?.partnerId ?? partner?.id ?? "";
+
+    const partnerName = (partner) => partner?.partnerName || partner?.name || "-";
+
+    const defaultPartnerMeta = (partner) => {
+        const code = partner?.partnerCode || partner?.code || "";
+        const role = label("partnerRole", partner?.partnerRole, "");
+        return [code, role].filter(Boolean).join(" · ") || "거래처";
+    };
+
+    const bindPartnerPicker = (options = {}) => {
+        const input = toElement(options.input);
+        const modal = toElement(options.modal);
+        const search = toElement(options.search);
+        const list = toElement(options.list);
+        const message = toElement(options.message);
+        const nameTarget = toElement(options.nameTarget);
+        const metaTarget = toElement(options.metaTarget);
+        const openButtons = toElements(options.openButtons);
+        const closeButtons = toElements(options.closeButtons);
+        const allowEmpty = options.allowEmpty === true;
+        const emptyName = options.emptyName || "전체 거래처";
+        const emptyMeta = options.emptyMeta || "거래처를 검색해 선택해 주세요.";
+        const emptyDescription = options.emptyDescription || "거래처 조건 없이 조회합니다.";
+        const noResultMessage = options.noResultMessage || "검색 결과가 없습니다.";
+        const unavailableMessage = options.unavailableMessage || "선택 가능한 거래처가 없습니다.";
+        const loadingMessage = options.loadingMessage || "거래처를 불러오는 중입니다.";
+        const failureMessage = options.failureMessage || "거래처를 불러오지 못했습니다.";
+        const getMeta = typeof options.getMeta === "function" ? options.getMeta : defaultPartnerMeta;
+        const pageSize = Math.min(100, Math.max(1, Number(options.size || 50)));
+        const debounceMs = Math.max(0, Number(options.debounceMs ?? 200));
+
+        let partners = normalizeListData(options.partners || []);
+        let selectedPartner = options.selectedPartner || null;
+        let requestId = 0;
+        let searchTimer = null;
+        let loading = false;
+        let loaded = options.partners !== undefined;
+        let loadedKeyword = loaded ? "" : null;
+
+        const selectedValue = () => input?.value || "";
+
+        const setMessage = (text = "", isError = false) => {
+            if (!message) {
+                return;
+            }
+            message.textContent = text;
+            message.classList.toggle("is-error", isError);
+        };
+
+        const syncView = () => {
+            const hasPartner = Boolean(selectedPartner && partnerId(selectedPartner));
+            if (input) {
+                input.value = hasPartner ? String(partnerId(selectedPartner)) : "";
+            }
+            if (nameTarget) {
+                nameTarget.textContent = hasPartner ? partnerName(selectedPartner) : emptyName;
+            }
+            if (metaTarget) {
+                metaTarget.textContent = hasPartner ? getMeta(selectedPartner) : emptyMeta;
+            }
+            openButtons.forEach((button) => button.classList.toggle("is-selected", hasPartner));
+        };
+
+        const appendPartnerOption = (partner) => {
+            if (!list) {
+                return;
+            }
+            const id = String(partnerId(partner));
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "partner-modal-row";
+            button.dataset.partnerOption = id;
+            button.classList.toggle("is-selected", id === String(partnerId(selectedPartner)));
+
+            const content = document.createElement("span");
+            const name = document.createElement("strong");
+            const meta = document.createElement("small");
+            name.textContent = partnerName(partner);
+            meta.textContent = getMeta(partner);
+            content.append(name, meta);
+            button.append(content);
+            list.append(button);
+        };
+
+        const render = () => {
+            if (!list) {
+                return;
+            }
+            list.innerHTML = "";
+
+            if (allowEmpty) {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "partner-modal-row";
+                button.dataset.partnerOption = "";
+                button.classList.toggle("is-selected", !selectedPartner);
+                const content = document.createElement("span");
+                const name = document.createElement("strong");
+                const meta = document.createElement("small");
+                name.textContent = emptyName;
+                meta.textContent = emptyDescription;
+                content.append(name, meta);
+                button.append(content);
+                list.append(button);
+            }
+
+            partners.forEach(appendPartnerOption);
+            if (!partners.length) {
+                const empty = document.createElement("p");
+                empty.className = "partner-modal-empty";
+                empty.textContent = search?.value.trim() ? noResultMessage : unavailableMessage;
+                list.append(empty);
+            }
+        };
+
+        const buildApiOptions = (companyCode) => ({
+            authRedirect: true,
+            loginCompanyCode: companyCode,
+            ...(typeof options.apiOptions === "function" ? options.apiOptions(companyCode) : options.apiOptions || {})
+        });
+
+        const load = async (loadOptions = {}) => {
+            const companyCode = options.companyCode || getCompanyCode();
+            if (!companyCode || !window.PcsApi?.getData) {
+                partners = [];
+                render();
+                setMessage(failureMessage, true);
+                return partners;
+            }
+
+            const currentRequestId = ++requestId;
+            const keyword = loadOptions.keyword ?? search?.value.trim() ?? "";
+            const params = new URLSearchParams({
+                active: "true",
+                page: "0",
+                size: String(pageSize)
+            });
+            if (keyword) {
+                params.set("keyword", keyword);
+            }
+            if (options.partnerRole) {
+                params.set("partnerRole", options.partnerRole);
+            }
+
+            loading = true;
+            setMessage(loadingMessage);
+            openButtons.forEach((button) => {
+                button.disabled = true;
+            });
+
+            try {
+                const apiUrl = typeof options.apiUrl === "function"
+                    ? options.apiUrl(companyCode, params)
+                    : options.apiUrl || `/api/workspaces/${encodeURIComponent(companyCode)}/partners?${params.toString()}`;
+                const data = await window.PcsApi.getData(apiUrl, buildApiOptions(companyCode));
+                if (currentRequestId !== requestId) {
+                    return partners;
+                }
+                partners = normalizeListData(data);
+                loaded = true;
+                loadedKeyword = keyword;
+                const currentValue = selectedValue();
+                if (currentValue && !selectedPartner) {
+                    selectedPartner = partners.find((partner) => String(partnerId(partner)) === String(currentValue)) || null;
+                }
+                syncView();
+                render();
+                setMessage("");
+                return partners;
+            } catch (error) {
+                if (currentRequestId !== requestId) {
+                    return partners;
+                }
+                partners = [];
+                render();
+                setMessage(error?.message || failureMessage, true);
+                if (typeof options.onError === "function") {
+                    options.onError(error);
+                }
+                return partners;
+            } finally {
+                if (currentRequestId === requestId) {
+                    loading = false;
+                    openButtons.forEach((button) => {
+                        button.disabled = false;
+                    });
+                }
+            }
+        };
+
+        const select = (partner, selectOptions = {}) => {
+            selectedPartner = partner || null;
+            syncView();
+            render();
+            setMessage("");
+            if (selectOptions.close !== false) {
+                modal?.close();
+            }
+            if (selectOptions.emitChange !== false && typeof options.onChange === "function") {
+                options.onChange(selectedPartner, selectedValue());
+            }
+        };
+
+        const open = () => {
+            if (!modal) {
+                return;
+            }
+            if (search) {
+                search.value = "";
+            }
+            render();
+            if (typeof modal.showModal === "function" && !modal.open) {
+                modal.showModal();
+            }
+            if ((!loaded || loadedKeyword !== "") && !loading) {
+                void load({ keyword: "" });
+            }
+            window.setTimeout(() => search?.focus(), 0);
+        };
+
+        const close = () => modal?.close();
+
+        openButtons.forEach((button) => button.addEventListener("click", open));
+        closeButtons.forEach((button) => button.addEventListener("click", close));
+        search?.addEventListener("input", () => {
+            window.clearTimeout(searchTimer);
+            searchTimer = window.setTimeout(() => void load(), debounceMs);
+        });
+        search?.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                window.clearTimeout(searchTimer);
+                void load();
+            }
+        });
+        list?.addEventListener("click", (event) => {
+            const option = event.target.closest("[data-partner-option]");
+            if (!option || !list.contains(option)) {
+                return;
+            }
+            const id = option.dataset.partnerOption;
+            select(id ? partners.find((partner) => String(partnerId(partner)) === id) : null);
+        });
+        modal?.addEventListener("click", (event) => {
+            if (event.target === modal && !loading) {
+                close();
+            }
+        });
+
+        syncView();
+        render();
+
+        return {
+            load,
+            render,
+            open,
+            close,
+            select,
+            setSelected: (partner, setOptions = {}) => select(partner, {
+                close: false,
+                emitChange: false,
+                ...setOptions
+            }),
+            getSelected: () => selectedPartner,
+            getPartners: () => partners.slice()
         };
     };
 
@@ -796,10 +1161,13 @@
 
     window.PcsWorkspace = {
         getCompanyCode,
+        createContext: createWorkspaceContext,
         updateWorkspaceLinks
     };
     window.PcsFormat = {
         date,
+        dateTime,
+        localDate,
         number
     };
     window.PcsHtml = {
@@ -822,10 +1190,17 @@
         documentType: (value, fallback) => label("documentType", value, fallback),
         documentStatus: (value, fallback) => label("documentStatus", value, fallback),
         partnerRole: (value, fallback) => label("partnerRole", value, fallback),
+        partnerRoleLong: (value, fallback) => label("partnerRoleLong", value, fallback),
+        partnerType: (value, fallback) => label("partnerType", value, fallback),
+        userRole: (value, fallback) => label("userRole", value, fallback),
         grade: (value, fallback = "미정") => label("grade", value, fallback),
         unitStatus: (value, fallback) => label("unitStatus", value, fallback),
         salesStatus: (value, fallback) => label("salesStatus", value, fallback),
         inspectionResult: (value, fallback) => label("inspectionResult", value, fallback),
+        inspectionStatus: (value, fallback) => label("inspectionStatus", value, fallback),
+        inspectionType: (value, fallback) => label("inspectionType", value, fallback),
+        inspectionItemGroup: (value, fallback) => label("inspectionItemGroup", value, fallback),
+        inspectionInputType: (value, fallback) => label("inspectionInputType", value, fallback),
         currentSalesStatus,
         documentTypeClass,
         documentStatusClass,
@@ -849,5 +1224,8 @@
     window.PcsCategoryPicker = {
         bind: bindCategoryPicker,
         createOption: createCategoryPickerOption
+    };
+    window.PcsPartnerPicker = {
+        bind: bindPartnerPicker
     };
 })(window);

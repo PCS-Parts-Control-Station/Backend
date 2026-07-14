@@ -47,7 +47,7 @@ pre-push와 Codex Stop은 `full`이 아니라 `gate`를 사용한다.
 ## Codex 작업 중 최소 실행
 
 - 문서·주석·문구만 변경: 링크·형식 검사, 필요하면 `git diff --check`
-- JS 변경: 문법과 관련 feature
+- JS 변경: 문법, 화면별 공통 유틸·거래처 picker 재구현 여부, 관련 feature
 - Java 변경: `compileJava`, 관련 feature·단위/API 테스트
 - Mapper·DDL·DB 변경: 관련 DB 통합 테스트
 - 하네스·hook 변경: PowerShell 문법, cross-platform 규칙, registry 검증

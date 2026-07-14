@@ -1,19 +1,6 @@
 ﻿(function () {
     const PAGE_SIZE = 10;
 
-    const partnerTypeLabels = {
-        PC_CAFE: "PC방",
-        PERSON: "개인",
-        COMPANY: "기업",
-        ETC: "기타"
-    };
-
-    const partnerRoleLabels = {
-        SUPPLIER: "공급처",
-        CUSTOMER: "고객",
-        BOTH: "공급+고객"
-    };
-
     const form = document.querySelector(".management-filter-form");
     const table = document.querySelector("[data-partner-table]");
     const pagination = document.querySelector("[data-partner-pagination]");
@@ -60,6 +47,12 @@
         message
     });
     const createTextCell = window.PcsTable.textCell;
+    const partnerTypeLabel = (type) => (
+        type === "PC_CAFE" ? "PC방" : window.PcsLabels.partnerType(type, type || "-")
+    );
+    const partnerRoleLabel = (role) => (
+        role === "BOTH" ? "공급+고객" : window.PcsLabels.partnerRole(role, role || "-")
+    );
 
     const createBadgeCell = (label, badgeText, badgeClass) => {
         const cell = document.createElement("span");
@@ -81,24 +74,18 @@
         });
     };
 
-    const setDrawerOpen = (isOpen) => {
-        detailDrawer?.classList.toggle("is-open", isOpen);
-        detailDrawer?.setAttribute("aria-hidden", String(!isOpen));
-        createDrawerButtons.forEach((button) => {
-            button.setAttribute("aria-expanded", String(isOpen));
-        });
-    };
-
     const openDrawer = (trigger = null) => {
         if (trigger instanceof HTMLElement) {
             lastDrawerTrigger = detailDrawer?.contains(trigger) ? createDrawerButton : trigger;
         }
-        setDrawerOpen(true);
+        window.PcsDrawer.setOpen(detailDrawer, true);
+        createDrawerButtons.forEach((button) => button.setAttribute("aria-expanded", "true"));
     };
 
     const closeDrawer = (options = {}) => {
         selectedPartnerId = null;
-        setDrawerOpen(false);
+        window.PcsDrawer.setOpen(detailDrawer, false);
+        createDrawerButtons.forEach((button) => button.setAttribute("aria-expanded", "false"));
         updateSelectedRow();
         if (options.restoreFocus !== false && lastDrawerTrigger?.isConnected) {
             lastDrawerTrigger.focus({ preventScroll: true });
@@ -130,8 +117,8 @@
             return;
         }
         detailFields.name.textContent = partner.partnerName || "-";
-        detailFields.type.textContent = partnerTypeLabels[partner.partnerType] || partner.partnerType || "-";
-        detailFields.role.textContent = partnerRoleLabels[partner.partnerRole] || partner.partnerRole || "-";
+        detailFields.type.textContent = partnerTypeLabel(partner.partnerType);
+        detailFields.role.textContent = partnerRoleLabel(partner.partnerRole);
         setDetailBadge(
                 detailFields.active,
                 partner.active ? "거래 가능" : "거래 불가",
@@ -199,8 +186,8 @@
 
             row.append(
                 createTextCell("거래처명", partner.partnerName, "strong"),
-                createTextCell("유형", partnerTypeLabels[partner.partnerType] || partner.partnerType || "-"),
-                createTextCell("역할", partnerRoleLabels[partner.partnerRole] || partner.partnerRole || "-"),
+                createTextCell("유형", partnerTypeLabel(partner.partnerType)),
+                createTextCell("역할", partnerRoleLabel(partner.partnerRole)),
                 createBadgeCell(
                     "거래 상태",
                     partner.active ? "거래 가능" : "거래 불가",

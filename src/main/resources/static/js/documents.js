@@ -57,60 +57,18 @@
     let cancelTarget = null;
     let lastDetailTrigger = null;
     let paginationStatusTimer = null;
-    let partners = [];
-    let selectedPartner = null;
+    let partnerPicker = null;
+    let documentListRequestId = 0;
+    let documentDetailRequestId = 0;
 
     if (!filterForm || !table || !window.PcsApi || !window.PcsPagination) {
         return;
     }
 
-    const getCompanyCode = () => {
-        if (window.PcsWorkspace?.getCompanyCode) {
-            return window.PcsWorkspace.getCompanyCode();
-        }
-        const segments = window.location.pathname.split("/").filter(Boolean);
-        return segments[0] === "w" && segments[1] ? decodeURIComponent(segments[1]) : "";
-    };
-
-    const apiBase = () => {
-        const companyCode = getCompanyCode();
-        return companyCode ? `/api/workspaces/${encodeURIComponent(companyCode)}` : "";
-    };
-
-    const apiOptions = () => ({
-        authRedirect: true,
-        loginCompanyCode: getCompanyCode(),
-    });
-
-    const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (letter) => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        "\"": "&quot;",
-        "'": "&#039;",
-    }[letter]));
-
-    const numberText = (value) => Number(value || 0).toLocaleString("ko-KR");
-
-    const formatDate = (value) => {
-        if (!value) {
-            return "-";
-        }
-        const text = String(value);
-        if (/^\d{4}-\d{2}-\d{2}/.test(text)) {
-            return text.slice(0, 16).replace("T", " ");
-        }
-        const date = new Date(value);
-        if (Number.isNaN(date.getTime())) {
-            return text.slice(0, 16) || "-";
-        }
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const day = String(date.getDate()).padStart(2, "0");
-        const hour = String(date.getHours()).padStart(2, "0");
-        const minute = String(date.getMinutes()).padStart(2, "0");
-        return `${year}-${month}-${day} ${hour}:${minute}`;
-    };
+    const workspace = window.PcsWorkspace.createContext();
+    const escapeHtml = window.PcsHtml.escape;
+    const numberText = window.PcsFormat.number;
+    const formatDate = window.PcsFormat.dateTime;
 
     const documentTypeLabel = (type) => window.PcsLabels?.documentType(type) || type || "-";
 
@@ -120,104 +78,10 @@
 
     const documentStatusClass = (status) => window.PcsLabels?.documentStatusClass(status) || "badge-active";
 
-    const partnerRoleLabel = (role) => {
-        if (role === "SUPPLIER") return "공급 거래처";
-        if (role === "CUSTOMER" || role === "CLIENT" || role === "BUYER") return "출고 거래처";
-        if (role === "BOTH") return "공급/출고 거래처";
-        return role || "역할 미지정";
-    };
-
     const partnerMeta = (partner) => {
         const code = partner?.partnerCode || partner?.code || "";
-        const role = partnerRoleLabel(partner?.partnerRole);
+        const role = window.PcsLabels.partnerRoleLong(partner?.partnerRole, "역할 미지정");
         return [code, role].filter(Boolean).join(" · ");
-    };
-
-    const partnerSearchText = (partner) => [
-        partner?.partnerName,
-        partner?.partnerCode,
-        partner?.code,
-        partner?.phone,
-        partner?.contactName,
-        partnerRoleLabel(partner?.partnerRole),
-    ].filter(Boolean).join(" ").toLowerCase();
-
-    const updateSelectedPartnerView = () => {
-        const hasPartner = Boolean(selectedPartner?.partnerId);
-        if (partnerFilter) {
-            partnerFilter.value = hasPartner ? String(selectedPartner.partnerId) : "";
-        }
-        if (selectedPartnerName) {
-            selectedPartnerName.textContent = hasPartner ? selectedPartner.partnerName || "선택 거래처" : "전체 거래처";
-        }
-        if (selectedPartnerMeta) {
-            selectedPartnerMeta.textContent = hasPartner ? partnerMeta(selectedPartner) || "선택된 거래처" : "거래처를 검색해 선택해 주세요.";
-        }
-        openPartnerModalButton?.classList.toggle("is-selected", hasPartner);
-    };
-
-    const renderPartnerList = () => {
-        if (!partnerList) {
-            return;
-        }
-        const keyword = (partnerSearchInput?.value || "").trim().toLowerCase();
-        const filtered = keyword ? partners.filter((partner) => partnerSearchText(partner).includes(keyword)) : partners;
-        const allSelected = !selectedPartner?.partnerId;
-        const allRow = `
-            <button class="partner-modal-row${allSelected ? " is-selected" : ""}" type="button" data-partner-option="">
-                <span>
-                    <strong>전체 거래처</strong>
-                    <small>거래처 조건 없이 조회합니다.</small>
-                </span>
-            </button>
-        `;
-
-        if (!filtered.length) {
-            const message = partners.length ? "검색 결과가 없습니다." : "선택 가능한 거래처가 없습니다.";
-            partnerList.innerHTML = `${allRow}<p class="partner-modal-empty">${message}</p>`;
-            return;
-        }
-
-        partnerList.innerHTML = `${allRow}${filtered.map((partner) => {
-            const selected = String(selectedPartner?.partnerId || "") === String(partner.partnerId);
-            return `
-                <button class="partner-modal-row${selected ? " is-selected" : ""}" type="button" data-partner-option="${escapeHtml(String(partner.partnerId))}">
-                    <span>
-                        <strong>${escapeHtml(partner.partnerName || "-")}</strong>
-                        <small>${escapeHtml(partnerMeta(partner) || "거래처")}</small>
-                    </span>
-                </button>
-            `;
-        }).join("")}`;
-    };
-
-    const loadPartnerFilter = async () => {
-        const base = apiBase();
-        if (!base) {
-            return;
-        }
-        try {
-            const data = await window.PcsApi.getData(`${base}/partners?active=true&limit=200`, apiOptions());
-            partners = Array.isArray(data) ? data : data.content || [];
-            const partnerId = partnerFilter?.value;
-            if (partnerId && !selectedPartner?.partnerId) {
-                selectedPartner = partners.find((partner) => String(partner.partnerId) === String(partnerId)) || null;
-            }
-        } catch (error) {
-            partners = [];
-        } finally {
-            updateSelectedPartnerView();
-            renderPartnerList();
-        }
-    };
-
-    const selectPartnerFilter = (partner) => {
-        selectedPartner = partner;
-        updateSelectedPartnerView();
-        renderPartnerList();
-        partnerModal?.close();
-        closeDetailDrawer({ restoreFocus: false });
-        void loadDocuments(0);
     };
 
     const buildDocumentSubText = (stockDocument) => {
@@ -229,7 +93,7 @@
     };
 
     const buildRouteUrl = (route, documentNo) => {
-        const companyCode = encodeURIComponent(getCompanyCode());
+        const companyCode = encodeURIComponent(workspace.companyCode);
         const keyword = encodeURIComponent(documentNo || "");
         return `/w/${companyCode}/${route}?documentNo=${keyword}&keyword=${keyword}`;
     };
@@ -244,7 +108,7 @@
     };
 
     const buildPartUnitsRouteUrl = (stockDocument) => {
-        const companyCode = encodeURIComponent(getCompanyCode());
+        const companyCode = encodeURIComponent(workspace.companyCode);
         const params = new URLSearchParams();
         if (stockDocument?.documentId) {
             params.set("documentId", String(stockDocument.documentId));
@@ -280,27 +144,16 @@
         return `<button class="btn btn-danger documents-detail-action documents-cancel-action" type="button" data-document-cancel-detail="${escapeHtml(stockDocument.documentId)}"${disabled}${reason}>${label}</button>`;
     };
 
-    const setDetailDrawerOpen = (isOpen) => {
-        if (!detailDrawer) {
-            return;
-        }
-        if (window.PcsDrawer?.setOpen) {
-            window.PcsDrawer.setOpen(detailDrawer, isOpen);
-            return;
-        }
-        detailDrawer.classList.toggle("is-open", isOpen);
-        detailDrawer.setAttribute("aria-hidden", String(!isOpen));
-    };
-
     const openDetailDrawer = () => {
-        setDetailDrawerOpen(true);
+        window.PcsDrawer.setOpen(detailDrawer, true);
     };
 
     const closeDetailDrawer = (options = {}) => {
         if (!detailDrawer) {
             return;
         }
-        setDetailDrawerOpen(false);
+        documentDetailRequestId += 1;
+        window.PcsDrawer.setOpen(detailDrawer, false);
         selectedDocumentId = null;
         currentDetail = null;
         updateSelectedRows();
@@ -394,7 +247,7 @@
     };
 
     const loadDocumentDetail = async (documentId, trigger = null) => {
-        const base = apiBase();
+        const base = workspace.apiBase;
         if (trigger instanceof HTMLElement) {
             lastDetailTrigger = trigger;
         }
@@ -403,11 +256,18 @@
             return;
         }
 
+        const requestId = ++documentDetailRequestId;
         setDetailLoading("전표 상세를 불러오는 중입니다.", documentId);
         try {
-            const detail = await window.PcsApi.getData(`${base}/stock/documents/${encodeURIComponent(documentId)}`, apiOptions());
+            const detail = await window.PcsApi.getData(workspace.apiUrl(`/stock/documents/${encodeURIComponent(documentId)}`), workspace.apiOptions());
+            if (requestId !== documentDetailRequestId) {
+                return;
+            }
             renderDocumentDetail(detail);
         } catch (error) {
+            if (requestId !== documentDetailRequestId) {
+                return;
+            }
             setDetailLoading(error?.message || "전표 상세를 불러오지 못했습니다.", documentId);
         }
     };
@@ -426,10 +286,7 @@
             return;
         }
         if (cancelTarget.cancelable !== true) {
-            window.PcsUi?.toast({
-                type: "warning",
-                message: cancelTarget.cancelBlockedReason || "취소할 수 없는 전표입니다.",
-            });
+            window.PcsFeedback.toast(cancelTarget.cancelBlockedReason || "취소할 수 없는 전표입니다.", "warning");
             return;
         }
         if (cancelFields.documentNo) cancelFields.documentNo.textContent = cancelTarget.documentNo || "-";
@@ -451,7 +308,7 @@
     };
 
     const cancelDocument = async () => {
-        const base = apiBase();
+        const base = workspace.apiBase;
         if (!cancelTarget?.documentId || !base || !confirmCancelButton) {
             setCancelMessage("취소할 전표를 찾을 수 없습니다.");
             return;
@@ -461,15 +318,12 @@
         confirmCancelButton.disabled = true;
         confirmCancelButton.textContent = "취소 중";
         try {
-            await window.PcsApi.request(`${base}/stock/documents/${encodeURIComponent(target.documentId)}/cancel`, {
+            await window.PcsApi.request(workspace.apiUrl(`/stock/documents/${encodeURIComponent(target.documentId)}/cancel`), {
                 method: "POST",
-                ...apiOptions(),
+                ...workspace.apiOptions(),
             });
             closeCancelModal();
-            window.PcsUi?.toast({
-                type: "success",
-                message: `${documentTypeLabel(target.documentType)} 전표 ${target.documentNo} 가 취소되었습니다.`,
-            });
+            window.PcsFeedback.toast(`${documentTypeLabel(target.documentType)} 전표 ${target.documentNo} 가 취소되었습니다.`, "success");
             await loadDocumentDetail(target.documentId);
             await loadDocuments(currentPage, { keepRows: true });
         } catch (error) {
@@ -552,11 +406,7 @@
             onPageClick: (page) => {
                 closeDetailDrawer({ restoreFocus: false });
                 const execute = () => loadDocuments(page, { keepRows: true });
-                if (window.PcsPagination?.withPreservedScroll) {
-                    void window.PcsPagination.withPreservedScroll(execute);
-                    return;
-                }
-                void execute();
+                void window.PcsPagination.withPreservedScroll(execute);
             }
         });
     };
@@ -630,12 +480,13 @@
 
     const loadDocuments = async (page = currentPage, options = {}) => {
         const keepRows = options.keepRows === true;
-        const base = apiBase();
+        const base = workspace.apiBase;
         if (!base) {
             setEmptyMessage("업체 주소가 올바르지 않습니다.");
             return;
         }
 
+        const requestId = ++documentListRequestId;
         setLoading(true);
         if (keepRows) {
             setPageLoading(true);
@@ -645,15 +496,21 @@
 
         try {
             const params = buildParams(page);
-            const data = await window.PcsApi.getData(`${base}/stock/documents?${params.toString()}`, apiOptions());
+            const data = await window.PcsApi.getData(workspace.apiUrl(`/stock/documents?${params.toString()}`), workspace.apiOptions());
+            if (requestId !== documentListRequestId) {
+                return;
+            }
             const pageData = window.PcsPagination.normalizePageData(data, PAGE_SIZE);
             currentPage = pageData.page;
             renderDocuments(pageData);
         } catch (error) {
+            if (requestId !== documentListRequestId) {
+                return;
+            }
             const message = error?.message || "전표 목록을 불러오지 못했습니다.";
             if (keepRows) {
                 setPaginationStatus(message, "error");
-                window.PcsUi?.toast({ message, type: "error" });
+                window.PcsFeedback.toast(message, "error");
                 updatePagination(currentPageData || {
                     content: [],
                     page: 0,
@@ -679,11 +536,50 @@
                 setEmptyMessage(message);
             }
         } finally {
-            if (keepRows) {
-                setPageLoading(false);
+            if (requestId === documentListRequestId) {
+                if (keepRows) {
+                    setPageLoading(false);
+                }
+                setLoading(false);
             }
-            setLoading(false);
         }
+    };
+
+    partnerPicker = window.PcsPartnerPicker.bind({
+        input: partnerFilter,
+        modal: partnerModal,
+        search: partnerSearchInput,
+        list: partnerList,
+        nameTarget: selectedPartnerName,
+        metaTarget: selectedPartnerMeta,
+        openButtons: openPartnerModalButton,
+        closeButtons: closePartnerModalButtons,
+        companyCode: workspace.companyCode,
+        allowEmpty: true,
+        size: 100,
+        emptyName: "전체 거래처",
+        emptyMeta: "거래처를 검색해 선택해 주세요.",
+        getMeta: partnerMeta,
+        onChange: () => {
+            closeDetailDrawer({ restoreFocus: false });
+            void loadDocuments(0);
+        },
+    });
+
+    const loadPartnerPicker = async () => {
+        const selectedPartnerId = partnerFilter?.value;
+        if (selectedPartnerId) {
+            try {
+                const selectedPartner = await window.PcsApi.getData(
+                    workspace.apiUrl(`/partners/${encodeURIComponent(selectedPartnerId)}`),
+                    workspace.apiOptions()
+                );
+                partnerPicker.setSelected(selectedPartner);
+            } catch {
+                // The list load below keeps the normal empty-filter fallback for an invalid deep link.
+            }
+        }
+        await partnerPicker.load();
     };
 
     const applyUrlParams = () => {
@@ -708,56 +604,9 @@
 
     resetButton?.addEventListener("click", () => {
         filterForm.reset();
-        selectedPartner = null;
-        updateSelectedPartnerView();
-        renderPartnerList();
+        partnerPicker.setSelected(null);
         closeDetailDrawer({ restoreFocus: false });
         void loadDocuments(0);
-    });
-
-    openPartnerModalButton?.addEventListener("click", async () => {
-        if (!partners.length) {
-            await loadPartnerFilter();
-        }
-        renderPartnerList();
-        partnerModal?.showModal();
-        requestAnimationFrame(() => partnerSearchInput?.focus());
-    });
-
-    closePartnerModalButtons.forEach((button) => {
-        button.addEventListener("click", () => partnerModal?.close());
-    });
-
-    partnerModal?.addEventListener("click", (event) => {
-        if (event.target === partnerModal) {
-            partnerModal.close();
-        }
-    });
-
-    partnerSearchInput?.addEventListener("input", renderPartnerList);
-
-    partnerSearchInput?.addEventListener("keydown", (event) => {
-        if (event.key !== "Enter") {
-            return;
-        }
-        event.preventDefault();
-        renderPartnerList();
-    });
-
-    partnerList?.addEventListener("click", (event) => {
-        const option = event.target.closest("[data-partner-option]");
-        if (!option) {
-            return;
-        }
-        const partnerId = option.dataset.partnerOption;
-        if (!partnerId) {
-            selectPartnerFilter(null);
-            return;
-        }
-        const partner = partners.find((candidate) => String(candidate.partnerId) === String(partnerId));
-        if (partner) {
-            selectPartnerFilter(partner);
-        }
     });
 
     prevButton?.addEventListener("click", () => {
@@ -766,11 +615,7 @@
         }
         closeDetailDrawer({ restoreFocus: false });
         const execute = () => loadDocuments(Math.max(0, currentPage - 1), { keepRows: true });
-        if (window.PcsPagination?.withPreservedScroll) {
-            void window.PcsPagination.withPreservedScroll(execute);
-            return;
-        }
-        void execute();
+        void window.PcsPagination.withPreservedScroll(execute);
     });
 
     nextButton?.addEventListener("click", () => {
@@ -779,11 +624,7 @@
         }
         closeDetailDrawer({ restoreFocus: false });
         const execute = () => loadDocuments(currentPage + 1, { keepRows: true });
-        if (window.PcsPagination?.withPreservedScroll) {
-            void window.PcsPagination.withPreservedScroll(execute);
-            return;
-        }
-        void execute();
+        void window.PcsPagination.withPreservedScroll(execute);
     });
 
     table.addEventListener("click", (event) => {
@@ -839,7 +680,7 @@
     });
 
     const initialize = async () => {
-        const companyCode = getCompanyCode();
+        const companyCode = workspace.companyCode;
         if (!companyCode) {
             setEmptyMessage("업체 주소가 올바르지 않습니다.");
             return;
@@ -853,7 +694,7 @@
                 }
             }
             applyUrlParams();
-            await loadPartnerFilter();
+            await loadPartnerPicker();
             await loadDocuments(0);
         } catch (error) {
             setEmptyMessage(error?.message || "화면을 초기화하지 못했습니다.");

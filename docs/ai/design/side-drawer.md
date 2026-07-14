@@ -37,7 +37,7 @@ aside.right-side-drawer.[type]
 - 닫을 때는 드로어를 연 버튼이나 마지막 선택 행으로 focus를 돌려준다.
 - 저장 중에는 닫기와 중복 제출을 막는다.
 
-공통 JS의 `PcsDrawer.bindDismiss()`를 사용하고 화면별 outside-click/Escape 로직을 다시 만들지 않는다.
+열림 상태는 공통 `PcsDrawer.setOpen()`으로 변경하고, outside-click/Escape 닫기는 `PcsDrawer.bindDismiss()`를 사용한다. 화면별로 같은 로직을 다시 만들지 않는다.
 
 ## Management 모드
 

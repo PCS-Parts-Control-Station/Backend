@@ -1,5 +1,6 @@
 (function () {
-    const companyCode = window.location.pathname.split("/").filter(Boolean)[1] || "workspace";
+    const workspace = window.PcsWorkspace.createContext();
+    const { companyCode } = workspace;
     const summarySection = document.querySelector("[data-dashboard-summary]");
     const todoList = document.querySelector("[data-dashboard-todos]");
     const stockList = document.querySelector("[data-dashboard-stock]");
@@ -23,10 +24,8 @@
     let todoPage = 0;
     let recentPage = 0;
 
-    const numberText = (value) => {
-        const number = Number(value || 0);
-        return Number.isFinite(number) ? number.toLocaleString("ko-KR") : "0";
-    };
+    const numberText = window.PcsFormat.number;
+    const escapeHtml = window.PcsHtml.escape;
 
     const ratioText = (value) => {
         const number = Number(value || 0);
@@ -34,23 +33,13 @@
     };
 
     const dateTimeText = (value) => {
-        if (!value) {
-            return "-";
-        }
-        const normalized = String(value).replace("T", " ");
-        const match = normalized.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/);
+        const formatted = window.PcsFormat.dateTime(value);
+        const match = formatted.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/);
         if (!match) {
-            return normalized;
+            return formatted;
         }
         return `${match[2]}.${match[3]} ${match[4]}:${match[5]}`;
     };
-
-    const escapeHtml = (value) => String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
 
     const routeHref = (route) => `/w/${encodeURIComponent(companyCode)}/${String(route || "dashboard")}`;
 
@@ -252,15 +241,9 @@
         }
 
         try {
-            await window.PcsApi.getData(`/api/workspaces/${encodeURIComponent(companyCode)}/me`, {
-                authRedirect: true,
-                loginCompanyCode: companyCode
-            });
+            await window.PcsApi.getData(workspace.apiUrl("/me"), workspace.apiOptions());
 
-            const dashboard = await window.PcsApi.getData(`/api/workspaces/${encodeURIComponent(companyCode)}/dashboard`, {
-                authRedirect: true,
-                loginCompanyCode: companyCode
-            });
+            const dashboard = await window.PcsApi.getData(workspace.apiUrl("/dashboard"), workspace.apiOptions());
             renderSummary(dashboard?.summary);
             renderStockStatus(dashboard?.stockStatus);
             todosState = dashboard?.todos || [];

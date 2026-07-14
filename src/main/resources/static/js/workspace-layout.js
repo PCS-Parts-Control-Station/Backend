@@ -344,17 +344,7 @@
             logoutButton.disabled = true;
 
             try {
-                if (window.PcsApi?.logout) {
-                    await window.PcsApi.logout();
-                } else {
-                    await fetch("/api/auth/logout", {
-                        method: "POST",
-                        credentials: "same-origin",
-                        headers: {
-                            "Accept": "application/json"
-                        }
-                    });
-                }
+                await window.PcsApi.logout();
             } finally {
                 window.location.href = `/w/${encodeURIComponent(companyCode)}`;
             }

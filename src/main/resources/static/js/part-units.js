@@ -41,12 +41,12 @@
     let detailDrawer = null;
     let isRestoringNavigationState = false;
 
-    const escape = window.PcsHtml?.escape || ((value) => String(value ?? ""));
-    const setText = window.PcsHtml?.setText || ((element, value, fallback = "-") => {
-        if (element) {
-            element.textContent = value === null || value === undefined || value === "" ? fallback : String(value);
-        }
-    });
+    const workspace = window.PcsWorkspace.createContext();
+    const { companyCode, apiBase } = workspace;
+    const escape = window.PcsHtml.escape;
+    const setText = window.PcsHtml.setText;
+    const formatNumber = window.PcsFormat.number;
+    const formatDateTime = window.PcsFormat.dateTime;
     const navigationState = window.PcsNavigationState?.createUrlStateController({
         namespace: "part-units",
         managedKeys: ["keyword", "partId", "documentId", "documentNo", "categoryId", "partState", "page", "unitId"],
@@ -92,38 +92,12 @@
         }
     };
 
-    const companyCode = () => window.PcsWorkspace?.getCompanyCode?.() || "";
-    const apiBase = () => {
-        const code = companyCode();
-        return code ? `/api/workspaces/${encodeURIComponent(code)}` : "";
-    };
     const workspaceRoute = (route, params = null) => {
-        const code = companyCode();
         const query = params?.toString();
-        const path = code ? `/w/${encodeURIComponent(code)}/${route}` : `/${route}`;
+        const path = companyCode ? `/w/${encodeURIComponent(companyCode)}/${route}` : `/${route}`;
         return query ? `${path}?${query}` : path;
     };
-    const apiOptions = () => ({
-        authRedirect: true,
-        loginCompanyCode: companyCode()
-    });
-
-    const formatNumber = (value) => window.PcsFormat?.number
-            ? window.PcsFormat.number(value)
-            : Number(value || 0).toLocaleString("ko-KR");
-
-    const formatDateTime = (value) => {
-        if (!value) {
-            return "-";
-        }
-        if (Array.isArray(value)) {
-            const [year, month, day, hour = 0, minute = 0] = value;
-            if (year && month && day) {
-                return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")} ${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-            }
-        }
-        return String(value).replace("T", " ").slice(0, 16);
-    };
+    const apiOptions = workspace.apiOptions;
 
     const dateValue = (value) => {
         if (!value) {
@@ -308,17 +282,9 @@
         if (value.includes("판매 불가") || value.includes("불량")) return "badge-danger";
         if (value.includes("출고") || value.includes("취소") || value.includes("비활성")) return "badge-inactive";
         if (value.includes("검수 대기")) return "badge-pending";
-        if (value.includes("보류") || value.includes("C 등급") || value.includes("C 등급")) return "badge-warning";
+        if (value.includes("보류") || value.includes("C 등급")) return "badge-warning";
         if (value.includes("A 등급") || value.includes("B 등급") || value.includes("판매 가능")) return "badge-available";
         return "badge-blue";
-    };
-
-    const salesBadgeClass = (label) => {
-        const value = label || "";
-        if (value === "판매 가능") return "badge-available";
-        if (value === "판매 보류" || value === "보류") return "badge-warning";
-        if (value === "판매 불가") return "badge-danger";
-        return "badge-inactive";
     };
 
     const setBadge = (selector, text, variantClass) => {
@@ -460,7 +426,7 @@
 
     const loadPartUnits = async (page = 0, options = {}) => {
         const requestedPage = Math.max(0, Number(page) || 0);
-        const base = apiBase();
+        const base = apiBase;
         if (!base || !window.PcsApi?.getData || !window.PcsPagination) {
             emptyTable("워크스페이스 정보를 확인할 수 없습니다.");
             updateSummary();
@@ -788,7 +754,7 @@
     };
 
     const loadDetail = async (unitId, requestId) => {
-        const base = apiBase();
+        const base = apiBase;
         if (!unitId || !base || !window.PcsApi?.getData) {
             return;
         }
@@ -931,7 +897,7 @@
     };
 
     const loadDocuments = async () => {
-        const base = apiBase();
+        const base = apiBase;
         if (!base || !window.PcsApi?.getData) {
             renderEmptyDocumentPicker("워크스페이스 정보를 확인할 수 없습니다.");
             return;

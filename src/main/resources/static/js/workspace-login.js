@@ -6,7 +6,6 @@ const passwordInput = document.querySelector('#password');
 const loginButton = document.querySelector('#loginButton');
 const loginMessage = document.querySelector('#loginMessage');
 const loginTitle = document.querySelector('#login-title');
-const loginDescription = document.querySelector('#login-description');
 const guideTitle = document.querySelector('#guide-title');
 const guideBadge = document.querySelector('#guideBadge');
 const currentAccessLabel = document.querySelector('#currentAccessLabel');
@@ -66,7 +65,6 @@ const updateRouteMode = () => {
         currentAccessTitle.textContent = '업체 코드가 확인되었습니다.';
         currentAccessDescription.textContent = '아이디와 비밀번호만 입력하면 업무 페이지로 이동합니다.';
         loginTitle.textContent = `${companyCodeFromUrl} 작업공간 로그인`;
-        if (loginDescription) loginDescription.textContent = '업체 코드가 확인되었습니다. 아이디와 비밀번호로 업무 화면에 접속하세요.';
         loginIdInput.focus();
         return;
     }
@@ -80,18 +78,6 @@ const updateRouteMode = () => {
     currentAccessTitle.textContent = '업체 코드를 입력해야 합니다.';
     currentAccessDescription.textContent = '회사 관리자에게 받은 업체 코드, 아이디, 비밀번호를 입력하세요.';
     loginTitle.textContent = '로그인';
-    if (loginDescription) loginDescription.textContent = '회사에서 받은 계정으로 로그인하면 부품, 입고, 검수, 출고 업무를 바로 이어서 처리할 수 있습니다.';
-};
-
-const redirectToInvalidAccess = (type, companyCode, reason = '') => {
-    const params = new URLSearchParams({ type });
-    if (companyCode) {
-        params.set('code', companyCode);
-    }
-    if (reason) {
-        params.set('reason', reason);
-    }
-    window.location.href = `/workspace-not-found?${params.toString()}`;
 };
 
 const verifyCompanyCodeFromUrl = async () => {
@@ -104,25 +90,10 @@ const verifyCompanyCodeFromUrl = async () => {
     setMessage('업체 주소를 확인하는 중입니다.');
 
     try {
-        const response = await fetch(`/api/workspaces/${encodeURIComponent(companyCodeFromUrl)}/public-info`, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
-        const result = await response.json().catch(() => null);
-
-        if (!response.ok || result?.success === false) {
-            const code = result?.code || '';
-            if (code === 'COMPANY-003') {
-                redirectToInvalidAccess('inactive', companyCodeFromUrl, code);
-                return;
-            }
-            redirectToInvalidAccess('workspace', companyCodeFromUrl, code || 'COMPANY-001');
-            return;
+        const isValid = await window.PcsApi.validateWorkspacePublic(companyCodeFromUrl);
+        if (isValid) {
+            setMessage('');
         }
-
-        setMessage('');
     } catch (error) {
         setMessage('업체 주소를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.', true);
     } finally {
@@ -175,24 +146,16 @@ workspaceLoginForm?.addEventListener('submit', async (event) => {
     setMessage('로그인 정보를 확인하는 중입니다.');
 
     try {
-        const response = await fetch('/api/workspaces/login', {
+        const result = await window.PcsApi.request('/api/workspaces/login', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
+            body: {
                 companyCode,
                 loginId,
                 password
-            })
+            },
+            retryOnAuthError: false,
+            workspaceErrorRedirect: false
         });
-
-        const result = await response.json().catch(() => null);
-
-        if (!response.ok || result?.success === false) {
-            setMessage(result?.message || '업체 코드, 아이디 또는 비밀번호를 확인해 주세요.', true);
-            return;
-        }
 
         const responseData = result?.data || {};
         const nextCompanyCode = responseData.companyCode || companyCode;
@@ -208,7 +171,10 @@ workspaceLoginForm?.addEventListener('submit', async (event) => {
 
         window.location.href = `/w/${encodeURIComponent(nextCompanyCode)}/dashboard`;
     } catch (error) {
-        setMessage('로그인 정보를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.', true);
+        const message = error instanceof window.PcsApi.PcsApiError
+            ? error.result?.message || '업체 코드, 아이디 또는 비밀번호를 확인해 주세요.'
+            : '로그인 정보를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.';
+        setMessage(message, true);
     } finally {
         loginButton.disabled = false;
     }

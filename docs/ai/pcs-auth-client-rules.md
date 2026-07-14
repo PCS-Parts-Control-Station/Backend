@@ -21,12 +21,10 @@
 사용:
 
 ```js
+const workspace = window.PcsWorkspace.createContext();
 const data = await window.PcsApi.getData(
-    `/api/workspaces/${encodeURIComponent(companyCode)}/partners`,
-    {
-        authRedirect: true,
-        loginCompanyCode: companyCode
-    }
+    workspace.apiUrl("/partners"),
+    workspace.apiOptions()
 );
 ```
 
