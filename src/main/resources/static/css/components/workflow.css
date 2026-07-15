@@ -154,6 +154,59 @@
     transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
 }
 
+.operation-flow-form {
+    display: grid;
+    gap: 18px;
+    min-width: 0;
+}
+
+.operation-step-card .table-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+}
+
+.operation-step-card h2,
+.submit-panel h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-step {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 22px;
+    height: 22px;
+    border: 1px solid rgba(37, 99, 235, 0.18);
+    border-radius: 999px;
+    background: var(--blue-soft, #eff6ff);
+    color: var(--blue, #2563eb);
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.line-empty-state {
+    margin: 0;
+    padding: 18px;
+    border: 1px dashed var(--line-strong);
+    border-radius: var(--radius);
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 800;
+    text-align: center;
+}
+
+.submit-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px;
+}
+
 .operation-step-card.is-active {
     border-color: rgba(37, 99, 235, 0.28);
     box-shadow: 0 14px 34px rgba(37, 99, 235, 0.1);
@@ -208,33 +261,4 @@
     }
 }
 
-[data-inbound-panel="guide"] {
-    gap: 18px;
-}
-
-.field-message.is-error {
-    color: var(--danger, #b42318);
-}
-
-@media (max-width: 640px) {
-.part-modal {
-        width: calc(100vw - 24px);
-    }
-
-.part-modal-header,
-.part-modal-actions {
-        padding-inline: 16px;
-    }
-
-.part-modal-actions {
-        display: grid;
-        grid-template-columns: 1fr;
-    }
-}
-
-@keyframes inboundLoadingSpin {
-    to {
-        transform: rotate(360deg);
-    }
-}
 }

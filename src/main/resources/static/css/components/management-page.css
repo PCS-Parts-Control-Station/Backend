@@ -12,6 +12,22 @@
     padding-left: 14px;
 }
 
+.management-summary-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+}
+
+.management-summary-header > div:first-child {
+    min-width: 0;
+}
+
+.management-summary-header .list-summary-box {
+    justify-self: end;
+    margin-left: 0;
+    width: auto;
+}
+
 .management-summary-header .list-summary {
     display: flex;
     flex-wrap: wrap;
@@ -53,6 +69,21 @@
 
 .management-summary-header .list-summary dd {
     color: var(--cyan-dark);
+}
+
+.management-data-table > .management-data-row {
+    grid-template-columns: var(--management-row-columns, 1fr);
+    min-width: var(--management-row-min-width, 0);
+    gap: var(--management-row-gap, 14px);
+}
+
+.management-data-table > .management-data-row > *,
+.management-data-table > .management-data-row strong,
+.management-data-table > .management-data-row small {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .management-subitem-list,
@@ -1062,6 +1093,120 @@
 
 .management-editor-option-create-form {
         grid-template-columns: 1fr;
+    }
+}
+
+@container management-summary-card (max-width: 760px) {
+    .management-summary-header {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+    }
+
+    .management-summary-header .list-summary-box {
+        justify-self: stretch;
+        width: 100%;
+    }
+
+    .management-summary-header .list-summary {
+        justify-content: flex-start;
+    }
+}
+
+@container management-card-table (max-width: 840px) {
+    .management-data-table {
+        display: grid;
+        gap: 10px;
+        overflow-x: visible;
+        padding: 12px;
+        background: var(--surface-soft);
+    }
+
+    .management-data-table > .management-data-row.table-head {
+        display: none;
+    }
+
+    .management-data-table > .management-data-row.empty-data-row {
+        grid-template-columns: minmax(0, 1fr);
+        min-width: 0;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+    }
+
+    .management-data-table > .management-data-row.empty-data-row [role="cell"]::before {
+        display: none;
+        content: none;
+    }
+
+    .management-data-table > .management-data-row:not(.empty-data-row):not(.table-head) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: auto;
+        gap: 0 14px;
+        min-width: 0;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+    }
+
+    .management-data-table > .management-data-row:not(.empty-data-row):not(.table-head) > [role="cell"] {
+        display: grid;
+        grid-column: var(--management-cell-column, auto);
+        grid-row: var(--management-cell-row, auto);
+        align-content: start;
+        gap: 6px;
+        min-width: 0;
+        width: 100%;
+        height: auto;
+        padding: 11px 0;
+        padding-bottom: var(--management-cell-padding-bottom, 11px);
+        overflow: visible;
+        border-top: 1px solid var(--line);
+        white-space: normal;
+    }
+
+    .management-data-table > .management-data-row:not(.empty-data-row):not(.table-head) > [role="cell"]::before {
+        display: block;
+        color: var(--muted);
+        content: attr(data-label);
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.3;
+    }
+
+    .management-data-table > .management-data-row:not(.empty-data-row):not(.table-head) > [role="cell"]:first-child {
+        padding-top: 0;
+        border-top: 0;
+    }
+
+    .management-data-table > .management-data-row:not(.empty-data-row):not(.table-head) > [role="cell"]:last-child {
+        padding-bottom: 0;
+    }
+
+    .management-data-table > .management-data-row.is-selected {
+        border-color: var(--cyan);
+    }
+}
+
+@container management-card-table (max-width: 440px) {
+    .management-data-table > .management-data-row:not(.empty-data-row):not(.table-head) {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .management-data-table > .management-data-row:not(.empty-data-row):not(.table-head) > [role="cell"]:nth-child(n) {
+        grid-column: 1;
+        grid-row: auto;
+        padding: 11px 0;
+    }
+
+    .management-data-table > .management-data-row:not(.empty-data-row):not(.table-head) > [role="cell"]:first-child {
+        padding-top: 0;
+        border-top: 0;
+    }
+
+    .management-data-table > .management-data-row:not(.empty-data-row):not(.table-head) > [role="cell"]:last-child {
+        padding-bottom: 0;
     }
 }
 

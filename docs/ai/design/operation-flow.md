@@ -42,6 +42,8 @@ operation-step-card
 - 필수 입력은 앞 단계에 모은다.
 - 서버 자동 발급 값은 입력받지 않는다.
 - 비어 있는 단계는 짧은 안내와 공통 empty state를 사용한다.
+- `operation-flow-form`, `operation-step-card`, `section-step`, `line-empty-state`, `submit-panel`의 공통 외형은 `workflow.css`가 소유한다.
+- 페이지 CSS에는 단계 내부의 실제 필드 grid, 검색 결과 열, 도메인별 메시지 차이만 둔다.
 
 ## 기준 데이터 검색과 선택
 
@@ -52,6 +54,7 @@ operation-step-card
 - 선택 행은 공통 selected 상태를 사용한다.
 - 선택한 대상과 다음 입력을 별도 요약 영역에서 연결한다.
 - 기준 데이터가 없을 때만 최소 입력의 빠른 등록 모달을 제공한다.
+- 거래처 선택 버튼과 선택 값 표시는 공통 `partner-picker-field` 구조와 `components.css`를 사용한다.
 
 ## 라인 검토
 

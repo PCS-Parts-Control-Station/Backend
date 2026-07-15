@@ -32,24 +32,8 @@
 }
 
 .page-partners .partner-list-card {
-    container-name: partner-list-card;
+    container-name: partner-list-card management-summary-card management-card-table;
     container-type: inline-size;
-}
-
-.page-partners .partner-list-card .management-summary-header {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
-}
-
-.page-partners .partner-list-card .management-summary-header > div:first-child {
-    min-width: 0;
-}
-
-.page-partners .partner-list-card .management-summary-header .list-summary-box {
-    justify-self: end;
-    margin-left: 0;
-    width: auto;
 }
 
 .page-partners .management-data-table {
@@ -57,7 +41,7 @@
 }
 
 .page-partners .partner-management-data-row {
-    grid-template-columns:
+    --management-row-columns:
         minmax(140px, 1fr)
         58px
         70px
@@ -66,28 +50,12 @@
         minmax(130px, 0.9fr)
         minmax(150px, 1fr)
         84px;
-    min-width: 940px;
-    gap: 10px;
-}
-
-.page-partners .partner-management-data-row > * {
-    min-width: 0;
-}
-
-.page-partners .partner-management-data-row > span,
-.page-partners .partner-management-data-row > strong {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    --management-row-min-width: 940px;
+    --management-row-gap: 10px;
 }
 
 .page-partners .partner-management-data-row .badge {
     justify-self: start;
-}
-
-.page-partners .partner-detail-drawer {
-    left: auto;
-    right: 0;
 }
 
 @container partner-filter-card (max-width: 1000px) {
@@ -121,165 +89,45 @@
     }
 }
 
-@container partner-list-card (max-width: 980px) {
-    .page-partners .partner-list-card .management-data-table {
-        gap: 10px;
-        overflow-x: visible;
-        padding: 12px;
-        background: var(--surface-soft);
-    }
-
-    .page-partners .partner-management-data-row.table-head {
-        display: none;
-    }
-
-    .page-partners .partner-management-data-row.empty-data-row {
-        min-width: 0;
-        grid-template-columns: minmax(0, 1fr);
-        padding: 16px;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: var(--surface);
-    }
-
-    .page-partners .partner-management-data-row:not(.empty-data-row):not(.table-head) {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        grid-template-rows: auto;
-        gap: 0 14px;
-        min-width: 0;
-        padding: 16px;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: var(--surface);
-    }
-
-    .page-partners .partner-management-data-row:not(.empty-data-row):not(.table-head) > [role="cell"] {
-        display: grid;
-        align-content: start;
-        gap: 6px;
-        min-width: 0;
-        padding: 11px 0;
-        overflow: visible;
-        border-top: 1px solid var(--line);
-        white-space: normal;
-    }
-
-    .page-partners .partner-management-data-row:not(.empty-data-row):not(.table-head) > [role="cell"]::before {
-        display: block;
-        color: var(--muted);
-        content: attr(data-label);
-        font-size: 11px;
-        font-weight: 700;
-        line-height: 1.3;
-    }
-
+@container management-card-table (max-width: 840px) {
     .page-partners .partner-management-data-row:not(.empty-data-row):not(.table-head) > [role="cell"]:nth-child(1) {
-        grid-column: 1 / -1;
-        grid-row: 1;
-        padding-top: 0;
-        border-top: 0;
+        --management-cell-column: 1 / -1;
+        --management-cell-row: 1;
     }
 
     .page-partners .partner-management-data-row:not(.empty-data-row):not(.table-head) > [role="cell"]:nth-child(2) {
-        grid-column: 1;
-        grid-row: 2;
+        --management-cell-column: 1;
+        --management-cell-row: 2;
     }
 
     .page-partners .partner-management-data-row:not(.empty-data-row):not(.table-head) > [role="cell"]:nth-child(3) {
-        grid-column: 2;
-        grid-row: 2;
+        --management-cell-column: 2;
+        --management-cell-row: 2;
     }
 
     .page-partners .partner-management-data-row:not(.empty-data-row):not(.table-head) > [role="cell"]:nth-child(4) {
-        grid-column: 1;
-        grid-row: 3;
+        --management-cell-column: 1;
+        --management-cell-row: 3;
     }
 
     .page-partners .partner-management-data-row:not(.empty-data-row):not(.table-head) > [role="cell"]:nth-child(8) {
-        grid-column: 2;
-        grid-row: 3;
+        --management-cell-column: 2;
+        --management-cell-row: 3;
     }
 
     .page-partners .partner-management-data-row:not(.empty-data-row):not(.table-head) > [role="cell"]:nth-child(5) {
-        grid-column: 1;
-        grid-row: 4;
+        --management-cell-column: 1;
+        --management-cell-row: 4;
     }
 
     .page-partners .partner-management-data-row:not(.empty-data-row):not(.table-head) > [role="cell"]:nth-child(6) {
-        grid-column: 2;
-        grid-row: 4;
+        --management-cell-column: 2;
+        --management-cell-row: 4;
     }
 
     .page-partners .partner-management-data-row:not(.empty-data-row):not(.table-head) > [role="cell"]:nth-child(7) {
-        grid-column: 1 / -1;
-        grid-row: 5;
-        padding-bottom: 0;
-    }
-}
-
-@container partner-list-card (max-width: 760px) {
-    .page-partners .partner-list-card .management-summary-header {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 14px;
-    }
-
-    .page-partners .partner-list-card .management-summary-header .list-summary-box {
-        justify-self: stretch;
-        width: 100%;
-    }
-
-    .page-partners .partner-list-card .list-summary {
-        justify-content: flex-start;
-    }
-}
-
-@container partner-list-card (max-width: 440px) {
-    .page-partners .partner-management-data-row:not(.empty-data-row):not(.table-head) {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .page-partners .partner-management-data-row:not(.empty-data-row):not(.table-head) > [role="cell"]:nth-child(n) {
-        grid-column: 1;
-        grid-row: auto;
-    }
-
-    .page-partners .partner-management-data-row:not(.empty-data-row):not(.table-head) > [role="cell"]:first-child {
-        padding-top: 0;
-        border-top: 0;
-    }
-
-    .page-partners .partner-management-data-row:not(.empty-data-row):not(.table-head) > [role="cell"]:last-child {
-        padding-bottom: 0;
-    }
-}
-
-@media (max-width: 840px) {
-    .page-partners .partner-detail-drawer {
-        left: auto;
-        right: 0;
-        width: min(520px, 100vw);
-        max-width: 100vw;
-    }
-}
-
-@media (max-width: 440px) {
-    .page-partners .partner-detail-drawer .panel-title-bar {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .page-partners .partner-detail-drawer .panel-title-bar > .panel-link-button {
-        justify-self: end;
-    }
-
-    .page-partners .partner-detail-drawer .panel-title-actions {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        width: 100%;
-    }
-
-    .page-partners .partner-detail-drawer .panel-title-actions .panel-link-button {
-        width: 100%;
+        --management-cell-column: 1 / -1;
+        --management-cell-row: 5;
     }
 }
 }
