@@ -5,96 +5,12 @@
     min-width: 0;
 }
 
-.partner-picker-field {
-    display: grid;
-    gap: 8px;
-    min-width: 0;
-}
-
-.partner-picker-field > span {
-    color: var(--muted);
-    font-size: 13px;
-    font-weight: 800;
-}
-
-.partner-picker-button {
-    box-sizing: border-box;
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 12px;
-    align-items: center;
-    width: 100%;
-    min-height: var(--control-height);
-    padding: 0 16px;
-    border: 1px solid var(--line-strong, #cbd5e1);
-    border-radius: var(--radius);
-    background: var(--surface, #ffffff);
-    color: var(--ink);
-    text-align: left;
-    cursor: pointer;
-    transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
-}
-
-.partner-picker-button:hover,
-.partner-picker-button:focus-visible {
-    border-color: rgba(37, 99, 235, 0.38);
-    background: var(--blue-soft, #eff6ff);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    outline: none;
-}
-
-.partner-picker-button.is-selected {
-    border-color: rgba(37, 99, 235, 0.34);
-    background: #f8fbff;
-}
-
-.partner-picker-label {
-    color: var(--ink);
-    font-size: 13px;
-    font-weight: 800;
-    white-space: nowrap;
-}
-
-.partner-picker-value {
-    display: grid;
-    justify-items: end;
-    min-width: 0;
-}
-
-.partner-picker-value strong {
-    min-width: 0;
-    max-width: 100%;
-    color: var(--muted);
-    font-size: 13px;
-    font-weight: 800;
-    line-height: 1.25;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.partner-picker-value small {
-    display: none;
-}
-
-.partner-picker-button.is-selected .partner-picker-value strong {
-    color: var(--blue, #2563eb);
-}
-
-.field-message {
-    min-height: 18px;
-    color: var(--muted);
-    font-size: 12px;
-    font-weight: 800;
-    line-height: 1.4;
-}
-
-.field-message:empty {
-    display: none;
-}
-
 .modal-message {
     margin: 0 20px;
+}
+
+[data-inbound-panel="guide"] {
+    gap: 18px;
 }
 
 .line-entry-list::-webkit-scrollbar {
@@ -113,18 +29,6 @@
     font-weight: 800;
 }
 
-.operation-flow-form {
-    display: grid;
-    gap: 18px;
-    min-width: 0;
-}
-
-.operation-step-card .table-header {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
-}
-
 .operation-step-card {
     container-name: inbound-step-card;
     container-type: inline-size;
@@ -132,28 +36,6 @@
 
 .operation-step-card .table-header .badge {
     justify-self: end;
-}
-
-.operation-step-card h2,
-.submit-panel h2 {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.section-step {
-    display: inline-grid;
-    place-items: center;
-    flex: 0 0 auto;
-    width: 22px;
-    height: 22px;
-    border: 1px solid rgba(37, 99, 235, 0.18);
-    border-radius: 999px;
-    background: var(--blue-soft, #eff6ff);
-    color: var(--blue, #2563eb);
-    font-size: 12px;
-    font-weight: 800;
-    line-height: 1;
 }
 
 .register-fields {
@@ -211,17 +93,6 @@
     display: grid;
     gap: 14px;
     padding: 20px;
-}
-
-.line-empty-state {
-    margin: 0;
-    padding: 18px;
-    border: 1px dashed var(--line-strong);
-    border-radius: var(--radius);
-    color: var(--muted);
-    font-size: 14px;
-    font-weight: 800;
-    text-align: center;
 }
 
 .part-search-panel {
@@ -523,14 +394,6 @@
     font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
     font-size: 12px;
     font-weight: 800;
-}
-
-.submit-panel {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 20px;
 }
 
 .submit-panel h2 {

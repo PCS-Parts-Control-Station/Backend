@@ -20,7 +20,7 @@ content-main
 | 유형 | 공통 class | 용도 |
 |---|---|---|
 | 단순 관리 | `simple-management-data-row` | 4열 전후 읽기 중심 |
-| 선택형 관리 | `management-data-row` | 행 선택 후 드로어 작업 |
+| 선택형 관리 | `management-data-table`, `management-data-row` | 행 선택 후 드로어 작업 |
 | 전표·이력 | `document-data-table`, `document-data-row` | 긴 식별자와 상태·날짜 비교 |
 
 modifier는 grid와 정보 우선순위만 조정한다. 카드·배지·버튼 기본 모양은 공통 CSS를 사용한다.
@@ -94,6 +94,10 @@ table-card
 - 선택 상태는 `is-selected`와 왼쪽 accent, 옅은 배경으로 표시한다.
 - 수정·상태 버튼을 모든 행에 반복하지 않고 드로어에 둔다.
 - 다른 행을 선택하면 열린 드로어 내용만 교체한다.
+- 목록 카드는 `container-name`에 `management-card-table`을 추가한다.
+- 열 폭은 페이지 CSS의 `--management-row-columns`, `--management-row-min-width`, `--management-row-gap`으로 전달한다.
+- 840px 이하의 카드 외형·셀 라벨과 440px 이하의 1열 전환은 `management-page.css`가 소유한다.
+- 페이지 CSS는 카드 외형을 복사하지 않고 `--management-cell-column`, `--management-cell-row`로 도메인 고유 노출 순서만 지정한다.
 
 ### 전표·이력 행
 
@@ -125,6 +129,7 @@ table-card
 - 헤더를 숨기고 카드형 행으로 전환한다.
 - 값만으로 의미가 약한 셀에만 짧은 라벨을 붙인다.
 - 행동은 카드 하단에 둔다.
+- 선택형 관리 목록의 공통 전환 기준은 840px, 단일 열 전환 기준은 440px이다.
 
 전표형 목록:
 

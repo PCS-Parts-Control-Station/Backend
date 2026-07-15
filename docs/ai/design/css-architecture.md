@@ -26,7 +26,7 @@ static/css/
 | `base.css` | box sizing, 폰트, 기본 요소 |
 | `workspace.css` | 업무 레이아웃, 사이드바, 헤더 |
 | `components.css` | 버튼, 입력, 카드, 표, 배지, 모달, 드로어 셸 |
-| `management-page.css` | 관리형 편집·선택·정렬 상태 |
+| `management-page.css` | 관리형 요약·목록 카드 전환·편집·선택·정렬 상태 |
 | `workflow.css` | 업무 흐름 표현 |
 | `feedback.css` | 토스트와 공통 피드백 |
 | `pages/{page}.css` | 해당 페이지의 데이터 배치와 예외 |
@@ -68,11 +68,22 @@ layer 순서는 `tokens.css` 한 곳에서만 선언한다.
 - 모바일에서 숨길 열과 페이지 고유 노출 순서
 - 공통 계약으로 표현할 수 없는 페이지 상태
 
+관리형 목록의 열 배치는 직접 공통 속성을 덮지 않고 다음 custom property로 전달한다.
+
+```text
+--management-row-columns
+--management-row-min-width
+--management-row-gap
+--management-cell-column
+--management-cell-row
+```
+
 공통 CSS가 소유하는 내용:
 
 - 버튼, 입력, 카드, 배지, 검색, 요약, 모달, 드로어 기본 모양
 - hover, focus, selected, inactive, dragging 상태
 - 드로어 위치·폭·열림·스크롤·액션 영역
+- 관리형 목록의 요약 헤더, 카드 외형, 셀 라벨, 공통 반응형 전환
 - 여러 화면에 동일하게 적용되는 컴포넌트 내부 반응형
 
 모든 HTML은 대응하는 `pages/{page}.css`를 가진다. 비어 있거나 `@layer page {}`만 있어도 된다.

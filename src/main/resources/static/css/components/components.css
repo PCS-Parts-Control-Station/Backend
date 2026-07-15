@@ -626,6 +626,82 @@ body.pcs-modal-scroll-locked,
     border-top: 1px solid var(--line);
 }
 
+.partner-picker-field {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+}
+
+.partner-picker-field > span {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.partner-picker-button {
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+    min-height: var(--control-height);
+    padding: 0 16px;
+    border: 1px solid var(--line-strong, #cbd5e1);
+    border-radius: var(--radius);
+    background: var(--surface, #ffffff);
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.partner-picker-button:hover,
+.partner-picker-button:focus-visible {
+    border-color: rgba(37, 99, 235, 0.38);
+    background: var(--blue-soft, #eff6ff);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    outline: none;
+}
+
+.partner-picker-button.is-selected {
+    border-color: rgba(37, 99, 235, 0.34);
+    background: #f8fbff;
+}
+
+.partner-picker-label {
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.partner-picker-value {
+    display: grid;
+    justify-items: end;
+    min-width: 0;
+}
+
+.partner-picker-value strong {
+    min-width: 0;
+    max-width: 100%;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.partner-picker-value small {
+    display: none;
+}
+
+.partner-picker-button.is-selected .partner-picker-value strong {
+    color: var(--blue, #2563eb);
+}
+
 .partner-modal {
     width: min(680px, calc(100vw - 32px));
 }
@@ -1254,6 +1330,27 @@ body.pcs-modal-scroll-locked,
         right: calc(100% - 100vw);
         width: auto;
         max-width: none;
+    }
+}
+
+@media (max-width: 440px) {
+    .management-detail-drawer .panel-title-bar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .management-detail-drawer .panel-title-bar > .panel-link-button {
+        justify-self: end;
+    }
+
+    .management-detail-drawer .panel-title-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+    }
+
+    .management-detail-drawer .panel-title-actions .panel-link-button {
+        width: 100%;
     }
 }
 
